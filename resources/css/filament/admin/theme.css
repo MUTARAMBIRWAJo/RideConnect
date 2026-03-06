@@ -1,0 +1,462 @@
+@import 'tailwindcss';
+
+@source '../../../../app/Filament/**/*.php';
+@source '../../../../resources/views/filament/**/*.blade.php';
+@source '../../../../resources/views/components/filament/**/*.blade.php';
+@source '../../../../vendor/filament/**/*.blade.php';
+
+:root {
+    --rc-primary-50: 240 253 244;
+    --rc-primary-100: 220 252 231;
+    --rc-primary-200: 187 247 208;
+    --rc-primary-300: 134 239 172;
+    --rc-primary-400: 74 222 128;
+    --rc-primary-500: 22 101 52;
+    --rc-primary-600: 20 83 45;
+    --rc-primary-700: 15 64 35;
+    --rc-primary-800: 11 45 25;
+    --rc-primary-900: 7 29 16;
+    --rc-primary-950: 4 17 9;
+
+    --rc-secondary-100: 220 252 231;
+    --rc-secondary-200: 187 247 208;
+    --rc-accent-500: 20 184 166;
+    --rc-accent-gold-500: 217 119 6;
+
+    --rc-neutral-bg: #f8fafc;
+    --rc-card-bg: #ffffff;
+    --rc-card-ring: rgba(15, 23, 42, 0.08);
+    --rc-text-main: #0f172a;
+    --rc-text-muted: #475569;
+}
+
+.dark {
+    --rc-neutral-bg: #0b1220;
+    --rc-card-bg: #111827;
+    --rc-card-ring: rgba(148, 163, 184, 0.2);
+    --rc-text-main: #e2e8f0;
+    --rc-text-muted: #94a3b8;
+}
+
+.fi-body {
+    background-color: var(--rc-neutral-bg);
+    color: var(--rc-text-main);
+    font-family: Inter, ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, sans-serif;
+    font-size: 0.875rem;
+}
+
+.fi-body h1 {
+    font-size: 1.25rem;
+    line-height: 2rem;
+    font-weight: 700;
+}
+
+.fi-body h2 {
+    font-size: 1.25rem;
+    line-height: 1.75rem;
+    font-weight: 600;
+}
+
+.fi-body h3 {
+    font-size: 1.125rem;
+    line-height: 1.75rem;
+    font-weight: 600;
+}
+
+/* Repair Filament grid utility classes that compile with invalid CSS values in Tailwind v4. */
+.col-\[--col-span-default\] {
+    grid-column: var(--col-span-default) !important;
+}
+
+.col-start-\[--col-start-default\] {
+    grid-column-start: var(--col-start-default) !important;
+}
+
+.grid-cols-\[--cols-default\] {
+    grid-template-columns: var(--cols-default) !important;
+}
+
+.columns-\[--cols-default\] {
+    columns: var(--cols-default) !important;
+}
+
+@media (min-width: 40rem) {
+    .sm\:col-\[--col-span-sm\] {
+        grid-column: var(--col-span-sm) !important;
+    }
+
+    .sm\:col-start-\[--col-start-sm\] {
+        grid-column-start: var(--col-start-sm) !important;
+    }
+
+    .sm\:grid-cols-\[--cols-sm\] {
+        grid-template-columns: var(--cols-sm) !important;
+    }
+
+    .sm\:columns-\[--cols-sm\] {
+        columns: var(--cols-sm) !important;
+    }
+}
+
+@media (min-width: 48rem) {
+    .md\:col-\[--col-span-md\] {
+        grid-column: var(--col-span-md) !important;
+    }
+
+    .md\:col-start-\[--col-start-md\] {
+        grid-column-start: var(--col-start-md) !important;
+    }
+
+    .md\:grid-cols-\[--cols-md\] {
+        grid-template-columns: var(--cols-md) !important;
+    }
+
+    .md\:columns-\[--cols-md\] {
+        columns: var(--cols-md) !important;
+    }
+}
+
+@media (min-width: 64rem) {
+    .lg\:col-\[--col-span-lg\] {
+        grid-column: var(--col-span-lg) !important;
+    }
+
+    .lg\:col-start-\[--col-start-lg\] {
+        grid-column-start: var(--col-start-lg) !important;
+    }
+
+    .lg\:grid-cols-\[--cols-lg\] {
+        grid-template-columns: var(--cols-lg) !important;
+    }
+
+    .lg\:columns-\[--cols-lg\] {
+        columns: var(--cols-lg) !important;
+    }
+}
+
+@media (min-width: 80rem) {
+    .xl\:col-\[--col-span-xl\] {
+        grid-column: var(--col-span-xl) !important;
+    }
+
+    .xl\:col-start-\[--col-start-xl\] {
+        grid-column-start: var(--col-start-xl) !important;
+    }
+
+    .xl\:grid-cols-\[--cols-xl\] {
+        grid-template-columns: var(--cols-xl) !important;
+    }
+
+    .xl\:columns-\[--cols-xl\] {
+        columns: var(--cols-xl) !important;
+    }
+}
+
+@media (min-width: 96rem) {
+    .\32xl\:col-\[--col-span-2xl\] {
+        grid-column: var(--col-span-2xl) !important;
+    }
+
+    .\32xl\:col-start-\[--col-start-2xl\] {
+        grid-column-start: var(--col-start-2xl) !important;
+    }
+
+    .\32xl\:grid-cols-\[--cols-2xl\] {
+        grid-template-columns: var(--cols-2xl) !important;
+    }
+
+    .\32xl\:columns-\[--cols-2xl\] {
+        columns: var(--cols-2xl) !important;
+    }
+}
+
+.fi-main,
+.fi-topbar nav {
+    background-color: var(--rc-neutral-bg);
+}
+
+.fi-sidebar,
+.fi-sidebar-nav,
+.fi-sidebar-header,
+.fi-sidebar-footer {
+    background: linear-gradient(180deg, rgb(var(--rc-primary-600) / 1) 0%, rgb(var(--rc-primary-700) / 1) 100%);
+}
+
+.fi-main-sidebar,
+.fi-main-sidebar .fi-sidebar,
+.fi-main-sidebar .fi-sidebar-nav,
+.fi-main-sidebar .fi-sidebar-header,
+.fi-main-sidebar .fi-sidebar-footer {
+    background: linear-gradient(180deg, rgb(var(--rc-primary-600) / 1) 0%, rgb(var(--rc-primary-700) / 1) 100%) !important;
+}
+
+.fi-sidebar-header {
+    background: transparent;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.12);
+}
+
+.fi-sidebar-item-button {
+    position: relative;
+    border-radius: 0.75rem;
+    padding: 0.65rem 0.9rem;
+    transition: all 160ms ease;
+}
+
+.fi-sidebar-item.fi-active>.fi-sidebar-item-button {
+    background: rgba(255, 255, 255, 0.18);
+    box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.22);
+}
+
+.fi-sidebar-item.fi-active>.fi-sidebar-item-button::before {
+    content: '';
+    position: absolute;
+    inset-block: 0.35rem;
+    inset-inline-start: 0;
+    border-inline-start: 3px solid rgb(var(--rc-primary-300));
+    border-radius: 9999px;
+}
+
+.fi-sidebar-item.fi-active .fi-sidebar-item-label,
+.fi-sidebar-item.fi-active .fi-sidebar-item-icon,
+.fi-topbar-item.fi-active .fi-topbar-item-label,
+.fi-topbar-item.fi-active .fi-topbar-item-icon {
+    color: rgba(255, 255, 255, 0.98) !important;
+}
+
+.fi-sidebar .fi-sidebar-item-label,
+.fi-sidebar .fi-sidebar-item-icon,
+.fi-sidebar .fi-sidebar-group-button,
+.fi-sidebar .fi-sidebar-group-label,
+.fi-sidebar .fi-sidebar-group-icon {
+    color: rgba(255, 255, 255, 0.85) !important;
+}
+
+.fi-sidebar .fi-sidebar-item-icon,
+.fi-sidebar .fi-sidebar-group-icon {
+    color: rgba(255, 255, 255, 0.75) !important;
+}
+
+.fi-sidebar .fi-sidebar-group-label {
+    color: rgba(255, 255, 255, 0.6) !important;
+    font-size: 0.75rem;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+}
+
+.fi-sidebar .fi-sidebar-group {
+    margin-bottom: 1rem;
+}
+
+.fi-sidebar .fi-sidebar-item-button:hover,
+.fi-sidebar .fi-sidebar-item-button:focus-visible {
+    background: rgba(255, 255, 255, 0.12);
+}
+
+.fi-topbar-item.fi-active .fi-topbar-item-button {
+    background: rgb(var(--rc-primary-500) / 0.14);
+}
+
+.fi-topbar-item.fi-active .fi-topbar-item-label,
+.fi-topbar-item.fi-active .fi-topbar-item-icon {
+    color: rgb(var(--rc-primary-500)) !important;
+}
+
+.fi-btn.fi-color-primary:not(.fi-btn-outlined),
+.fi-btn.fi-color-success:not(.fi-btn-outlined) {
+    background: linear-gradient(135deg, rgb(var(--rc-primary-500)) 0%, rgb(var(--rc-primary-600)) 100%);
+    border-color: transparent;
+}
+
+.fi-btn.fi-color-primary:not(.fi-btn-outlined):hover,
+.fi-btn.fi-color-success:not(.fi-btn-outlined):hover {
+    filter: brightness(1.05);
+}
+
+.fi-btn.fi-color-primary.fi-btn-outlined,
+.fi-btn.fi-color-success.fi-btn-outlined {
+    color: rgb(var(--rc-primary-500));
+    border-color: rgb(var(--rc-primary-500) / 0.25);
+}
+
+.fi-link,
+.fi-body a:not(.fi-btn):not(.fi-icon-btn) {
+    color: var(--rc-text-main);
+    text-decoration-color: rgb(var(--rc-primary-500) / 0.45);
+}
+
+.fi-link:hover,
+.fi-body a:not(.fi-btn):not(.fi-icon-btn):hover {
+    color: rgb(var(--rc-primary-600));
+}
+
+.fi-section,
+.fi-ta,
+.fi-wi-stats-overview-stat,
+.fi-in-entry {
+    background: var(--rc-card-bg);
+    border-radius: 1rem;
+    box-shadow: 0 8px 24px rgba(15, 23, 42, 0.08);
+    transition: box-shadow 180ms ease, transform 180ms ease;
+}
+
+.fi-section:hover,
+.fi-wi-stats-overview-stat:hover {
+    box-shadow: 0 14px 32px rgba(15, 23, 42, 0.14);
+    transform: translateY(-2px);
+}
+
+.fi-wi-stats-overview-stat {
+    border: 1px solid rgb(var(--rc-primary-500) / 0.12);
+    min-height: 6rem;
+    padding: 0.75rem;
+}
+
+.fi-wi-stats-overview-stat-icon {
+    color: rgb(var(--rc-accent-500));
+}
+
+.fi-wi-stats-overview-stat-value {
+    overflow-wrap: anywhere;
+    font-size: 1.25rem;
+    line-height: 2.25rem;
+    font-weight: 700;
+    letter-spacing: -0.025em;
+}
+
+.fi-wi-stats-overview-stat-description {
+    font-size: 0.75rem;
+    line-height: 1rem;
+    color: var(--rc-text-muted);
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+}
+
+.fi-wi-stats-overview-stat-label {
+    font-size: 0.75rem;
+    font-weight: 500;
+    color: var(--rc-text-muted);
+}
+
+.fi-wi-stats-overview-stats-ctn {
+    gap: 1.5rem;
+    grid-template-columns: repeat(1, minmax(0, 1fr));
+}
+
+@media (min-width: 48rem) {
+    .fi-wi-stats-overview-stats-ctn {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+}
+
+@media (min-width: 80rem) {
+    .fi-wi-stats-overview-stats-ctn {
+        grid-template-columns: repeat(4, minmax(0, 1fr));
+    }
+}
+
+.fi-ta-table thead tr,
+.fi-ta-header {
+    background: rgb(var(--rc-primary-500) / 0.04);
+}
+
+.fi-ta-actions .fi-btn,
+.fi-ta-cell .fi-btn {
+    border-radius: 0.75rem;
+}
+
+.fi-badge.fi-color-primary,
+.fi-badge.fi-color-success {
+    background: rgb(var(--rc-primary-500) / 0.14);
+    color: rgb(var(--rc-primary-600));
+    border-color: rgb(var(--rc-primary-500) / 0.22);
+}
+
+.fi-badge.fi-color-warning {
+    background: rgba(245, 158, 11, 0.14);
+    color: #b45309;
+}
+
+.fi-badge.fi-color-danger {
+    background: rgba(239, 68, 68, 0.14);
+    color: #b91c1c;
+}
+
+.dark .fi-topbar nav {
+    background: #0f172a;
+}
+
+.dark .fi-sidebar,
+.dark .fi-sidebar-nav,
+.dark .fi-sidebar-header,
+.dark .fi-sidebar-footer {
+    background: linear-gradient(180deg, rgb(var(--rc-primary-700) / 1) 0%, rgb(var(--rc-primary-900) / 1) 100%);
+}
+
+.dark .fi-main-sidebar,
+.dark .fi-main-sidebar .fi-sidebar,
+.dark .fi-main-sidebar .fi-sidebar-nav,
+.dark .fi-main-sidebar .fi-sidebar-header,
+.dark .fi-main-sidebar .fi-sidebar-footer {
+    background: linear-gradient(180deg, rgb(var(--rc-primary-700) / 1) 0%, rgb(var(--rc-primary-900) / 1) 100%) !important;
+}
+
+.dark .fi-section,
+.dark .fi-ta,
+.dark .fi-wi-stats-overview-stat,
+.dark .fi-in-entry {
+    background: #0f172a;
+    border: 1px solid rgba(148, 163, 184, 0.18);
+    box-shadow: 0 12px 28px rgba(2, 6, 23, 0.42);
+}
+
+.dark .fi-wi-stats-overview-stat-value,
+.dark .fi-section h1,
+.dark .fi-section h2,
+.dark .fi-section h3 {
+    color: #e2e8f0;
+}
+
+.dark .fi-wi-stats-overview-stat-label,
+.dark .fi-wi-stats-overview-stat-description,
+.dark .fi-ta-table thead tr,
+.dark .fi-ta-header {
+    color: #94a3b8;
+}
+
+.dark .fi-ta-table thead tr,
+.dark .fi-ta-header {
+    background: rgb(var(--rc-primary-300) / 0.08);
+}
+
+.dark .fi-sidebar .fi-sidebar-item-label,
+.dark .fi-sidebar .fi-sidebar-item-icon,
+.dark .fi-sidebar .fi-sidebar-group-button,
+.dark .fi-sidebar .fi-sidebar-group-label,
+.dark .fi-sidebar .fi-sidebar-group-icon {
+    color: rgba(255, 255, 255, 0.9) !important;
+}
+
+.dark .fi-badge.fi-color-primary,
+.dark .fi-badge.fi-color-success {
+    background: rgb(var(--rc-primary-400) / 0.18);
+    color: rgb(var(--rc-secondary-100));
+}
+
+@media (max-width: 1024px) {
+    .fi-sidebar {
+        box-shadow: 0 20px 40px rgba(15, 23, 42, 0.25);
+    }
+}
+
+/* Fix for native select wrapping repeating background chevrons in Tailwind v4 */
+select {
+    background-repeat: no-repeat !important;
+    background-size: 1.5em 1.5em !important;
+    background-position: right 0.5rem center !important;
+}
+
+.fi-select-input {
+    background-repeat: no-repeat !important;
+    background-size: 1.5em 1.5em !important;
+    background-position: right 0.5rem center !important;
+}

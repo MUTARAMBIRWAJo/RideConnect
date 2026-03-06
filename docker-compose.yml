@@ -1,0 +1,143 @@
+
+services:
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: rideconnect_app
+    restart: unless-stopped
+    working_dir: /var/www
+    volumes:
+      - .:/var/www:cached
+    user: "1000:1000"
+    dns:
+      - 8.8.8.8
+      - 8.8.4.4
+    environment:
+      APP_ENV: local
+      APP_DEBUG: "true"
+      DB_CONNECTION: pgsql
+      DB_HOST: aws-1-us-east-1.pooler.supabase.com
+      DB_PORT: 5432
+      DB_DATABASE: postgres
+      DB_USERNAME: postgres.tpahuvmhlfluztuhznfj
+      DB_PASSWORD: rOnptMsAAnTbrpIY
+      DB_SSLMODE: require
+      SUPABASE_URL: https://tpahuvmhlfluztuhznfj.supabase.co
+      SUPABASE_KEY: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InRwYWh1dm1obGZsdXp0dWh6bmZqIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjU5OTg1ODQsImV4cCI6MjA4MTU3NDU4NH0.iwwdBlMDl-X97_ozEEaEBah8vBQ5Em02f0praEr6m0U
+      SUPABASE_SERVICE_ROLE_KEY: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InRwYWh1dm1obGZsdXp0dWh6bmZqIiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc2NTk5ODU4NCwiZXhwIjoyMDgxNTc0NTg0fQ.DxszTVnPVdC1o9m8ew3WOEgY-POblWGgiNKS_cFLGwg
+      REDIS_HOST: redis
+      REDIS_PORT: 6379
+      EVENT_BUS_DRIVER: database
+      QUEUE_CONNECTION: database
+    depends_on:
+      - redis
+    networks:
+      - rideconnect
+
+  # -----------------------------------------------------------------------
+  # Queue Worker — default + events + reporting queues
+  # -----------------------------------------------------------------------
+  worker:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: rideconnect_worker
+    restart: unless-stopped
+    working_dir: /var/www
+    volumes:
+      - .:/var/www:cached
+    user: "1000:1000"
+    command: >
+      php artisan queue:work database
+      --queue=events,reporting,default
+      --sleep=3
+      --tries=3
+      --timeout=120
+      --max-jobs=500
+      --max-time=3600
+    environment:
+      APP_ENV: local
+      DB_CONNECTION: pgsql
+      DB_HOST: aws-1-us-east-1.pooler.supabase.com
+      DB_PORT: 5432
+      DB_DATABASE: postgres
+      DB_USERNAME: postgres.tpahuvmhlfluztuhznfj
+      DB_PASSWORD: rOnptMsAAnTbrpIY
+      DB_SSLMODE: require
+      REDIS_HOST: redis
+      REDIS_PORT: 6379
+      QUEUE_CONNECTION: database
+    depends_on:
+      - app
+      - redis
+    networks:
+      - rideconnect
+
+  # -----------------------------------------------------------------------
+  # Scheduler — runs artisan schedule:work every minute
+  # -----------------------------------------------------------------------
+  scheduler:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: rideconnect_scheduler
+    restart: unless-stopped
+    working_dir: /var/www
+    volumes:
+      - .:/var/www:cached
+    user: "1000:1000"
+    command: php artisan schedule:work
+    environment:
+      APP_ENV: local
+      DB_CONNECTION: pgsql
+      DB_HOST: aws-1-us-east-1.pooler.supabase.com
+      DB_PORT: 5432
+      DB_DATABASE: postgres
+      DB_USERNAME: postgres.tpahuvmhlfluztuhznfj
+      DB_PASSWORD: rOnptMsAAnTbrpIY
+      DB_SSLMODE: require
+      REDIS_HOST: redis
+      REDIS_PORT: 6379
+      QUEUE_CONNECTION: database
+    depends_on:
+      - app
+    networks:
+      - rideconnect
+
+  # -----------------------------------------------------------------------
+  # Redis — BI caching + session + queue driver fallback
+  # -----------------------------------------------------------------------
+  redis:
+    image: redis:7-alpine
+    container_name: rideconnect_redis
+    restart: unless-stopped
+    ports:
+      - "6380:6379"   # Exposed on non-standard host port to avoid conflicts
+    volumes:
+      - redis_data:/data
+    command: redis-server --appendonly yes --maxmemory 256mb --maxmemory-policy allkeys-lru
+    networks:
+      - rideconnect
+
+  nginx:
+    image: nginx:alpine
+    container_name: rideconnect_nginx
+    restart: unless-stopped
+    ports:
+      - "8000:80"
+    volumes:
+      - .:/var/www:ro
+      - ./docker/nginx/default.conf:/etc/nginx/conf.d/default.conf:ro
+    depends_on:
+      - app
+    networks:
+      - rideconnect
+
+networks:
+  rideconnect:
+    driver: bridge
+
+volumes:
+  redis_data:
+    driver: local

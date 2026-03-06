@@ -1,0 +1,1541 @@
+openapi: 3.1.0
+info:
+  title: RideConnect API
+  description: |
+    # RideConnect Backend API Documentation
+
+    ## Overview
+    RideConnect is a comprehensive ride-sharing and booking platform that connects passengers with drivers.
+    This API provides secure access to all mobile app and backend management features.
+
+    ## Authentication
+    - **Mobile Users (Passengers/Drivers)**: Use Laravel Sanctum token-based authentication
+    - **Managers (Admin/Accountant/Officer)**: Use token-based authentication with role-based access control
+
+    ## Base URL
+    ```
+    https://api.rideconnect.com/api/v1
+    ```
+
+    ## Rate Limiting
+    - 100 requests per minute for authenticated users
+    - 20 requests per minute for unauthenticated users
+
+    ## Response Format
+    All responses follow a consistent JSON structure:
+    ```json
+    {
+      "success": true,
+      "message": "Success message",
+      "data": { ... }
+    }
+    ```
+
+    ## Error Handling
+    - 400: Bad Request - Invalid input
+    - 401: Unauthorized - Invalid or missing authentication
+    - 403: Forbidden - Insufficient permissions
+    - 404: Not Found - Resource not found
+    - 422: Validation Error - Invalid request data
+    - 500: Server Error - Internal server error
+
+  version: 1.0.0
+  contact:
+    name: RideConnect API Support
+    email: api-support@rideconnect.com
+  license:
+    name: Proprietary
+
+servers:
+  - url: https://api.rideconnect.com/api/v1
+    description: Production Server
+  - url: https://staging-api.rideconnect.com/api/v1
+    description: Staging Server
+  - url: http://localhost:8000/api/v1
+    description: Local Development Server
+
+tags:
+  - name: Authentication
+    description: User authentication and authorization endpoints
+  - name: Passenger
+    description: Passenger-specific endpoints for ride booking and management
+  - name: Rider
+    description: Driver/Rider-specific endpoints for ride requests and earnings
+  - name: Ride Management
+    description: Ride creation, monitoring and management
+  - name: Payments
+    description: Payment processing and transaction history
+  - name: Tickets
+    description: Support ticket management and validation
+  - name: Admin
+    description: Admin and superadmin user management
+  - name: Finance
+    description: Financial reporting and exports for accountants
+
+security:
+  - BearerAuth: []
+
+paths:
+  # ===========================
+  # AUTHENTICATION
+  # ===========================
+
+  /auth/register:
+    post:
+      tags:
+        - Authentication
+      summary: Register a new mobile user
+      description: |
+        Register a new passenger or driver account. 
+        Only PASSENGER and DRIVER roles are allowed.
+        Accounts require approval before login is allowed.
+      operationId: registerUser
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/RegisterRequest"
+            example:
+              name: "John Doe"
+              email: "john@example.com"
+              password: "securePassword123"
+              password_confirmation: "securePassword123"
+              phone: "+1234567890"
+              role: "PASSENGER"
+      responses:
+        "201":
+          description: User registered successfully
+          content:
+            application/json:
+              example:
+                success: true
+                message: "Registration successful. Your account is pending approval."
+                data:
+                  user:
+                    id: 1
+                    name: "John Doe"
+                    email: "john@example.com"
+                    role: "PASSENGER"
+                    phone: "+1234567890"
+                    is_approved: false
+        "422":
+          description: Validation error
+          content:
+            application/json:
+              $ref: "#/components/schemas/ValidationError"
+
+  /auth/login:
+    post:
+      tags:
+        - Authentication
+      summary: Login user
+      description: Authenticate user and receive access token
+      operationId: loginUser
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/LoginRequest"
+            example:
+              email: "john@example.com"
+              password: "securePassword123"
+      responses:
+        "200":
+          description: Login successful
+          content:
+            application/json:
+              example:
+                success: true
+                message: "Login successful"
+                data:
+                  user:
+                    id: 1
+                    name: "John Doe"
+                    email: "john@example.com"
+                    role: "PASSENGER"
+                  token: "1|a1b2c3d4e5f6g7h8i9j0..."
+                  token_type: "Bearer"
+        "401":
+          description: Invalid credentials
+          content:
+            application/json:
+              example:
+                success: false
+                message: "Invalid credentials"
+        "403":
+          description: Account not approved
+          content:
+            application/json:
+              example:
+                success: false
+                message: "Your account is pending approval. Please contact administrator."
+
+  /auth/logout:
+    post:
+      tags:
+        - Authentication
+      summary: Logout user
+      description: Revoke current access token
+      operationId: logoutUser
+      security:
+        - BearerAuth: []
+      responses:
+        "200":
+          description: Logout successful
+          content:
+            application/json:
+              example:
+                success: true
+                message: "Logout successful"
+        "401":
+          description: Unauthorized
+
+  /auth/profile:
+    get:
+      tags:
+        - Authentication
+      summary: Get current user profile
+      description: Retrieve authenticated user's profile information
+      operationId: getProfile
+      security:
+        - BearerAuth: []
+      responses:
+        "200":
+          description: Profile retrieved successfully
+          content:
+            application/json:
+              example:
+                success: true
+                data:
+                  user:
+                    id: 1
+                    name: "John Doe"
+                    email: "john@example.com"
+                    role: "PASSENGER"
+                    phone: "+1234567890"
+        "401":
+          description: Unauthorized
+
+  # ===========================
+  # MANAGER AUTHENTICATION
+  # ===========================
+
+  /manager/login:
+    post:
+      tags:
+        - Authentication
+      summary: Manager login
+      description: Login for admin, accountant, and officer accounts
+      operationId: managerLogin
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - email
+                - password
+              properties:
+                email:
+                  type: string
+                  format: email
+                password:
+                  type: string
+                  format: password
+            example:
+              email: "admin@rideconnect.com"
+              password: "adminPassword123"
+      responses:
+        "200":
+          description: Manager login successful
+          content:
+            application/json:
+              example:
+                success: true
+                message: "Manager login successful"
+                data:
+                  user:
+                    id: 1
+                    name: "Admin User"
+                    email: "admin@rideconnect.com"
+                    role: "ADMIN"
+                  token: "1|a1b2c3d4e5f6g7h8i9j0..."
+        "403":
+          description: Only managers allowed
+
+  /manager/logout:
+    post:
+      tags:
+        - Authentication
+      summary: Manager logout
+      description: Revoke manager's access token
+      operationId: managerLogout
+      security:
+        - BearerAuth: []
+      responses:
+        "200":
+          description: Logout successful
+          content:
+            application/json:
+              example:
+                success: true
+                message: "Manager logout successful"
+
+  /manager/profile:
+    get:
+      tags:
+        - Authentication
+      summary: Get manager profile
+      description: Retrieve authenticated manager's profile
+      operationId: getManagerProfile
+      security:
+        - BearerAuth: []
+      responses:
+        "200":
+          description: Profile retrieved successfully
+          content:
+            application/json:
+              example:
+                success: true
+                data:
+                  user:
+                    id: 1
+                    name: "Admin User"
+                    email: "admin@rideconnect.com"
+                    role: "ADMIN"
+                    is_approved: true
+
+  # ===========================
+  # PASSENGER APIs
+  # ===========================
+
+  /passenger/rides:
+    post:
+      tags:
+        - Passenger
+      summary: Book a ride
+      description: Create a new ride booking
+      operationId: bookRide
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/BookRideRequest"
+            example:
+              ride_id: 1
+              seats: 2
+              pickup_address: "123 Main St, City"
+              dropoff_address: "456 Oak Ave, City"
+      responses:
+        "201":
+          description: Ride booked successfully
+          content:
+            application/json:
+              example:
+                success: true
+                message: "Ride booked successfully"
+                data:
+                  id: 1
+                  ride_id: 1
+                  seats: 2
+                  total_price: 25.00
+                  status: "PENDING"
+        "403":
+          description: Only passengers allowed
+    get:
+      tags:
+        - Passenger
+      summary: Get passenger's rides
+      description: List all rides booked by the passenger
+      operationId: getMyRides
+      security:
+        - BearerAuth: []
+      parameters:
+        - $ref: "#/components/parameters/PageParam"
+        - $ref: "#/components/parameters/PerPageParam"
+      responses:
+        "200":
+          description: Rides retrieved successfully
+          content:
+            application/json:
+              example:
+                success: true
+                data: []
+
+  /passenger/rides/{id}:
+    get:
+      tags:
+        - Passenger
+      summary: Get ride details
+      description: Get details of a specific ride
+      operationId: getRideDetail
+      security:
+        - BearerAuth: []
+      parameters:
+        - $ref: "#/components/parameters/IdParam"
+      responses:
+        "200":
+          description: Ride details retrieved
+          content:
+            application/json:
+              example:
+                success: true
+                data:
+                  id: 1
+                  driver:
+                    name: "John Driver"
+                    rating: 4.8
+                  origin:
+                    address: "123 Main St"
+                  destination:
+                    address: "456 Oak Ave"
+        "404":
+          description: Ride not found
+
+  /passenger/rides/{id}/cancel:
+    put:
+      tags:
+        - Passenger
+      summary: Cancel ride booking
+      description: Cancel a pending ride booking
+      operationId: cancelRide
+      security:
+        - BearerAuth: []
+      parameters:
+        - $ref: "#/components/parameters/IdParam"
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                reason:
+                  type: string
+                  maxLength: 500
+            example:
+              reason: "Changed my plans"
+      responses:
+        "200":
+          description: Booking cancelled
+          content:
+            application/json:
+              example:
+                success: true
+                message: "Booking cancelled successfully"
+
+  /passenger/rides/history:
+    get:
+      tags:
+        - Passenger
+      summary: Get ride history
+      description: Get complete ride booking history
+      operationId: getRideHistory
+      security:
+        - BearerAuth: []
+      parameters:
+        - $ref: "#/components/parameters/PageParam"
+        - name: status
+          in: query
+          schema:
+            type: string
+            enum: [PENDING, CONFIRMED, COMPLETED, CANCELLED]
+        - name: start_date
+          in: query
+          schema:
+            type: string
+            format: date
+        - name: end_date
+          in: query
+          schema:
+            type: string
+            format: date
+      responses:
+        "200":
+          description: History retrieved
+          content:
+            application/json:
+              example:
+                success: true
+                data: []
+
+  /passenger/profile:
+    get:
+      tags:
+        - Passenger
+      summary: Get passenger profile
+      operationId: getPassengerProfile
+      security:
+        - BearerAuth: []
+      responses:
+        "200":
+          description: Profile retrieved
+    put:
+      tags:
+        - Passenger
+      summary: Update passenger profile
+      operationId: updatePassengerProfile
+      security:
+        - BearerAuth: []
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                name:
+                  type: string
+                phone:
+                  type: string
+      responses:
+        "200":
+          description: Profile updated
+
+  # ===========================
+  # RIDER APIs
+  # ===========================
+
+  /rider/status:
+    put:
+      tags:
+        - Rider
+      summary: Update rider status
+      description: Set rider availability (online/offline/busy)
+      operationId: updateRiderStatus
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - status
+              properties:
+                status:
+                  type: string
+                  enum: [online, offline, busy]
+                latitude:
+                  type: number
+                  format: double
+                longitude:
+                  type: number
+                  format: double
+            example:
+              status: "online"
+              latitude: -1.9403
+              longitude: 29.8739
+      responses:
+        "200":
+          description: Status updated
+          content:
+            application/json:
+              example:
+                success: true
+                message: "Status updated successfully"
+                data:
+                  status: "online"
+
+  /rider/requests:
+    get:
+      tags:
+        - Rider
+      summary: Get ride requests
+      description: Get available ride requests in the area
+      operationId: getRideRequests
+      security:
+        - BearerAuth: []
+      responses:
+        "200":
+          description: Requests retrieved
+          content:
+            application/json:
+              example:
+                success: true
+                data: []
+
+  /rider/requests/{id}/accept:
+    put:
+      tags:
+        - Rider
+      summary: Accept ride request
+      description: Accept an incoming ride request
+      operationId: acceptRideRequest
+      security:
+        - BearerAuth: []
+      parameters:
+        - $ref: "#/components/parameters/IdParam"
+      responses:
+        "200":
+          description: Request accepted
+          content:
+            application/json:
+              example:
+                success: true
+                message: "Ride request accepted"
+
+  /rider/requests/{id}/reject:
+    put:
+      tags:
+        - Rider
+      summary: Reject ride request
+      description: Reject an incoming ride request
+      operationId: rejectRideRequest
+      security:
+        - BearerAuth: []
+      parameters:
+        - $ref: "#/components/parameters/IdParam"
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                reason:
+                  type: string
+      responses:
+        "200":
+          description: Request rejected
+
+  /rider/requests/{id}/complete:
+    put:
+      tags:
+        - Rider
+      summary: Complete ride
+      description: Mark a ride as completed
+      operationId: completeRide
+      security:
+        - BearerAuth: []
+      parameters:
+        - $ref: "#/components/parameters/IdParam"
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                actual_distance:
+                  type: number
+                actual_fare:
+                  type: number
+      responses:
+        "200":
+          description: Ride completed
+
+  /rider/earnings:
+    get:
+      tags:
+        - Rider
+      summary: Get earnings
+      description: Get rider's earnings summary
+      operationId: getEarnings
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: start_date
+          in: query
+          schema:
+            type: string
+            format: date
+        - name: end_date
+          in: query
+          schema:
+            type: string
+            format: date
+      responses:
+        "200":
+          description: Earnings retrieved
+
+  /rider/earnings/monthly:
+    get:
+      tags:
+        - Rider
+      summary: Get monthly earnings
+      description: Get earnings breakdown for last 12 months
+      operationId: getMonthlyEarnings
+      security:
+        - BearerAuth: []
+      responses:
+        "200":
+          description: Monthly earnings retrieved
+
+  /rider/documents:
+    post:
+      tags:
+        - Rider
+      summary: Upload document
+      description: Upload driver document (license, insurance, etc.)
+      operationId: uploadDocument
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          multipart/form-data:
+            schema:
+              type: object
+              required:
+                - document_type
+                - document
+              properties:
+                document_type:
+                  type: string
+                  enum: [license, insurance, registration, id_card, other]
+                document:
+                  type: string
+                  format: binary
+                expiry_date:
+                  type: string
+                  format: date
+      responses:
+        "201":
+          description: Document uploaded
+    get:
+      tags:
+        - Rider
+      summary: List documents
+      description: Get list of uploaded documents
+      operationId: listDocuments
+      security:
+        - BearerAuth: []
+      responses:
+        "200":
+          description: Documents listed
+
+  # ===========================
+  # PAYMENTS
+  # ===========================
+
+  /payments:
+    post:
+      tags:
+        - Payments
+      summary: Create payment
+      description: Initiate a payment for a trip or booking
+      operationId: createPayment
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/PaymentRequest"
+      responses:
+        "201":
+          description: Payment initiated
+
+  /payments/history:
+    get:
+      tags:
+        - Payments
+      summary: Get payment history
+      description: Get user's payment transaction history
+      operationId: getPaymentHistory
+      security:
+        - BearerAuth: []
+      parameters:
+        - $ref: "#/components/parameters/PageParam"
+        - name: status
+          in: query
+          schema:
+            type: string
+        - name: type
+          in: query
+          schema:
+            type: string
+      responses:
+        "200":
+          description: History retrieved
+
+  # ===========================
+  # TICKETS
+  # ===========================
+
+  /tickets:
+    post:
+      tags:
+        - Tickets
+      summary: Create ticket
+      description: Create a new support ticket
+      operationId: createTicket
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/TicketRequest"
+      responses:
+        "201":
+          description: Ticket created
+    get:
+      tags:
+        - Tickets
+      summary: List tickets
+      description: Get all tickets (filtered by role)
+      operationId: listTickets
+      security:
+        - BearerAuth: []
+      parameters:
+        - $ref: "#/components/parameters/PageParam"
+        - name: status
+          in: query
+          schema:
+            type: string
+        - name: ticket_type
+          in: query
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Tickets listed
+
+  /tickets/{id}:
+    get:
+      tags:
+        - Tickets
+      summary: Get ticket
+      description: Get ticket details
+      operationId: getTicket
+      security:
+        - BearerAuth: []
+      parameters:
+        - $ref: "#/components/parameters/IdParam"
+      responses:
+        "200":
+          description: Ticket retrieved
+    put:
+      tags:
+        - Tickets
+      summary: Update ticket
+      description: Update ticket (admin/officer only)
+      operationId: updateTicket
+      security:
+        - BearerAuth: []
+      parameters:
+        - $ref: "#/components/parameters/IdParam"
+      responses:
+        "200":
+          description: Ticket updated
+    delete:
+      tags:
+        - Tickets
+      summary: Delete ticket
+      description: Delete a ticket
+      operationId: deleteTicket
+      security:
+        - BearerAuth: []
+      parameters:
+        - $ref: "#/components/parameters/IdParam"
+      responses:
+        "200":
+          description: Ticket deleted
+
+  /tickets/{id}/validate:
+    put:
+      tags:
+        - Tickets
+      summary: Validate ticket
+      description: Validate a ticket (officer/admin only)
+      operationId: validateTicket
+      security:
+        - BearerAuth: []
+      parameters:
+        - $ref: "#/components/parameters/IdParam"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - is_valid
+              properties:
+                is_valid:
+                  type: boolean
+                validation_notes:
+                  type: string
+      responses:
+        "200":
+          description: Ticket validated
+
+  # ===========================
+  # ADMIN APIs
+  # ===========================
+
+  /admin/dashboard:
+    get:
+      tags:
+        - Admin
+      summary: Get dashboard stats
+      description: Get comprehensive dashboard statistics
+      operationId: getDashboard
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: start_date
+          in: query
+          schema:
+            type: string
+            format: date
+        - name: end_date
+          in: query
+          schema:
+            type: string
+            format: date
+      responses:
+        "200":
+          description: Dashboard data retrieved
+
+  /admin/users:
+    get:
+      tags:
+        - Admin
+      summary: List users
+      description: Get all users (admin only)
+      operationId: listUsers
+      security:
+        - BearerAuth: []
+      parameters:
+        - $ref: "#/components/parameters/PageParam"
+        - name: role
+          in: query
+          schema:
+            type: string
+        - name: is_approved
+          in: query
+          schema:
+            type: boolean
+        - name: search
+          in: query
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Users listed
+    post:
+      tags:
+        - Admin
+      summary: Create user
+      description: Create a new manager user (superadmin only)
+      operationId: createUser
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CreateUserRequest"
+      responses:
+        "201":
+          description: User created
+
+  /admin/users/{id}:
+    get:
+      tags:
+        - Admin
+      summary: Get user
+      description: Get user details
+      operationId: getUser
+      security:
+        - BearerAuth: []
+      parameters:
+        - $ref: "#/components/parameters/IdParam"
+      responses:
+        "200":
+          description: User retrieved
+    put:
+      tags:
+        - Admin
+      summary: Update user
+      description: Update user details
+      operationId: updateUser
+      security:
+        - BearerAuth: []
+      parameters:
+        - $ref: "#/components/parameters/IdParam"
+      responses:
+        "200":
+          description: User updated
+    delete:
+      tags:
+        - Admin
+      summary: Delete user
+      description: Delete a user
+      operationId: deleteUser
+      security:
+        - BearerAuth: []
+      parameters:
+        - $ref: "#/components/parameters/IdParam"
+      responses:
+        "200":
+          description: User deleted
+
+  /admin/users/{id}/role:
+    put:
+      tags:
+        - Admin
+      summary: Update user role
+      description: Change user role (superadmin only)
+      operationId: updateUserRole
+      security:
+        - BearerAuth: []
+      parameters:
+        - $ref: "#/components/parameters/IdParam"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - role
+              properties:
+                role:
+                  type: string
+                  enum:
+                    [SUPER_ADMIN, ADMIN, ACCOUNTANT, OFFICER, DRIVER, PASSENGER]
+      responses:
+        "200":
+          description: Role updated
+
+  /admin/logs:
+    get:
+      tags:
+        - Admin
+      summary: Get system logs
+      description: Get system activity logs (superadmin only)
+      operationId: getSystemLogs
+      security:
+        - BearerAuth: []
+      parameters:
+        - $ref: "#/components/parameters/PageParam"
+        - name: action
+          in: query
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Logs retrieved
+
+  /admin/riders/pending:
+    get:
+      tags:
+        - Admin
+      summary: Get pending riders
+      description: Get list of riders awaiting approval
+      operationId: getPendingRiders
+      security:
+        - BearerAuth: []
+      responses:
+        "200":
+          description: Pending riders listed
+
+  /admin/riders/{id}/approve:
+    put:
+      tags:
+        - Admin
+      summary: Approve rider
+      description: Approve a rider's account
+      operationId: approveRider
+      security:
+        - BearerAuth: []
+      parameters:
+        - $ref: "#/components/parameters/IdParam"
+      responses:
+        "200":
+          description: Rider approved
+
+  /admin/riders/{id}/reject:
+    put:
+      tags:
+        - Admin
+      summary: Reject rider
+      description: Reject a rider's account
+      operationId: rejectRider
+      security:
+        - BearerAuth: []
+      parameters:
+        - $ref: "#/components/parameters/IdParam"
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - reason
+              properties:
+                reason:
+                  type: string
+      responses:
+        "200":
+          description: Rider rejected
+
+  /admin/rides:
+    get:
+      tags:
+        - Admin
+      summary: Get all rides
+      description: Get all rides (admin view)
+      operationId: adminGetRides
+      security:
+        - BearerAuth: []
+      parameters:
+        - $ref: "#/components/parameters/PageParam"
+        - name: status
+          in: query
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Rides listed
+
+  /admin/rides/{id}:
+    get:
+      tags:
+        - Admin
+      summary: Get ride details
+      description: Get detailed ride information
+      operationId: adminGetRideDetail
+      security:
+        - BearerAuth: []
+      parameters:
+        - $ref: "#/components/parameters/IdParam"
+      responses:
+        "200":
+          description: Ride details retrieved
+
+  # ===========================
+  # FINANCE APIs
+  # ===========================
+
+  /finance/summary:
+    get:
+      tags:
+        - Finance
+      summary: Get revenue summary
+      description: Get financial revenue summary
+      operationId: getRevenueSummary
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: start_date
+          in: query
+          schema:
+            type: string
+            format: date
+        - name: end_date
+          in: query
+          schema:
+            type: string
+            format: date
+      responses:
+        "200":
+          description: Summary retrieved
+
+  /finance/transactions:
+    get:
+      tags:
+        - Finance
+      summary: Get transactions
+      description: Get all financial transactions
+      operationId: getTransactions
+      security:
+        - BearerAuth: []
+      parameters:
+        - $ref: "#/components/parameters/PageParam"
+        - name: status
+          in: query
+          schema:
+            type: string
+        - name: payment_method
+          in: query
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Transactions listed
+
+  /finance/export:
+    get:
+      tags:
+        - Finance
+      summary: Export financial report
+      description: Export financial data in specified format
+      operationId: exportReport
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: format
+          in: query
+          schema:
+            type: string
+            enum: [csv, pdf]
+            default: csv
+        - name: type
+          in: query
+          schema:
+            type: string
+            enum: [transactions, revenue, driver_earnings]
+            default: transactions
+        - name: start_date
+          in: query
+          schema:
+            type: string
+            format: date
+        - name: end_date
+          in: query
+          schema:
+            type: string
+            format: date
+      responses:
+        "200":
+          description: Export generated
+
+components:
+  # ===========================
+  # SECURITY SCHEMES
+  # ===========================
+  securitySchemes:
+    BearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+      description: |
+        JWT tokens are issued upon successful login.
+        Include the token in the Authorization header:
+        `Authorization: Bearer <token>`
+
+  # ===========================
+  # PARAMETERS
+  # ===========================
+  parameters:
+    PageParam:
+      name: page
+      in: query
+      schema:
+        type: integer
+        default: 1
+      description: Page number
+    PerPageParam:
+      name: per_page
+      in: query
+      schema:
+        type: integer
+        default: 15
+        maximum: 100
+      description: Items per page
+    IdParam:
+      name: id
+      in: path
+      required: true
+      schema:
+        type: integer
+      description: Resource ID
+
+  # ===========================
+  # SCHEMAS
+  # ===========================
+  schemas:
+    # Request Schemas
+    RegisterRequest:
+      type: object
+      required:
+        - name
+        - email
+        - password
+        - password_confirmation
+        - role
+      properties:
+        name:
+          type: string
+          maxLength: 255
+        email:
+          type: string
+          format: email
+          maxLength: 255
+        password:
+          type: string
+          format: password
+          minLength: 8
+        password_confirmation:
+          type: string
+          format: password
+        phone:
+          type: string
+          maxLength: 20
+        role:
+          type: string
+          enum: [PASSENGER, DRIVER]
+
+    LoginRequest:
+      type: object
+      required:
+        - email
+        - password
+      properties:
+        email:
+          type: string
+          format: email
+        password:
+          type: string
+          format: password
+
+    BookRideRequest:
+      type: object
+      required:
+        - ride_id
+        - seats
+        - pickup_address
+        - dropoff_address
+      properties:
+        ride_id:
+          type: integer
+        seats:
+          type: integer
+          minimum: 1
+          maximum: 8
+        pickup_address:
+          type: string
+        dropoff_address:
+          type: string
+
+    PaymentRequest:
+      type: object
+      required:
+        - type
+        - amount
+        - payment_method
+      properties:
+        type:
+          type: string
+          enum: [trip, booking]
+        trip_id:
+          type: integer
+        booking_id:
+          type: integer
+        amount:
+          type: number
+        currency:
+          type: string
+          default: RWF
+        payment_method:
+          type: string
+          enum: [card, cash, mobile_money, bank_transfer]
+        transaction_id:
+          type: string
+
+    TicketRequest:
+      type: object
+      required:
+        - title
+        - description
+        - ticket_type
+      properties:
+        title:
+          type: string
+          maxLength: 255
+        description:
+          type: string
+        ticket_type:
+          type: string
+          enum: [ride, booking, payment, account, other]
+        priority:
+          type: string
+          enum: [low, medium, high, urgent]
+          default: medium
+
+    CreateUserRequest:
+      type: object
+      required:
+        - name
+        - email
+        - password
+        - password_confirmation
+        - role
+      properties:
+        name:
+          type: string
+        email:
+          type: string
+          format: email
+        password:
+          type: string
+          format: password
+          minLength: 8
+        password_confirmation:
+          type: string
+        role:
+          type: string
+          enum: [SUPER_ADMIN, ADMIN, ACCOUNTANT, OFFICER]
+        phone:
+          type: string
+
+    # Response Schemas
+    UserSchema:
+      type: object
+      properties:
+        id:
+          type: integer
+        name:
+          type: string
+        email:
+          type: string
+        role:
+          type: string
+        phone:
+          type: string
+        is_approved:
+          type: boolean
+
+    RideSchema:
+      type: object
+      properties:
+        id:
+          type: integer
+        driver:
+          type: object
+        origin:
+          type: object
+        destination:
+          type: object
+        departure_time:
+          type: string
+          format: date-time
+        available_seats:
+          type: integer
+        price_per_seat:
+          type: number
+        status:
+          type: string
+
+    PaymentSchema:
+      type: object
+      properties:
+        id:
+          type: integer
+        type:
+          type: string
+        amount:
+          type: number
+        currency:
+          type: string
+        status:
+          type: string
+        payment_method:
+          type: string
+        created_at:
+          type: string
+          format: date-time
+
+    TicketSchema:
+      type: object
+      properties:
+        id:
+          type: integer
+        title:
+          type: string
+        description:
+          type: string
+        ticket_type:
+          type: string
+        priority:
+          type: string
+        status:
+          type: string
+
+    ErrorSchema:
+      type: object
+      properties:
+        success:
+          type: boolean
+          example: false
+        message:
+          type: string
+        error:
+          type: object
+          properties:
+            code:
+              type: string
+            description:
+              type: string
+
+    ValidationError:
+      type: object
+      properties:
+        success:
+          type: boolean
+          example: false
+        message:
+          type: string
+        errors:
+          type: object
+          additionalProperties:
+            type: array
+            items:
+              type: string
+
+  # ===========================
+  # RESPONSE EXAMPLES
+  # ===========================
+  responses:
+    ValidationError:
+      description: Validation failed
+      content:
+        application/json:
+          example:
+            success: false
+            message: "The given data was invalid."
+            errors:
+              email:
+                - "The email has already been taken."
+              password:
+                - "The password must be at least 8 characters."
+
+    UnauthorizedError:
+      description: Unauthorized
+      content:
+        application/json:
+          example:
+            success: false
+            message: "Unauthenticated"
+
+    ForbiddenError:
+      description: Forbidden
+      content:
+        application/json:
+          example:
+            success: false
+            message: "You do not have permission to access this resource"
+
+    NotFoundError:
+      description: Not Found
+      content:
+        application/json:
+          example:
+            success: false
+            message: "Resource not found"
+
+    ServerError:
+      description: Server Error
+      content:
+        application/json:
+          example:
+            success: false
+            message: "Something went wrong. Please try again later."
+
+# ===========================
+# EXTERNAL DOCUMENTATION
+# ===========================
+externalDocs:
+  description: RideConnect Mobile App Documentation
+  url: https://docs.rideconnect.com/mobile
