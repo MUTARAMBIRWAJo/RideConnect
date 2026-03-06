@@ -5,6 +5,7 @@ namespace App\Services\EventSourcing;
 use App\Events\Domain\DomainEvent;
 use App\Models\EventOutbox;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Schema;
 
 /**
  * OutboxService — implements the Transactional Outbox Pattern.
@@ -48,6 +49,10 @@ class OutboxService
      */
     public function fetchPending(int $batchSize = 100): \Illuminate\Database\Eloquent\Collection
     {
+        if (! Schema::hasTable('event_outbox')) {
+            return new \Illuminate\Database\Eloquent\Collection();
+        }
+
         return EventOutbox::where('status', 'pending')
             ->where('attempts', '<', 5)
             ->orderBy('occurred_at')

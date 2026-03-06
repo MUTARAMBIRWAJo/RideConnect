@@ -77,7 +77,7 @@ RUN mkdir -p \
     storage/framework/sessions \
     storage/logs \
     bootstrap/cache \
-    && chmod +x /var/www/scripts/render-port-check.sh \
+    && chmod +x /var/www/scripts/*.sh \
     && chown -R www-data:www-data /var/www \
     && chmod -R 775 storage bootstrap/cache
 
