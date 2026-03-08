@@ -2,6 +2,7 @@
 
 namespace App\Filament\Widgets\Dashboard;
 
+use App\Filament\Support\RoleDashboardConfig;
 use Filament\Widgets\ChartWidget;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Schema;
@@ -11,6 +12,11 @@ class MonthlyEarningsChartWidget extends ChartWidget
     protected static ?string $heading = 'Monthly Earnings Chart';
 
     protected int | string | array $columnSpan = 'full';
+
+    protected function getPollingInterval(): ?string
+    {
+        return RoleDashboardConfig::pollingInterval();
+    }
 
     protected function getData(): array
     {

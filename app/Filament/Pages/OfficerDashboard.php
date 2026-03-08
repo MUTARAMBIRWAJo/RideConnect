@@ -4,10 +4,7 @@ namespace App\Filament\Pages;
 
 use App\Enums\UserRole;
 use App\Filament\Pages\Concerns\HandlesRoleDashboards;
-use App\Filament\Widgets\Dashboard\OfficerOverviewStats;
-use App\Filament\Widgets\DemandHeatmapWidget;
-use App\Filament\Widgets\DriverAvailabilityChart;
-use App\Filament\Widgets\LatestRidesTable;
+use App\Filament\Support\RoleDashboardConfig;
 use Illuminate\Contracts\Support\Htmlable;
 
 class OfficerDashboard extends \Filament\Pages\Dashboard
@@ -45,19 +42,11 @@ class OfficerDashboard extends \Filament\Pages\Dashboard
 
     public function getWidgets(): array
     {
-        return [
-            OfficerOverviewStats::class,
-            DriverAvailabilityChart::class,
-            DemandHeatmapWidget::class,
-            LatestRidesTable::class,
-        ];
+        return RoleDashboardConfig::widgetsForRole(UserRole::OFFICER->value);
     }
 
     public function getColumns(): int | string | array
     {
-        return [
-            'md' => 2,
-            'xl' => 3,
-        ];
+        return RoleDashboardConfig::columnsForRole(UserRole::OFFICER->value);
     }
 }

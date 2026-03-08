@@ -31,6 +31,8 @@ class Dashboard extends \Filament\Pages\Dashboard
             UserRole::ADMIN->value => "filament.{$panelId}.pages.admin-dashboard",
             UserRole::ACCOUNTANT->value => "filament.{$panelId}.pages.accountant-dashboard",
             UserRole::OFFICER->value => "filament.{$panelId}.pages.officer-dashboard",
+            UserRole::DRIVER->value => "filament.{$panelId}.pages.driver-dashboard",
+            UserRole::PASSENGER->value => "filament.{$panelId}.pages.passenger-dashboard",
             default => null,
         };
 

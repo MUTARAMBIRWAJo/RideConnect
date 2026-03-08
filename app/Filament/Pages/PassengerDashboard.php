@@ -7,20 +7,20 @@ use App\Filament\Pages\Concerns\HandlesRoleDashboards;
 use App\Filament\Support\RoleDashboardConfig;
 use Illuminate\Contracts\Support\Htmlable;
 
-class SuperDashboard extends \Filament\Pages\Dashboard
+class PassengerDashboard extends \Filament\Pages\Dashboard
 {
     use HandlesRoleDashboards;
 
-    protected static string $routePath = '/super-dashboard';
+    protected static string $routePath = '/passenger-dashboard';
 
     public static function getNavigationLabel(): string
     {
-        return 'Super Dashboard';
+        return 'Passenger Dashboard';
     }
 
     public static function getNavigationIcon(): string | Htmlable | null
     {
-        return 'heroicon-o-shield-check';
+        return 'heroicon-o-user-circle';
     }
 
     public static function shouldRegisterNavigation(): bool
@@ -32,7 +32,7 @@ class SuperDashboard extends \Filament\Pages\Dashboard
     {
         $user = auth()->user();
 
-        return static::userHasRole($user, 'Super_admin', UserRole::SUPER_ADMIN);
+        return static::userHasRole($user, 'Passenger', UserRole::PASSENGER);
     }
 
     public function mount(): void
@@ -42,11 +42,11 @@ class SuperDashboard extends \Filament\Pages\Dashboard
 
     public function getWidgets(): array
     {
-        return RoleDashboardConfig::widgetsForRole(UserRole::SUPER_ADMIN->value);
+        return RoleDashboardConfig::widgetsForRole(UserRole::PASSENGER->value);
     }
 
     public function getColumns(): int | string | array
     {
-        return RoleDashboardConfig::columnsForRole(UserRole::SUPER_ADMIN->value);
+        return RoleDashboardConfig::columnsForRole(UserRole::PASSENGER->value);
     }
 }

@@ -4,14 +4,7 @@ namespace App\Filament\Pages;
 
 use App\Enums\UserRole;
 use App\Filament\Pages\Concerns\HandlesRoleDashboards;
-use App\Filament\Widgets\Dashboard\AccountantRevenueSummary;
-use App\Filament\Widgets\Dashboard\CommissionOverviewWidget;
-use App\Filament\Widgets\Dashboard\DailyCommissionChartWidget;
-use App\Filament\Widgets\Dashboard\EscrowBalanceWidget;
-use App\Filament\Widgets\Dashboard\FinanceExportActionsWidget;
-use App\Filament\Widgets\Dashboard\FraudAlertsWidget;
-use App\Filament\Widgets\Dashboard\MonthlyEarningsChartWidget;
-use App\Filament\Widgets\Dashboard\TransactionsTableWidget;
+use App\Filament\Support\RoleDashboardConfig;
 use Illuminate\Contracts\Support\Htmlable;
 
 class AccountantDashboard extends \Filament\Pages\Dashboard
@@ -49,23 +42,11 @@ class AccountantDashboard extends \Filament\Pages\Dashboard
 
     public function getWidgets(): array
     {
-        return [
-            EscrowBalanceWidget::class,
-            AccountantRevenueSummary::class,
-            CommissionOverviewWidget::class,
-            FraudAlertsWidget::class,
-            DailyCommissionChartWidget::class,
-            FinanceExportActionsWidget::class,
-            MonthlyEarningsChartWidget::class,
-            TransactionsTableWidget::class,
-        ];
+        return RoleDashboardConfig::widgetsForRole(UserRole::ACCOUNTANT->value);
     }
 
     public function getColumns(): int | string | array
     {
-        return [
-            'md' => 2,
-            'xl' => 3,
-        ];
+        return RoleDashboardConfig::columnsForRole(UserRole::ACCOUNTANT->value);
     }
 }

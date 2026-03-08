@@ -4,11 +4,7 @@ namespace App\Filament\Pages;
 
 use App\Enums\UserRole;
 use App\Filament\Pages\Concerns\HandlesRoleDashboards;
-use App\Filament\Widgets\Dashboard\AdminOverviewStats;
-use App\Filament\Widgets\DemandHeatmapWidget;
-use App\Filament\Widgets\DriverAvailabilityChart;
-use App\Filament\Widgets\LatestRidesTable;
-use App\Filament\Widgets\RideStatsOverview;
+use App\Filament\Support\RoleDashboardConfig;
 use Illuminate\Contracts\Support\Htmlable;
 
 class AdminDashboard extends \Filament\Pages\Dashboard
@@ -46,20 +42,11 @@ class AdminDashboard extends \Filament\Pages\Dashboard
 
     public function getWidgets(): array
     {
-        return [
-            AdminOverviewStats::class,
-            RideStatsOverview::class,
-            DriverAvailabilityChart::class,
-            DemandHeatmapWidget::class,
-            LatestRidesTable::class,
-        ];
+        return RoleDashboardConfig::widgetsForRole(UserRole::ADMIN->value);
     }
 
     public function getColumns(): int | string | array
     {
-        return [
-            'md' => 2,
-            'xl' => 3,
-        ];
+        return RoleDashboardConfig::columnsForRole(UserRole::ADMIN->value);
     }
 }
