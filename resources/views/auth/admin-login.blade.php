@@ -260,7 +260,7 @@
         <section class="left-panel">
             <div class="login-card">
                 <a href="{{ url('/') }}" class="brand">
-                    <img src="{{ asset('images/rideconnect-logo.svg') }}" alt="RideConnect" onerror="this.style.display='none'">
+                    <img src="{{ asset('images/logo.svg') }}" alt="RideConnect" onerror="this.style.display='none'">
                     <strong>RideConnect</strong>
                 </a>
 
@@ -327,7 +327,7 @@
             <div class="hero">
                 <h2>RideConnect Operations & Ticketing Console</h2>
                 <div class="hero-art">
-                    <svg viewBox="0 0 760 360" width="100%" height="auto" role="img" aria-label="Admin portal illustration">
+                    <svg viewBox="0 0 760 360" width="100%" height="360" role="img" aria-label="Admin portal illustration">
                         <defs>
                             <linearGradient id="g" x1="0" x2="1" y1="0" y2="1">
                                 <stop offset="0%" stop-color="#a7f3d0" stop-opacity=".9"/>

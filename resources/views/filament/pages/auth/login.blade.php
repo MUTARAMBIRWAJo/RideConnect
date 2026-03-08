@@ -15,7 +15,7 @@
   <div class="min-h-screen w-full flex items-center justify-center p-6">
       <div class="max-w-md w-full bg-[color-mix(in srgb,var(--fi-card-bg) 80%, transparent)] backdrop-blur-md border border-[rgba(22,101,52,0.18)] rounded-xl p-8">
       <div class="text-center mb-6">
-        <img src="{{ asset('images/rideconnect-logo.svg') }}" alt="RideConnect" class="mx-auto h-14 mb-2">
+        <img src="{{ asset('images/logo.svg') }}" alt="RideConnect" class="mx-auto h-14 mb-2">
         <div class="text-slate-600 dark:text-slate-300 font-mono tracking-wide">AI-Powered Smart Transport</div>
       </div>
 
