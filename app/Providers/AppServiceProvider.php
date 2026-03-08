@@ -22,6 +22,7 @@ use Spatie\Permission\Models\Role;
 use App\Models\DriverPayout;
 use App\Models\FraudFlag;
 use App\Models\LedgerEntry;
+use Illuminate\Support\Facades\URL;
 
 // Register SafeEloquentUserProvider class
 use App\Auth\SafeEloquentUserProvider;
@@ -44,6 +45,10 @@ class AppServiceProvider extends ServiceProvider
      */
     public function boot(): void
     {
+        if (app()->environment('production')) {
+            URL::forceScheme('https');
+        }
+
         // Filament/Livewire serializes all component data via json_encode with
         // JSON_THROW_ON_ERROR. Any string attribute containing non-UTF-8 bytes
         // (e.g. legacy data migrated from Latin-1) will cause a JsonException.

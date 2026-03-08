@@ -5,3 +5,10 @@ services:
     plan: free
     dockerfilePath: ./dockerfile
     dockerContext: .
+    envVars:
+      - key: APP_ENV
+        value: production
+      - key: APP_URL
+        value: https://rideconnect-emp0.onrender.com
+      - key: APP_DEBUG
+        value: false

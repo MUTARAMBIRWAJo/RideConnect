@@ -18,9 +18,10 @@ fi
 
 # Production-safe cache warmup. If a cache command fails, clear stale cache and continue.
 if [ "${RUN_CONFIG_CACHE:-true}" = "true" ]; then
-  php artisan config:cache --no-interaction || php artisan config:clear --no-interaction || true
-  php artisan route:cache --no-interaction || php artisan route:clear --no-interaction || true
-  php artisan view:cache --no-interaction || php artisan view:clear --no-interaction || true
+  php artisan config:clear --no-interaction || true
+  php artisan route:clear --no-interaction || true
+  php artisan view:clear --no-interaction || true
+  php artisan config:cache --no-interaction || true
 fi
 
 # Migrations are opt-in to avoid blocking HTTP startup on student/free-tier environments.
