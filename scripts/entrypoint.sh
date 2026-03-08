@@ -6,6 +6,9 @@ APP_DIR="${APP_DIR:-$(CDPATH= cd -- "${SCRIPT_DIR}/.." && pwd)}"
 
 cd "${APP_DIR}"
 
+# Protect production runtime from stale cache files copied from local dev environments.
+rm -f bootstrap/cache/*.php
+
 /bin/sh "${SCRIPT_DIR}/bootstrap-laravel.sh"
 
 # Optional DB readiness gate for commands that require a live database.

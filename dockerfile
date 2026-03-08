@@ -33,7 +33,11 @@ RUN composer install \
 
 COPY . .
 
+# Rebuild authoritative autoload after app source is present.
+RUN composer dump-autoload --optimize --classmap-authoritative --no-dev --no-interaction --no-scripts
+
 RUN set -eux; \
+    rm -f bootstrap/cache/*.php; \
     mkdir -p storage/framework/views storage/framework/cache storage/framework/sessions storage/logs bootstrap/cache; \
     chmod +x /var/www/scripts/*.sh; \
     chmod -R 775 storage bootstrap/cache; \
