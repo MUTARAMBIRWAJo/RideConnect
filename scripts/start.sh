@@ -9,6 +9,7 @@ cd "${APP_DIR}"
 PORT_VALUE="${PORT:-10000}"
 
 /bin/sh "${SCRIPT_DIR}/bootstrap-laravel.sh"
+/bin/sh "${SCRIPT_DIR}/fix-laravel-permissions.sh"
 
 php artisan config:cache --no-interaction || true
 php artisan route:cache --no-interaction || true
