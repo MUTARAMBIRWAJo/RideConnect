@@ -6,6 +6,8 @@ RUN apt-get update \
     && apt-get install -y --no-install-recommends \
         git \
         unzip \
+        nodejs \
+        npm \
         procps \
         libpq-dev \
         libicu-dev \
@@ -28,12 +30,22 @@ RUN composer install \
     --no-scripts \
     --no-progress
 
+COPY package*.json ./
+RUN npm install
+
 COPY . .
 
 RUN composer dump-autoload --optimize --classmap-authoritative --no-dev --no-interaction --no-scripts \
+    && npm run build \
     && rm -f bootstrap/cache/*.php \
     && if [ ! -f .env ] && [ -f .env.example ]; then cp .env.example .env; fi \
+    && php artisan key:generate --force --no-interaction || true \
+    && php artisan config:cache --no-interaction || true \
+    && php artisan route:cache --no-interaction || true \
+    && php artisan view:cache --no-interaction || true \
     && mkdir -p storage/framework/views storage/framework/cache storage/framework/sessions storage/logs bootstrap/cache \
+    && test -f public/build/manifest.json \
+    && test -d public/build/assets \
     && chmod +x /var/www/scripts/*.sh
 
 ENV APP_ENV=production
