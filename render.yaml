@@ -3,12 +3,85 @@ services:
     name: rideconnect-api
     runtime: docker
     plan: free
-    dockerfilePath: ./dockerfile
+    dockerfilePath: ./Dockerfile
     dockerContext: .
+    startCommand: /bin/sh /var/www/scripts/start.sh
     envVars:
       - key: APP_ENV
         value: production
-      - key: APP_URL
-        value: https://rideconnect-emp0.onrender.com
       - key: APP_DEBUG
         value: false
+      - key: APP_URL
+        value: https://rideconnect-emp0.onrender.com
+      - key: PORT
+        value: 10000
+      - key: CACHE_DRIVER
+        value: redis
+      - key: SESSION_DRIVER
+        value: redis
+      - key: QUEUE_CONNECTION
+        value: redis
+      - key: REDIS_CLIENT
+        value: predis
+      - key: REDIS_HOST
+        value: rideconnect-redis
+      - key: REDIS_PORT
+        value: 6379
+
+  - type: worker
+    name: rideconnect-queue
+    runtime: docker
+    plan: free
+    dockerfilePath: ./Dockerfile
+    dockerContext: .
+    startCommand: php artisan queue:work --tries=3 --timeout=90
+    envVars:
+      - key: APP_ENV
+        value: production
+      - key: APP_DEBUG
+        value: false
+      - key: APP_URL
+        value: https://rideconnect-emp0.onrender.com
+      - key: CACHE_DRIVER
+        value: redis
+      - key: SESSION_DRIVER
+        value: redis
+      - key: QUEUE_CONNECTION
+        value: redis
+      - key: REDIS_CLIENT
+        value: predis
+      - key: REDIS_HOST
+        value: rideconnect-redis
+      - key: REDIS_PORT
+        value: 6379
+
+  - type: worker
+    name: rideconnect-scheduler
+    runtime: docker
+    plan: free
+    dockerfilePath: ./Dockerfile
+    dockerContext: .
+    startCommand: php artisan schedule:work
+    envVars:
+      - key: APP_ENV
+        value: production
+      - key: APP_DEBUG
+        value: false
+      - key: APP_URL
+        value: https://rideconnect-emp0.onrender.com
+      - key: CACHE_DRIVER
+        value: redis
+      - key: SESSION_DRIVER
+        value: redis
+      - key: QUEUE_CONNECTION
+        value: redis
+      - key: REDIS_CLIENT
+        value: predis
+      - key: REDIS_HOST
+        value: rideconnect-redis
+      - key: REDIS_PORT
+        value: 6379
+
+  - type: redis
+    name: rideconnect-redis
+    plan: free
