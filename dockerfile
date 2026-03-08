@@ -1,11 +1,12 @@
-# ---------- Stage 1: Build Vendor Dependencies ----------
-FROM php:8.4-fpm-alpine AS vendor
+FROM php:8.4-cli-alpine
 
 WORKDIR /var/www
 
-# Install runtime libraries and build dependencies
 RUN set -eux; \
     apk add --no-cache \
+        bash \
+        git \
+        unzip \
         libpq \
         icu-libs \
         libzip; \
@@ -13,22 +14,14 @@ RUN set -eux; \
         $PHPIZE_DEPS \
         postgresql-dev \
         icu-dev \
-        libzip-dev \
-        git \
-        unzip; \
+        libzip-dev; \
     docker-php-ext-configure intl; \
-    docker-php-ext-install -j$(nproc) \
-        pdo \
-        pdo_pgsql \
-        intl \
-        zip; \
+    docker-php-ext-install -j"$(nproc)" pdo pdo_pgsql intl zip; \
     apk del .build-deps
 
-# Install Composer
 COPY --from=composer:2 /usr/bin/composer /usr/bin/composer
 
 COPY composer.json composer.lock ./
-
 RUN composer install \
     --no-dev \
     --no-interaction \
@@ -38,54 +31,24 @@ RUN composer install \
     --no-scripts \
     --no-progress
 
+COPY . .
 
-# ---------- Stage 2: Runtime ----------
-FROM php:8.4-fpm-alpine AS runtime
+RUN set -eux; \
+    mkdir -p storage/framework/views storage/framework/cache storage/framework/sessions storage/logs bootstrap/cache; \
+    chmod +x /var/www/scripts/*.sh; \
+    chmod -R 775 storage bootstrap/cache; \
+    if [ ! -f .env ] && [ -f .env.example ]; then cp .env.example .env; fi; \
+    php artisan key:generate --force --no-interaction || true; \
+    addgroup -S app || true; \
+    adduser -S -G app app || true; \
+    chown -R app:app /var/www
 
-WORKDIR /var/www
+USER app
 
-# Disable IPv6 (optional but safe)
-RUN echo "net.ipv6.conf.all.disable_ipv6 = 1" >> /etc/sysctl.conf && \
-    echo "net.ipv6.conf.default.disable_ipv6 = 1" >> /etc/sysctl.conf
+ENV APP_ENV=production
+ENV APP_DEBUG=false
+ENV PORT=10000
 
-# Install runtime packages
-RUN apk add --no-cache \
-        libpq \
-        icu-libs \
-        libzip \
-        bash \
-        supervisor
+EXPOSE 10000
 
-# Copy PHP extensions from vendor stage
-COPY --from=vendor /usr/local/lib/php/extensions/ /usr/local/lib/php/extensions/
-COPY --from=vendor /usr/local/etc/php/conf.d/ /usr/local/etc/php/conf.d/
-
-# Create Laravel user
-RUN addgroup -g 1000 www-data || true && \
-    adduser -G www-data -g www-data -s /bin/sh -D www-data || true
-
-# Copy application
-COPY --chown=www-data:www-data . .
-
-# Copy vendor dependencies
-COPY --from=vendor --chown=www-data:www-data /var/www/vendor ./vendor
-
-# Create required Laravel directories
-RUN mkdir -p \
-    storage/framework/views \
-    storage/framework/cache \
-    storage/framework/sessions \
-    storage/logs \
-    bootstrap/cache \
-    && chmod +x /var/www/scripts/*.sh \
-    && chown -R www-data:www-data /var/www \
-    && chmod -R 775 storage bootstrap/cache
-
-# Supervisor configuration
-COPY docker/supervisor.conf /etc/supervisor/conf.d/supervisor.conf
-
-USER www-data
-
-EXPOSE 8000
-
-CMD ["/usr/bin/supervisord","-c","/etc/supervisor/conf.d/supervisor.conf"]
+CMD ["/bin/sh", "/var/www/scripts/entrypoint.sh"]

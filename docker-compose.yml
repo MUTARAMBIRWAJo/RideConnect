@@ -3,7 +3,7 @@ services:
   app:
     build:
       context: .
-      dockerfile: Dockerfile
+      dockerfile: dockerfile
     container_name: rideconnect_app
     restart: unless-stopped
     working_dir: /var/www
@@ -41,7 +41,7 @@ services:
   worker:
     build:
       context: .
-      dockerfile: Dockerfile
+      dockerfile: dockerfile
     container_name: rideconnect_worker
     restart: unless-stopped
     working_dir: /var/www
@@ -80,7 +80,7 @@ services:
   scheduler:
     build:
       context: .
-      dockerfile: Dockerfile
+      dockerfile: dockerfile
     container_name: rideconnect_scheduler
     restart: unless-stopped
     working_dir: /var/www
