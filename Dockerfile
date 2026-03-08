@@ -1,4 +1,4 @@
-FROM php:8.4-cli
+FROM php:8.4-fpm
 
 WORKDIR /var/www
 
@@ -9,6 +9,9 @@ RUN apt-get update \
         nodejs \
         npm \
         procps \
+        nginx \
+        supervisor \
+        gettext-base \
         libpq-dev \
         libicu-dev \
         libzip-dev \
@@ -49,11 +52,11 @@ RUN composer dump-autoload --optimize --classmap-authoritative --no-dev --no-int
 
 ENV APP_ENV=production
 ENV APP_DEBUG=false
-ENV OCTANE_SERVER=swoole
-ENV OCTANE_WORKERS=4
-ENV ENABLE_OCTANE=auto
 ENV PORT=10000
 
 EXPOSE 10000
+
+COPY docker/nginx/default.conf /etc/nginx/templates/default.conf.template
+COPY docker/supervisor.conf /etc/supervisor/conf.d/supervisord.conf
 
 CMD ["/bin/sh", "/var/www/scripts/start.sh"]
