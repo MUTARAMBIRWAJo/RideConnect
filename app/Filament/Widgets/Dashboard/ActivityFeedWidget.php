@@ -13,6 +13,8 @@ class ActivityFeedWidget extends Widget
 {
     protected static string $view = 'filament.widgets.dashboard.activity-feed-widget';
 
+    protected static bool $isLazy = false;
+
     protected int | string | array $columnSpan = [
         'default' => 1,
         'md' => 1,

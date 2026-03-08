@@ -117,6 +117,8 @@ class AdminPanelProvider extends PanelProvider
                 \App\Filament\Widgets\LatestRidesTable::class,
                 \App\Filament\Widgets\DemandHeatmapWidget::class,
                 \App\Filament\Widgets\DriverAvailabilityChart::class,
+                \App\Filament\Widgets\Dashboard\NotificationsWidget::class,
+                \App\Filament\Widgets\Dashboard\ActivityFeedWidget::class,
             ])
             ->discoverResources(app_path('Filament/Resources'), 'App\\Filament\\Resources')
             ->discoverPages(app_path('Filament/Pages'), 'App\\Filament\\Pages')
