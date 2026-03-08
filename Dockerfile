@@ -11,11 +11,10 @@ RUN apt-get update \
         procps \
         libpq-dev \
         libicu-dev \
-        libbrotli-dev \
         libzip-dev \
     && docker-php-ext-install -j"$(nproc)" pdo pdo_pgsql intl zip pcntl \
-    && pecl install redis swoole \
-    && docker-php-ext-enable redis swoole \
+    && pecl install redis \
+    && docker-php-ext-enable redis \
     && rm -rf /var/lib/apt/lists/*
 
 COPY --from=composer:2 /usr/bin/composer /usr/bin/composer
@@ -52,6 +51,7 @@ ENV APP_ENV=production
 ENV APP_DEBUG=false
 ENV OCTANE_SERVER=swoole
 ENV OCTANE_WORKERS=4
+ENV ENABLE_OCTANE=auto
 ENV PORT=10000
 
 EXPOSE 10000
