@@ -10,6 +10,9 @@ services:
     volumes:
       - .:/var/www:cached
     user: "1000:1000"
+    command: /bin/sh /var/www/scripts/entrypoint.sh
+    ports:
+      - "8000:10000"
     dns:
       - 8.8.8.8
       - 8.8.4.4
@@ -112,25 +115,9 @@ services:
     image: redis:7-alpine
     container_name: rideconnect_redis
     restart: unless-stopped
-    ports:
-      - "6380:6379"   # Exposed on non-standard host port to avoid conflicts
     volumes:
       - redis_data:/data
     command: redis-server --appendonly yes --maxmemory 256mb --maxmemory-policy allkeys-lru
-    networks:
-      - rideconnect
-
-  nginx:
-    image: nginx:alpine
-    container_name: rideconnect_nginx
-    restart: unless-stopped
-    ports:
-      - "8000:80"
-    volumes:
-      - .:/var/www:ro
-      - ./docker/nginx/default.conf:/etc/nginx/conf.d/default.conf:ro
-    depends_on:
-      - app
     networks:
       - rideconnect
 
