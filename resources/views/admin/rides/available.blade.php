@@ -124,9 +124,9 @@
                                         <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">Downtown</td>
                                         <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">2 min ago</td>
                                         <td class="px-6 py-4 whitespace-nowrap text-sm font-medium">
-                                            <a href="#" class="text-blue-600 hover:text-blue-900 mr-4">View Details</a>
-                                            <a href="#" class="text-green-600 hover:text-green-900 mr-4">Assign to Trip</a>
-                                            <a href="#" class="text-yellow-600 hover:text-yellow-900">Track Location</a>
+                                            <a href="{{ route('admin.dashboard') }}" class="text-blue-600 hover:text-blue-900 mr-4">View Details</a>
+                                            <a href="{{ route('admin.dashboard') }}" class="text-green-600 hover:text-green-900 mr-4">Assign to Trip</a>
+                                            <a href="{{ route('admin.dashboard') }}" class="text-yellow-600 hover:text-yellow-900">Track Location</a>
                                         </td>
                                     </tr>
                                     <tr>
@@ -137,9 +137,9 @@
                                         <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">University Area</td>
                                         <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">5 min ago</td>
                                         <td class="px-6 py-4 whitespace-nowrap text-sm font-medium">
-                                            <a href="#" class="text-blue-600 hover:text-blue-900 mr-4">View Details</a>
-                                            <a href="#" class="text-green-600 hover:text-green-900 mr-4">Assign to Trip</a>
-                                            <a href="#" class="text-yellow-600 hover:text-yellow-900">Track Location</a>
+                                            <a href="{{ route('admin.dashboard') }}" class="text-blue-600 hover:text-blue-900 mr-4">View Details</a>
+                                            <a href="{{ route('admin.dashboard') }}" class="text-green-600 hover:text-green-900 mr-4">Assign to Trip</a>
+                                            <a href="{{ route('admin.dashboard') }}" class="text-yellow-600 hover:text-yellow-900">Track Location</a>
                                         </td>
                                     </tr>
                                     <!-- Add more rows as needed -->

@@ -359,7 +359,7 @@
 
                     <label class="terms" for="terms">
                         <input type="checkbox" id="terms" name="terms" {{ old('terms') ? 'checked' : '' }} required>
-                        <span>I agree to the <a href="#">Terms of Service</a> and <a href="#">Privacy Policy</a>.</span>
+                        <span>I agree to the <a href="{{ route('terms') }}">Terms of Service</a> and <a href="{{ route('privacy') }}">Privacy Policy</a>.</span>
                     </label>
 
                     <button type="submit" class="btn">Create Account</button>

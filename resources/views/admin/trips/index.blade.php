@@ -154,9 +154,9 @@
                                         </td>
                                         <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">2024-01-15</td>
                                         <td class="px-6 py-4 whitespace-nowrap text-sm font-medium">
-                                            <a href="#" class="text-blue-600 hover:text-blue-900 mr-4">View</a>
-                                            <a href="#" class="text-green-600 hover:text-green-900 mr-4">Accept</a>
-                                            <a href="#" class="text-red-600 hover:text-red-900">Cancel</a>
+                                            <a href="{{ route('admin.dashboard') }}" class="text-blue-600 hover:text-blue-900 mr-4">View</a>
+                                            <a href="{{ route('admin.dashboard') }}" class="text-green-600 hover:text-green-900 mr-4">Accept</a>
+                                            <a href="{{ route('admin.dashboard') }}" class="text-red-600 hover:text-red-900">Cancel</a>
                                         </td>
                                     </tr>
                                     <!-- Add more rows as needed -->

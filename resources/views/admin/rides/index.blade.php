@@ -150,9 +150,9 @@
                                         </td>
                                         <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">Downtown</td>
                                         <td class="px-6 py-4 whitespace-nowrap text-sm font-medium">
-                                            <a href="#" class="text-blue-600 hover:text-blue-900 mr-4">View Details</a>
-                                            <a href="#" class="text-green-600 hover:text-green-900 mr-4">Assign</a>
-                                            <a href="#" class="text-red-600 hover:text-red-900">Maintenance</a>
+                                            <a href="{{ route('admin.dashboard') }}" class="text-blue-600 hover:text-blue-900 mr-4">View Details</a>
+                                            <a href="{{ route('admin.dashboard') }}" class="text-green-600 hover:text-green-900 mr-4">Assign</a>
+                                            <a href="{{ route('admin.dashboard') }}" class="text-red-600 hover:text-red-900">Maintenance</a>
                                         </td>
                                     </tr>
                                     <tr>
@@ -167,9 +167,9 @@
                                         </td>
                                         <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">Airport</td>
                                         <td class="px-6 py-4 whitespace-nowrap text-sm font-medium">
-                                            <a href="#" class="text-blue-600 hover:text-blue-900 mr-4">View Details</a>
-                                            <a href="#" class="text-green-600 hover:text-green-900 mr-4">Track</a>
-                                            <a href="#" class="text-red-600 hover:text-red-900">Maintenance</a>
+                                            <a href="{{ route('admin.dashboard') }}" class="text-blue-600 hover:text-blue-900 mr-4">View Details</a>
+                                            <a href="{{ route('admin.dashboard') }}" class="text-green-600 hover:text-green-900 mr-4">Track</a>
+                                            <a href="{{ route('admin.dashboard') }}" class="text-red-600 hover:text-red-900">Maintenance</a>
                                         </td>
                                     </tr>
                                     <!-- Add more rows as needed -->

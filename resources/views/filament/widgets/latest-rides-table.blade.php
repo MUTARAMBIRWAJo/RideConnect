@@ -23,7 +23,7 @@
         @forelse($rides as $ride)
         <tr class="hover:bg-gray-50 dark:hover:bg-gray-900">
           <td class="px-3 py-3">
-            <a href="#" class="text-sm font-semibold text-gray-800 dark:text-gray-200 transition-all duration-200 hover:underline hover:text-green-700 dark:hover:text-green-300 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-green-300 focus-visible:ring-offset-2 dark:focus-visible:ring-green-700 dark:focus-visible:ring-offset-gray-900 rounded-sm">{{ Str::limit($ride->id, 10) }}</a>
+            <a href="{{ route('filament.admin.resources.rides.index') }}" class="text-sm font-semibold text-gray-800 dark:text-gray-200 transition-all duration-200 hover:underline hover:text-green-700 dark:hover:text-green-300 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-green-300 focus-visible:ring-offset-2 dark:focus-visible:ring-green-700 dark:focus-visible:ring-offset-gray-900 rounded-sm">{{ Str::limit($ride->id, 10) }}</a>
             <div class="text-xs text-gray-400 mt-0.5">{{ $ride->passenger_name ?? '—' }}</div>
           </td>
           <td class="px-3 py-3 flex items-center gap-3">

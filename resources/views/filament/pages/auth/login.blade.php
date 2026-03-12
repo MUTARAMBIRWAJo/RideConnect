@@ -19,7 +19,7 @@
         <div class="text-slate-600 dark:text-slate-300 font-mono tracking-wide">AI-Powered Smart Transport</div>
       </div>
 
-      <form method="POST" action="{{ route('filament.auth.login') }}">
+      <form method="POST" action="{{ route('auth.login') }}">
         @csrf
         <div class="mb-4">
           <label class="block text-sm text-slate-700 dark:text-slate-300 mb-1">Email</label>

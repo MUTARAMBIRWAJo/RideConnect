@@ -224,8 +224,8 @@
                                         </td>
                                         <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">Jan 15, 2024</td>
                                         <td class="px-6 py-4 whitespace-nowrap text-sm font-medium">
-                                            <a href="#" class="text-blue-600 hover:text-blue-900 mr-4">View Profile</a>
-                                            <a href="#" class="text-red-600 hover:text-red-900">Suspend</a>
+                                            <a href="{{ route('admin.dashboard') }}" class="text-blue-600 hover:text-blue-900 mr-4">View Profile</a>
+                                            <a href="{{ route('admin.dashboard') }}" class="text-red-600 hover:text-red-900">Suspend</a>
                                         </td>
                                     </tr>
                                     <tr>
@@ -239,8 +239,8 @@
                                         </td>
                                         <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">Jan 14, 2024</td>
                                         <td class="px-6 py-4 whitespace-nowrap text-sm font-medium">
-                                            <a href="#" class="text-blue-600 hover:text-blue-900 mr-4">View Profile</a>
-                                            <a href="#" class="text-red-600 hover:text-red-900">Suspend</a>
+                                            <a href="{{ route('admin.dashboard') }}" class="text-blue-600 hover:text-blue-900 mr-4">View Profile</a>
+                                            <a href="{{ route('admin.dashboard') }}" class="text-red-600 hover:text-red-900">Suspend</a>
                                         </td>
                                     </tr>
                                     <!-- Add more rows as needed -->

@@ -150,9 +150,9 @@
                                         </td>
                                         <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">Jan 15, 2024</td>
                                         <td class="px-6 py-4 whitespace-nowrap text-sm font-medium">
-                                            <a href="#" class="text-blue-600 hover:text-blue-900 mr-4">View Profile</a>
-                                            <a href="#" class="text-yellow-600 hover:text-yellow-900 mr-4">Edit</a>
-                                            <a href="#" class="text-red-600 hover:text-red-900">Suspend</a>
+                                            <a href="{{ route('admin.dashboard') }}" class="text-blue-600 hover:text-blue-900 mr-4">View Profile</a>
+                                            <a href="{{ route('admin.dashboard') }}" class="text-yellow-600 hover:text-yellow-900 mr-4">Edit</a>
+                                            <a href="{{ route('admin.dashboard') }}" class="text-red-600 hover:text-red-900">Suspend</a>
                                         </td>
                                     </tr>
                                     <tr>
@@ -166,9 +166,9 @@
                                         </td>
                                         <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">Jan 14, 2024</td>
                                         <td class="px-6 py-4 whitespace-nowrap text-sm font-medium">
-                                            <a href="#" class="text-blue-600 hover:text-blue-900 mr-4">View Profile</a>
-                                            <a href="#" class="text-yellow-600 hover:text-yellow-900 mr-4">Edit</a>
-                                            <a href="#" class="text-red-600 hover:text-red-900">Suspend</a>
+                                            <a href="{{ route('admin.dashboard') }}" class="text-blue-600 hover:text-blue-900 mr-4">View Profile</a>
+                                            <a href="{{ route('admin.dashboard') }}" class="text-yellow-600 hover:text-yellow-900 mr-4">Edit</a>
+                                            <a href="{{ route('admin.dashboard') }}" class="text-red-600 hover:text-red-900">Suspend</a>
                                         </td>
                                     </tr>
                                     <tr>
@@ -182,9 +182,9 @@
                                         </td>
                                         <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">Jan 13, 2024</td>
                                         <td class="px-6 py-4 whitespace-nowrap text-sm font-medium">
-                                            <a href="#" class="text-blue-600 hover:text-blue-900 mr-4">View Profile</a>
-                                            <a href="#" class="text-green-600 hover:text-green-900 mr-4">Approve</a>
-                                            <a href="#" class="text-red-600 hover:text-red-900">Reject</a>
+                                            <a href="{{ route('admin.dashboard') }}" class="text-blue-600 hover:text-blue-900 mr-4">View Profile</a>
+                                            <a href="{{ route('admin.dashboard') }}" class="text-green-600 hover:text-green-900 mr-4">Approve</a>
+                                            <a href="{{ route('admin.dashboard') }}" class="text-red-600 hover:text-red-900">Reject</a>
                                         </td>
                                     </tr>
                                     <!-- Add more rows as needed -->
