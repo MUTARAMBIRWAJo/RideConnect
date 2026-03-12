@@ -114,11 +114,13 @@ class RideResource extends Resource
                     ->sortable(),
                 Tables\Columns\TextColumn::make('status')
                     ->badge()
-                    ->color(fn (string $state): string => match ($state) {
-                        'available' => 'success',
-                        'in_progress' => 'warning',
+                    ->color(fn (?string $state): string => match (strtolower((string) $state)) {
+                        'available', 'active' => 'success',
+                        'scheduled' => 'primary',
+                        'in_progress', 'started' => 'warning',
                         'completed' => 'info',
                         'cancelled' => 'danger',
+                        default => 'gray',
                     }),
                 Tables\Columns\TextColumn::make('created_at')
                     ->dateTime()
@@ -129,7 +131,10 @@ class RideResource extends Resource
                 Tables\Filters\SelectFilter::make('status')
                     ->options([
                         'available' => 'Available',
+                        'active' => 'Active',
+                        'scheduled' => 'Scheduled',
                         'in_progress' => 'In Progress',
+                        'started' => 'Started',
                         'completed' => 'Completed',
                         'cancelled' => 'Cancelled',
                     ]),
