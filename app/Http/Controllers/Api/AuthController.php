@@ -199,6 +199,72 @@ class AuthController extends Controller
     }
 
     /**
+     * Clear auth session/tokens for mobile users.
+     * POST /api/v1/auth/session/clear
+     */
+    public function clearSession(Request $request): JsonResponse
+    {
+        $user = $request->user();
+        $validated = $request->validate([
+            'all_devices' => 'sometimes|boolean',
+        ]);
+
+        $allDevices = (bool) ($validated['all_devices'] ?? true);
+
+        if ($allDevices) {
+            $revokedTokens = $user->tokens()->count();
+            $user->tokens()->delete();
+        } else {
+            $currentToken = $user->currentAccessToken();
+            $revokedTokens = $currentToken ? 1 : 0;
+            if ($currentToken) {
+                $currentToken->delete();
+            }
+        }
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Auth session cleared successfully. Please login again.',
+            'data' => [
+                'revoked_tokens' => $revokedTokens,
+                'all_devices' => $allDevices,
+            ],
+        ]);
+    }
+
+    /**
+     * Validate bearer token for protected API calls.
+     * GET /api/v1/auth/token/validate
+     */
+    public function validateToken(Request $request): JsonResponse
+    {
+        $user = $request->user();
+        $token = $user->currentAccessToken();
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Token is valid',
+            'data' => [
+                'authenticated' => true,
+                'user' => [
+                    'id' => $user->id,
+                    'name' => $user->name,
+                    'email' => $user->email,
+                    'role' => $user->role->value,
+                    'phone' => $user->phone,
+                    'is_approved' => $user->is_approved,
+                ],
+                'token' => [
+                    'id' => $token?->id,
+                    'name' => $token?->name,
+                    'last_used_at' => $token?->last_used_at?->toIso8601String(),
+                    'created_at' => $token?->created_at?->toIso8601String(),
+                ],
+            ],
+        ]);
+    }
+
+    /**
      * Get current user profile (API).
      */
     public function profile(Request $request): JsonResponse

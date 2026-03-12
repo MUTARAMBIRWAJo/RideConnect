@@ -85,6 +85,35 @@ Example payload:
 ### E) Legacy Email Login
 `POST /api/v1/auth/login`
 
+### F) AuthSession.clear (Logout/Clear Session)
+`POST /api/v1/auth/session/clear`
+
+Use this when a driver or passenger taps logout and must return to login screen.
+
+Auth:
+- Bearer token required
+
+Optional payload:
+```json
+{
+  "all_devices": true
+}
+```
+
+Notes:
+- `all_devices=true` (default) revokes all user tokens.
+- `all_devices=false` revokes only the current token.
+
+### G) Validate Token For Protected Endpoints
+`GET /api/v1/auth/token/validate`
+
+Use this to verify the stored token is still valid before calling protected backend endpoints.
+
+Auth:
+- Bearer token required
+
+Response includes authenticated user and token metadata.
+
 ## 3. Typical Success Response (Login)
 
 ```json
@@ -116,3 +145,8 @@ Example payload:
 - Use aliases `full_name` and `phone_number` if preferred by your app models.
 - Send token in `Authorization: Bearer <token>` for authenticated endpoints.
 - Keep passwords and token storage in secure storage (`flutter_secure_storage`).
+- Suggested mobile flow:
+  1. Login via `/auth/mobile/login` and persist token.
+  2. On app start, call `/auth/token/validate`.
+  3. If `401`, clear local token and navigate to login.
+  4. On logout, call `/auth/session/clear`, then clear local `AuthSession` in Flutter.

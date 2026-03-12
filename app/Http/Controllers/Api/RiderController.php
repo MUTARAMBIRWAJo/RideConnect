@@ -24,7 +24,7 @@ class RiderController extends Controller
         $user = $request->user();
 
         // Check if user is a driver
-        if ($user->role !== 'driver') {
+        if (! $user->isDriver()) {
             return response()->json([
                 'success' => false,
                 'message' => 'Only drivers can update availability status',
@@ -74,7 +74,7 @@ class RiderController extends Controller
     {
         $user = $request->user();
 
-        if ($user->role !== 'driver') {
+        if (! $user->isDriver()) {
             return response()->json([
                 'success' => false,
                 'message' => 'Only drivers can access ride requests',
@@ -129,7 +129,7 @@ class RiderController extends Controller
     {
         $user = $request->user();
 
-        if ($user->role !== 'driver') {
+        if (! $user->isDriver()) {
             return response()->json([
                 'success' => false,
                 'message' => 'Only drivers can accept ride requests',
@@ -188,7 +188,7 @@ class RiderController extends Controller
     {
         $user = $request->user();
 
-        if ($user->role !== 'driver') {
+        if (! $user->isDriver()) {
             return response()->json([
                 'success' => false,
                 'message' => 'Only drivers can reject ride requests',
@@ -233,7 +233,7 @@ class RiderController extends Controller
     {
         $user = $request->user();
 
-        if ($user->role !== 'driver') {
+        if (! $user->isDriver()) {
             return response()->json([
                 'success' => false,
                 'message' => 'Only drivers can complete ride requests',
@@ -304,7 +304,7 @@ class RiderController extends Controller
     {
         $user = $request->user();
 
-        if ($user->role !== 'driver') {
+        if (! $user->isDriver()) {
             return response()->json([
                 'success' => false,
                 'message' => 'Only drivers can view earnings',
@@ -372,7 +372,7 @@ class RiderController extends Controller
     {
         $user = $request->user();
 
-        if ($user->role !== 'driver') {
+        if (! $user->isDriver()) {
             return response()->json([
                 'success' => false,
                 'message' => 'Only drivers can view earnings',
@@ -427,7 +427,7 @@ class RiderController extends Controller
     {
         $user = $request->user();
 
-        if ($user->role !== 'driver') {
+        if (! $user->isDriver()) {
             return response()->json([
                 'success' => false,
                 'message' => 'Only drivers can upload documents',
@@ -482,7 +482,7 @@ class RiderController extends Controller
     {
         $user = $request->user();
 
-        if ($user->role !== 'driver') {
+        if (! $user->isDriver()) {
             return response()->json([
                 'success' => false,
                 'message' => 'Only drivers can view documents',

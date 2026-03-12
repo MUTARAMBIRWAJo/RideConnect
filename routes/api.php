@@ -5,6 +5,7 @@ use App\Http\Controllers\Api\UserController;
 use App\Http\Controllers\Api\RideController;
 use App\Http\Controllers\Api\BookingController;
 use App\Http\Controllers\Api\TripController;
+use App\Http\Controllers\Api\DriverController;
 use App\Http\Controllers\Api\PassengerController;
 use App\Http\Controllers\Api\RiderController;
 use App\Http\Controllers\Api\PaymentController;
@@ -92,6 +93,10 @@ Route::prefix('v1')->group(function () {
         Route::prefix('auth')->group(function () {
             // Logout
             Route::post('/logout', [ApiAuthController::class, 'logout']);
+            // Clear session/tokens (Flutter AuthSession.clear)
+            Route::post('/session/clear', [ApiAuthController::class, 'clearSession']);
+            // Validate bearer token before protected API calls
+            Route::get('/token/validate', [ApiAuthController::class, 'validateToken']);
             // Get profile
             Route::get('/profile', [ApiAuthController::class, 'profile']);
             // Update profile
@@ -105,19 +110,56 @@ Route::prefix('v1')->group(function () {
             // Profile
             Route::get('/profile', [PassengerController::class, 'profile']);
             Route::put('/profile', [PassengerController::class, 'updateProfile']);
+            Route::get('/stats', [PassengerController::class, 'stats']);
             
-            // Rides - Booking
+            // Rides - Discovery + Booking
+            Route::get('/rides/available', [RideController::class, 'index']);
             Route::post('/rides', [RideController::class, 'bookRide']);
-            Route::get('/rides', [RideController::class, 'myRides']);
+            Route::get('/rides', [PassengerController::class, 'rideHistory']);
             Route::get('/rides/{id}', [RideController::class, 'showRide']);
             Route::put('/rides/{id}/cancel', [RideController::class, 'cancelRide']);
             
             // Ride History
             Route::get('/rides/history', [PassengerController::class, 'rideHistory']);
+
+            // Bookings
+            Route::get('/bookings', [BookingController::class, 'index']);
+            Route::get('/bookings/{id}', [BookingController::class, 'show']);
             
             // Payments
             Route::post('/payments', [PaymentController::class, 'createPayment']);
             Route::get('/payments/history', [PaymentController::class, 'paymentHistory']);
+        });
+
+        /* ===========================
+           DRIVER APIs
+           =========================== */
+        Route::prefix('driver')->group(function () {
+            // Profile + stats
+            Route::get('/profile', [DriverController::class, 'profile']);
+            Route::put('/profile', [DriverController::class, 'updateProfile']);
+            Route::get('/stats', [DriverController::class, 'stats']);
+
+            // Rides managed by the driver
+            Route::get('/rides', [RideController::class, 'myRides']);
+            Route::post('/rides', [RideController::class, 'store']);
+            Route::put('/rides/{id}', [RideController::class, 'update']);
+            Route::delete('/rides/{id}', [RideController::class, 'destroy']);
+
+            // Operational data
+            Route::get('/bookings', [DriverController::class, 'bookings']);
+            Route::get('/trips', [DriverController::class, 'myTrips']);
+            Route::put('/status', [RiderController::class, 'updateStatus']);
+            Route::get('/requests', [RiderController::class, 'rideRequests']);
+            Route::put('/requests/{id}/accept', [RiderController::class, 'acceptRequest']);
+            Route::put('/requests/{id}/reject', [RiderController::class, 'rejectRequest']);
+            Route::put('/requests/{id}/complete', [RiderController::class, 'completeRequest']);
+
+            // Earnings + documents
+            Route::get('/earnings', [RiderController::class, 'earnings']);
+            Route::get('/earnings/monthly', [RiderController::class, 'monthlyEarnings']);
+            Route::post('/documents', [RiderController::class, 'uploadDocument']);
+            Route::get('/documents', [RiderController::class, 'listDocuments']);
         });
 
         /* ===========================

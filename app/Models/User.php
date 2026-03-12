@@ -145,6 +145,14 @@ class User extends Authenticatable
     }
 
     /**
+     * Get the driver profile associated with this user.
+     */
+    public function driver()
+    {
+        return $this->hasOne(Driver::class);
+    }
+
+    /**
      * Get the manager associated with this user (if any)
      */
     public function manager()
