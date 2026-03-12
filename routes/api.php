@@ -9,9 +9,14 @@ use App\Http\Controllers\Api\PassengerController;
 use App\Http\Controllers\Api\RiderController;
 use App\Http\Controllers\Api\PaymentController;
 use App\Http\Controllers\Api\TicketController;
+use App\Http\Controllers\API\DriverLocationController;
 use App\Http\Controllers\Api\Admin\UserApprovalController as UserApprovalController;
 use App\Http\Controllers\Api\Admin\UserManagementController;
 use App\Http\Controllers\Api\Admin\DashboardController as AdminDashboardController;
+use App\Http\Controllers\Api\Admin\DemandHeatmapController;
+use App\Http\Controllers\Api\Admin\LiveRequestsController;
+use App\Http\Controllers\Api\Admin\MapDataController;
+use App\Http\Controllers\Api\Admin\RideRouteHistoryController;
 use App\Http\Controllers\Api\Finance\FinanceController;
 use App\Http\Controllers\Api\Finance\ExportController;
 use App\Http\Controllers\Api\Accountant\PayoutController;
@@ -46,6 +51,17 @@ Route::prefix('webhooks')->group(function () {
     Route::post('/mtn',    [MTNWebhookController::class,   'handle'])->name('webhooks.mtn');
 });
 
+Route::middleware(['auth:sanctum'])->group(function () {
+    Route::post('/driver/location', [DriverLocationController::class, 'update']);
+});
+
+Route::middleware(['auth:sanctum', 'role:super_admin,admin'])->prefix('admin')->group(function () {
+    Route::get('/map-data', [MapDataController::class, 'index']);
+    Route::get('/demand-heatmap', [DemandHeatmapController::class, 'index']);
+    Route::get('/live-requests', [LiveRequestsController::class, 'index']);
+    Route::get('/rides/{ride}/route-history', [RideRouteHistoryController::class, 'show']);
+});
+
 Route::prefix('v1')->group(function () {
 
     /* ===========================
@@ -54,10 +70,16 @@ Route::prefix('v1')->group(function () {
 
     // Authentication
     Route::prefix('auth')->group(function () {
-        // Register - Only passenger and rider allowed
+        // Generic mobile registration (role = DRIVER|PASSENGER)
         Route::post('/register', [ApiAuthController::class, 'register']);
-        // Login
+        // Explicit role registration endpoints for Flutter apps
+        Route::post('/register/driver', [ApiAuthController::class, 'registerDriver']);
+        Route::post('/register/passenger', [ApiAuthController::class, 'registerPassenger']);
+
+        // Legacy email login
         Route::post('/login', [ApiAuthController::class, 'login']);
+        // Flutter/mobile login (email or phone)
+        Route::post('/mobile/login', [ApiAuthController::class, 'mobileLogin']);
     });
 
     /* ===========================

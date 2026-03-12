@@ -27,9 +27,9 @@ class RegisterRequest extends FormRequest
             'name' => ['required', 'string', 'max:255'],
             'email' => ['required', 'string', 'email', 'max:255', 'unique:users,email'],
             'password' => ['required', 'string', 'confirmed', Password::defaults()],
-            // Only allow passenger and rider via public API
+            // Only allow passenger and driver via public API
             'role' => ['required', 'string', 'in:' . implode(',', UserRole::mobileUserRoles())],
-            'phone' => ['nullable', 'string', 'max:20'],
+            'phone' => ['required', 'string', 'max:20'],
         ];
     }
 
@@ -39,8 +39,10 @@ class RegisterRequest extends FormRequest
     public function messages(): array
     {
         return [
+            'name.required' => 'Full name is required.',
             'role.in' => 'Only passenger and driver roles are allowed for API registration.',
             'email.unique' => 'This email is already registered.',
+            'phone.required' => 'Phone number is required.',
         ];
     }
 
@@ -49,11 +51,24 @@ class RegisterRequest extends FormRequest
      */
     protected function prepareForValidation(): void
     {
-        // Convert role to uppercase to match enum
+        $payload = [];
+
+        // Support Flutter/mobile aliases.
+        if (!$this->filled('name') && $this->filled('full_name')) {
+            $payload['name'] = $this->input('full_name');
+        }
+
+        if (!$this->filled('phone') && $this->filled('phone_number')) {
+            $payload['phone'] = $this->input('phone_number');
+        }
+
+        // Convert role to uppercase to match enum.
         if ($this->has('role')) {
-            $this->merge([
-                'role' => strtoupper($this->role),
-            ]);
+            $payload['role'] = strtoupper((string) $this->input('role'));
+        }
+
+        if (!empty($payload)) {
+            $this->merge($payload);
         }
     }
 }

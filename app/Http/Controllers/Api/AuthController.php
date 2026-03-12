@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Api;
 use App\Enums\UserRole;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Api\LoginRequest;
+use App\Http\Requests\Api\MobileLoginRequest;
 use App\Http\Requests\Api\RegisterRequest;
 use App\Models\User;
 use Illuminate\Http\JsonResponse;
@@ -24,12 +25,36 @@ class AuthController extends Controller
      */
     public function register(RegisterRequest $request): JsonResponse
     {
+        return $this->registerByRole($request, UserRole::from($request->validated('role')));
+    }
+
+    /**
+     * Register a new driver from mobile app payload.
+     */
+    public function registerDriver(RegisterRequest $request): JsonResponse
+    {
+        return $this->registerByRole($request, UserRole::DRIVER);
+    }
+
+    /**
+     * Register a new passenger from mobile app payload.
+     */
+    public function registerPassenger(RegisterRequest $request): JsonResponse
+    {
+        return $this->registerByRole($request, UserRole::PASSENGER);
+    }
+
+    /**
+     * Shared registration workflow for mobile users.
+     */
+    private function registerByRole(RegisterRequest $request, UserRole $role): JsonResponse
+    {
         // Create the user with validated data
         $user = User::create([
             'name' => $request->validated('name'),
             'email' => $request->validated('email'),
             'password' => Hash::make($request->validated('password')),
-            'role' => UserRole::from($request->validated('role')),
+            'role' => $role,
             'phone' => $request->validated('phone'),
             'is_approved' => false, // Require approval before login
         ]);
@@ -94,6 +119,62 @@ class AuthController extends Controller
                     'email' => $user->email,
                     'role' => $user->role->value,
                     'phone' => $user->phone,
+                ],
+                'token' => $token,
+                'token_type' => 'Bearer',
+            ],
+        ]);
+    }
+
+    /**
+     * Mobile login that accepts either email or phone.
+     */
+    public function mobileLogin(MobileLoginRequest $request): JsonResponse
+    {
+        $login = $request->validated('login');
+
+        $user = User::query()
+            ->where('email', $login)
+            ->orWhere('phone', $login)
+            ->first();
+
+        if (!$user || !Hash::check($request->validated('password'), $user->password)) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Invalid credentials',
+            ], 401);
+        }
+
+        if (!$user->isMobileUser()) {
+            return response()->json([
+                'success' => false,
+                'message' => 'This endpoint is for passenger/driver accounts only.',
+            ], 403);
+        }
+
+        if (!$user->is_approved) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Your account is pending approval. Please contact administrator.',
+            ], 403);
+        }
+
+        $user->tokens()->delete();
+
+        $tokenName = $request->validated('device_name') ?: 'flutter-mobile';
+        $token = $user->createToken($tokenName)->plainTextToken;
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Login successful',
+            'data' => [
+                'user' => [
+                    'id' => $user->id,
+                    'name' => $user->name,
+                    'email' => $user->email,
+                    'role' => $user->role->value,
+                    'phone' => $user->phone,
+                    'is_approved' => $user->is_approved,
                 ],
                 'token' => $token,
                 'token_type' => 'Bearer',
