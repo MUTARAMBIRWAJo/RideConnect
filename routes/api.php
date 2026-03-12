@@ -116,11 +116,11 @@ Route::prefix('v1')->group(function () {
             Route::get('/rides/available', [RideController::class, 'index']);
             Route::post('/rides', [RideController::class, 'bookRide']);
             Route::get('/rides', [PassengerController::class, 'rideHistory']);
-            Route::get('/rides/{id}', [RideController::class, 'showRide']);
-            Route::put('/rides/{id}/cancel', [RideController::class, 'cancelRide']);
             
             // Ride History
             Route::get('/rides/history', [PassengerController::class, 'rideHistory']);
+            Route::get('/rides/{id}', [RideController::class, 'showRide'])->whereNumber('id');
+            Route::put('/rides/{id}/cancel', [RideController::class, 'cancelRide'])->whereNumber('id');
 
             // Bookings
             Route::get('/bookings', [BookingController::class, 'index']);

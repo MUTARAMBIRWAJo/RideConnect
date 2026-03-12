@@ -17,7 +17,7 @@ class RiderController extends Controller
 {
     /**
      * Update rider availability status.
-     * PUT /api/v1/rider/status
+        * PUT /api/v1/driver/status
      */
     public function updateStatus(Request $request): JsonResponse
     {
@@ -48,17 +48,17 @@ class RiderController extends Controller
 
         // Update driver status
         $driver->update([
-            'status' => $validated['status'],
+            'availability_status' => $validated['status'],
             'current_latitude' => $validated['latitude'] ?? $driver->current_latitude,
             'current_longitude' => $validated['longitude'] ?? $driver->current_longitude,
-            'last_online_at' => now(),
+            'last_online_at' => $validated['status'] === 'online' ? now() : $driver->last_online_at,
         ]);
 
         return response()->json([
             'success' => true,
             'message' => 'Status updated successfully',
             'data' => [
-                'status' => $driver->status,
+                'status' => $driver->availability_status,
                 'latitude' => $driver->current_latitude,
                 'longitude' => $driver->current_longitude,
                 'last_online_at' => $driver->last_online_at?->toIso8601String(),
@@ -155,7 +155,7 @@ class RiderController extends Controller
         }
 
         // Check if driver is available
-        if ($driver->status !== 'online') {
+        if (($driver->availability_status ?? 'offline') !== 'online') {
             return response()->json([
                 'success' => false,
                 'message' => 'You must be online to accept requests',
@@ -208,9 +208,8 @@ class RiderController extends Controller
             ], 400);
         }
 
-        // Reject the trip
+        // Keep the trip pending so another driver can accept it.
         $trip->update([
-            'status' => 'REJECTED',
             'rejection_reason' => $validated['reason'] ?? null,
             'rejected_at' => now(),
         ]);

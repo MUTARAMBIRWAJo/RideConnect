@@ -28,10 +28,20 @@ class Trip extends Model
         'dropoff_lat',
         'dropoff_lng',
         'fare',
+        'actual_pickup_lat',
+        'actual_pickup_lng',
+        'actual_dropoff_lat',
+        'actual_dropoff_lng',
+        'actual_distance',
+        'actual_fare',
         'status',
         'requested_at',
+        'accepted_at',
+        'rejected_at',
+        'rejection_reason',
         'started_at',
         'completed_at',
+        'paid_to_driver_at',
     ];
 
     protected $casts = [
@@ -40,9 +50,18 @@ class Trip extends Model
         'dropoff_lat' => 'decimal:7',
         'dropoff_lng' => 'decimal:7',
         'fare' => 'decimal:2',
+        'actual_pickup_lat' => 'decimal:7',
+        'actual_pickup_lng' => 'decimal:7',
+        'actual_dropoff_lat' => 'decimal:7',
+        'actual_dropoff_lng' => 'decimal:7',
+        'actual_distance' => 'decimal:2',
+        'actual_fare' => 'decimal:2',
         'requested_at' => 'datetime',
+        'accepted_at' => 'datetime',
+        'rejected_at' => 'datetime',
         'started_at' => 'datetime',
         'completed_at' => 'datetime',
+        'paid_to_driver_at' => 'datetime',
     ];
 
     public function passenger()
