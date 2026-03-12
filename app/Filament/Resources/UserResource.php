@@ -130,14 +130,18 @@ class UserResource extends Resource
                     ->searchable()
                     ->toggleable(),
                 Tables\Columns\TextColumn::make('role')
+                    ->formatStateUsing(fn (UserRole|string|null $state): string => $state instanceof UserRole
+                        ? $state->label()
+                        : (is_string($state) ? (UserRole::tryFrom($state)?->label() ?? $state) : 'Unknown'))
                     ->badge()
-                    ->color(fn (string $state): string => match ($state) {
+                    ->color(fn (UserRole|string|null $state): string => match ($state instanceof UserRole ? $state->value : (string) $state) {
                         'SUPER_ADMIN' => 'danger',
                         'ADMIN' => 'warning',
                         'ACCOUNTANT' => 'info',
                         'OFFICER' => 'purple',
                         'DRIVER' => 'success',
                         'PASSENGER' => 'cyan',
+                        default => 'gray',
                     }),
                 Tables\Columns\TextColumn::make('roles.name')
                     ->label('Assigned Roles')
