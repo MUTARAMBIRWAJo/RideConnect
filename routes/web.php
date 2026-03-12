@@ -49,6 +49,10 @@ Route::middleware(['auth'])->group(function () {
 Route::middleware('guest')->group(function () {
     Route::get('/admin/login', [AdminAuthController::class, 'showLogin'])->name('admin.login');
     Route::post('/admin/login', [AdminAuthController::class, 'login']);
+
+    // Compatibility route expected by Filament auth middleware redirects.
+    Route::get('/admin/filament-login', [AuthController::class, 'showLogin'])
+        ->name('filament.admin.auth.login');
 });
 
 Route::middleware('auth:admin')->group(function () {
