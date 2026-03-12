@@ -55,6 +55,10 @@ Route::middleware('auth:admin')->group(function () {
     Route::get('/admin/register', [AdminAuthController::class, 'showRegister'])->name('admin.register');
     Route::post('/admin/register', [AdminAuthController::class, 'register']);
     Route::post('/admin/logout', [AdminAuthController::class, 'logout'])->name('admin.logout');
+
+    // Compatibility route expected by Filament user-menu/account widgets.
+    Route::match(['GET', 'POST'], '/admin/filament-logout', [AdminAuthController::class, 'logout'])
+        ->name('filament.admin.auth.logout');
 });
 
 // Compatibility aliases for legacy admin view links.
