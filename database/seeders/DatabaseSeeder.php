@@ -40,6 +40,7 @@ class DatabaseSeeder extends Seeder
         DB::statement('TRUNCATE TABLE vehicles CASCADE');
         DB::statement('TRUNCATE TABLE drivers CASCADE');
         DB::statement('TRUNCATE TABLE notifications CASCADE');
+        DB::statement('TRUNCATE TABLE driver_locations CASCADE');
         DB::statement('TRUNCATE TABLE mobile_users CASCADE');
         DB::statement('TRUNCATE TABLE managers CASCADE');
         DB::statement('TRUNCATE TABLE users CASCADE');
@@ -53,6 +54,7 @@ class DatabaseSeeder extends Seeder
         DB::statement('ALTER SEQUENCE payments_id_seq RESTART WITH 1');
         DB::statement('ALTER SEQUENCE reviews_id_seq RESTART WITH 1');
         DB::statement('ALTER SEQUENCE notifications_id_seq RESTART WITH 1');
+        DB::statement('ALTER SEQUENCE driver_locations_id_seq RESTART WITH 1');
         DB::statement('ALTER SEQUENCE mobile_users_id_seq RESTART WITH 1');
         DB::statement('ALTER SEQUENCE managers_id_seq RESTART WITH 1');
         DB::statement('ALTER SEQUENCE vehicles_v2_id_seq RESTART WITH 1');
@@ -82,6 +84,7 @@ class DatabaseSeeder extends Seeder
         // Run seeders that depend on having users in the users table
         $this->call([
             DriverSeeder::class,
+            DriverLocationSeeder::class,
             VehicleSeeder::class,
             RideSeeder::class,
             BookingSeeder::class,

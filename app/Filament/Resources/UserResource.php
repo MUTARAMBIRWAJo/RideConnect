@@ -205,7 +205,7 @@ class UserResource extends Resource
                         }),
                     Tables\Actions\Action::make('reject')
                         ->label('Reject')
-                        ->icon('heroicon-o-x')
+                        ->icon('heroicon-o-x-mark')
                         ->color('danger')
                         ->visible(fn (User $record): bool => !$record->is_approved)
                         ->requiresConfirmation()

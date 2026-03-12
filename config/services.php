@@ -72,4 +72,8 @@ return [
         'currency'                   => env('MTN_CURRENCY', 'RWF'),
     ],
 
+    'google_maps' => [
+        'key' => env('GOOGLE_MAPS_API_KEY'),
+    ],
+
 ];

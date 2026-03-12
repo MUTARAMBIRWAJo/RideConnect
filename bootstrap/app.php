@@ -27,6 +27,9 @@ return Application::configure(basePath: dirname(__DIR__))
             \Illuminate\Cookie\Middleware\AddQueuedCookiesToResponse::class,
         ]);
 
+        // Allow session-authenticated first-party requests to pass auth:sanctum.
+        $middleware->statefulApi();
+
         $middleware->trustProxies(
             at: '*',
             headers: Request::HEADER_X_FORWARDED_FOR |

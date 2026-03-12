@@ -19,6 +19,7 @@ services:
     environment:
       APP_ENV: local
       APP_DEBUG: "true"
+      GOOGLE_MAPS_API_KEY: AIzaSyDi6WNLqm2hxqOftbWYZQTX4UWc5M2GN5s
       DB_CONNECTION: pgsql
       DB_HOST: aws-1-us-east-1.pooler.supabase.com
       DB_PORT: 5432

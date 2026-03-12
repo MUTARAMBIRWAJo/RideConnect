@@ -63,6 +63,7 @@ return [
             'widgets' => [
                 EscrowBalanceWidget::class,
                 AccountantRevenueSummary::class,
+                DemandHeatmapWidget::class,
                 CommissionOverviewWidget::class,
                 FraudAlertsWidget::class,
                 DailyCommissionChartWidget::class,
@@ -86,6 +87,7 @@ return [
         'DRIVER' => [
             'columns' => ['default' => 1, 'md' => 2],
             'widgets' => [
+                DemandHeatmapWidget::class,
                 RideStatsOverview::class,
                 NotificationsWidget::class,
                 LatestRidesTable::class,
@@ -95,6 +97,7 @@ return [
         'PASSENGER' => [
             'columns' => ['default' => 1, 'md' => 2],
             'widgets' => [
+                DemandHeatmapWidget::class,
                 RideStatsOverview::class,
                 NotificationsWidget::class,
                 ActivityFeedWidget::class,
