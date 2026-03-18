@@ -10,7 +10,7 @@ class RideMapWidget extends Widget
 
     protected int | string | array $columnSpan = 'full';
 
-    protected static ?int $sort = 3;
+    protected static ?int $sort = 1;
 
-    protected static bool $isLazy = true;
+    protected static bool $isLazy = false;
 }

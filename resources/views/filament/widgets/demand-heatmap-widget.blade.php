@@ -33,7 +33,7 @@
         id="{{ $mapId }}"
         class="h-[300px] sm:h-[360px] lg:h-[420px] w-full"
         style="min-height: 320px;"
-        data-google-maps-key="{{ config('services.google_maps.key') }}"
+        data-google-maps-key="{{ config('laramaps.api_key', config('services.google_maps.key')) }}"
         data-supabase-url="{{ config('supabase.url') }}"
         data-supabase-key="{{ config('supabase.key') }}"
         data-map-endpoint="{{ url('/api/admin/map-data') }}"

@@ -177,58 +177,58 @@ class DatabaseSeeder extends Seeder
         }
     }
 
-    private function resetDatabaseForSeeding(): bool
-    {
-        $tables = [
-            'ledger_entries',
-            'ledger_transactions',
-            'ledger_accounts',
-            'fraud_flags',
-            'platform_commissions',
-            'driver_payouts',
-            'model_has_permissions',
-            'model_has_roles',
-            'role_has_permissions',
-            'permissions',
-            'roles',
-            'activity_logs',
-            'tickets',
-            'driver_earnings',
-            'payments_v2',
-            'trips',
-            'vehicles_v2',
-            'reviews',
-            'payments',
-            'bookings',
-            'rides',
-            'vehicles',
-            'drivers',
-            'notifications',
-            'user_notifications',
-            'mobile_device_tokens',
-            'driver_locations',
-            'mobile_users',
-            'managers',
-            'users',
-        ];
+    // private function resetDatabaseForSeeding(): bool
+    // {
+    //     $tables = [
+    //         'ledger_entries',
+    //         'ledger_transactions',
+    //         'ledger_accounts',
+    //         'fraud_flags',
+    //         'platform_commissions',
+    //         'driver_payouts',
+    //         'model_has_permissions',
+    //         'model_has_roles',
+    //         'role_has_permissions',
+    //         'permissions',
+    //         'roles',
+    //         'activity_logs',
+    //         'tickets',
+    //         'driver_earnings',
+    //         'payments_v2',
+    //         'trips',
+    //         'vehicles_v2',
+    //         'reviews',
+    //         'payments',
+    //         'bookings',
+    //         'rides',
+    //         'vehicles',
+    //         'drivers',
+    //         'notifications',
+    //         'user_notifications',
+    //         'mobile_device_tokens',
+    //         'driver_locations',
+    //         'mobile_users',
+    //         'managers',
+    //         'users',
+    //     ];
 
-        try {
-            foreach ($tables as $table) {
-                if (!Schema::hasTable($table)) {
-                    continue;
-                }
+    //     try {
+    //         foreach ($tables as $table) {
+    //             if (!Schema::hasTable($table)) {
+    //                 continue;
+    //             }
 
-                $this->withRetry(fn () => DB::statement("TRUNCATE TABLE {$table} CASCADE"));
-                $this->restartTableIdSequence($table);
-            }
+    //             $this->withRetry(fn () => DB::statement("TRUNCATE TABLE {$table} CASCADE"));
+    //             $this->restartTableIdSequence($table);
+    //         }
 
-            return true;
-        } catch (Throwable $e) {
-            $this->command?->warn('Reset failure: ' . $e->getMessage());
+    //         return true;
+    //     } catch (Throwable $e) {
+    //         $this->command?->warn('Reset failure: ' . $e->getMessage());
 
-            return false;
-        }
-    }
+    //         return false;
+    //     }
+    // }
 
     private function withRetry(callable $operation, int $maxAttempts = 3): void
     {

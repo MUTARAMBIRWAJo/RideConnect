@@ -219,6 +219,8 @@ Route::prefix('v1')->group(function () {
         Route::get('/notifications/unread-count', [MobileNotificationController::class, 'unreadCount']);
         Route::put('/notifications/{id}/read', [MobileNotificationController::class, 'markAsRead']);
         Route::put('/notifications/read-all', [MobileNotificationController::class, 'markAllAsRead']);
+        Route::delete('/notifications/clear-actioned', [MobileNotificationController::class, 'clearActioned']);
+        Route::delete('/notifications/{id}', [MobileNotificationController::class, 'destroy']);
 
         // Mobile push token registration (FCM/APNs)
         Route::post('/devices/push-token', [DeviceTokenController::class, 'store']);

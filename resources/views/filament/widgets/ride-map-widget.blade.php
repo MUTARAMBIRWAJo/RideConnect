@@ -4,6 +4,7 @@
 @php($toggleTrafficId = 'toggle-traffic-' . uniqid())
 @php($driversCountId = 'drivers-count-' . uniqid())
 @php($ridesCountId = 'rides-count-' . uniqid())
+@php($mapStatusId = 'map-status-' . uniqid())
 
 <x-filament-widgets::widget>
     <x-filament::section>
@@ -47,6 +48,8 @@
             data-default-zoom="12"
         ></div>
 
+        <div id="{{ $mapStatusId }}" class="mt-2 hidden rounded-md border px-3 py-2 text-xs"></div>
+
         <script src="https://unpkg.com/@googlemaps/markerclusterer/dist/index.min.js"></script>
         <script>
             (function () {
@@ -78,6 +81,8 @@
                     rides: document.getElementById('{{ $ridesCountId }}'),
                 };
 
+                const mapStatus = document.getElementById('{{ $mapStatusId }}');
+
                 const controls = {
                     markers: document.getElementById('{{ $toggleMarkersId }}'),
                     heatmap: document.getElementById('{{ $toggleHeatmapId }}'),
@@ -97,7 +102,16 @@
                         return Promise.resolve();
                     }
 
-                    return new Promise(function (resolve, reject) {
+                    if (window.__rideConnectGoogleMapsPromise) {
+                        return window.__rideConnectGoogleMapsPromise;
+                    }
+
+                    window.__rideConnectGoogleMapsPromise = new Promise(function (resolve, reject) {
+                        // Google invokes this callback when API key auth fails.
+                        window.gm_authFailure = function () {
+                            reject(new Error('Google Maps authentication failed'));
+                        };
+
                         const script = document.createElement('script');
                         script.src = 'https://maps.googleapis.com/maps/api/js?key=' + encodeURIComponent(apiKey) + '&libraries=visualization';
                         script.async = true;
@@ -106,6 +120,32 @@
                         script.onerror = reject;
                         document.head.appendChild(script);
                     });
+
+                    return window.__rideConnectGoogleMapsPromise;
+                };
+
+                const showStatus = function (message, isError) {
+                    if (!mapStatus) {
+                        return;
+                    }
+
+                    mapStatus.textContent = message;
+                    mapStatus.classList.remove('hidden', 'border-emerald-200', 'bg-emerald-50', 'text-emerald-800', 'border-red-200', 'bg-red-50', 'text-red-700');
+
+                    if (isError) {
+                        mapStatus.classList.add('border-red-200', 'bg-red-50', 'text-red-700');
+                    } else {
+                        mapStatus.classList.add('border-emerald-200', 'bg-emerald-50', 'text-emerald-800');
+                    }
+                };
+
+                const hideStatus = function () {
+                    if (!mapStatus) {
+                        return;
+                    }
+
+                    mapStatus.classList.add('hidden');
+                    mapStatus.textContent = '';
                 };
 
                 const debounce = function (fn, waitMs) {
@@ -332,9 +372,12 @@
 
                             return response.json();
                         })
-                        .then(renderData)
-                        .catch(function () {
-                            // Keep the widget resilient; next poll attempt may recover automatically.
+                        .then(function (payload) {
+                            hideStatus();
+                            renderData(payload);
+                        })
+                        .catch(function (error) {
+                            showStatus('Map data refresh failed: ' + (error?.message || 'unknown error'), true);
                         })
                         .finally(function () {
                             state.isRefreshing = false;
@@ -403,8 +446,13 @@
 
                     loadGoogleMaps()
                         .then(initMap)
-                        .catch(function () {
-                            mapElement.innerHTML = '<div class="h-full flex items-center justify-center text-sm text-red-600">Unable to load Google Maps</div>';
+                        .catch(function (error) {
+                            const message = (error && error.message === 'Google Maps authentication failed')
+                                ? 'Google Maps key rejected (check API restrictions/billing).'
+                                : 'Unable to load Google Maps';
+
+                            mapElement.innerHTML = '<div class="h-full flex items-center justify-center text-sm text-red-600">' + message + '</div>';
+                            showStatus(message, true);
                         });
                 };
 

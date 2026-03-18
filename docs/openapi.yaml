@@ -587,6 +587,18 @@ paths:
           schema:
             type: boolean
             default: false
+        - name: only_clearable
+          in: query
+          description: Return only actioned notifications that can be cleared/deleted.
+          schema:
+            type: boolean
+            default: false
+        - name: only_action_required
+          in: query
+          description: Return only non-actioned notifications that still require user action.
+          schema:
+            type: boolean
+            default: false
         - $ref: "#/components/parameters/PerPageParam"
       responses:
         "200":
@@ -652,6 +664,62 @@ paths:
       responses:
         "200":
           description: All notifications marked as read
+
+  /notifications/clear-actioned:
+    delete:
+      tags:
+        - Notifications
+      summary: Clear actioned notifications
+      description: |
+        Removes notifications that are already actioned (accepted/rejected/cancelled/completed/confirmed/started).
+        Pending actionable notifications are kept and are not deleted.
+      operationId: clearActionedNotifications
+      security:
+        - BearerAuth: []
+      responses:
+        "200":
+          description: Actioned notifications cleared
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  message:
+                    type: string
+                  data:
+                    type: object
+                    properties:
+                      deleted_count:
+                        type: integer
+                      kept_count:
+                        type: integer
+
+  /notifications/{id}:
+    delete:
+      tags:
+        - Notifications
+      summary: Delete one notification if actioned
+      description: |
+        Deletes a single notification only if it is actioned.
+        If the notification is still pending action, deletion is refused.
+      operationId: deleteNotificationIfActioned
+      security:
+        - BearerAuth: []
+      parameters:
+        - $ref: "#/components/parameters/IdParam"
+      responses:
+        "200":
+          description: Notification deleted
+        "422":
+          description: Notification is not actioned and cannot be deleted
+          content:
+            application/json:
+              example:
+                success: false
+                message: "Notification is not actioned yet and cannot be deleted."
+                error_code: "notification_not_actioned"
 
   /devices/push-token:
     post:
@@ -1594,6 +1662,9 @@ components:
           additionalProperties: true
         is_read:
           type: boolean
+        can_be_cleared:
+          type: boolean
+          description: True when notification is actioned and can be deleted by client.
         read_at:
           type: string
           format: date-time

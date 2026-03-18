@@ -267,17 +267,25 @@ class UserResource extends Resource
 
     public static function canViewAny(): bool
     {
-        return auth()->user()?->can('view users') ?? false;
+        $user = auth()->user();
+
+        return static::isSuperAdmin($user) || ($user?->can('view users') ?? false);
     }
 
     public static function canCreate(): bool
     {
-        return auth()->user()?->can('create users') ?? false;
+        $user = auth()->user();
+
+        return static::isSuperAdmin($user) || ($user?->can('create users') ?? false);
     }
 
     public static function canEdit(Model $record): bool
     {
         $user = auth()->user();
+
+        if (static::isSuperAdmin($user)) {
+            return true;
+        }
 
         if (!$user || !$user->can('edit users')) {
             return false;
@@ -302,6 +310,10 @@ class UserResource extends Resource
     {
         $user = auth()->user();
 
+        if (static::isSuperAdmin($user)) {
+            return true;
+        }
+
         if (!$user || !$user->can('delete users')) {
             return false;
         }
@@ -319,6 +331,21 @@ class UserResource extends Resource
         }
 
         return true;
+    }
+
+    protected static function isSuperAdmin(?User $user): bool
+    {
+        if (!$user) {
+            return false;
+        }
+
+        if (($user->role?->value ?? $user->role) === UserRole::SUPER_ADMIN->value) {
+            return true;
+        }
+
+        return method_exists($user, 'hasRole')
+            ? ($user->hasRole('Super_admin') || $user->hasRole('SUPER_ADMIN'))
+            : false;
     }
 
 

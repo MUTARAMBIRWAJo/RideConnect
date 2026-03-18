@@ -7,13 +7,14 @@ use App\Models\Driver;
 use App\Models\MobileUser;
 use App\Models\Notification;
 use App\Models\User;
-use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Foundation\Testing\DatabaseTransactions;
+use Illuminate\Support\Str;
 use Laravel\Sanctum\Sanctum;
 use Tests\TestCase;
 
 class PassengerNotificationEndpointsTest extends TestCase
 {
-    use RefreshDatabase;
+    use DatabaseTransactions;
 
     public function test_passenger_can_list_only_online_approved_drivers(): void
     {
@@ -66,17 +67,20 @@ class PassengerNotificationEndpointsTest extends TestCase
 
     public function test_passenger_ride_request_creates_trip_and_driver_notification(): void
     {
+        $suffix = Str::lower(Str::random(8));
+
         $mobilePassenger = MobileUser::create([
             'first_name' => 'Passenger',
             'last_name' => 'One',
-            'phone' => '+250780123456',
-            'email' => 'passenger.one@example.com',
+            'phone' => '+25078' . random_int(1000000, 9999999),
+            'email' => "passenger.one.{$suffix}@example.com",
             'password' => 'password123',
             'role' => UserRole::PASSENGER->value,
             'is_verified' => true,
         ]);
 
         $passenger = User::factory()->create([
+            'email' => "passenger.user.{$suffix}@example.com",
             'role' => UserRole::PASSENGER->value,
             'is_approved' => true,
             'mobile_user_id' => $mobilePassenger->id,
@@ -89,8 +93,8 @@ class PassengerNotificationEndpointsTest extends TestCase
 
         $driver = Driver::create([
             'user_id' => $driverUser->id,
-            'license_number' => 'DL-PN-2001',
-            'license_plate' => 'RAA-211-A',
+            'license_number' => 'DL-PN-' . random_int(2000, 9999),
+            'license_plate' => 'RAA-' . random_int(200, 999) . '-' . chr(random_int(65, 90)),
             'status' => 'approved',
             'availability_status' => 'online',
             'current_latitude' => -1.9441,
@@ -197,5 +201,214 @@ class PassengerNotificationEndpointsTest extends TestCase
             'user_id' => $user->id,
             'device_token' => 'fcm-token-abc-123',
         ]);
+    }
+
+    public function test_clear_actioned_notifications_keeps_non_actioned_notifications(): void
+    {
+        $user = User::factory()->create([
+            'role' => UserRole::PASSENGER->value,
+            'is_approved' => true,
+        ]);
+
+        $accepted = Notification::create([
+            'user_id' => $user->id,
+            'type' => 'ride_request_accepted',
+            'title' => 'Accepted',
+            'message' => 'Your request was accepted.',
+            'data' => ['trip_id' => 1001, 'status' => 'ACCEPTED'],
+            'is_read' => false,
+        ]);
+
+        $cancelled = Notification::create([
+            'user_id' => $user->id,
+            'type' => 'trip_cancelled',
+            'title' => 'Cancelled',
+            'message' => 'Your trip was cancelled.',
+            'data' => ['trip_id' => 1002, 'status' => 'CANCELLED'],
+            'is_read' => false,
+        ]);
+
+        $pending = Notification::create([
+            'user_id' => $user->id,
+            'type' => 'ride_request_received',
+            'title' => 'Pending Action',
+            'message' => 'Please accept or reject.',
+            'data' => ['trip_id' => 1003],
+            'is_read' => false,
+        ]);
+
+        Sanctum::actingAs($user, ['*']);
+
+        $this->deleteJson('/api/v1/notifications/clear-actioned')
+            ->assertStatus(200)
+            ->assertJsonPath('success', true)
+            ->assertJsonPath('data.deleted_count', 2)
+            ->assertJsonPath('data.kept_count', 1);
+
+        $this->assertDatabaseMissing('user_notifications', ['id' => $accepted->id]);
+        $this->assertDatabaseMissing('user_notifications', ['id' => $cancelled->id]);
+        $this->assertDatabaseHas('user_notifications', ['id' => $pending->id]);
+    }
+
+    public function test_cannot_delete_non_actioned_notification_but_can_delete_actioned(): void
+    {
+        $user = User::factory()->create([
+            'role' => UserRole::PASSENGER->value,
+            'is_approved' => true,
+        ]);
+
+        $pending = Notification::create([
+            'user_id' => $user->id,
+            'type' => 'ride_request_received',
+            'title' => 'Pending Action',
+            'message' => 'Please accept or reject.',
+            'data' => ['trip_id' => 3001],
+            'is_read' => false,
+        ]);
+
+        $actioned = Notification::create([
+            'user_id' => $user->id,
+            'type' => 'ride_request_accepted',
+            'title' => 'Accepted',
+            'message' => 'Driver accepted.',
+            'data' => ['trip_id' => 3002, 'status' => 'ACCEPTED'],
+            'is_read' => false,
+        ]);
+
+        Sanctum::actingAs($user, ['*']);
+
+        $this->deleteJson('/api/v1/notifications/' . $pending->id)
+            ->assertStatus(422)
+            ->assertJsonPath('success', false)
+            ->assertJsonPath('error_code', 'notification_not_actioned');
+
+        $this->assertDatabaseHas('user_notifications', ['id' => $pending->id]);
+
+        $this->deleteJson('/api/v1/notifications/' . $actioned->id)
+            ->assertStatus(200)
+            ->assertJsonPath('success', true);
+
+        $this->assertDatabaseMissing('user_notifications', ['id' => $actioned->id]);
+    }
+
+    public function test_notifications_list_exposes_can_be_cleared_flag(): void
+    {
+        $user = User::factory()->create([
+            'role' => UserRole::PASSENGER->value,
+            'is_approved' => true,
+        ]);
+
+        $pending = Notification::create([
+            'user_id' => $user->id,
+            'type' => 'ride_request_received',
+            'title' => 'Pending Action',
+            'message' => 'Please accept or reject.',
+            'data' => ['trip_id' => 8001],
+            'is_read' => false,
+            'created_at' => now()->subMinute(),
+            'updated_at' => now()->subMinute(),
+        ]);
+
+        $actioned = Notification::create([
+            'user_id' => $user->id,
+            'type' => 'trip_cancelled',
+            'title' => 'Cancelled',
+            'message' => 'Trip was cancelled.',
+            'data' => ['trip_id' => 8002, 'status' => 'CANCELLED'],
+            'is_read' => false,
+            'created_at' => now(),
+            'updated_at' => now(),
+        ]);
+
+        Sanctum::actingAs($user, ['*']);
+
+        $response = $this->getJson('/api/v1/notifications');
+
+        $response->assertStatus(200)
+            ->assertJsonPath('success', true)
+            ->assertJsonPath('data.0.id', $actioned->id)
+            ->assertJsonPath('data.0.can_be_cleared', true)
+            ->assertJsonPath('data.1.id', $pending->id)
+            ->assertJsonPath('data.1.can_be_cleared', false);
+    }
+
+    public function test_notifications_can_filter_only_clearable(): void
+    {
+        $user = User::factory()->create([
+            'role' => UserRole::PASSENGER->value,
+            'is_approved' => true,
+        ]);
+
+        $actioned = Notification::create([
+            'user_id' => $user->id,
+            'type' => 'trip_cancelled',
+            'title' => 'Cancelled',
+            'message' => 'Trip was cancelled.',
+            'data' => ['trip_id' => 9001, 'status' => 'CANCELLED'],
+            'is_read' => false,
+            'created_at' => now(),
+            'updated_at' => now(),
+        ]);
+
+        Notification::create([
+            'user_id' => $user->id,
+            'type' => 'ride_request_received',
+            'title' => 'Pending Action',
+            'message' => 'Please accept or reject.',
+            'data' => ['trip_id' => 9002],
+            'is_read' => false,
+            'created_at' => now()->subMinute(),
+            'updated_at' => now()->subMinute(),
+        ]);
+
+        Sanctum::actingAs($user, ['*']);
+
+        $response = $this->getJson('/api/v1/notifications?only_clearable=true');
+
+        $response->assertStatus(200)
+            ->assertJsonPath('success', true)
+            ->assertJsonPath('pagination.total', 1)
+            ->assertJsonPath('data.0.id', $actioned->id)
+            ->assertJsonPath('data.0.can_be_cleared', true);
+    }
+
+    public function test_notifications_can_filter_only_action_required(): void
+    {
+        $user = User::factory()->create([
+            'role' => UserRole::PASSENGER->value,
+            'is_approved' => true,
+        ]);
+
+        Notification::create([
+            'user_id' => $user->id,
+            'type' => 'trip_cancelled',
+            'title' => 'Cancelled',
+            'message' => 'Trip was cancelled.',
+            'data' => ['trip_id' => 9101, 'status' => 'CANCELLED'],
+            'is_read' => false,
+            'created_at' => now()->subMinute(),
+            'updated_at' => now()->subMinute(),
+        ]);
+
+        $pending = Notification::create([
+            'user_id' => $user->id,
+            'type' => 'ride_request_received',
+            'title' => 'Pending Action',
+            'message' => 'Please accept or reject.',
+            'data' => ['trip_id' => 9102],
+            'is_read' => false,
+            'created_at' => now(),
+            'updated_at' => now(),
+        ]);
+
+        Sanctum::actingAs($user, ['*']);
+
+        $response = $this->getJson('/api/v1/notifications?only_action_required=true');
+
+        $response->assertStatus(200)
+            ->assertJsonPath('success', true)
+            ->assertJsonPath('pagination.total', 1)
+            ->assertJsonPath('data.0.id', $pending->id)
+            ->assertJsonPath('data.0.can_be_cleared', false);
     }
 }

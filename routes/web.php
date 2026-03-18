@@ -99,7 +99,7 @@ Route::redirect('/terms-of-service', '/')->name('terms');
 Route::redirect('/privacy-policy', '/')->name('privacy');
 Route::redirect('/forgot-password', '/auth/login')->name('password.request');
 
-// Filament admin live map endpoint (session-authenticated + role-restricted).
-Route::middleware(['auth', 'role:super_admin,admin,officer,accountant'])
+// Filament admin live map endpoint (session-authenticated; role checks handled in controller).
+Route::middleware(['auth'])
     ->get('/api/map/live-data', [LiveMapDataController::class, 'index'])
     ->name('api.map.live-data');

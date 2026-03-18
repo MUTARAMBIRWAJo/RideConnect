@@ -10,6 +10,7 @@ use App\Filament\Widgets\BI\RevenueOverTimeChartWidget;
 use App\Filament\Widgets\BI\TopDriversLeaderboardWidget;
 use App\Filament\Pages\Concerns\HandlesRoleDashboards;
 use App\Filament\Support\RoleDashboardConfig;
+use App\Models\User;
 use Illuminate\Contracts\Support\Htmlable;
 
 class SuperDashboard extends \Filament\Pages\Dashboard
@@ -93,6 +94,35 @@ class SuperDashboard extends \Filament\Pages\Dashboard
             'default' => 1,
             'md' => 2,
             'xl' => 2,
+        ];
+    }
+
+    public function canManageUsers(): bool
+    {
+        $user = auth()->user();
+
+        if (!$user) {
+            return false;
+        }
+
+        $isSuperAdminByRoleEnum = ($user->role?->value ?? $user->role) === UserRole::SUPER_ADMIN->value;
+        $isSuperAdminBySpatie = method_exists($user, 'hasRole')
+            ? ($user->hasRole('Super_admin') || $user->hasRole('SUPER_ADMIN'))
+            : false;
+
+        return $isSuperAdminByRoleEnum || $isSuperAdminBySpatie || ($user->can('view users') ?? false);
+    }
+
+    /**
+     * @return array<string, int>
+     */
+    public function getUserManagementStats(): array
+    {
+        return [
+            'total' => (int) User::query()->count(),
+            'pending' => (int) User::query()->where('is_approved', false)->count(),
+            'managers' => (int) User::query()->whereIn('role', UserRole::managerRoles())->count(),
+            'mobile' => (int) User::query()->whereIn('role', UserRole::mobileUserRoles())->count(),
         ];
     }
 }

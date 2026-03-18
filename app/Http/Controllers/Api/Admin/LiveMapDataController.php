@@ -2,15 +2,25 @@
 
 namespace App\Http\Controllers\Api\Admin;
 
+use App\Enums\UserRole;
 use App\Http\Controllers\Controller;
 use App\Models\Driver;
 use App\Models\Ride;
+use App\Models\User;
 use Illuminate\Http\JsonResponse;
+use Illuminate\Http\Request;
 
 class LiveMapDataController extends Controller
 {
-    public function index(): JsonResponse
+    public function index(Request $request): JsonResponse
     {
+        if (! $this->canAccessLiveMap($request->user())) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Forbidden',
+            ], 403);
+        }
+
         $drivers = Driver::query()
             ->with('user:id,name')
             ->whereNotNull('current_latitude')
@@ -44,11 +54,28 @@ class LiveMapDataController extends Controller
             ->values();
 
         return response()->json([
+            'success' => true,
             'drivers' => $drivers,
             'rides' => $rides,
             'meta' => [
                 'generated_at' => now()->toIso8601String(),
             ],
         ]);
+    }
+
+    private function canAccessLiveMap(?User $user): bool
+    {
+        if (! $user) {
+            return false;
+        }
+
+        $enumRole = $user->role?->value ?? (string) $user->role;
+        if (in_array($enumRole, UserRole::managerRoles(), true)) {
+            return true;
+        }
+
+        return method_exists($user, 'hasAnyRole')
+            ? $user->hasAnyRole(['Super_admin', 'Admin', 'Officer', 'Accountant'])
+            : false;
     }
 }

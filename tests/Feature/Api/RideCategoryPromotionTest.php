@@ -10,13 +10,14 @@ use App\Models\Ride;
 use App\Models\Trip;
 use App\Models\User;
 use App\Models\Vehicle;
-use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Foundation\Testing\DatabaseTransactions;
+use Illuminate\Support\Str;
 use Laravel\Sanctum\Sanctum;
 use Tests\TestCase;
 
 class RideCategoryPromotionTest extends TestCase
 {
-    use RefreshDatabase;
+    use DatabaseTransactions;
 
     public function test_create_as_booking_when_departure_is_greater_than_six_hours(): void
     {
@@ -118,11 +119,13 @@ class RideCategoryPromotionTest extends TestCase
      */
     private function createPassengerUser(): array
     {
+        $suffix = Str::lower(Str::random(8));
+
         $mobilePassenger = MobileUser::create([
             'first_name' => 'Passenger',
             'last_name' => 'Tester',
-            'phone' => '+250780000001',
-            'email' => 'passenger.tester@example.com',
+            'phone' => '+25078' . random_int(1000000, 9999999),
+            'email' => "passenger.tester.{$suffix}@example.com",
             'password' => 'password123',
             'role' => UserRole::PASSENGER->value,
             'is_verified' => true,
@@ -130,7 +133,7 @@ class RideCategoryPromotionTest extends TestCase
 
         $user = User::factory()->create([
             'name' => 'Passenger Tester',
-            'email' => 'passenger.user@example.com',
+            'email' => "passenger.user.{$suffix}@example.com",
             'role' => UserRole::PASSENGER->value,
             'is_approved' => true,
             'mobile_user_id' => $mobilePassenger->id,
@@ -144,17 +147,19 @@ class RideCategoryPromotionTest extends TestCase
      */
     private function createDriverStack($departureTime): array
     {
+        $suffix = Str::upper(Str::random(6));
+
         $driverUser = User::factory()->create([
             'name' => 'Driver Tester',
-            'email' => 'driver.user@example.com',
+            'email' => "driver.user.{$suffix}@example.com",
             'role' => UserRole::DRIVER->value,
             'is_approved' => true,
         ]);
 
         $driver = Driver::create([
             'user_id' => $driverUser->id,
-            'license_number' => 'DL-TEST-0001',
-            'license_plate' => 'RAC-123-A',
+            'license_number' => 'DL-TEST-' . $suffix,
+            'license_plate' => 'RAC-' . random_int(100, 999) . '-' . chr(random_int(65, 90)),
             'status' => 'approved',
             'total_rides' => 0,
             'rating' => 0,
