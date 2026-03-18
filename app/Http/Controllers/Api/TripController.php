@@ -3,12 +3,21 @@
 namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
+use App\Models\MobileUser;
 use App\Models\Trip;
+use App\Services\AITrainingDataLogger;
+use App\Services\MobileNotificationService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use Illuminate\Validation\ValidationException;
 
 class TripController extends Controller
 {
+    public function __construct(
+        private readonly MobileNotificationService $mobileNotificationService,
+    ) {
+    }
+
     /**
      * Display a listing of trips.
      */
@@ -24,8 +33,13 @@ class TripController extends Controller
         } else {
             // Regular users can only see their own trips (as passenger or driver)
             $query->where(function ($q) use ($user) {
-                $q->where('passenger_id', $user->id)
-                  ->orWhere('driver_id', $user->id);
+                if ($user->mobile_user_id) {
+                    $q->where('passenger_id', (int) $user->mobile_user_id);
+                }
+
+                if ($user->driver?->id) {
+                    $q->orWhere('driver_id', (int) $user->driver->id);
+                }
             });
         }
         
@@ -66,6 +80,19 @@ class TripController extends Controller
     public function show(int $id): JsonResponse
     {
         $trip = Trip::findOrFail($id);
+        $user = request()->user();
+
+        if (! $user->role->isSuperAdmin() && ! $user->role->isManager()) {
+            $isPassenger = $user->mobile_user_id && (int) $trip->passenger_id === (int) $user->mobile_user_id;
+            $isDriver = $user->driver?->id && (int) $trip->driver_id === (int) $user->driver->id;
+
+            if (! $isPassenger && ! $isDriver) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Unauthorized to view this trip',
+                ], 403);
+            }
+        }
         
         return response()->json([
             'success' => true,
@@ -124,13 +151,17 @@ class TripController extends Controller
             'fare' => 'required|numeric|min:0',
         ]);
         
+        $passengerMobileUserId = $this->resolvePassengerMobileUserId($user);
+
         $trip = Trip::create([
             ...$validated,
-            'passenger_id' => $user->id,
+            'passenger_id' => $passengerMobileUserId,
             'driver_id' => null,
             'status' => 'PENDING',
             'requested_at' => now(),
         ]);
+
+        app(AITrainingDataLogger::class)->logRideRequest($trip);
         
         return response()->json([
             'success' => true,
@@ -178,7 +209,15 @@ class TripController extends Controller
         $trip->update([
             'driver_id' => $driver->id,
             'status' => 'ACCEPTED',
+            'accepted_at' => now(),
         ]);
+
+        $this->mobileNotificationService->sendRideAcceptedToPassenger($trip->fresh(), $driver);
+
+        app(AITrainingDataLogger::class)->logTripEvent($trip->fresh(), 'driver_assigned', [
+            'driver_id' => $driver->id,
+        ]);
+        app(AITrainingDataLogger::class)->syncRideSnapshot($trip->fresh());
         
         return response()->json([
             'success' => true,
@@ -218,6 +257,11 @@ class TripController extends Controller
             'status' => 'STARTED',
             'started_at' => now(),
         ]);
+
+        $this->mobileNotificationService->sendTripStartedToPassenger($trip->fresh());
+
+        app(AITrainingDataLogger::class)->logTripEvent($trip->fresh(), 'ride_started');
+        app(AITrainingDataLogger::class)->syncRideSnapshot($trip->fresh());
         
         return response()->json([
             'success' => true,
@@ -258,6 +302,11 @@ class TripController extends Controller
             'status' => 'COMPLETED',
             'completed_at' => now(),
         ]);
+
+        $this->mobileNotificationService->sendTripCompletedToPassenger($trip->fresh());
+
+        app(AITrainingDataLogger::class)->logTripEvent($trip->fresh(), 'ride_completed');
+        app(AITrainingDataLogger::class)->syncRideSnapshot($trip->fresh());
         
         return response()->json([
             'success' => true,
@@ -301,6 +350,17 @@ class TripController extends Controller
         $trip->update([
             'status' => 'CANCELLED',
         ]);
+
+        $trip = $trip->fresh();
+        $reason = (string) $request->input('reason', 'cancelled_by_user');
+        $this->mobileNotificationService->sendTripCancelledToPassenger($trip, $reason);
+        $this->mobileNotificationService->sendTripCancelledToDriver($trip, $reason);
+
+        app(AITrainingDataLogger::class)->logTripCancellation(
+            $trip,
+            $user->id,
+            $reason
+        );
         
         return response()->json([
             'success' => true,
@@ -314,6 +374,8 @@ class TripController extends Controller
     public function myTrips(Request $request): JsonResponse
     {
         $user = $request->user();
+        $passengerMobileUserId = $user->mobile_user_id ? (int) $user->mobile_user_id : null;
+        $driverId = $user->driver?->id ? (int) $user->driver->id : null;
         
         $query = Trip::query();
         
@@ -321,13 +383,32 @@ class TripController extends Controller
         $type = $request->get('type', 'all'); // 'passenger', 'driver', or 'all'
         
         if ($type === 'passenger') {
-            $query->where('passenger_id', $user->id);
+            if (! $passengerMobileUserId) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Passenger mobile profile is not linked',
+                ], 422);
+            }
+
+            $query->where('passenger_id', $passengerMobileUserId);
         } elseif ($type === 'driver') {
-            $query->where('driver_id', $user->id);
+            if (! $driverId) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Driver profile not found',
+                ], 422);
+            }
+
+            $query->where('driver_id', $driverId);
         } else {
-            $query->where(function ($q) use ($user) {
-                $q->where('passenger_id', $user->id)
-                  ->orWhere('driver_id', $user->id);
+            $query->where(function ($q) use ($passengerMobileUserId, $driverId) {
+                if ($passengerMobileUserId) {
+                    $q->where('passenger_id', $passengerMobileUserId);
+                }
+
+                if ($driverId) {
+                    $q->orWhere('driver_id', $driverId);
+                }
             });
         }
         
@@ -390,6 +471,25 @@ class TripController extends Controller
                 'fare' => $trip->fare,
                 'requested_at' => $trip->requested_at?->toIso8601String(),
             ]),
+        ]);
+    }
+
+    private function resolvePassengerMobileUserId($user): int
+    {
+        if ($user->mobile_user_id) {
+            return (int) $user->mobile_user_id;
+        }
+
+        $mobileUserId = MobileUser::query()
+            ->where('email', $user->email)
+            ->value('id');
+
+        if ($mobileUserId) {
+            return (int) $mobileUserId;
+        }
+
+        throw ValidationException::withMessages([
+            'user' => 'Passenger mobile profile is not linked. Please contact support.',
         ]);
     }
 }

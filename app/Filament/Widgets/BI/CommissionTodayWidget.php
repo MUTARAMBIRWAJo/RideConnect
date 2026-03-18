@@ -2,14 +2,24 @@
 
 namespace App\Filament\Widgets\BI;
 
+use App\Filament\Support\RoleDashboardConfig;
 use App\Modules\Reporting\Services\ReportingService;
 use Filament\Widgets\StatsOverviewWidget as BaseWidget;
 use Filament\Widgets\StatsOverviewWidget\Stat;
 
 class CommissionTodayWidget extends BaseWidget
 {
-    protected static ?string $pollingInterval = '60s';
     protected static ?int $sort = 2;
+
+    public static function isLazy(): bool
+    {
+        return RoleDashboardConfig::isWidgetLazy(static::class, true);
+    }
+
+    protected function getPollingInterval(): ?string
+    {
+        return RoleDashboardConfig::pollingIntervalForWidget(static::class, '180s');
+    }
 
     protected function getStats(): array
     {

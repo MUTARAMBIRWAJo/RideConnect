@@ -39,17 +39,19 @@ class DriverSeeder extends Seeder
                 ->first();
 
             if ($user) {
-                Driver::create([
-                    'user_id' => $user->id,
-                    'license_number' => $licenseNumbers[$index] ?? 'DL-' . date('Y') . '-' . str_pad($index + 1, 3, '0', STR_PAD_LEFT),
-                    'license_plate' => $licensePlates[$index] ?? 'RAC-' . str_pad($index + 1, 3, '0', STR_PAD_LEFT) . '-A',
-                    'status' => 'approved',
-                    'total_rides' => $totalRides[$index] ?? 0,
-                    'rating' => $ratings[$index] ?? 0.00,
-                    'rating_count' => $ratingCounts[$index] ?? 0,
-                    'balance' => $balances[$index] ?? 0.00,
-                    'approved_at' => now()->subDays($daysAgo[$index] ?? 0),
-                ]);
+                Driver::updateOrCreate(
+                    ['user_id' => $user->id],
+                    [
+                        'license_number' => $licenseNumbers[$index] ?? 'DL-' . date('Y') . '-' . str_pad($index + 1, 3, '0', STR_PAD_LEFT),
+                        'license_plate' => $licensePlates[$index] ?? 'RAC-' . str_pad($index + 1, 3, '0', STR_PAD_LEFT) . '-A',
+                        'status' => 'approved',
+                        'total_rides' => $totalRides[$index] ?? 0,
+                        'rating' => $ratings[$index] ?? 0.00,
+                        'rating_count' => $ratingCounts[$index] ?? 0,
+                        'balance' => $balances[$index] ?? 0.00,
+                        'approved_at' => now()->subDays($daysAgo[$index] ?? 0),
+                    ]
+                );
                 $index++;
             }
         }

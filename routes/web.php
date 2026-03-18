@@ -3,6 +3,7 @@
 use App\Http\Controllers\AuthController;
 use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\Admin\AdminAuthController;
+use App\Http\Controllers\Api\Admin\LiveMapDataController;
 use Illuminate\Support\Facades\Route;
 
 /*
@@ -97,3 +98,8 @@ Route::middleware('auth')->group(function () {
 Route::redirect('/terms-of-service', '/')->name('terms');
 Route::redirect('/privacy-policy', '/')->name('privacy');
 Route::redirect('/forgot-password', '/auth/login')->name('password.request');
+
+// Filament admin live map endpoint (session-authenticated + role-restricted).
+Route::middleware(['auth', 'role:super_admin,admin,officer,accountant'])
+    ->get('/api/map/live-data', [LiveMapDataController::class, 'index'])
+    ->name('api.map.live-data');

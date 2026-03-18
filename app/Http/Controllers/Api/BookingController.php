@@ -5,6 +5,8 @@ namespace App\Http\Controllers\Api;
 use App\Http\Controllers\Controller;
 use App\Models\Booking;
 use App\Models\Ride;
+use App\Services\MobileNotificationService;
+use App\Services\RideCategoryTransitionService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 
@@ -12,11 +14,20 @@ class BookingController extends Controller
 {
     private const TICKET_THRESHOLD_HOURS = 6;
 
+    public function __construct(
+        private readonly RideCategoryTransitionService $rideCategoryTransitionService,
+        private readonly MobileNotificationService $mobileNotificationService,
+    )
+    {
+    }
+
     /**
      * Display a listing of bookings.
      */
     public function index(Request $request): JsonResponse
     {
+        $this->rideCategoryTransitionService->promoteEligibleBookingsToTrips();
+
         $user = $request->user();
         
         $query = Booking::with(['ride.driver.user', 'user', 'payment']);
@@ -81,6 +92,8 @@ class BookingController extends Controller
      */
     public function show(int $id): JsonResponse
     {
+        $this->rideCategoryTransitionService->promoteEligibleBookingsToTrips();
+
         $booking = Booking::with(['ride.driver.user', 'ride.vehicle', 'user', 'payment', 'review'])->findOrFail($id);
         
         return response()->json([
@@ -207,6 +220,24 @@ class BookingController extends Controller
         
         // Calculate total price
         $totalPrice = $ride->price_per_seat * $validated['seats_booked'];
+
+        if ($this->rideCategoryTransitionService->isTripCategory($ride)) {
+            $trip = $this->rideCategoryTransitionService->createTripFromRideSelection($user, $ride, [
+                ...$validated,
+                'total_price' => $totalPrice,
+            ]);
+
+            return response()->json([
+                'success' => true,
+                'message' => 'Trip request created successfully',
+                'data' => [
+                    'id' => $trip->id,
+                    'status' => $trip->status,
+                    'travel_type' => 'TRIP',
+                    'hours_to_departure' => round(now()->diffInMinutes($ride->departure_time, false) / 60, 2),
+                ],
+            ], 201);
+        }
         
         // Create booking
         $booking = Booking::create([
@@ -224,6 +255,8 @@ class BookingController extends Controller
             'dropoff_lng' => $validated['dropoff_lng'],
             'special_requests' => $validated['special_requests'] ?? null,
         ]);
+
+        $this->mobileNotificationService->sendBookingRequestToDriver($booking->loadMissing('ride.driver'));
         
         return response()->json([
             'success' => true,
@@ -302,9 +335,12 @@ class BookingController extends Controller
     {
         $booking = Booking::findOrFail($id);
         $user = $request->user();
+        $ride = $booking->ride()->with('driver')->first();
+        $driverUserId = $ride?->driver?->user_id;
+        $isDriver = $driverUserId && (int) $driverUserId === (int) $user->id;
         
         // Only the booking owner or SuperAdmin can cancel
-        if ($booking->user_id !== $user->id && !$user->role->isSuperAdmin()) {
+        if ($booking->user_id !== $user->id && ! $isDriver && !$user->role->isSuperAdmin()) {
             return response()->json([
                 'success' => false,
                 'message' => 'Unauthorized to cancel this booking',
@@ -332,6 +368,11 @@ class BookingController extends Controller
         // Restore available seats on the ride
         $ride = $booking->ride;
         $ride->increment('available_seats', $booking->seats_booked);
+
+        $booking->loadMissing('ride.driver');
+        $actor = $isDriver ? 'driver' : 'passenger';
+        $this->mobileNotificationService->sendBookingCancelledToPassenger($booking, $actor);
+        $this->mobileNotificationService->sendBookingCancelledToDriver($booking, $actor);
         
         return response()->json([
             'success' => true,
@@ -344,6 +385,8 @@ class BookingController extends Controller
      */
     public function myBookings(Request $request): JsonResponse
     {
+        $this->rideCategoryTransitionService->promoteEligibleBookingsToTrips();
+
         $user = $request->user();
         
         $query = Booking::with(['ride.driver.user', 'payment'])
@@ -419,6 +462,8 @@ class BookingController extends Controller
         
         // Reduce available seats
         $booking->ride->decrement('available_seats', $booking->seats_booked);
+
+        $this->mobileNotificationService->sendBookingConfirmedToPassenger($booking);
         
         return response()->json([
             'success' => true,
@@ -445,12 +490,12 @@ class BookingController extends Controller
             return 'BOOKING';
         }
 
-        return $hoursToDeparture <= self::TICKET_THRESHOLD_HOURS ? 'TICKET' : 'BOOKING';
+        return $hoursToDeparture <= self::TICKET_THRESHOLD_HOURS ? 'TRIP' : 'BOOKING';
     }
 
     private function resolveTicketStatus(Booking $booking): ?string
     {
-        if ($this->resolveTravelType($booking) !== 'TICKET') {
+        if ($this->resolveTravelType($booking) !== 'TRIP') {
             return null;
         }
 

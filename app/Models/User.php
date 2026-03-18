@@ -183,4 +183,12 @@ class User extends Authenticatable
     {
         return $this->hasMany(Trip::class, 'passenger_id');
     }
+
+    /**
+     * Get registered mobile push tokens for this user.
+     */
+    public function mobileDeviceTokens()
+    {
+        return $this->hasMany(MobileDeviceToken::class);
+    }
 }

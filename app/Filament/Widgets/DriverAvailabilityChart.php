@@ -2,6 +2,7 @@
 
 namespace App\Filament\Widgets;
 
+use App\Filament\Support\RoleDashboardConfig;
 use Filament\Widgets\Widget;
 use App\Models\Driver;
 use Illuminate\Support\Facades\Schema;
@@ -14,6 +15,16 @@ class DriverAvailabilityChart extends Widget
         'md' => 1,
         'xl' => 1,
     ];
+
+    public static function isLazy(): bool
+    {
+        return RoleDashboardConfig::isWidgetLazy(static::class, true);
+    }
+
+    protected function getPollingInterval(): ?string
+    {
+        return RoleDashboardConfig::pollingIntervalForWidget(static::class, '120s');
+    }
 
     protected function getViewData(): array
     {

@@ -10,6 +10,8 @@ use App\Http\Controllers\Api\PassengerController;
 use App\Http\Controllers\Api\RiderController;
 use App\Http\Controllers\Api\PaymentController;
 use App\Http\Controllers\Api\TicketController;
+use App\Http\Controllers\Api\MobileNotificationController;
+use App\Http\Controllers\Api\DeviceTokenController;
 use App\Http\Controllers\API\DriverLocationController;
 use App\Http\Controllers\Api\Admin\UserApprovalController as UserApprovalController;
 use App\Http\Controllers\Api\Admin\UserManagementController;
@@ -23,6 +25,7 @@ use App\Http\Controllers\Api\Finance\ExportController;
 use App\Http\Controllers\Api\Accountant\PayoutController;
 use App\Http\Controllers\Api\Analytics\AnalyticsController;
 use App\Http\Controllers\Api\HealthCheckController;
+use App\Http\Controllers\Api\AIController;
 use App\Http\Controllers\Api\Webhooks\StripeWebhookController;
 use App\Http\Controllers\Api\Webhooks\MTNWebhookController;
 use App\Models\Manager;
@@ -116,6 +119,8 @@ Route::prefix('v1')->group(function () {
             Route::get('/rides/available', [RideController::class, 'index']);
             Route::post('/rides', [RideController::class, 'bookRide']);
             Route::get('/rides', [PassengerController::class, 'rideHistory']);
+            Route::get('/drivers/online', [PassengerController::class, 'onlineDrivers']);
+            Route::post('/ride-requests', [PassengerController::class, 'requestRide']);
             
             // Ride History
             Route::get('/rides/history', [PassengerController::class, 'rideHistory']);
@@ -124,7 +129,16 @@ Route::prefix('v1')->group(function () {
 
             // Bookings
             Route::get('/bookings', [BookingController::class, 'index']);
+            Route::get('/bookings/my', [BookingController::class, 'myBookings']);
             Route::get('/bookings/{id}', [BookingController::class, 'show']);
+            Route::post('/bookings', [BookingController::class, 'store']);
+            Route::put('/bookings/{id}', [BookingController::class, 'update']);
+            Route::put('/bookings/{id}/cancel', [BookingController::class, 'cancel']);
+
+            // Trips
+            Route::get('/trips', [TripController::class, 'myTrips']);
+            Route::get('/trips/{id}', [TripController::class, 'show'])->whereNumber('id');
+            Route::put('/trips/{id}/cancel', [TripController::class, 'cancel'])->whereNumber('id');
             
             // Payments
             Route::post('/payments', [PaymentController::class, 'createPayment']);
@@ -148,7 +162,15 @@ Route::prefix('v1')->group(function () {
 
             // Operational data
             Route::get('/bookings', [DriverController::class, 'bookings']);
+            Route::put('/bookings/{id}/confirm', [BookingController::class, 'confirm']);
+            Route::put('/bookings/{id}/cancel', [BookingController::class, 'cancel']);
             Route::get('/trips', [DriverController::class, 'myTrips']);
+            Route::get('/trip-requests', [RiderController::class, 'rideRequests']);
+            Route::put('/trip-requests/{id}/accept', [RiderController::class, 'acceptRequest']);
+            Route::put('/trip-requests/{id}/reject', [RiderController::class, 'rejectRequest']);
+            Route::put('/trip-requests/{id}/complete', [RiderController::class, 'completeRequest']);
+            Route::put('/trips/{id}/start', [TripController::class, 'start']);
+            Route::put('/trips/{id}/cancel', [TripController::class, 'cancel']);
             Route::put('/status', [RiderController::class, 'updateStatus']);
             Route::get('/requests', [RiderController::class, 'rideRequests']);
             Route::put('/requests/{id}/accept', [RiderController::class, 'acceptRequest']);
@@ -191,6 +213,32 @@ Route::prefix('v1')->group(function () {
         // User Profile (alias for /auth/profile)
         Route::get('/user/profile', [ApiAuthController::class, 'profile']);
         Route::put('/user/password', [UserController::class, 'updatePassword']);
+
+        // Mobile app notifications (driver/passenger)
+        Route::get('/notifications', [MobileNotificationController::class, 'index']);
+        Route::get('/notifications/unread-count', [MobileNotificationController::class, 'unreadCount']);
+        Route::put('/notifications/{id}/read', [MobileNotificationController::class, 'markAsRead']);
+        Route::put('/notifications/read-all', [MobileNotificationController::class, 'markAllAsRead']);
+
+        // Mobile push token registration (FCM/APNs)
+        Route::post('/devices/push-token', [DeviceTokenController::class, 'store']);
+        Route::delete('/devices/push-token/{token}', [DeviceTokenController::class, 'destroy']);
+
+        // Internal AI integration endpoints
+        Route::prefix('ai')->group(function () {
+            Route::post('/match-driver', [AIController::class, 'matchDriver']);
+            Route::post('/predict-eta', [AIController::class, 'predictETA']);
+            Route::post('/predict-demand', [AIController::class, 'predictDemand']);
+            Route::post('/calculate-surge', [AIController::class, 'calculateSurge']);
+            Route::post('/optimize-route', [AIController::class, 'optimizeRoute']);
+            Route::post('/analyze-driver', [AIController::class, 'analyzeDriver']);
+            Route::post('/detect-fare-anomaly', [AIController::class, 'detectFareAnomaly']);
+            Route::get('/driver-redistribution', [AIController::class, 'driverRedistribution']);
+            Route::post('/route-monitor', [AIController::class, 'routeMonitor']);
+            Route::get('/driver-idle', [AIController::class, 'driverIdle']);
+            Route::get('/cancellation-anomalies', [AIController::class, 'cancellationAnomalies']);
+            Route::get('/system-health', [AIController::class, 'systemHealth']);
+        });
     });
 
     /* ===========================

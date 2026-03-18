@@ -4,7 +4,7 @@
         "Read more about it at https://getcomposer.org/doc/01-basic-usage.md#installing-dependencies",
         "This file is @generated automatically"
     ],
-    "content-hash": "1da20190eaab514657015f90d8c4b5b7",
+    "content-hash": "bc72394ac3491eb635e7d87a7a0658a4",
     "packages": [
         {
             "name": "anourvalar/eloquent-serialize",
@@ -8449,6 +8449,39 @@
             "time": "2025-12-02T11:56:42+00:00"
         },
         {
+            "name": "ttanai/laramap",
+            "version": "dev-master",
+            "source": {
+                "type": "git",
+                "url": "https://github.com/ttanai/laramap.git",
+                "reference": "1ce4e5d6bc42d8ddc7bd4070502bfb7d8238f3f7"
+            },
+            "dist": {
+                "type": "zip",
+                "url": "https://api.github.com/repos/ttanai/laramap/zipball/1ce4e5d6bc42d8ddc7bd4070502bfb7d8238f3f7",
+                "reference": "1ce4e5d6bc42d8ddc7bd4070502bfb7d8238f3f7",
+                "shasum": ""
+            },
+            "default-branch": true,
+            "type": "library",
+            "notification-url": "https://packagist.org/downloads/",
+            "license": [
+                "MIT"
+            ],
+            "authors": [
+                {
+                    "name": "Tamas Tanai",
+                    "email": "thomas.tanai@gmail.com"
+                }
+            ],
+            "description": "Laramap",
+            "support": {
+                "issues": "https://github.com/ttanai/laramap/issues",
+                "source": "https://github.com/ttanai/laramap/tree/master"
+            },
+            "time": "2016-03-04T12:57:59+00:00"
+        },
+        {
             "name": "vlucas/phpdotenv",
             "version": "v5.6.3",
             "source": {
@@ -10987,7 +11020,9 @@
     ],
     "aliases": [],
     "minimum-stability": "stable",
-    "stability-flags": {},
+    "stability-flags": {
+        "ttanai/laramap": 20
+    },
     "prefer-stable": true,
     "prefer-lowest": false,
     "platform": {

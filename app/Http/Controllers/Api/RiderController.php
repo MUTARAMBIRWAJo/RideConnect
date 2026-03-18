@@ -8,6 +8,7 @@ use App\Models\Ride;
 use App\Models\Trip;
 use App\Models\Payment;
 use App\Models\DriverDocument;
+use App\Services\MobileNotificationService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
@@ -15,6 +16,10 @@ use Illuminate\Support\Facades\Storage;
 
 class RiderController extends Controller
 {
+    public function __construct(private readonly MobileNotificationService $mobileNotificationService)
+    {
+    }
+
     /**
      * Update rider availability status.
         * PUT /api/v1/driver/status
@@ -92,6 +97,10 @@ class RiderController extends Controller
 
         // Get pending requests in driver's area (simplified - should use spatial queries)
         $requests = Trip::where('status', 'PENDING')
+            ->where(function ($query) use ($driver) {
+                $query->where('driver_id', $driver->id)
+                    ->orWhereNull('driver_id');
+            })
             ->with(['passenger.user'])
             ->orderBy('requested_at', 'desc')
             ->limit(50)
@@ -147,6 +156,13 @@ class RiderController extends Controller
 
         $trip = Trip::findOrFail($id);
 
+        if ($trip->driver_id !== null && (int) $trip->driver_id !== (int) $driver->id) {
+            return response()->json([
+                'success' => false,
+                'message' => 'This ride request is assigned to another driver',
+            ], 403);
+        }
+
         if ($trip->status !== 'PENDING') {
             return response()->json([
                 'success' => false,
@@ -168,6 +184,8 @@ class RiderController extends Controller
             'status' => 'ACCEPTED',
             'accepted_at' => now(),
         ]);
+
+        $this->mobileNotificationService->sendRideAcceptedToPassenger($trip->fresh(), $driver);
 
         return response()->json([
             'success' => true,
@@ -201,6 +219,21 @@ class RiderController extends Controller
 
         $trip = Trip::findOrFail($id);
 
+        $driver = $user->driver;
+        if (! $driver) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Driver profile not found',
+            ], 404);
+        }
+
+        if ($trip->driver_id !== null && (int) $trip->driver_id !== (int) $driver->id) {
+            return response()->json([
+                'success' => false,
+                'message' => 'This ride request is assigned to another driver',
+            ], 403);
+        }
+
         if ($trip->status !== 'PENDING') {
             return response()->json([
                 'success' => false,
@@ -212,7 +245,14 @@ class RiderController extends Controller
         $trip->update([
             'rejection_reason' => $validated['reason'] ?? null,
             'rejected_at' => now(),
+            'driver_id' => null,
         ]);
+
+        $this->mobileNotificationService->sendRideRejectedToPassenger(
+            $trip->fresh(),
+            $driver,
+            (string) ($validated['reason'] ?? '')
+        );
 
         return response()->json([
             'success' => true,
@@ -282,6 +322,8 @@ class RiderController extends Controller
         $driver->update([
             'total_rides' => $driver->total_rides + 1,
         ]);
+
+        $this->mobileNotificationService->sendTripCompletedToPassenger($trip->fresh());
 
         return response()->json([
             'success' => true,

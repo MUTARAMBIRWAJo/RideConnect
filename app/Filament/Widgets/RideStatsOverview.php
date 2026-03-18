@@ -2,6 +2,7 @@
 
 namespace App\Filament\Widgets;
 
+use App\Filament\Support\RoleDashboardConfig;
 use Filament\Widgets\Widget;
 use App\Models\Ride;
 use App\Models\Driver;
@@ -12,6 +13,16 @@ class RideStatsOverview extends Widget
     protected static string $view = 'filament.widgets.ride-stats-overview';
 
     protected int | string | array $columnSpan = 'full';
+
+    public static function isLazy(): bool
+    {
+        return RoleDashboardConfig::isWidgetLazy(static::class, false);
+    }
+
+    protected function getPollingInterval(): ?string
+    {
+        return RoleDashboardConfig::pollingIntervalForWidget(static::class, '90s');
+    }
 
     protected function getViewData(): array
     {

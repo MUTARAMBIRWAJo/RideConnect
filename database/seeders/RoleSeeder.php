@@ -44,18 +44,19 @@ class RoleSeeder extends Seeder
             ->values()
             ->all();
 
-        foreach ($allPermissions as $permissionName) {
-            Permission::findOrCreate($permissionName, 'web');
-        }
+        $storedPermissions = collect($allPermissions)
+            ->mapWithKeys(fn (string $permissionName) => [
+                $permissionName => Permission::findOrCreate($permissionName, 'web'),
+            ]);
 
         $superAdmin = Role::findOrCreate('Super_admin', 'web');
         $admin = Role::findOrCreate('Admin', 'web');
         $accountant = Role::findOrCreate('Accountant', 'web');
         $officer = Role::findOrCreate('Officer', 'web');
 
-        $superAdmin->syncPermissions($allPermissions);
+        $superAdmin->syncPermissions($storedPermissions->values()->all());
 
-        $admin->syncPermissions([
+        $admin->syncPermissions($storedPermissions->only([
             'view users',
             'create users',
             'edit users',
@@ -65,22 +66,22 @@ class RoleSeeder extends Seeder
             'view performance metrics',
             'view demand forecasts',
             'manage tickets',
-        ]);
+        ])->values()->all());
 
-        $accountant->syncPermissions([
+        $accountant->syncPermissions($storedPermissions->only([
             'view finances',
             'export finances',
             'view performance metrics',
-        ]);
+        ])->values()->all());
 
-        $officer->syncPermissions([
+        $officer->syncPermissions($storedPermissions->only([
             'view users',
             'create users',
             'edit users',
             'view rides',
             'manage rides',
             'manage tickets',
-        ]);
+        ])->values()->all());
 
         $roleMap = [
             UserRole::SUPER_ADMIN->value => 'Super_admin',

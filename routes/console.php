@@ -44,3 +44,17 @@ Schedule::job(new NightlyWarehouseEtlJob(Carbon::yesterday()->toDateString()))
     })
     ->name('etl-nightly');
 
+// Trigger independent AI model retraining from platform data every night.
+Schedule::command('ai:retrain-models')
+    ->dailyAt('03:00')
+    ->withoutOverlapping()
+    ->onOneServer()
+    ->name('ai-retrain-models');
+
+// Continuously enforce ride category transitions from bookings to trips.
+Schedule::command('rides:promote-bookings-to-trips')
+    ->everyFiveMinutes()
+    ->withoutOverlapping()
+    ->onOneServer()
+    ->name('promote-eligible-bookings-to-trips');
+

@@ -5,6 +5,8 @@ namespace App\Http\Controllers\Api;
 use App\Http\Controllers\Controller;
 use App\Models\Ride;
 use App\Models\User;
+use App\Services\MobileNotificationService;
+use App\Services\RideCategoryTransitionService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
@@ -12,6 +14,13 @@ use Illuminate\Support\Facades\Auth;
 class RideController extends Controller
 {
     private const TICKET_THRESHOLD_HOURS = 6;
+
+    public function __construct(
+        private readonly RideCategoryTransitionService $rideCategoryTransitionService,
+        private readonly MobileNotificationService $mobileNotificationService,
+    )
+    {
+    }
 
     /**
      * Display a listing of rides.
@@ -237,6 +246,7 @@ class RideController extends Controller
     {
         $ride = Ride::findOrFail($id);
         $user = $request->user();
+        $originalDepartureTime = $ride->departure_time;
         
         // Only the driver who created the ride can update it
         if ($ride->driver?->user_id !== $user->id && !$user->role->isSuperAdmin()) {
@@ -276,6 +286,11 @@ class RideController extends Controller
         }
         
         $ride->update($validated);
+
+        if (array_key_exists('departure_time', $validated)
+            || ($originalDepartureTime && $this->rideCategoryTransitionService->isTripCategory($ride))) {
+            $this->rideCategoryTransitionService->promoteEligibleBookingsToTrips($ride);
+        }
         
         return response()->json([
             'success' => true,
@@ -408,6 +423,30 @@ class RideController extends Controller
         // Calculate price
         $totalPrice = $ride->price_per_seat * $validated['seats'];
 
+        if ($this->rideCategoryTransitionService->isTripCategory($ride)) {
+            $trip = $this->rideCategoryTransitionService->createTripFromRideSelection($user, $ride, [
+                'pickup_address' => $validated['pickup_address'],
+                'dropoff_address' => $validated['dropoff_address'],
+                'seats' => $validated['seats'],
+                'total_price' => $totalPrice,
+            ]);
+
+            if ($ride->driver) {
+                $this->mobileNotificationService->sendRideRequestToDriver($trip, $ride->driver);
+            }
+
+            return response()->json([
+                'success' => true,
+                'message' => 'Trip request created successfully',
+                'data' => [
+                    'id' => $trip->id,
+                    'status' => $trip->status,
+                    'hours_to_departure' => round(now()->diffInMinutes($ride->departure_time, false) / 60, 2),
+                    'travel_type' => 'TRIP',
+                ],
+            ], 201);
+        }
+
         // Create booking
         $booking = \App\Models\Booking::create([
             'user_id' => $user->id,
@@ -419,6 +458,8 @@ class RideController extends Controller
             'status' => 'PENDING',
         ]);
 
+        $this->mobileNotificationService->sendBookingRequestToDriver($booking->loadMissing('ride.driver'));
+
         return response()->json([
             'success' => true,
             'message' => 'Ride booked successfully',
@@ -429,7 +470,7 @@ class RideController extends Controller
                 'total_price' => $booking->total_price,
                 'status' => $booking->status,
                 'hours_to_departure' => round(now()->diffInMinutes($ride->departure_time, false) / 60, 2),
-                'travel_type' => now()->diffInHours($ride->departure_time, false) <= self::TICKET_THRESHOLD_HOURS ? 'TICKET' : 'BOOKING',
+                'travel_type' => now()->diffInHours($ride->departure_time, false) <= self::TICKET_THRESHOLD_HOURS ? 'TRIP' : 'BOOKING',
             ],
         ], 201);
     }

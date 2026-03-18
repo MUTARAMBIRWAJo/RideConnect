@@ -2,37 +2,37 @@
 
 namespace App\Filament\Widgets\BI;
 
+use App\Filament\Support\RoleDashboardConfig;
+use App\Models\Driver;
 use App\Modules\Reporting\Services\ReportingService;
+use Illuminate\Contracts\Pagination\Paginator;
+use Illuminate\Database\Eloquent\Collection as EloquentCollection;
 use Filament\Tables;
 use Filament\Tables\Table;
 use Filament\Widgets\TableWidget as BaseWidget;
 
 class TopDriversLeaderboardWidget extends BaseWidget
 {
-    protected static ?string $pollingInterval = '300s';
     protected static ?int $sort = 4;
     protected int | string | array $columnSpan = 'full';
     protected static ?string $heading = 'Top Drivers — This Month';
 
+    public static function isLazy(): bool
+    {
+        return RoleDashboardConfig::isWidgetLazy(static::class, true);
+    }
+
+    protected function getPollingInterval(): ?string
+    {
+        return RoleDashboardConfig::pollingIntervalForWidget(static::class, '600s');
+    }
+
     public function table(Table $table): Table
     {
-        /** @var ReportingService $reporting */
-        $reporting = app(ReportingService::class);
-        $rankings  = $reporting->getDriverRankings();
-
-        $rows = collect($rankings)->map(fn ($r, $i) => [
-            'rank'         => $i + 1,
-            'driver_id'    => $r['driver_id'] ?? 'N/A',
-            'driver_name'  => $r['driver_name'] ?? 'Unknown',
-            'total_rides'  => number_format($r['total_rides'] ?? 0),
-            'total_earned' => 'RWF ' . number_format($r['total_earned'] ?? 0),
-            'avg_rating'   => number_format($r['avg_rating'] ?? 0, 2),
-        ]);
-
         return $table
             ->query(
                 // Use a raw in-memory approach; suppress actual DB query.
-                \App\Models\Driver::query()->whereRaw('1=0')
+                Driver::query()->whereRaw('1=0')
             )
             ->columns([
                 Tables\Columns\TextColumn::make('rank')->label('#'),
@@ -45,12 +45,31 @@ class TopDriversLeaderboardWidget extends BaseWidget
             ->emptyStateDescription('Run the nightly ETL job to populate driver rankings.');
     }
 
-    public function getTableRecords(): \Illuminate\Contracts\Pagination\Paginator|\Illuminate\Database\Eloquent\Collection
+    public function getTableRecords(): Paginator|EloquentCollection
     {
         /** @var ReportingService $reporting */
         $reporting = app(ReportingService::class);
         $rankings  = $reporting->getDriverRankings();
 
-        return collect($rankings)->values();
+        $records = collect($rankings)
+            ->values()
+            ->map(function (array $row, int $index): Driver {
+                $model = new Driver();
+
+                // Feed table rows from warehouse projections while honoring Eloquent return type.
+                $model->forceFill([
+                    'rank' => $index + 1,
+                    'driver_id' => $row['driver_id'] ?? 'N/A',
+                    'driver_name' => $row['driver_name'] ?? 'Unknown',
+                    'total_rides' => number_format((int) ($row['total_rides'] ?? 0)),
+                    'total_earned' => 'RWF ' . number_format((float) ($row['total_earned'] ?? 0)),
+                    'avg_rating' => number_format((float) ($row['avg_rating'] ?? 0), 2),
+                ]);
+
+                return $model;
+            })
+            ->all();
+
+        return new EloquentCollection($records);
     }
 }

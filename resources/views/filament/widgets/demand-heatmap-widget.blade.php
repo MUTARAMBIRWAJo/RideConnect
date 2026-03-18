@@ -1,11 +1,11 @@
-<div class="fi-section p-6 rounded-2xl">
-  <div class="flex items-center justify-between mb-4">
+<div class="fi-section rounded-2xl p-4 sm:p-6">
+  <div class="mb-4 flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
     <div>
       <h3 class="text-lg font-semibold text-gray-900 dark:text-white">AI Demand Heatmap — Kigali</h3>
       <div class="text-sm text-gray-500 dark:text-gray-300">Predicted demand in next 30 minutes</div>
     </div>
     @php($activeDriversCounterId = 'active-drivers-counter-' . uniqid())
-    <div class="flex items-center gap-2 text-xs text-gray-500">
+    <div class="flex flex-wrap items-center gap-2 text-xs text-gray-500">
       <span id="{{ $activeDriversCounterId }}" class="px-2 py-1 rounded-full bg-green-100 text-green-800 dark:bg-green-900/40 dark:text-green-200 font-semibold">Active Drivers: 0</span>
       <span class="w-3 h-3 rounded-full bg-blue-100 inline-block"></span> Low
       <span class="w-3 h-3 rounded-full bg-amber-100 inline-block ml-3"></span> Medium
@@ -40,14 +40,14 @@
         data-demand-endpoint="{{ url('/api/admin/demand-heatmap') }}"
         data-live-requests-endpoint="{{ url('/api/admin/live-requests') }}"
         data-route-history-template="{{ url('/api/admin/rides/__RIDE__/route-history') }}"
-        data-refresh-ms="5000"
+        data-refresh-ms="15000"
         data-kigali-lat="-1.9441"
         data-kigali-lng="30.0619"
       ></div>
 
       <div id="{{ $mapId }}-status" class="hidden px-3 py-2 text-xs text-amber-700 bg-amber-50 border-t border-amber-200"></div>
 
-      <div class="p-3 border-t border-gray-200 dark:border-gray-700 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-2">
+      <div class="grid grid-cols-1 gap-2 border-t border-gray-200 p-3 sm:grid-cols-2 lg:grid-cols-3 dark:border-gray-700">
         <button id="{{ $toggleDriversId }}" type="button" class="w-full cursor-pointer px-3 py-1.5 text-xs rounded-md border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-200">Toggle Drivers</button>
         <button id="{{ $togglePassengersId }}" type="button" class="w-full cursor-pointer px-3 py-1.5 text-xs rounded-md border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-200">Toggle Passengers</button>
         <button id="{{ $toggleHeatmapId }}" type="button" class="w-full cursor-pointer px-3 py-1.5 text-xs rounded-md border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-200">Show Demand Heatmap</button>
@@ -79,10 +79,11 @@
     </div>
 
     <div class="space-y-4">
-      <div class="fi-section p-4 rounded-lg">
+      <div class="fi-section rounded-lg p-4">
         <h4 class="text-sm font-medium text-gray-900 dark:text-white">Driver Availability</h4>
-        <div class="mt-3">
-          <canvas id="driverAvailabilityDonutSmall" style="max-width:220px"></canvas>
+        @php($smallDonutId = 'driverAvailabilityDonutSmall-' . uniqid())
+        <div class="mt-3 h-[220px] w-full max-w-[280px]">
+          <canvas id="{{ $smallDonutId }}" class="h-full w-full"></canvas>
         </div>
       </div>
 
@@ -98,10 +99,16 @@
   <script src="https://unpkg.com/@googlemaps/markerclusterer/dist/index.min.js"></script>
   <script>
     (function(){
-      const ctx = document.getElementById('driverAvailabilityDonutSmall');
+      const chartId = '{{ $smallDonutId }}';
+      const ctx = document.getElementById(chartId);
       if(!ctx) return;
       try{
-        new Chart(ctx.getContext('2d'), {
+        window.__rideConnectCharts = window.__rideConnectCharts || {};
+        if (window.__rideConnectCharts[chartId]) {
+          window.__rideConnectCharts[chartId].destroy();
+        }
+
+        window.__rideConnectCharts[chartId] = new Chart(ctx.getContext('2d'), {
           type: 'doughnut',
           data: { labels:['Available','Busy','Offline'], datasets:[{ data:[{{ $available ?? 0 }}, {{ $busy ?? 0 }}, {{ $offline ?? 0 }}], backgroundColor:['var(--color-success)','var(--color-primary)','var(--color-muted)'] }]},
           options: { responsive:true, maintainAspectRatio:false, plugins:{legend:{position:'bottom'}} }

@@ -76,4 +76,22 @@ return [
         'key' => env('GOOGLE_MAPS_API_KEY'),
     ],
 
+    'ride_ai' => [
+        'base_url' => env('RIDE_AI_BASE_URL', 'http://ai-service:8001'),
+        'api_key' => env('RIDE_AI_API_KEY'),
+        'timeout' => env('RIDE_AI_TIMEOUT', 5),
+    ],
+
+    'push' => [
+        // FCM legacy server key (or use your own gateway if preferred).
+        'fcm_server_key' => env('FCM_SERVER_KEY'),
+
+        // APNs token-based auth (.p8 key content can be stored inline with escaped newlines).
+        'apns_key_id' => env('APNS_KEY_ID'),
+        'apns_team_id' => env('APNS_TEAM_ID'),
+        'apns_bundle_id' => env('APNS_BUNDLE_ID'),
+        'apns_private_key' => env('APNS_PRIVATE_KEY'),
+        'apns_use_sandbox' => env('APNS_USE_SANDBOX', true),
+    ],
+
 ];

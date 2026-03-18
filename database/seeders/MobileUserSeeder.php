@@ -16,15 +16,19 @@ class MobileUserSeeder extends Seeder
      */
     public function run(): void
     {
+        if (DB::getDriverName() === 'pgsql') {
+            DB::statement("SELECT setval(pg_get_serial_sequence('mobile_users','id'), COALESCE((SELECT MAX(id) FROM mobile_users), 0) + 1, false)");
+        }
+
         $mobileUsers = [
             // Drivers
             [
                 'first_name' => 'Jean',
                 'last_name' => 'Mugabo',
-                'phone' => '+250788100001',
+                'phone' => '+250780126094',
                 'email' => 'jean.mugabo@example.com',
                 'password' => Hash::make('password123'),
-                'role' => 'DRIVER',
+                'role' => 'PASSENGER',
                 'profile_photo' => 'profiles/jean_mugabo.jpg',
                 'is_verified' => true,
                 'created_at' => now()->subDays(60),
@@ -141,8 +145,30 @@ class MobileUserSeeder extends Seeder
             ],
         ];
 
+        $existingIdsByEmail = DB::table('mobile_users')
+            ->whereIn('email', array_column($mobileUsers, 'email'))
+            ->pluck('id', 'email')
+            ->all();
+
+        $nextId = (int) (DB::table('mobile_users')->max('id') ?? 0);
+        $rows = [];
+
         foreach ($mobileUsers as $user) {
-            DB::table('mobile_users')->insert($user);
+            $email = $user['email'];
+            $rows[] = [
+                'id' => $existingIdsByEmail[$email] ?? ++$nextId,
+                ...$user,
+            ];
+        }
+
+        DB::table('mobile_users')->upsert(
+            $rows,
+            ['email'],
+            ['first_name', 'last_name', 'phone', 'password', 'role', 'profile_photo', 'is_verified', 'updated_at']
+        );
+
+        if (DB::getDriverName() === 'pgsql') {
+            DB::statement("SELECT setval(pg_get_serial_sequence('mobile_users','id'), COALESCE((SELECT MAX(id) FROM mobile_users), 0) + 1, false)");
         }
     }
 }

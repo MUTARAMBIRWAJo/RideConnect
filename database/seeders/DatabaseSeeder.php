@@ -8,6 +8,8 @@ use App\Models\Manager;
 use Illuminate\Database\Console\Seeds\WithoutModelEvents;
 use Illuminate\Database\Seeder;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Schema;
+use Throwable;
 
 class DatabaseSeeder extends Seeder
 {
@@ -18,57 +20,29 @@ class DatabaseSeeder extends Seeder
      */
     public function run(): void
     {
-        // Truncate all tables in the correct order (respecting foreign keys)
-        // --- Fintech architecture tables (must come before core tables) ---
-        DB::statement('TRUNCATE TABLE ledger_entries CASCADE');
-        DB::statement('TRUNCATE TABLE ledger_transactions CASCADE');
-        DB::statement('TRUNCATE TABLE ledger_accounts CASCADE');
-        DB::statement('TRUNCATE TABLE fraud_flags CASCADE');
-        DB::statement('TRUNCATE TABLE platform_commissions CASCADE');
-        DB::statement('TRUNCATE TABLE driver_payouts CASCADE');
-        // --- Core tables ---
-        DB::statement('TRUNCATE TABLE activity_logs CASCADE');
-        DB::statement('TRUNCATE TABLE tickets CASCADE');
-        DB::statement('TRUNCATE TABLE driver_earnings CASCADE');
-        DB::statement('TRUNCATE TABLE payments_v2 CASCADE');
-        DB::statement('TRUNCATE TABLE trips CASCADE');
-        DB::statement('TRUNCATE TABLE vehicles_v2 CASCADE');
-        DB::statement('TRUNCATE TABLE reviews CASCADE');
-        DB::statement('TRUNCATE TABLE payments CASCADE');
-        DB::statement('TRUNCATE TABLE bookings CASCADE');
-        DB::statement('TRUNCATE TABLE rides CASCADE');
-        DB::statement('TRUNCATE TABLE vehicles CASCADE');
-        DB::statement('TRUNCATE TABLE drivers CASCADE');
-        DB::statement('TRUNCATE TABLE notifications CASCADE');
-        DB::statement('TRUNCATE TABLE driver_locations CASCADE');
-        DB::statement('TRUNCATE TABLE mobile_users CASCADE');
-        DB::statement('TRUNCATE TABLE managers CASCADE');
-        DB::statement('TRUNCATE TABLE users CASCADE');
+        $resumeMode = (bool) env('DB_SEED_RESUME', false);
+        $skipReset = (bool) env('DB_SEED_SKIP_RESET', false);
 
-        // Reset all sequences
-        DB::statement('ALTER SEQUENCE users_id_seq RESTART WITH 1');
-        DB::statement('ALTER SEQUENCE drivers_id_seq RESTART WITH 1');
-        DB::statement('ALTER SEQUENCE vehicles_id_seq RESTART WITH 1');
-        DB::statement('ALTER SEQUENCE rides_id_seq RESTART WITH 1');
-        DB::statement('ALTER SEQUENCE bookings_id_seq RESTART WITH 1');
-        DB::statement('ALTER SEQUENCE payments_id_seq RESTART WITH 1');
-        DB::statement('ALTER SEQUENCE reviews_id_seq RESTART WITH 1');
-        DB::statement('ALTER SEQUENCE notifications_id_seq RESTART WITH 1');
-        DB::statement('ALTER SEQUENCE driver_locations_id_seq RESTART WITH 1');
-        DB::statement('ALTER SEQUENCE mobile_users_id_seq RESTART WITH 1');
-        DB::statement('ALTER SEQUENCE managers_id_seq RESTART WITH 1');
-        DB::statement('ALTER SEQUENCE vehicles_v2_id_seq RESTART WITH 1');
-        DB::statement('ALTER SEQUENCE trips_id_seq RESTART WITH 1');
-        DB::statement('ALTER SEQUENCE payments_v2_id_seq RESTART WITH 1');
-        DB::statement('ALTER SEQUENCE driver_earnings_id_seq RESTART WITH 1');
-        DB::statement('ALTER SEQUENCE tickets_id_seq RESTART WITH 1');
-        DB::statement('ALTER SEQUENCE activity_logs_id_seq RESTART WITH 1');
-        // Fintech architecture sequences
-        DB::statement('ALTER SEQUENCE ledger_accounts_id_seq RESTART WITH 1');
-        DB::statement('ALTER SEQUENCE ledger_entries_id_seq RESTART WITH 1');
-        DB::statement('ALTER SEQUENCE fraud_flags_id_seq RESTART WITH 1');
-        DB::statement('ALTER SEQUENCE platform_commissions_id_seq RESTART WITH 1');
-        DB::statement('ALTER SEQUENCE driver_payouts_id_seq RESTART WITH 1');
+        // Resume mode keeps already-seeded data and only runs the final top-up pass.
+        if ($resumeMode) {
+            $this->command?->info('DB_SEED_RESUME enabled: skipping truncation and completed seeders.');
+            $this->call([
+                AIRwandaTrainingSeeder::class,
+                RwandaFiftyTopUpSeeder::class,
+            ]);
+
+            return;
+        }
+
+        if (!$skipReset && !$this->resetDatabaseForSeeding()) {
+            $this->command?->warn('DB reset failed, continuing in resume-style mode to complete top-up without truncation.');
+            $this->call([
+                AIRwandaTrainingSeeder::class,
+                RwandaFiftyTopUpSeeder::class,
+            ]);
+
+            return;
+        }
 
         // Run seeders for mobile_users and managers tables FIRST (source of truth)
         $this->call([
@@ -110,6 +84,8 @@ class DatabaseSeeder extends Seeder
             DriverWalletSeeder::class,
             DriverPayoutSeeder::class,
             FraudFlagSeeder::class,
+            AIRwandaTrainingSeeder::class,
+            RwandaFiftyTopUpSeeder::class,
         ]);
     }
 
@@ -119,23 +95,41 @@ class DatabaseSeeder extends Seeder
     protected function syncManagersToUsers(): void
     {
         $managers = DB::table('managers')->get();
+        $rowsByEmail = [];
+        $managerEmails = $managers->pluck('email')->all();
+        $existingIdsByEmail = DB::table('users')
+            ->whereIn('email', $managerEmails)
+            ->pluck('id', 'email')
+            ->all();
+        $nextId = (int) (DB::table('users')->max('id') ?? 0);
 
         foreach ($managers as $manager) {
-            DB::table('users')->updateOrInsert(
-                ['email' => $manager->email],
-                [
-                    'name' => $manager->name,
-                    'password' => $manager->password,
-                    'role' => $manager->role,
-                    'manager_id' => $manager->id,
-                    'mobile_user_id' => null,
-                    'phone' => null,
-                    'profile_photo' => null,
-                    'is_verified' => true,
-                    'created_at' => $manager->created_at ?? now(),
-                    'updated_at' => now(),
-                ]
+            $id = $existingIdsByEmail[$manager->email] ?? ++$nextId;
+
+            $rowsByEmail[$manager->email] = [
+                'id' => $id,
+                'email' => $manager->email,
+                'name' => $manager->name,
+                'password' => $manager->password,
+                'role' => $manager->role,
+                'manager_id' => $manager->id,
+                'mobile_user_id' => null,
+                'phone' => null,
+                'profile_photo' => null,
+                'is_verified' => true,
+                'created_at' => $manager->created_at ?? now(),
+                'updated_at' => now(),
+            ];
+        }
+
+        if (!empty($rowsByEmail)) {
+            DB::table('users')->upsert(
+                array_values($rowsByEmail),
+                ['email'],
+                ['name', 'password', 'role', 'manager_id', 'mobile_user_id', 'phone', 'profile_photo', 'is_verified', 'updated_at']
             );
+
+            $this->syncTableIdSequence('users');
         }
     }
 
@@ -145,23 +139,149 @@ class DatabaseSeeder extends Seeder
     protected function syncMobileUsersToUsers(): void
     {
         $mobileUsers = DB::table('mobile_users')->get();
+        $rowsByEmail = [];
+        $mobileEmails = $mobileUsers->pluck('email')->all();
+        $existingIdsByEmail = DB::table('users')
+            ->whereIn('email', $mobileEmails)
+            ->pluck('id', 'email')
+            ->all();
+        $nextId = (int) (DB::table('users')->max('id') ?? 0);
 
         foreach ($mobileUsers as $mobileUser) {
-            DB::table('users')->updateOrInsert(
-                ['email' => $mobileUser->email],
-                [
-                    'name' => $mobileUser->first_name . ' ' . $mobileUser->last_name,
-                    'password' => $mobileUser->password,
-                    'role' => $mobileUser->role,
-                    'mobile_user_id' => $mobileUser->id,
-                    'manager_id' => null,
-                    'phone' => $mobileUser->phone,
-                    'profile_photo' => $mobileUser->profile_photo,
-                    'is_verified' => $mobileUser->is_verified,
-                    'created_at' => $mobileUser->created_at ?? now(),
-                    'updated_at' => now(),
-                ]
-            );
+            $id = $existingIdsByEmail[$mobileUser->email] ?? ++$nextId;
+
+            $rowsByEmail[$mobileUser->email] = [
+                'id' => $id,
+                'email' => $mobileUser->email,
+                'name' => $mobileUser->first_name . ' ' . $mobileUser->last_name,
+                'password' => $mobileUser->password,
+                'role' => $mobileUser->role,
+                'mobile_user_id' => $mobileUser->id,
+                'manager_id' => null,
+                'phone' => $mobileUser->phone,
+                'profile_photo' => $mobileUser->profile_photo,
+                'is_verified' => $mobileUser->is_verified,
+                'created_at' => $mobileUser->created_at ?? now(),
+                'updated_at' => now(),
+            ];
         }
+
+        if (!empty($rowsByEmail)) {
+            DB::table('users')->upsert(
+                array_values($rowsByEmail),
+                ['email'],
+                ['name', 'password', 'role', 'mobile_user_id', 'manager_id', 'phone', 'profile_photo', 'is_verified', 'updated_at']
+            );
+
+            $this->syncTableIdSequence('users');
+        }
+    }
+
+    private function resetDatabaseForSeeding(): bool
+    {
+        $tables = [
+            'ledger_entries',
+            'ledger_transactions',
+            'ledger_accounts',
+            'fraud_flags',
+            'platform_commissions',
+            'driver_payouts',
+            'model_has_permissions',
+            'model_has_roles',
+            'role_has_permissions',
+            'permissions',
+            'roles',
+            'activity_logs',
+            'tickets',
+            'driver_earnings',
+            'payments_v2',
+            'trips',
+            'vehicles_v2',
+            'reviews',
+            'payments',
+            'bookings',
+            'rides',
+            'vehicles',
+            'drivers',
+            'notifications',
+            'user_notifications',
+            'mobile_device_tokens',
+            'driver_locations',
+            'mobile_users',
+            'managers',
+            'users',
+        ];
+
+        try {
+            foreach ($tables as $table) {
+                if (!Schema::hasTable($table)) {
+                    continue;
+                }
+
+                $this->withRetry(fn () => DB::statement("TRUNCATE TABLE {$table} CASCADE"));
+                $this->restartTableIdSequence($table);
+            }
+
+            return true;
+        } catch (Throwable $e) {
+            $this->command?->warn('Reset failure: ' . $e->getMessage());
+
+            return false;
+        }
+    }
+
+    private function withRetry(callable $operation, int $maxAttempts = 3): void
+    {
+        $attempt = 1;
+
+        beginning:
+        try {
+            $operation();
+        } catch (Throwable $e) {
+            if ($attempt >= $maxAttempts) {
+                throw $e;
+            }
+
+            $attempt++;
+            DB::reconnect();
+            usleep(250000);
+            goto beginning;
+        }
+    }
+
+    private function restartTableIdSequence(string $table): void
+    {
+        if (DB::getDriverName() !== 'pgsql') {
+            return;
+        }
+
+        if (!Schema::hasColumn($table, 'id')) {
+            return;
+        }
+
+        $sequence = DB::selectOne("SELECT pg_get_serial_sequence('{$table}', 'id') AS seq");
+        $sequenceName = $sequence?->seq ?? null;
+
+        if (!is_string($sequenceName) || $sequenceName === '') {
+            return;
+        }
+
+        $this->withRetry(fn () => DB::statement("SELECT setval('{$sequenceName}', 1, false)"));
+    }
+
+    private function syncTableIdSequence(string $table): void
+    {
+        if (DB::getDriverName() !== 'pgsql' || !Schema::hasTable($table) || !Schema::hasColumn($table, 'id')) {
+            return;
+        }
+
+        $sequence = DB::selectOne("SELECT pg_get_serial_sequence('{$table}', 'id') AS seq");
+        $sequenceName = $sequence?->seq ?? null;
+
+        if (!is_string($sequenceName) || $sequenceName === '') {
+            return;
+        }
+
+        DB::statement("SELECT setval('{$sequenceName}', COALESCE((SELECT MAX(id) FROM {$table}), 0) + 1, false)");
     }
 }

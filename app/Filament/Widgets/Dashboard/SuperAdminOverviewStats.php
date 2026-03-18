@@ -2,6 +2,7 @@
 
 namespace App\Filament\Widgets\Dashboard;
 
+use App\Filament\Support\RoleDashboardConfig;
 use App\Models\Ride;
 use App\Models\User;
 use Filament\Widgets\StatsOverviewWidget;
@@ -12,6 +13,16 @@ use Illuminate\Support\Facades\Schema;
 class SuperAdminOverviewStats extends StatsOverviewWidget
 {
     protected int | string | array $columnSpan = 'full';
+
+    public static function isLazy(): bool
+    {
+        return RoleDashboardConfig::isWidgetLazy(static::class, false);
+    }
+
+    protected function getPollingInterval(): ?string
+    {
+        return RoleDashboardConfig::pollingIntervalForWidget(static::class, '60s');
+    }
 
     protected function getStats(): array
     {

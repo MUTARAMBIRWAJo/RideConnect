@@ -131,7 +131,7 @@ class DriverController extends Controller
             $requestedType = strtolower((string) $request->string('type'));
             $threshold = now()->copy()->addHours(self::TICKET_THRESHOLD_HOURS);
 
-            if ($requestedType === 'ticket') {
+            if (in_array($requestedType, ['trip', 'ticket'], true)) {
                 $bookingsQuery->whereHas('ride', fn ($rideQuery) => $rideQuery->where('departure_time', '<=', $threshold));
             }
 
@@ -261,12 +261,12 @@ class DriverController extends Controller
             return 'BOOKING';
         }
 
-        return $hoursToDeparture <= self::TICKET_THRESHOLD_HOURS ? 'TICKET' : 'BOOKING';
+        return $hoursToDeparture <= self::TICKET_THRESHOLD_HOURS ? 'TRIP' : 'BOOKING';
     }
 
     private function resolveTicketStatus(Booking $booking): ?string
     {
-        if ($this->resolveTravelType($booking) !== 'TICKET') {
+        if ($this->resolveTravelType($booking) !== 'TRIP') {
             return null;
         }
 

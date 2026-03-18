@@ -5,4 +5,5 @@ return [
     App\Providers\FinanceServiceProvider::class,
     App\Providers\Filament\AdminPanelProvider::class,
     App\Providers\SupabaseServiceProvider::class,
+    Ttanai\Laramap\LaramapServiceProvider::class,
 ];

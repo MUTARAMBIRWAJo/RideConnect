@@ -2,15 +2,25 @@
 
 namespace App\Filament\Widgets\BI;
 
+use App\Filament\Support\RoleDashboardConfig;
 use App\Modules\Reporting\Services\ReportingService;
 use Filament\Widgets\ChartWidget;
 
 class RevenueOverTimeChartWidget extends ChartWidget
 {
     protected static ?string $heading = 'Revenue Over Time (Last 30 Days)';
-    protected static ?string $pollingInterval = '300s';
     protected static ?int $sort = 3;
     protected int | string | array $columnSpan = 'full';
+
+    public static function isLazy(): bool
+    {
+        return RoleDashboardConfig::isWidgetLazy(static::class, true);
+    }
+
+    protected function getPollingInterval(): ?string
+    {
+        return RoleDashboardConfig::pollingIntervalForWidget(static::class, '600s');
+    }
 
     protected function getData(): array
     {

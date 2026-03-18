@@ -2,6 +2,7 @@
 
 namespace App\Filament\Widgets;
 
+use App\Filament\Support\RoleDashboardConfig;
 use Filament\Widgets\Widget;
 
 class DemandHeatmapWidget extends Widget
@@ -12,6 +13,16 @@ class DemandHeatmapWidget extends Widget
         'md' => 1,
         'xl' => 2,
     ];
+
+    public static function isLazy(): bool
+    {
+        return RoleDashboardConfig::isWidgetLazy(static::class, true);
+    }
+
+    protected function getPollingInterval(): ?string
+    {
+        return RoleDashboardConfig::pollingIntervalForWidget(static::class, '180s');
+    }
 
     protected function getViewData(): array
     {

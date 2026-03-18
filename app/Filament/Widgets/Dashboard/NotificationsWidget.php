@@ -11,8 +11,6 @@ class NotificationsWidget extends Widget
 {
     protected static string $view = 'filament.widgets.dashboard.notifications-widget';
 
-    protected static bool $isLazy = false;
-
     protected int | string | array $columnSpan = [
         'default' => 1,
         'md' => 1,
@@ -21,7 +19,12 @@ class NotificationsWidget extends Widget
 
     protected function getPollingInterval(): ?string
     {
-        return RoleDashboardConfig::pollingInterval();
+        return RoleDashboardConfig::pollingIntervalForWidget(static::class, '75s');
+    }
+
+    public static function isLazy(): bool
+    {
+        return RoleDashboardConfig::isWidgetLazy(static::class, true);
     }
 
     protected function getViewData(): array

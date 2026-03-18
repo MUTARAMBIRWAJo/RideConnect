@@ -2,6 +2,7 @@
 
 namespace App\Filament\Widgets\Dashboard;
 
+use App\Filament\Support\RoleDashboardConfig;
 use Filament\Widgets\Widget;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Schema;
@@ -11,6 +12,16 @@ class SystemLogsWidget extends Widget
     protected static string $view = 'filament.widgets.dashboard.system-logs-widget';
 
     protected int | string | array $columnSpan = 'full';
+
+    public static function isLazy(): bool
+    {
+        return RoleDashboardConfig::isWidgetLazy(static::class, true);
+    }
+
+    protected function getPollingInterval(): ?string
+    {
+        return RoleDashboardConfig::pollingIntervalForWidget(static::class, '120s');
+    }
 
     protected function getViewData(): array
     {

@@ -2,14 +2,24 @@
 
 namespace App\Filament\Widgets\BI;
 
+use App\Filament\Support\RoleDashboardConfig;
 use App\Modules\Reporting\Services\ReportingService;
 use Filament\Widgets\ChartWidget;
 
 class FraudRiskHeatmapWidget extends ChartWidget
 {
     protected static ?string $heading = 'Fraud Risk by Severity';
-    protected static ?string $pollingInterval = '120s';
     protected static ?int $sort = 5;
+
+    public static function isLazy(): bool
+    {
+        return RoleDashboardConfig::isWidgetLazy(static::class, true);
+    }
+
+    protected function getPollingInterval(): ?string
+    {
+        return RoleDashboardConfig::pollingIntervalForWidget(static::class, '300s');
+    }
 
     protected function getData(): array
     {

@@ -16,6 +16,10 @@ class ManagerSeeder extends Seeder
      */
     public function run(): void
     {
+        if (DB::getDriverName() === 'pgsql') {
+            DB::statement("SELECT setval(pg_get_serial_sequence('managers','id'), COALESCE((SELECT MAX(id) FROM managers), 0) + 1, false)");
+        }
+
         $managers = [
             [
                 'name' => 'Admin Super',
@@ -60,7 +64,10 @@ class ManagerSeeder extends Seeder
         ];
 
         foreach ($managers as $manager) {
-            DB::table('managers')->insert($manager);
+            DB::table('managers')->updateOrInsert(
+                ['email' => $manager['email']],
+                $manager
+            );
         }
     }
 }

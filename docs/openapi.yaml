@@ -61,6 +61,10 @@ tags:
     description: Passenger-specific endpoints for ride booking and management
   - name: Rider
     description: Driver/Rider-specific endpoints for ride requests and earnings
+  - name: Notifications
+    description: In-app and push notification endpoints for mobile clients
+  - name: Devices
+    description: Device token registration endpoints for FCM/APNs push delivery
   - name: Ride Management
     description: Ride creation, monitoring and management
   - name: Payments
@@ -495,6 +499,196 @@ paths:
       responses:
         "200":
           description: Profile updated
+
+  /passenger/drivers/online:
+    get:
+      tags:
+        - Passenger
+      summary: List online drivers
+      description: Retrieve currently online and approved drivers visible to the passenger app.
+      operationId: getOnlineDrivers
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: limit
+          in: query
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 200
+            default: 100
+      responses:
+        "200":
+          description: Online drivers retrieved
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  data:
+                    type: array
+                    items:
+                      $ref: "#/components/schemas/OnlineDriverSchema"
+
+  /passenger/ride-requests:
+    post:
+      tags:
+        - Passenger
+      summary: Request ride from selected driver
+      description: Create a direct ride request targeting an online driver.
+      operationId: requestRideFromDriver
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/PassengerRideRequest"
+      responses:
+        "201":
+          description: Ride request created and sent to driver
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  message:
+                    type: string
+                  data:
+                    type: object
+                    properties:
+                      trip_id:
+                        type: integer
+                      status:
+                        type: string
+                      driver_id:
+                        type: integer
+                      requested_at:
+                        type: string
+                        format: date-time
+
+  /notifications:
+    get:
+      tags:
+        - Notifications
+      summary: List user notifications
+      description: Retrieve in-app notifications for the authenticated user.
+      operationId: getNotifications
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: unread_only
+          in: query
+          schema:
+            type: boolean
+            default: false
+        - $ref: "#/components/parameters/PerPageParam"
+      responses:
+        "200":
+          description: Notifications retrieved
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  data:
+                    type: array
+                    items:
+                      $ref: "#/components/schemas/MobileNotificationSchema"
+
+  /notifications/unread-count:
+    get:
+      tags:
+        - Notifications
+      summary: Get unread notification count
+      operationId: getUnreadNotificationCount
+      security:
+        - BearerAuth: []
+      responses:
+        "200":
+          description: Unread count retrieved
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  data:
+                    type: object
+                    properties:
+                      unread_count:
+                        type: integer
+
+  /notifications/{id}/read:
+    put:
+      tags:
+        - Notifications
+      summary: Mark one notification as read
+      operationId: markNotificationAsRead
+      security:
+        - BearerAuth: []
+      parameters:
+        - $ref: "#/components/parameters/IdParam"
+      responses:
+        "200":
+          description: Notification marked as read
+
+  /notifications/read-all:
+    put:
+      tags:
+        - Notifications
+      summary: Mark all notifications as read
+      operationId: markAllNotificationsAsRead
+      security:
+        - BearerAuth: []
+      responses:
+        "200":
+          description: All notifications marked as read
+
+  /devices/push-token:
+    post:
+      tags:
+        - Devices
+      summary: Register FCM/APNs device token
+      description: Register or refresh the push token used for real-time notifications.
+      operationId: registerPushToken
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/RegisterPushTokenRequest"
+      responses:
+        "200":
+          description: Push token registered successfully
+
+  /devices/push-token/{token}:
+    delete:
+      tags:
+        - Devices
+      summary: Remove registered push token
+      operationId: removePushToken
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: token
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Push token removed successfully
 
   # ===========================
   # RIDER APIs
@@ -1308,6 +1502,105 @@ components:
           type: string
         dropoff_address:
           type: string
+
+    PassengerRideRequest:
+      type: object
+      required:
+        - driver_id
+        - pickup_location
+        - pickup_lat
+        - pickup_lng
+        - dropoff_location
+        - dropoff_lat
+        - dropoff_lng
+        - fare
+      properties:
+        driver_id:
+          type: integer
+        pickup_location:
+          type: string
+        pickup_lat:
+          type: number
+          format: double
+        pickup_lng:
+          type: number
+          format: double
+        dropoff_location:
+          type: string
+        dropoff_lat:
+          type: number
+          format: double
+        dropoff_lng:
+          type: number
+          format: double
+        fare:
+          type: number
+          format: double
+
+    RegisterPushTokenRequest:
+      type: object
+      required:
+        - platform
+        - device_token
+      properties:
+        platform:
+          type: string
+          enum: [fcm, apns]
+        device_token:
+          type: string
+        device_id:
+          type: string
+
+    OnlineDriverSchema:
+      type: object
+      properties:
+        id:
+          type: integer
+        name:
+          type: string
+        phone:
+          type: string
+        rating:
+          type: number
+        total_rides:
+          type: integer
+        availability_status:
+          type: string
+          enum: [online, offline, busy]
+        current_latitude:
+          type: number
+          nullable: true
+        current_longitude:
+          type: number
+          nullable: true
+        last_online_at:
+          type: string
+          format: date-time
+          nullable: true
+
+    MobileNotificationSchema:
+      type: object
+      properties:
+        id:
+          type: integer
+        type:
+          type: string
+        title:
+          type: string
+        message:
+          type: string
+        data:
+          type: object
+          additionalProperties: true
+        is_read:
+          type: boolean
+        read_at:
+          type: string
+          format: date-time
+          nullable: true
+        created_at:
+          type: string
+          format: date-time
 
     PaymentRequest:
       type: object

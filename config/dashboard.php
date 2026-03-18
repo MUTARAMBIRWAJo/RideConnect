@@ -17,7 +17,13 @@ use App\Filament\Widgets\Dashboard\TransactionsTableWidget;
 use App\Filament\Widgets\DemandHeatmapWidget;
 use App\Filament\Widgets\DriverAvailabilityChart;
 use App\Filament\Widgets\LatestRidesTable;
+use App\Filament\Widgets\RideMapWidget;
 use App\Filament\Widgets\RideStatsOverview;
+use App\Filament\Widgets\BI\CommissionTodayWidget;
+use App\Filament\Widgets\BI\FraudRiskHeatmapWidget;
+use App\Filament\Widgets\BI\LiveRevenueTickerWidget;
+use App\Filament\Widgets\BI\RevenueOverTimeChartWidget;
+use App\Filament\Widgets\BI\TopDriversLeaderboardWidget;
 
 return [
     // Mobile-first dashboard column breakpoints.
@@ -33,17 +39,107 @@ return [
         'polling_interval' => env('DASHBOARD_POLLING_INTERVAL', '30s'),
     ],
 
+    // Performance tuning knobs for slower devices/connections.
+    'performance' => [
+        'slow_mode' => env('DASHBOARD_SLOW_MODE', false),
+        'polling' => [
+            'default' => env('DASHBOARD_POLLING_DEFAULT', '90s'),
+            'sections' => [
+                'operational' => env('DASHBOARD_POLLING_OPERATIONAL', '60s'),
+                'intelligence' => env('DASHBOARD_POLLING_INTELLIGENCE', '180s'),
+            ],
+            'widgets' => [
+                SuperAdminOverviewStats::class => env('DASHBOARD_POLLING_SUPER_OVERVIEW', '60s'),
+                RideStatsOverview::class => env('DASHBOARD_POLLING_RIDE_STATS', '90s'),
+                DriverAvailabilityChart::class => env('DASHBOARD_POLLING_DRIVER_AVAILABILITY', '120s'),
+                DemandHeatmapWidget::class => env('DASHBOARD_POLLING_DEMAND_HEATMAP', '180s'),
+                NotificationsWidget::class => env('DASHBOARD_POLLING_NOTIFICATIONS', '75s'),
+                ActivityFeedWidget::class => env('DASHBOARD_POLLING_ACTIVITY_FEED', '90s'),
+                SystemLogsWidget::class => env('DASHBOARD_POLLING_SYSTEM_LOGS', '120s'),
+                LiveRevenueTickerWidget::class => env('DASHBOARD_POLLING_BI_REVENUE_TICKER', '120s'),
+                CommissionTodayWidget::class => env('DASHBOARD_POLLING_BI_COMMISSION', '180s'),
+                RevenueOverTimeChartWidget::class => env('DASHBOARD_POLLING_BI_REVENUE_CHART', '600s'),
+                FraudRiskHeatmapWidget::class => env('DASHBOARD_POLLING_BI_FRAUD', '300s'),
+                TopDriversLeaderboardWidget::class => env('DASHBOARD_POLLING_BI_LEADERBOARD', '600s'),
+            ],
+        ],
+        'slow_profile' => [
+            'polling' => [
+                'default' => env('DASHBOARD_SLOW_POLLING_DEFAULT', '240s'),
+                'sections' => [
+                    'operational' => env('DASHBOARD_SLOW_POLLING_OPERATIONAL', '180s'),
+                    'intelligence' => env('DASHBOARD_SLOW_POLLING_INTELLIGENCE', '420s'),
+                ],
+                'widgets' => [
+                    SuperAdminOverviewStats::class => env('DASHBOARD_SLOW_POLLING_SUPER_OVERVIEW', '180s'),
+                    RideStatsOverview::class => env('DASHBOARD_SLOW_POLLING_RIDE_STATS', '240s'),
+                    DriverAvailabilityChart::class => env('DASHBOARD_SLOW_POLLING_DRIVER_AVAILABILITY', '300s'),
+                    DemandHeatmapWidget::class => env('DASHBOARD_SLOW_POLLING_DEMAND_HEATMAP', '420s'),
+                    NotificationsWidget::class => env('DASHBOARD_SLOW_POLLING_NOTIFICATIONS', '240s'),
+                    ActivityFeedWidget::class => env('DASHBOARD_SLOW_POLLING_ACTIVITY_FEED', '300s'),
+                    SystemLogsWidget::class => env('DASHBOARD_SLOW_POLLING_SYSTEM_LOGS', '420s'),
+                    LiveRevenueTickerWidget::class => env('DASHBOARD_SLOW_POLLING_BI_REVENUE_TICKER', '300s'),
+                    CommissionTodayWidget::class => env('DASHBOARD_SLOW_POLLING_BI_COMMISSION', '420s'),
+                    RevenueOverTimeChartWidget::class => env('DASHBOARD_SLOW_POLLING_BI_REVENUE_CHART', '900s'),
+                    FraudRiskHeatmapWidget::class => env('DASHBOARD_SLOW_POLLING_BI_FRAUD', '720s'),
+                    TopDriversLeaderboardWidget::class => env('DASHBOARD_SLOW_POLLING_BI_LEADERBOARD', '900s'),
+                ],
+            ],
+            'lazy' => [
+                // In slow mode defer almost everything until viewport interaction.
+                'default' => true,
+                'widgets' => [
+                    SuperAdminOverviewStats::class => true,
+                    RideStatsOverview::class => true,
+                    DriverAvailabilityChart::class => true,
+                    DemandHeatmapWidget::class => true,
+                    NotificationsWidget::class => true,
+                    ActivityFeedWidget::class => true,
+                    SystemLogsWidget::class => true,
+                    LiveRevenueTickerWidget::class => true,
+                    CommissionTodayWidget::class => true,
+                    RevenueOverTimeChartWidget::class => true,
+                    FraudRiskHeatmapWidget::class => true,
+                    TopDriversLeaderboardWidget::class => true,
+                ],
+            ],
+        ],
+        'lazy' => [
+            'default' => true,
+            'widgets' => [
+                SuperAdminOverviewStats::class => false,
+                RideStatsOverview::class => false,
+                DriverAvailabilityChart::class => true,
+                DemandHeatmapWidget::class => true,
+                NotificationsWidget::class => true,
+                ActivityFeedWidget::class => true,
+                SystemLogsWidget::class => true,
+                LiveRevenueTickerWidget::class => true,
+                CommissionTodayWidget::class => true,
+                RevenueOverTimeChartWidget::class => true,
+                FraudRiskHeatmapWidget::class => true,
+                TopDriversLeaderboardWidget::class => true,
+            ],
+        ],
+    ],
+
     'roles' => [
         'SUPER_ADMIN' => [
-            'columns' => ['default' => 1, 'md' => 2, 'xl' => 3],
+            'columns' => ['default' => 1, 'sm' => 1, 'md' => 2, 'xl' => 4],
             'widgets' => [
                 SuperAdminOverviewStats::class,
                 RideStatsOverview::class,
+                RideMapWidget::class,
+                LiveRevenueTickerWidget::class,
+                CommissionTodayWidget::class,
                 DriverAvailabilityChart::class,
                 DemandHeatmapWidget::class,
                 NotificationsWidget::class,
                 ActivityFeedWidget::class,
                 SystemLogsWidget::class,
+                RevenueOverTimeChartWidget::class,
+                FraudRiskHeatmapWidget::class,
+                TopDriversLeaderboardWidget::class,
             ],
         ],
         'ADMIN' => [
@@ -51,6 +147,7 @@ return [
             'widgets' => [
                 AdminOverviewStats::class,
                 RideStatsOverview::class,
+                RideMapWidget::class,
                 DriverAvailabilityChart::class,
                 DemandHeatmapWidget::class,
                 NotificationsWidget::class,
@@ -63,6 +160,7 @@ return [
             'widgets' => [
                 EscrowBalanceWidget::class,
                 AccountantRevenueSummary::class,
+                RideMapWidget::class,
                 DemandHeatmapWidget::class,
                 CommissionOverviewWidget::class,
                 FraudAlertsWidget::class,
@@ -77,6 +175,7 @@ return [
             'columns' => ['default' => 1, 'md' => 2, 'xl' => 3],
             'widgets' => [
                 OfficerOverviewStats::class,
+                RideMapWidget::class,
                 DriverAvailabilityChart::class,
                 DemandHeatmapWidget::class,
                 NotificationsWidget::class,
