@@ -65,7 +65,7 @@
                 ></textarea>
             </div>
 
-            <div id="gmaps-health-map" class="mt-4 h-72 w-full rounded-lg border border-gray-200"></div>
+            <div id="gmaps-health-map" class="mt-4 h-72 w-full rounded-lg border border-gray-200" style="height: 320px; min-height: 320px;"></div>
         </section>
     </div>
 

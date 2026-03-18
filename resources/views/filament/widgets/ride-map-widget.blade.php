@@ -41,6 +41,7 @@
         <div
             id="{{ $mapId }}"
             class="w-full h-[420px] rounded-xl border border-gray-200 dark:border-gray-700"
+            style="height: 420px; min-height: 420px;"
             data-api-key="{{ config('laramaps.api_key', config('services.google_maps.key')) }}"
             data-endpoint="{{ route('api.map.live-data') }}"
             data-default-lat="-1.9441"
@@ -49,17 +50,6 @@
         ></div>
 
         <div id="{{ $mapStatusId }}" class="mt-2 hidden rounded-md border px-3 py-2 text-xs"></div>
-
-        @once
-            <script>
-                window.initMap = window.initMap || function () {
-                    console.log('Google Maps Loaded:', typeof google !== 'undefined');
-                };
-            </script>
-            <script async defer
-                src="https://maps.googleapis.com/maps/api/js?key={{ config('services.google_maps.key') }}&libraries=visualization,places&v=weekly&callback=initMap">
-            </script>
-        @endonce
 
         <script src="https://unpkg.com/@googlemaps/markerclusterer/dist/index.min.js"></script>
         <script>
@@ -132,8 +122,12 @@
                             reject(new Error('Google Maps authentication failed'));
                         };
 
+                        window.initMap = window.initMap || function () {
+                            console.log('Google Maps callback executed:', typeof google !== 'undefined');
+                        };
+
                         const script = document.createElement('script');
-                        script.src = 'https://maps.googleapis.com/maps/api/js?key=' + encodeURIComponent(apiKey) + '&libraries=visualization';
+                        script.src = 'https://maps.googleapis.com/maps/api/js?key=' + encodeURIComponent(apiKey) + '&libraries=visualization,places&v=weekly&callback=initMap';
                         script.async = true;
                         script.defer = true;
                         script.onload = function () {
