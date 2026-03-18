@@ -3,6 +3,9 @@
 use App\Http\Controllers\AuthController;
 use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\Admin\AdminAuthController;
+use App\Http\Controllers\Admin\FinancialMatrixExportController;
+use App\Http\Controllers\Admin\GoogleMapsHealthController;
+use App\Http\Controllers\Admin\OperationsIntelligenceExportController;
 use App\Http\Controllers\Api\Admin\LiveMapDataController;
 use Illuminate\Support\Facades\Route;
 
@@ -103,3 +106,29 @@ Route::redirect('/forgot-password', '/auth/login')->name('password.request');
 Route::middleware(['auth'])
     ->get('/api/map/live-data', [LiveMapDataController::class, 'index'])
     ->name('api.map.live-data');
+
+Route::middleware(['auth'])
+    ->get('/admin/google-maps-health/preflight', [GoogleMapsHealthController::class, 'preflight'])
+    ->name('admin.maps.health.preflight');
+
+Route::middleware(['auth'])
+    ->prefix('/admin/exports/operations-intelligence')
+    ->group(function () {
+        Route::get('/csv', [OperationsIntelligenceExportController::class, 'csv'])
+            ->name('admin.exports.operations-intelligence.csv');
+        Route::get('/pdf', [OperationsIntelligenceExportController::class, 'pdf'])
+            ->name('admin.exports.operations-intelligence.pdf');
+        Route::get('/xlsx', [OperationsIntelligenceExportController::class, 'xlsx'])
+            ->name('admin.exports.operations-intelligence.xlsx');
+    });
+
+Route::middleware(['auth'])
+    ->prefix('/admin/exports/financial-matrix')
+    ->group(function () {
+        Route::get('/csv', [FinancialMatrixExportController::class, 'csv'])
+            ->name('admin.exports.financial-matrix.csv');
+        Route::get('/pdf', [FinancialMatrixExportController::class, 'pdf'])
+            ->name('admin.exports.financial-matrix.pdf');
+        Route::get('/xlsx', [FinancialMatrixExportController::class, 'xlsx'])
+            ->name('admin.exports.financial-matrix.xlsx');
+    });

@@ -50,6 +50,17 @@
 
         <div id="{{ $mapStatusId }}" class="mt-2 hidden rounded-md border px-3 py-2 text-xs"></div>
 
+        @once
+            <script>
+                window.initMap = window.initMap || function () {
+                    console.log('Google Maps Loaded:', typeof google !== 'undefined');
+                };
+            </script>
+            <script async defer
+                src="https://maps.googleapis.com/maps/api/js?key={{ config('services.google_maps.key') }}&libraries=visualization,places&v=weekly&callback=initMap">
+            </script>
+        @endonce
+
         <script src="https://unpkg.com/@googlemaps/markerclusterer/dist/index.min.js"></script>
         <script>
             (function () {
@@ -98,8 +109,17 @@
                 const defaultZoom = Number(mapElement.dataset.defaultZoom || '12');
 
                 const loadGoogleMaps = function () {
-                    if (window.google && window.google.maps) {
+                    if (window.google && window.google.maps && window.google.maps.visualization) {
+                        console.log('Google Maps Loaded:', true);
                         return Promise.resolve();
+                    }
+
+                    if (window.loadGoogleMapsScript) {
+                        return window.loadGoogleMapsScript(apiKey, 'initMap').then(function () {
+                            if (!window.google?.maps?.visualization) {
+                                throw new Error('Google Maps loaded without visualization library.');
+                            }
+                        });
                     }
 
                     if (window.__rideConnectGoogleMapsPromise) {
@@ -116,7 +136,10 @@
                         script.src = 'https://maps.googleapis.com/maps/api/js?key=' + encodeURIComponent(apiKey) + '&libraries=visualization';
                         script.async = true;
                         script.defer = true;
-                        script.onload = resolve;
+                        script.onload = function () {
+                            console.log('Google Maps Loaded:', typeof google !== 'undefined');
+                            resolve();
+                        };
                         script.onerror = reject;
                         document.head.appendChild(script);
                     });

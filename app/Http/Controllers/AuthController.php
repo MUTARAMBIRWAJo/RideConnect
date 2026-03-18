@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Auth\SafeEloquentUserProvider;
 use App\Enums\UserRole;
 use App\Models\User;
 use Filament\Facades\Filament;
@@ -69,6 +70,14 @@ class AuthController extends Controller
 
         // Try to authenticate
         if (!Auth::attempt($credentials, $request->filled('remember'))) {
+            $provider = Auth::guard()->getProvider();
+
+            if ($provider instanceof SafeEloquentUserProvider && $provider->consumeCredentialsLookupDbFailure()) {
+                throw ValidationException::withMessages([
+                    'email' => ['Authentication service is temporarily unavailable. Please try again in a moment.'],
+                ]);
+            }
+
             throw ValidationException::withMessages([
                 'email' => ['The provided credentials do not match our records.'],
             ]);

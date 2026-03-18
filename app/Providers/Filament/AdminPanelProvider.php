@@ -21,6 +21,7 @@ use Filament\Support\Colors\Color;
 use Filament\View\PanelsRenderHook;
 use Filament\Navigation\NavigationGroup;
 use Filament\Widgets;
+use Illuminate\Support\Facades\Blade;
 use Illuminate\Cookie\Middleware\AddQueuedCookiesToResponse;
 use Illuminate\Cookie\Middleware\EncryptCookies;
 use Illuminate\Foundation\Http\Middleware\VerifyCsrfToken;
@@ -104,6 +105,10 @@ class AdminPanelProvider extends PanelProvider
             ->renderHook(
                 PanelsRenderHook::USER_MENU_BEFORE,
                 fn (): string => view('components.filament.role-badge')->render(),
+            )
+            ->renderHook(
+                PanelsRenderHook::HEAD_END,
+                fn (): string => Blade::render("@vite(['resources/js/app.js'])"),
             )
             ->navigationGroups([
                 NavigationGroup::make('Live Operations')->collapsible(false),

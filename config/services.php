@@ -73,7 +73,7 @@ return [
     ],
 
     'google_maps' => [
-        'key' => env('GOOGLE_MAPS_API_KEY', env('LARAMAP_GOOGLE_API_KEY')),
+        'key' => env('GOOGLE_MAPS_API_KEY'),
     ],
 
     'ride_ai' => [

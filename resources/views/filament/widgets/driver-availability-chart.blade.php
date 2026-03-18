@@ -1,10 +1,16 @@
-<div class="fi-section rounded-2xl p-4 sm:p-6">
+<div class="fi-section rounded-2xl p-4 sm:p-5">
+  <div wire:loading class="space-y-3 animate-pulse">
+    <div class="h-4 w-36 rounded bg-gray-200 dark:bg-gray-700"></div>
+    <div class="h-52 rounded-xl bg-gray-200 dark:bg-gray-700"></div>
+  </div>
+
+  <div wire:loading.remove>
   <div class="mb-4 flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
     <div>
-      <h3 class="text-lg font-semibold text-gray-900 dark:text-white">Driver Availability</h3>
-      <div class="text-sm text-gray-500 dark:text-gray-300">Real-time driver status distribution</div>
+      <h3 class="text-base font-semibold text-gray-900 dark:text-white">Driver Availability</h3>
+      <div class="text-xs text-gray-500 dark:text-gray-300">Real-time driver status distribution</div>
     </div>
-    <div class="text-sm text-gray-500">Total: {{ ($available ?? 0) + ($busy ?? 0) + ($offline ?? 0) }}</div>
+    <div class="text-xs text-gray-500">Total: {{ ($available ?? 0) + ($busy ?? 0) + ($offline ?? 0) }}</div>
   </div>
 
   @php($donutId = 'driverAvailabilityDonut-' . uniqid())
@@ -14,9 +20,9 @@
     </div>
     <div class="flex-1">
       <div class="space-y-3">
-        <div class="flex items-center justify-between"><div class="text-sm">Available</div><div class="text-sm font-medium text-gray-800 dark:text-gray-200">{{ $available ?? 0 }}</div></div>
-        <div class="flex items-center justify-between"><div class="text-sm">Busy</div><div class="text-sm font-medium text-blue-600">{{ $busy ?? 0 }}</div></div>
-        <div class="flex items-center justify-between"><div class="text-sm">Offline</div><div class="text-sm font-medium text-gray-500">{{ $offline ?? 0 }}</div></div>
+        <div class="flex items-center justify-between"><div class="text-xs">Available</div><div class="text-xs font-medium text-gray-800 dark:text-gray-200">{{ $available ?? 0 }}</div></div>
+        <div class="flex items-center justify-between"><div class="text-xs">Busy</div><div class="text-xs font-medium text-blue-600">{{ $busy ?? 0 }}</div></div>
+        <div class="flex items-center justify-between"><div class="text-xs">Offline</div><div class="text-xs font-medium text-gray-500">{{ $offline ?? 0 }}</div></div>
       </div>
     </div>
   </div>
@@ -45,4 +51,5 @@
       }catch(e){}
     })();
   </script>
+  </div>
 </div>

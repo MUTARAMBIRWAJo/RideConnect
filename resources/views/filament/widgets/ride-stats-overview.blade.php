@@ -1,14 +1,25 @@
 <div class="space-y-6">
+  <div wire:loading class="space-y-3 animate-pulse">
+    <div class="h-4 w-40 rounded bg-gray-200 dark:bg-gray-700"></div>
+    <div class="grid grid-cols-2 gap-3 lg:grid-cols-4">
+      <div class="h-24 rounded-xl bg-gray-200 dark:bg-gray-700"></div>
+      <div class="h-24 rounded-xl bg-gray-200 dark:bg-gray-700"></div>
+      <div class="h-24 rounded-xl bg-gray-200 dark:bg-gray-700"></div>
+      <div class="h-24 rounded-xl bg-gray-200 dark:bg-gray-700"></div>
+    </div>
+  </div>
+
+  <div wire:loading.remove class="space-y-6">
   <!-- Top Section -->
   <div class="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
     <div>
-      <h1 class="text-lg font-semibold text-gray-900 dark:text-gray-100">Dashboard</h1>
-      <div class="text-sm text-gray-500 dark:text-gray-300">Real-time system performance overview</div>
+      <h1 class="text-base font-semibold text-gray-900 dark:text-gray-100">Dashboard</h1>
+      <div class="text-xs text-gray-500 dark:text-gray-300">Real-time system performance overview</div>
     </div>
     <div class="flex flex-wrap items-center gap-2">
-      <button class="inline-flex items-center gap-2 px-3 py-2 rounded-lg text-sm font-semibold text-white bg-gradient-to-r from-green-800 to-green-700 shadow-sm transition-all duration-200 hover:from-green-700 hover:to-green-600 hover:shadow-md focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-green-300 focus-visible:ring-offset-2 dark:focus-visible:ring-green-700 dark:focus-visible:ring-offset-gray-900">Export Report</button>
-      <button class="inline-flex items-center gap-2 px-3 py-2 rounded-lg border border-green-200 dark:border-green-800 text-sm font-medium text-gray-800 dark:text-gray-200 transition-all duration-200 hover:bg-green-50 dark:hover:bg-green-900/30 hover:border-green-300 dark:hover:border-green-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-green-300 focus-visible:ring-offset-2 dark:focus-visible:ring-green-700 dark:focus-visible:ring-offset-gray-900">Refresh</button>
-      <a href="{{ route('filament.admin.pages.bi-dashboard') }}" class="inline-flex items-center gap-2 px-3 py-2 rounded-lg text-sm font-medium text-gray-800 dark:text-gray-200 transition-all duration-200 hover:bg-green-50 dark:hover:bg-green-900/30 hover:text-gray-900 dark:hover:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-green-300 focus-visible:ring-offset-2 dark:focus-visible:ring-green-700 dark:focus-visible:ring-offset-gray-900">View Analytics</a>
+      <button class="inline-flex items-center gap-2 px-3 py-2 rounded-lg text-xs font-semibold text-white bg-gradient-to-r from-green-800 to-green-700 shadow-sm transition-all duration-200 hover:from-green-700 hover:to-green-600 hover:shadow-md focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-green-300 focus-visible:ring-offset-2 dark:focus-visible:ring-green-700 dark:focus-visible:ring-offset-gray-900">Export Report</button>
+      <button class="inline-flex items-center gap-2 px-3 py-2 rounded-lg border border-green-200 dark:border-green-800 text-xs font-medium text-gray-800 dark:text-gray-200 transition-all duration-200 hover:bg-green-50 dark:hover:bg-green-900/30 hover:border-green-300 dark:hover:border-green-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-green-300 focus-visible:ring-offset-2 dark:focus-visible:ring-green-700 dark:focus-visible:ring-offset-gray-900">Refresh</button>
+      <a href="{{ route('filament.admin.pages.bi-dashboard') }}" class="inline-flex items-center gap-2 px-3 py-2 rounded-lg text-xs font-medium text-gray-800 dark:text-gray-200 transition-all duration-200 hover:bg-green-50 dark:hover:bg-green-900/30 hover:text-gray-900 dark:hover:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-green-300 focus-visible:ring-offset-2 dark:focus-visible:ring-green-700 dark:focus-visible:ring-offset-gray-900">View Analytics</a>
     </div>
   </div>
 
@@ -39,5 +50,6 @@
     <div class="col-span-12 lg:col-span-4">
       <x-filament.stat-widget title="Driver Utilization" :value="'72%'" meta="Last 24 hours" :icon="'🚗'" />
     </div>
+  </div>
   </div>
 </div>
