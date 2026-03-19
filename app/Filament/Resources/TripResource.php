@@ -70,62 +70,38 @@ class TripResource extends Resource
                     ->searchable(),
                 Tables\Columns\TextColumn::make('passenger.full_name')
                     ->label('Passenger')
-                    ->sortable(query: function (Builder $query, string $direction): Builder {
-                        return $query
-                            ->leftJoin('mobile_users as passengers', 'trips.passenger_id', '=', 'passengers.id')
-                            ->orderBy('passengers.first_name', $direction)
-                            ->orderBy('passengers.last_name', $direction)
-                            ->select('trips.*');
-                    }),
+                    ->sortable(),
                 Tables\Columns\TextColumn::make('driver_id')
                     ->label('Driver ID')
                     ->sortable(),
                 Tables\Columns\TextColumn::make('pickup_location')
-                    ->searchable()
+                    ->label('Pickup Location')
                     ->limit(30),
                 Tables\Columns\TextColumn::make('dropoff_location')
-                    ->searchable()
+                    ->label('Dropoff Location')
                     ->limit(30),
+                Tables\Columns\TextColumn::make('pickup_zone')
+                    ->label('Pickup Zone'),
+                Tables\Columns\TextColumn::make('dropoff_zone')
+                    ->label('Dropoff Zone'),
                 Tables\Columns\TextColumn::make('status')
                     ->badge()
                     ->color(fn (string $state): string => match (strtolower(trim($state))) {
                         'completed' => 'success',
                         'started' => 'warning',
-                        'in_progress' => 'warning',
                         'cancelled' => 'danger',
-                        'pending' => 'info',
-                        'accepted' => 'info',
                         default => 'gray',
-                    }),
-                Tables\Columns\TextColumn::make('started_at')
-                    ->dateTime()
+                    })
                     ->sortable(),
                 Tables\Columns\TextColumn::make('completed_at')
-                    ->dateTime()
+                    ->label('Completed At')
                     ->sortable(),
-                Tables\Columns\TextColumn::make('created_at')
-                    ->dateTime()
-                    ->sortable()
-                    ->toggleable(isToggledHiddenByDefault: true),
-            ])
-            ->filters([
-                Tables\Filters\SelectFilter::make('status')
-                    ->options([
-                        'PENDING' => 'Pending',
-                        'ACCEPTED' => 'Accepted',
-                        'STARTED' => 'Started',
-                        'COMPLETED' => 'Completed',
-                        'CANCELLED' => 'Cancelled',
-                    ]),
             ])
             ->actions([
                 Tables\Actions\ViewAction::make(),
-                Tables\Actions\EditAction::make(),
             ])
             ->bulkActions([
-                Tables\Actions\BulkActionGroup::make([
-                    Tables\Actions\DeleteBulkAction::make(),
-                ]),
+                // Add bulk actions if needed
             ])
             ->emptyStateActions([
                 Tables\Actions\CreateAction::make(),

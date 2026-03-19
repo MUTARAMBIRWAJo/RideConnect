@@ -21,6 +21,8 @@ return new class extends Migration
             $table->decimal('pickup_lng', 10, 7);
             $table->decimal('dropoff_lat', 10, 7);
             $table->decimal('dropoff_lng', 10, 7);
+            $table->string('pickup_zone', 64)->nullable();
+            $table->string('dropoff_zone', 64)->nullable();
             $table->decimal('fare', 10, 2);
             $table->enum('status', ['PENDING', 'ACCEPTED', 'STARTED', 'COMPLETED', 'CANCELLED'])->default('PENDING');
             $table->timestamp('requested_at')->nullable();

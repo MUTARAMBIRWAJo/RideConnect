@@ -2,6 +2,9 @@
 
 namespace App\Providers;
 
+use App\Models\Trip;
+use App\Observers\TripObserver;
+
 use App\Models\User;
 use App\Models\MobileUser;
 use App\Models\Manager;
@@ -45,6 +48,8 @@ class AppServiceProvider extends ServiceProvider
      */
     public function boot(): void
     {
+        // Register Trip observer for zone assignment
+        Trip::observe(TripObserver::class);
         if (app()->environment('production')) {
             URL::forceScheme('https');
         }
