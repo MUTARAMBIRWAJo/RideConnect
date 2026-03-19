@@ -1,23 +1,41 @@
-<?php
 
-namespace App\Http\Controllers\Manager;
-
-use App\Http\Controllers\Controller;
-use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Auth;
 
 class DashboardController extends Controller
 {
     /**
      * Display the manager dashboard based on user role.
      */
-    public function index()
+    public function index(AiPredictionService $aiPredictionService)
     {
         $user = Auth::user();
         $role = $user->role;
 
         // Get role-specific data
+        // Real-time AI analytics for dashboard
+        $now = now()->toIso8601String();
+        $aiHotspots = $aiPredictionService->demandHotspots([
+            'zone' => 'Kigali',
+            'time' => $now,
+        ]);
+        $aiDemand = $aiPredictionService->predictDemand([
+            'zone' => 'Kigali',
+            'time' => $now,
+        ]);
+        $aiSurge = $aiPredictionService->predictSurge([
+            'origin' => ['lat' => -1.95, 'lng' => 30.06],
+            'destination' => ['lat' => -1.96, 'lng' => 30.07],
+            'time' => $now,
+        ]);
+        $aiMatch = $aiPredictionService->matchDriver([
+            'zone' => 'Kigali',
+            'time' => $now,
+        ]);
+
         $data = $this->getDashboardData($role);
+        $data['ai_demand_hotspots'] = $aiHotspots['hotspots'] ?? [];
+        $data['ai_demand_prediction'] = $aiDemand['predicted_demand'] ?? null;
+        $data['ai_surge_multiplier'] = $aiSurge['surge_multiplier'] ?? null;
+        $data['ai_best_driver_match'] = $aiMatch['best_driver'] ?? null;
 
         return view('manager.dashboards.' . $role, [
             'user' => $user,

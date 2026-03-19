@@ -63,7 +63,49 @@ class RideResource extends Resource
                 Forms\Components\TextInput::make('price_per_seat')
                     ->required()
                     ->numeric()
-                    ->step(0.01),
+                    ->step(0.01)
+                    ->helperText(function ($get) {
+                        // Suggest legal fare per seat using RuraTariffService
+                        $originLat = $get('origin_lat');
+                        $originLng = $get('origin_lng');
+                        $destLat = $get('destination_lat');
+                        $destLng = $get('destination_lng');
+                        $vehicleType = $get('vehicle_type') ?? 'car';
+                        $rideType = $get('ride_type') ?? 'local';
+                        if (!$originLat || !$originLng || !$destLat || !$destLng) return null;
+                        $zoneService = app(\App\Services\RuraZoneService::class);
+                        $tariffService = app(\App\Services\RuraTariffService::class);
+                        $originZone = $zoneService->getZoneForCoordinates($originLat, $originLng);
+                        $destinationZone = $zoneService->getZoneForCoordinates($destLat, $destLng);
+                        $legalFare = $tariffService->lookupTariff($originZone, $destinationZone, $vehicleType, $rideType);
+                        if ($legalFare) {
+                            return 'RURA Legal Fare per seat: RWF ' . number_format($legalFare, 2);
+                        }
+                        return 'No RURA tariff found for this route.';
+                    })
+                    ->validationMessages([
+                        'rura_compliance' => 'Entered fare does not match RURA legal tariff for this route.'
+                    ])
+                    ->rule(function ($get) {
+                        // Validate against RURA tariff
+                        $originLat = $get('origin_lat');
+                        $originLng = $get('origin_lng');
+                        $destLat = $get('destination_lat');
+                        $destLng = $get('destination_lng');
+                        $vehicleType = $get('vehicle_type') ?? 'car';
+                        $rideType = $get('ride_type') ?? 'local';
+                        $entered = $get('price_per_seat');
+                        if (!$originLat || !$originLng || !$destLat || !$destLng || !$entered) return null;
+                        $zoneService = app(\App\Services\RuraZoneService::class);
+                        $tariffService = app(\App\Services\RuraTariffService::class);
+                        $originZone = $zoneService->getZoneForCoordinates($originLat, $originLng);
+                        $destinationZone = $zoneService->getZoneForCoordinates($destLat, $destLng);
+                        $legalFare = $tariffService->lookupTariff($originZone, $destinationZone, $vehicleType, $rideType);
+                        if ($legalFare) {
+                            return $entered == $legalFare ? null : 'rura_compliance';
+                        }
+                        return null;
+                    }),
                 Forms\Components\TextInput::make('currency')
                     ->required()
                     ->maxLength(3)
@@ -80,7 +122,7 @@ class RideResource extends Resource
                     ->required(),
                 Forms\Components\Select::make('ride_type')
                     ->options([
-                        ' intercity' => 'Intercity',
+                        'intercity' => 'Intercity',
                         'local' => 'Local',
                     ]),
                 Forms\Components\Checkbox::make('luggage_allowed'),

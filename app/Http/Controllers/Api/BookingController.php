@@ -1,14 +1,4 @@
-<?php
 
-namespace App\Http\Controllers\Api;
-
-use App\Http\Controllers\Controller;
-use App\Models\Booking;
-use App\Models\Ride;
-use App\Services\MobileNotificationService;
-use App\Services\RideCategoryTransitionService;
-use Illuminate\Http\JsonResponse;
-use Illuminate\Http\Request;
 
 class BookingController extends Controller
 {
@@ -17,6 +7,8 @@ class BookingController extends Controller
     public function __construct(
         private readonly RideCategoryTransitionService $rideCategoryTransitionService,
         private readonly MobileNotificationService $mobileNotificationService,
+        private readonly RuraZoneService $ruraZoneService,
+        private readonly RuraTariffService $ruraTariffService,
     )
     {
     }
@@ -218,8 +210,24 @@ class BookingController extends Controller
             ], 400);
         }
         
-        // Calculate total price
-        $totalPrice = $ride->price_per_seat * $validated['seats_booked'];
+
+        // Detect RURA zones for origin/destination
+        $originZone = $this->ruraZoneService->coordsToZone($ride->origin_lat, $ride->origin_lng);
+        $destZone = $this->ruraZoneService->coordsToZone($ride->destination_lat, $ride->destination_lng);
+
+        // Try to lookup legal RURA fare
+        $tariff = $this->ruraTariffService->lookupTariff(
+            null,
+            $originZone . ' Bus Park',
+            $destZone . ' Bus Park',
+            null
+        );
+        if ($tariff && isset($tariff['fare_rwf'])) {
+            $totalPrice = $tariff['fare_rwf'] * $validated['seats_booked'];
+        } else {
+            // Fallback: use ride price
+            $totalPrice = $ride->price_per_seat * $validated['seats_booked'];
+        }
 
         if ($this->rideCategoryTransitionService->isTripCategory($ride)) {
             $trip = $this->rideCategoryTransitionService->createTripFromRideSelection($user, $ride, [

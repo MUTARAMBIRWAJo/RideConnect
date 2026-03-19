@@ -51,5 +51,38 @@
       }catch(e){}
     })();
   </script>
+  <div class="mt-6">
+    <h4 class="text-sm font-semibold mb-2">Available Drivers</h4>
+    @if(isset($availableDrivers) && $availableDrivers->count())
+      <div class="overflow-x-auto">
+        <table class="min-w-full text-xs border rounded">
+          <thead>
+            <tr class="bg-gray-100 dark:bg-gray-800">
+              <th class="px-2 py-1 text-left">Name</th>
+              <th class="px-2 py-1 text-left">Vehicle Plate</th>
+              <th class="px-2 py-1 text-left">Location</th>
+            </tr>
+          </thead>
+          <tbody>
+            @foreach($availableDrivers as $driver)
+              <tr class="border-b">
+                <td class="px-2 py-1">{{ $driver->user?->name ?? 'N/A' }}</td>
+                <td class="px-2 py-1">{{ $driver->license_plate ?? ($driver->vehicles->first()?->license_plate ?? 'N/A') }}</td>
+                <td class="px-2 py-1">
+                  @if($driver->current_latitude && $driver->current_longitude)
+                    {{ number_format($driver->current_latitude, 5) }}, {{ number_format($driver->current_longitude, 5) }}
+                  @else
+                    N/A
+                  @endif
+                </td>
+              </tr>
+            @endforeach
+          </tbody>
+        </table>
+      </div>
+    @else
+      <div class="text-xs text-gray-500">No available drivers found.</div>
+    @endif
+  </div>
   </div>
 </div>

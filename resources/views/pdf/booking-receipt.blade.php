@@ -166,6 +166,37 @@
     <div class="amount-box">
         <p class="amount-label">TOTAL AMOUNT</p>
         <p class="amount-value">{{ $booking->currency ?? 'RWF' }} {{ number_format((float) $booking->total_price, 2) }}</p>
+        @php
+            $originLat = $ride?->origin_lat;
+            $originLng = $ride?->origin_lng;
+            $destLat = $ride?->destination_lat;
+            $destLng = $ride?->destination_lng;
+            $vehicleType = $ride?->vehicle_type ?? 'car';
+            $rideType = $ride?->ride_type ?? 'local';
+            $seats = $booking->seats_booked ?? 1;
+            $legalFare = null;
+            try {
+                $zoneService = app(\App\Services\RuraZoneService::class);
+                $tariffService = app(\App\Services\RuraTariffService::class);
+                $originZone = $zoneService->getZoneForCoordinates($originLat, $originLng);
+                $destinationZone = $zoneService->getZoneForCoordinates($destLat, $destLng);
+                $legalFare = $tariffService->lookupTariff($originZone, $destinationZone, $vehicleType, $rideType);
+            } catch (\Throwable $e) {}
+            $totalLegal = $legalFare ? $legalFare * $seats : null;
+            $isCompliant = $totalLegal && ((float) $booking->total_price === (float) $totalLegal);
+        @endphp
+        @if($totalLegal)
+            <div style="font-size:11px; color:#2563eb; margin-top:4px;">
+                RURA Legal Fare: {{ $booking->currency ?? 'RWF' }} {{ number_format((float) $totalLegal, 2) }}<br>
+                <span style="font-weight:600; color:{{ $isCompliant ? '#16a34a' : '#dc2626' }};">
+                    {{ $isCompliant ? 'RURA COMPLIANT' : 'NOT RURA COMPLIANT' }}
+                </span>
+            </div>
+        @else
+            <div style="font-size:11px; color:#dc2626; margin-top:4px;">
+                No RURA tariff found for this route.
+            </div>
+        @endif
     </div>
 
     <div class="footer">

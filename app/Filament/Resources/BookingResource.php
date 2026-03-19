@@ -43,7 +43,51 @@ class BookingResource extends Resource
                 Forms\Components\TextInput::make('total_price')
                     ->required()
                     ->numeric()
-                    ->step(0.01),
+                    ->step(0.01)
+                    ->helperText(function ($get) {
+                        // Suggest legal fare using RuraTariffService
+                        $rideId = $get('ride_id');
+                        $seats = $get('seats_booked') ?: 1;
+                        if (!$rideId) return null;
+                        $ride = \App\Models\Ride::find($rideId);
+                        if (!$ride) return null;
+                        $origin = ['lat' => $ride->origin_lat, 'lng' => $ride->origin_lng];
+                        $destination = ['lat' => $ride->destination_lat, 'lng' => $ride->destination_lng];
+                        $zoneService = app(\App\Services\RuraZoneService::class);
+                        $tariffService = app(\App\Services\RuraTariffService::class);
+                        $originZone = $zoneService->getZoneForCoordinates($origin['lat'], $origin['lng']);
+                        $destinationZone = $zoneService->getZoneForCoordinates($destination['lat'], $destination['lng']);
+                        $legalFare = $tariffService->lookupTariff($originZone, $destinationZone, $ride->vehicle_type, $ride->ride_type);
+                        if ($legalFare) {
+                            $totalLegal = $legalFare * $seats;
+                            return 'RURA Legal Fare: RWF ' . number_format($totalLegal, 2);
+                        }
+                        return 'No RURA tariff found for this route.';
+                    })
+                    ->validationMessages([
+                        'rura_compliance' => 'Entered fare does not match RURA legal tariff for this route.'
+                    ])
+                    ->rule(function ($get) {
+                        // Validate against RURA tariff
+                        $rideId = $get('ride_id');
+                        $seats = $get('seats_booked') ?: 1;
+                        $entered = $get('total_price');
+                        if (!$rideId || !$entered) return null;
+                        $ride = \App\Models\Ride::find($rideId);
+                        if (!$ride) return null;
+                        $origin = ['lat' => $ride->origin_lat, 'lng' => $ride->origin_lng];
+                        $destination = ['lat' => $ride->destination_lat, 'lng' => $ride->destination_lng];
+                        $zoneService = app(\App\Services\RuraZoneService::class);
+                        $tariffService = app(\App\Services\RuraTariffService::class);
+                        $originZone = $zoneService->getZoneForCoordinates($origin['lat'], $origin['lng']);
+                        $destinationZone = $zoneService->getZoneForCoordinates($destination['lat'], $destination['lng']);
+                        $legalFare = $tariffService->lookupTariff($originZone, $destinationZone, $ride->vehicle_type, $ride->ride_type);
+                        if ($legalFare) {
+                            $totalLegal = $legalFare * $seats;
+                            return $entered == $totalLegal ? null : 'rura_compliance';
+                        }
+                        return null;
+                    }),
                 Forms\Components\TextInput::make('currency')
                     ->required()
                     ->maxLength(3)

@@ -1,5 +1,35 @@
-<div>
-    <x-filament-panels::page>
+<x-filament-panels::page>
+    <div class="space-y-6">
+        <section class="space-y-3">
+            <div class="flex items-center justify-between gap-3">
+                <h3 class="text-base font-semibold text-gray-900 dark:text-gray-100">AI-Powered Analytics</h3>
+                <span class="text-xs uppercase tracking-wide text-cyan-600 dark:text-cyan-300">AI Insights</span>
+            </div>
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+                <div class="rounded-lg bg-cyan-900/80 p-4 text-white shadow">
+                    <div class="text-xs uppercase text-cyan-200">Demand Hotspots</div>
+                    <ul class="mt-2 space-y-1">
+                        @forelse($data['ai_demand_hotspots'] ?? [] as $hotspot)
+                            <li class="text-cyan-100">{{ $hotspot }}</li>
+                        @empty
+                            <li class="text-cyan-300/60">No data</li>
+                        @endforelse
+                    </ul>
+                </div>
+                <div class="rounded-lg bg-emerald-900/80 p-4 text-white shadow">
+                    <div class="text-xs uppercase text-emerald-200">Predicted Demand</div>
+                    <div class="mt-2 text-2xl font-bold">{{ $data['ai_demand_prediction'] ?? 'N/A' }}</div>
+                </div>
+                <div class="rounded-lg bg-amber-900/80 p-4 text-white shadow">
+                    <div class="text-xs uppercase text-amber-200">Surge Multiplier</div>
+                    <div class="mt-2 text-2xl font-bold">{{ $data['ai_surge_multiplier'] ?? 'N/A' }}</div>
+                </div>
+                <div class="rounded-lg bg-violet-900/80 p-4 text-white shadow">
+                    <div class="text-xs uppercase text-violet-200">Best Driver Match</div>
+                    <div class="mt-2 text-lg">{{ $data['ai_best_driver_match'] ?? 'N/A' }}</div>
+                </div>
+            </div>
+        </section>
         @php($userStats = $this->getUserManagementStats())
         @php($slowModeEnabled = (bool) config('dashboard.performance.slow_mode', false))
         <div class="space-y-6">
@@ -106,4 +136,3 @@
             </section>
         </div>
     </x-filament-panels::page>
-</div>

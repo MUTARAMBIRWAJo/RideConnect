@@ -34,19 +34,29 @@ class DriverAvailabilityChart extends Widget
                 $available = Driver::where('status', 'available')->count();
                 $busy = Driver::where('status', 'busy')->count();
                 $offline = Driver::where('status', 'offline')->count();
+                $availableDrivers = Driver::with(['user', 'vehicles'])
+                    ->where('status', 'available')
+                    ->get();
             } elseif (Schema::hasColumn('drivers', 'is_available') && Schema::hasColumn('drivers', 'is_online')) {
                 $available = Driver::where('is_available', true)->count();
                 $offline = Driver::where('is_online', false)->count();
                 $busy = max(0, Driver::count() - $available - $offline);
+                $availableDrivers = Driver::with(['user', 'vehicles'])
+                    ->where('is_available', true)
+                    ->get();
             } else {
                 $available = Driver::whereIn('status', ['approved', 'APPROVED', 'active', 'ACTIVE'])->count();
                 $busy = 0;
                 $offline = Driver::whereIn('status', ['pending', 'PENDING', 'suspended', 'SUSPENDED'])->count();
+                $availableDrivers = Driver::with(['user', 'vehicles'])
+                    ->whereIn('status', ['approved', 'APPROVED', 'active', 'ACTIVE'])
+                    ->get();
             }
         } catch (\Throwable $e) {
             $available = $busy = $offline = 0;
+            $availableDrivers = collect();
         }
 
-        return compact('available', 'busy', 'offline');
+        return compact('available', 'busy', 'offline', 'availableDrivers');
     }
 }

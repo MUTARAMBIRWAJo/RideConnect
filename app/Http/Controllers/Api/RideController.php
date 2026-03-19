@@ -1,15 +1,4 @@
-<?php
 
-namespace App\Http\Controllers\Api;
-
-use App\Http\Controllers\Controller;
-use App\Models\Ride;
-use App\Models\User;
-use App\Services\MobileNotificationService;
-use App\Services\RideCategoryTransitionService;
-use Illuminate\Http\JsonResponse;
-use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Auth;
 
 class RideController extends Controller
 {
@@ -18,6 +7,9 @@ class RideController extends Controller
     public function __construct(
         private readonly RideCategoryTransitionService $rideCategoryTransitionService,
         private readonly MobileNotificationService $mobileNotificationService,
+        private readonly AiPredictionService $aiPredictionService,
+        private readonly RuraZoneService $ruraZoneService,
+        private readonly RuraTariffService $ruraTariffService,
     )
     {
     }
@@ -218,23 +210,53 @@ class RideController extends Controller
             }
         }
         
+        // Predict ETA using AI service
+        $aiEtaPayload = [
+            'origin' => [
+                'lat' => $validated['origin_lat'],
+                'lng' => $validated['origin_lng'],
+                'address' => $validated['origin_address'],
+            ],
+            'destination' => [
+                'lat' => $validated['destination_lat'],
+                'lng' => $validated['destination_lng'],
+                'address' => $validated['destination_address'],
+            ],
+            'departure_time' => $validated['departure_time'],
+        ];
+        $aiEtaResult = $this->aiPredictionService->predictEta($aiEtaPayload);
+        $estimatedArrival = $aiEtaResult['eta'] ?? $validated['arrival_time_estimated'] ?? null;
+
+        // Predict surge pricing using AI service
+        $aiSurgePayload = [
+            'origin' => $aiEtaPayload['origin'],
+            'destination' => $aiEtaPayload['destination'],
+            'time' => $validated['departure_time'],
+        ];
+        $aiSurgeResult = $this->aiPredictionService->predictSurge($aiSurgePayload);
+        $surgeMultiplier = $aiSurgeResult['surge_multiplier'] ?? 1.0;
+
         $ride = Ride::create([
             ...$validated,
             'driver_id' => $driver->id,
             'status' => 'ACTIVE',
-                'currency' => $validated['currency'] ?? 'RWF',
+            'currency' => $validated['currency'] ?? 'RWF',
             'ride_type' => $validated['ride_type'] ?? 'REGULAR',
             'luggage_allowed' => $validated['luggage_allowed'] ?? true,
             'pets_allowed' => $validated['pets_allowed'] ?? false,
             'smoking_allowed' => $validated['smoking_allowed'] ?? false,
+            'arrival_time_estimated' => $estimatedArrival,
+            'surge_multiplier' => $surgeMultiplier,
         ]);
-        
+
         return response()->json([
             'success' => true,
             'message' => 'Ride created successfully',
             'data' => [
                 'id' => $ride->id,
                 'status' => $ride->status,
+                'arrival_time_estimated' => $ride->arrival_time_estimated,
+                'surge_multiplier' => $ride->surge_multiplier,
             ],
         ], 201);
     }
@@ -420,8 +442,43 @@ class RideController extends Controller
             ], 400);
         }
 
-        // Calculate price
-        $totalPrice = $ride->price_per_seat * $validated['seats'];
+
+        // Detect RURA zones for origin/destination
+        $originZone = $this->ruraZoneService->coordsToZone($ride->origin_lat, $ride->origin_lng);
+        $destZone = $this->ruraZoneService->coordsToZone($ride->destination_lat, $ride->destination_lng);
+
+        // Try to lookup legal RURA fare
+        $tariff = $this->ruraTariffService->lookupTariff(
+            null,
+            $originZone . ' Bus Park',
+            $destZone . ' Bus Park',
+            null
+        );
+        if ($tariff && isset($tariff['fare_rwf'])) {
+            $totalPrice = $tariff['fare_rwf'] * $validated['seats'];
+            $corridor = $tariff['corridor'] ?? null;
+        } else {
+            // Fallback: Predict price using AI service
+            $aiPayload = [
+                'origin' => [
+                    'lat' => $ride->origin_lat,
+                    'lng' => $ride->origin_lng,
+                    'address' => $ride->origin_address,
+                ],
+                'destination' => [
+                    'lat' => $ride->destination_lat,
+                    'lng' => $ride->destination_lng,
+                    'address' => $ride->destination_address,
+                ],
+                'seats' => $validated['seats'],
+                'ride_type' => $ride->ride_type,
+                'vehicle_type' => $ride->vehicle?->type,
+                'departure_time' => $ride->departure_time?->toIso8601String(),
+            ];
+            $aiResult = $this->aiPredictionService->predictPrice($aiPayload);
+            $totalPrice = $aiResult['predicted_price'] ?? ($ride->price_per_seat * $validated['seats']);
+            $corridor = null;
+        }
 
         if ($this->rideCategoryTransitionService->isTripCategory($ride)) {
             $trip = $this->rideCategoryTransitionService->createTripFromRideSelection($user, $ride, [

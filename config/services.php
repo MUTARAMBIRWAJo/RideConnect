@@ -1,3 +1,8 @@
+    'ai_service' => [
+        'url' => env('RIDE_AI_BASE_URL', 'https://rideconnect-ai.onrender.com'),
+        'key' => env('RIDE_AI_API_KEY'),
+        'timeout' => env('RIDE_AI_TIMEOUT', 10),
+    ],
 <?php
 
 return [
