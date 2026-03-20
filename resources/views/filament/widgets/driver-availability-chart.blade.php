@@ -51,6 +51,7 @@
       }catch(e){}
     })();
   </script>
+  </div>
   <div class="mt-6">
     <h4 class="text-sm font-semibold mb-2">Available Drivers</h4>
     @if(isset($availableDrivers) && $availableDrivers->count())
