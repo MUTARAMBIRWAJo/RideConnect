@@ -84,5 +84,4 @@
       <div class="text-xs text-gray-500">No available drivers found.</div>
     @endif
   </div>
-  </div>
 </div>
