@@ -2,12 +2,14 @@
 
 namespace App\Filament\Pages;
 
+use App\Enums\UserRole;
+use App\Filament\Pages\Concerns\HandlesRoleDashboards;
 use Filament\Pages\Dashboard\Concerns\HasFiltersForm;
 use Illuminate\Contracts\Support\Htmlable;
 
 class AIMonitoringDashboard extends \Filament\Pages\Dashboard
 {
-    use HasFiltersForm;
+    use HandlesRoleDashboards, HasFiltersForm;
     protected static ?string $navigationGroup = 'Dashboards';
 
     protected static ?int $navigationSort = 2;
@@ -26,17 +28,29 @@ class AIMonitoringDashboard extends \Filament\Pages\Dashboard
 
     public static function shouldRegisterNavigation(): bool
     {
-        return auth()->check() && auth()->user()->hasRole('ai-admin');
+        return static::userHasAnyRole(
+            auth()->user(),
+            ['Super_admin', 'Admin'],
+            [UserRole::SUPER_ADMIN, UserRole::ADMIN],
+        );
     }
 
     public static function canAccess(): bool
     {
-        return auth()->check() && auth()->user()->hasRole('ai-admin');
+        return static::userHasAnyRole(
+            auth()->user(),
+            ['Super_admin', 'Admin'],
+            [UserRole::SUPER_ADMIN, UserRole::ADMIN],
+        );
     }
 
     public static function canView(): bool
     {
-        return auth()->check() && auth()->user()->hasRole('ai-admin');
+        return static::userHasAnyRole(
+            auth()->user(),
+            ['Super_admin', 'Admin'],
+            [UserRole::SUPER_ADMIN, UserRole::ADMIN],
+        );
     }
 
     public function getWidgets(): array

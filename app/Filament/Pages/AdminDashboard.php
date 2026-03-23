@@ -2,6 +2,8 @@
 
 namespace App\Filament\Pages;
 
+use App\Enums\UserRole;
+use App\Filament\Pages\Concerns\HandlesRoleDashboards;
 use App\Filament\Widgets\AdminStats;
 use App\Filament\Widgets\RideAnalytics;
 use Filament\Pages\Dashboard\Concerns\HasFiltersForm;
@@ -9,7 +11,7 @@ use Illuminate\Contracts\Support\Htmlable;
 
 class AdminDashboard extends \Filament\Pages\Dashboard
 {
-    use HasFiltersForm;
+    use HandlesRoleDashboards, HasFiltersForm;
 
     protected static string $view = 'filament.pages.admin-dashboard';
 
@@ -29,17 +31,17 @@ class AdminDashboard extends \Filament\Pages\Dashboard
 
     public static function shouldRegisterNavigation(): bool
     {
-        return auth()->check() && auth()->user()->hasRole('admin');
+        return static::userHasRole(auth()->user(), 'Admin', UserRole::ADMIN);
     }
 
     public static function canAccess(): bool
     {
-        return auth()->check() && auth()->user()->hasRole('admin');
+        return static::userHasRole(auth()->user(), 'Admin', UserRole::ADMIN);
     }
 
     public static function canView(): bool
     {
-        return auth()->check() && auth()->user()->hasRole('admin');
+        return static::userHasRole(auth()->user(), 'Admin', UserRole::ADMIN);
     }
 
     public function mount(): void

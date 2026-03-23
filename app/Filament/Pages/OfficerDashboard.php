@@ -2,12 +2,14 @@
 
 namespace App\Filament\Pages;
 
+use App\Enums\UserRole;
+use App\Filament\Pages\Concerns\HandlesRoleDashboards;
 use Filament\Pages\Dashboard\Concerns\HasFiltersForm;
 use Illuminate\Contracts\Support\Htmlable;
 
 class OfficerDashboard extends \Filament\Pages\Dashboard
 {
-    use HasFiltersForm;
+    use HandlesRoleDashboards, HasFiltersForm;
 
     protected static ?string $navigationGroup = 'Dashboards';
 
@@ -25,17 +27,17 @@ class OfficerDashboard extends \Filament\Pages\Dashboard
 
     public static function shouldRegisterNavigation(): bool
     {
-        return auth()->check() && auth()->user()->hasRole('officer');
+        return static::userHasRole(auth()->user(), 'Officer', UserRole::OFFICER);
     }
 
     public static function canAccess(): bool
     {
-        return auth()->check() && auth()->user()->hasRole('officer');
+        return static::userHasRole(auth()->user(), 'Officer', UserRole::OFFICER);
     }
 
     public static function canView(): bool
     {
-        return auth()->check() && auth()->user()->hasRole('officer');
+        return static::userHasRole(auth()->user(), 'Officer', UserRole::OFFICER);
     }
 
     public function mount(): void

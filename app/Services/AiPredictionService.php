@@ -55,11 +55,16 @@ class AiPredictionService
     private function post($uri, $payload)
     {
         try {
+            $headers = [
+                'Accept' => 'application/json',
+            ];
+
+            if (!empty($this->apiKey)) {
+                $headers['X-API-Key'] = $this->apiKey;
+            }
+
             $response = $this->client->post($uri, [
-                'headers' => [
-                    'X-API-Key' => $this->apiKey,
-                    'Accept' => 'application/json',
-                ],
+                'headers' => $headers,
                 'json' => $payload,
             ]);
             return json_decode($response->getBody()->getContents(), true);

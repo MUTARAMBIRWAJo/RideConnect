@@ -28,6 +28,11 @@ trait HandlesRoleDashboards
                 if ($user->hasRole($spatieRole)) {
                     return true;
                 }
+
+                // Some code paths may store roles as underscored/no-case variants.
+                if ($user->hasRole(strtolower($spatieRole)) || $user->hasRole(strtoupper($spatieRole))) {
+                    return true;
+                }
             } catch (Throwable) {
                 // Fall back to enum role when role-table lookup is unavailable.
             }
@@ -35,4 +40,32 @@ trait HandlesRoleDashboards
 
         return static::resolveUserRoleValue($user) === $enumRole->value;
     }
+
+    protected static function userHasAnyRole(?User $user, array $spatieRoles, array $enumRoles = []): bool
+    {
+        if (!$user) {
+            return false;
+        }
+
+        if (method_exists($user, 'hasRole') && $user->exists) {
+            foreach ($spatieRoles as $role) {
+                if ($user->hasRole($role)) {
+                    return true;
+                }
+
+                if ($user->hasRole(strtolower($role)) || $user->hasRole(strtoupper($role))) {
+                    return true;
+                }
+            }
+        }
+
+        foreach ($enumRoles as $enumRole) {
+            if (static::resolveUserRoleValue($user) === $enumRole->value) {
+                return true;
+            }
+        }
+
+        return false;
+    }
 }
+

@@ -21,12 +21,13 @@ class DatabaseSeeder extends Seeder
     public function run(): void
     {
         $resumeMode = (bool) env('DB_SEED_RESUME', false);
-        $skipReset = (bool) env('DB_SEED_SKIP_RESET', false);
+        $skipReset = (bool) env('DB_SEED_SKIP_RESET', true); // Default to skip reset to avoid foreign key issues
 
         // Resume mode keeps already-seeded data and only runs the final top-up pass.
         if ($resumeMode) {
             $this->command?->info('DB_SEED_RESUME enabled: skipping truncation and completed seeders.');
             $this->call([
+                RoleSeeder::class,
                 AIRwandaTrainingSeeder::class,
                 RwandaFiftyTopUpSeeder::class,
             ]);
@@ -34,15 +35,9 @@ class DatabaseSeeder extends Seeder
             return;
         }
 
-        if (!$skipReset && !$this->resetDatabaseForSeeding()) {
-            $this->command?->warn('DB reset failed, continuing in resume-style mode to complete top-up without truncation.');
-            $this->call([
-                AIRwandaTrainingSeeder::class,
-                RwandaFiftyTopUpSeeder::class,
-            ]);
-
-            return;
-        }
+        // Skip database reset by default (resetDatabaseForSeeding is commented out)
+        // Just ensure roles and managers are seeded
+        $this->command?->info('Skipping database reset. Seeding roles and managers...');
 
         // Run seeders for mobile_users and managers tables FIRST (source of truth)
         $this->call([

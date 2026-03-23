@@ -3,6 +3,7 @@
 namespace App\Filament\Pages;
 
 use App\Enums\UserRole;
+use App\Filament\Pages\Concerns\HandlesRoleDashboards;
 use App\Filament\Widgets\BI\CommissionTodayWidget;
 use App\Filament\Widgets\BI\FraudRiskHeatmapWidget;
 use App\Filament\Widgets\BI\LiveRevenueTickerWidget;
@@ -15,7 +16,6 @@ use App\Filament\Widgets\Dashboard\OperationsIntelligenceWidget;
 use App\Filament\Widgets\Dashboard\SuperAdminOverviewStats;
 use App\Filament\Widgets\Dashboard\SystemLogsWidget;
 use App\Filament\Widgets\Dashboard\TransactionsTableWidget;
-use App\Filament\Pages\Concerns\HandlesRoleDashboards;
 use App\Filament\Widgets\DemandHeatmapWidget;
 use App\Filament\Widgets\DriverAvailabilityChart;
 use App\Filament\Widgets\LatestRidesTable;
@@ -45,17 +45,17 @@ class SuperDashboard extends \Filament\Pages\Dashboard
 
     public static function shouldRegisterNavigation(): bool
     {
-        return auth()->check() && auth()->user()->hasRole('super_admin');
+        return static::userHasRole(auth()->user(), 'Super_admin', UserRole::SUPER_ADMIN);
     }
 
     public static function canAccess(): bool
     {
-        return auth()->check() && auth()->user()->hasRole('super_admin');
+        return static::userHasRole(auth()->user(), 'Super_admin', UserRole::SUPER_ADMIN);
     }
 
     public static function canView(): bool
     {
-        return auth()->check() && auth()->user()->hasRole('super_admin');
+        return static::userHasRole(auth()->user(), 'Super_admin', UserRole::SUPER_ADMIN);
     }
 
     public function mount(): void
