@@ -15,7 +15,15 @@ class AdminOverviewStats extends StatsOverviewWidget
 
     protected function getStats(): array
     {
-        $activeRides = Ride::whereIn('status', ['in_progress', 'accepted', 'IN_PROGRESS', 'ACCEPTED'])->count();
+        // Use optimized data from page if available, fallback to individual queries
+        $riderStats = $this->getWidgetData()['riderStats'] ?? null;
+
+        if ($riderStats) {
+            $activeRides = $riderStats['active_rides'];
+        } else {
+            $activeRides = Ride::whereIn('status', ['in_progress', 'accepted', 'IN_PROGRESS', 'ACCEPTED'])->count();
+        }
+
         $driversOnline = Schema::hasColumn('drivers', 'is_online')
             ? Driver::where('is_online', true)->count()
             : Driver::whereIn('status', ['approved', 'APPROVED', 'active', 'ACTIVE'])->count();
