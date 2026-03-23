@@ -26,14 +26,14 @@ class DriverDashboard extends \Filament\Pages\Dashboard
 
     public static function shouldRegisterNavigation(): bool
     {
-        return static::canAccess();
+        // Driver Dashboard is for mobile app only, not Filament
+        return false;
     }
 
     public static function canAccess(): bool
     {
-        $user = auth()->user();
-
-        return static::userHasRole($user, 'Driver', UserRole::DRIVER);
+        // Driver Dashboard is for mobile app only, not Filament
+        return false;
     }
 
     public function mount(): void
