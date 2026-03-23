@@ -2,10 +2,12 @@
 
 namespace App\Filament\Pages;
 
+use Filament\Pages\Dashboard\Concerns\HasFiltersForm;
 use Illuminate\Contracts\Support\Htmlable;
 
 class AIMonitoringDashboard extends \Filament\Pages\Dashboard
 {
+    use HasFiltersForm;
     protected static ?string $navigationGroup = 'AI & Analytics';
 
     protected static ?int $navigationSort = 2;

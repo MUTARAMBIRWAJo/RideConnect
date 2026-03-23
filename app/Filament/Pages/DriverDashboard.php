@@ -5,11 +5,12 @@ namespace App\Filament\Pages;
 use App\Enums\UserRole;
 use App\Filament\Pages\Concerns\HandlesRoleDashboards;
 use App\Filament\Support\RoleDashboardConfig;
+use Filament\Pages\Dashboard\Concerns\HasFiltersForm;
 use Illuminate\Contracts\Support\Htmlable;
 
 class DriverDashboard extends \Filament\Pages\Dashboard
 {
-    use HandlesRoleDashboards;
+    use HandlesRoleDashboards, HasFiltersForm;
 
     protected static string $routePath = '/driver-dashboard';
 

@@ -22,11 +22,12 @@ use App\Filament\Widgets\LatestRidesTable;
 use App\Filament\Widgets\RideMapWidget;
 use App\Filament\Widgets\RideStatsOverview;
 use App\Models\User;
+use Filament\Pages\Dashboard\Concerns\HasFiltersForm;
 use Illuminate\Contracts\Support\Htmlable;
 
 class SuperDashboard extends \Filament\Pages\Dashboard
 {
-    use HandlesRoleDashboards;
+    use HandlesRoleDashboards, HasFiltersForm;
 
     protected static string $routePath = '/super-dashboard';
 
