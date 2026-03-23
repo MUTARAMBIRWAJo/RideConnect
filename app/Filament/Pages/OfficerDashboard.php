@@ -2,15 +2,14 @@
 
 namespace App\Filament\Pages;
 
-use App\Enums\UserRole;
-use App\Filament\Pages\Concerns\HandlesRoleDashboards;
-use App\Filament\Support\RoleDashboardConfig;
 use Filament\Pages\Dashboard\Concerns\HasFiltersForm;
 use Illuminate\Contracts\Support\Htmlable;
 
 class OfficerDashboard extends \Filament\Pages\Dashboard
 {
-    use HandlesRoleDashboards, HasFiltersForm;
+    use HasFiltersForm;
+
+    protected static ?string $navigationGroup = 'Dashboards';
 
     protected static string $routePath = '/officer-dashboard';
 
@@ -26,14 +25,17 @@ class OfficerDashboard extends \Filament\Pages\Dashboard
 
     public static function shouldRegisterNavigation(): bool
     {
-        return static::canAccess();
+        return auth()->check() && auth()->user()->hasRole('officer');
     }
 
     public static function canAccess(): bool
     {
-        $user = auth()->user();
+        return auth()->check() && auth()->user()->hasRole('officer');
+    }
 
-        return static::userHasRole($user, 'Officer', UserRole::OFFICER);
+    public static function canView(): bool
+    {
+        return auth()->check() && auth()->user()->hasRole('officer');
     }
 
     public function mount(): void
@@ -41,13 +43,17 @@ class OfficerDashboard extends \Filament\Pages\Dashboard
         abort_unless(static::canAccess(), 403);
     }
 
-    public function getWidgets(): array
+    protected function getHeaderWidgets(): array
     {
-        return RoleDashboardConfig::widgetsForRole(UserRole::OFFICER->value);
+        return [
+            // Add officer-specific widgets here
+        ];
     }
 
-    public function getColumns(): int | string | array
+    protected function getFooterWidgets(): array
     {
-        return RoleDashboardConfig::columnsForRole(UserRole::OFFICER->value);
+        return [
+            // Add officer-specific widgets here
+        ];
     }
 }

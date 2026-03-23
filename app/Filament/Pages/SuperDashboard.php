@@ -45,14 +45,17 @@ class SuperDashboard extends \Filament\Pages\Dashboard
 
     public static function shouldRegisterNavigation(): bool
     {
-        return static::canAccess();
+        return auth()->check() && auth()->user()->hasRole('super_admin');
     }
 
     public static function canAccess(): bool
     {
-        $user = auth()->user();
+        return auth()->check() && auth()->user()->hasRole('super_admin');
+    }
 
-        return static::userHasRole($user, 'Super_admin', UserRole::SUPER_ADMIN);
+    public static function canView(): bool
+    {
+        return auth()->check() && auth()->user()->hasRole('super_admin');
     }
 
     public function mount(): void

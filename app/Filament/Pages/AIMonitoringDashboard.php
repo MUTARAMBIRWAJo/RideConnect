@@ -8,7 +8,7 @@ use Illuminate\Contracts\Support\Htmlable;
 class AIMonitoringDashboard extends \Filament\Pages\Dashboard
 {
     use HasFiltersForm;
-    protected static ?string $navigationGroup = 'AI & Analytics';
+    protected static ?string $navigationGroup = 'Dashboards';
 
     protected static ?int $navigationSort = 2;
 
@@ -24,20 +24,19 @@ class AIMonitoringDashboard extends \Filament\Pages\Dashboard
         return 'heroicon-o-cpu-chip';
     }
 
+    public static function shouldRegisterNavigation(): bool
+    {
+        return auth()->check() && auth()->user()->hasRole('ai-admin');
+    }
+
     public static function canAccess(): bool
     {
-        $user = auth()->user();
+        return auth()->check() && auth()->user()->hasRole('ai-admin');
+    }
 
-        if (!$user || !isset($user->role)) {
-            return false;
-        }
-
-        $role = $user->role;
-        $value = is_object($role) && isset($role->value) ? strtolower((string) $role->value) : strtolower((string) $role);
-        $name = is_object($role) && isset($role->name) ? strtolower((string) $role->name) : $value;
-
-        return in_array($value, ['super_admin', 'admin'], true)
-            || in_array($name, ['super_admin', 'admin'], true);
+    public static function canView(): bool
+    {
+        return auth()->check() && auth()->user()->hasRole('ai-admin');
     }
 
     public function getWidgets(): array

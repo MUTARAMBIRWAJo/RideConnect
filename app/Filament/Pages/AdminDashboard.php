@@ -2,17 +2,18 @@
 
 namespace App\Filament\Pages;
 
-use App\Enums\UserRole;
-use App\Filament\Pages\Concerns\HandlesRoleDashboards;
-use App\Filament\Support\RoleDashboardConfig;
+use App\Filament\Widgets\AdminStats;
+use App\Filament\Widgets\RideAnalytics;
 use Filament\Pages\Dashboard\Concerns\HasFiltersForm;
 use Illuminate\Contracts\Support\Htmlable;
 
 class AdminDashboard extends \Filament\Pages\Dashboard
 {
-    use HandlesRoleDashboards, HasFiltersForm;
+    use HasFiltersForm;
 
     protected static string $view = 'filament.pages.admin-dashboard';
+
+    protected static ?string $navigationGroup = 'Dashboards';
 
     protected static string $routePath = '/admin-dashboard';
 
@@ -28,14 +29,17 @@ class AdminDashboard extends \Filament\Pages\Dashboard
 
     public static function shouldRegisterNavigation(): bool
     {
-        return static::canAccess();
+        return auth()->check() && auth()->user()->hasRole('admin');
     }
 
     public static function canAccess(): bool
     {
-        $user = auth()->user();
+        return auth()->check() && auth()->user()->hasRole('admin');
+    }
 
-        return static::userHasRole($user, 'Admin', UserRole::ADMIN);
+    public static function canView(): bool
+    {
+        return auth()->check() && auth()->user()->hasRole('admin');
     }
 
     public function mount(): void
@@ -43,53 +47,17 @@ class AdminDashboard extends \Filament\Pages\Dashboard
         abort_unless(static::canAccess(), 403);
     }
 
-    public function getWidgets(): array
-    {
-        return RoleDashboardConfig::widgetsForRole(UserRole::ADMIN->value);
-    }
-
-    public function getColumns(): int | string | array
-    {
-        return RoleDashboardConfig::columnsForRole(UserRole::ADMIN->value);
-    }
-
-    /**
-     * @return array<string, mixed>
-     */
-    public function getWidgetData(): array
+    protected function getHeaderWidgets(): array
     {
         return [
-            'riderStats' => $this->getOptimizedRiderStats(),
+            AdminStats::class,
         ];
     }
 
-    /**
-     * Optimized single query for rider stats to avoid multiple DB hits
-     */
-    private function getOptimizedRiderStats(): array
+    protected function getFooterWidgets(): array
     {
-        $stats = \DB::selectOne("
-            SELECT
-                COUNT(*) FILTER (WHERE status IN ('in_progress', 'accepted')) as active_rides,
-                COUNT(*) FILTER (WHERE created_at::date = CURRENT_DATE) as rides_today,
-                COUNT(*) FILTER (WHERE created_at::date = CURRENT_DATE - INTERVAL '1 day') as rides_yesterday,
-                COUNT(*) FILTER (WHERE created_at::date = CURRENT_DATE - INTERVAL '2 days') as rides_day_before,
-                COUNT(*) FILTER (WHERE created_at::date = CURRENT_DATE - INTERVAL '3 days') as rides_three_days_ago,
-                COUNT(*) FILTER (WHERE created_at::date = CURRENT_DATE - INTERVAL '4 days') as rides_four_days_ago,
-                COUNT(*) FILTER (WHERE created_at::date = CURRENT_DATE - INTERVAL '5 days') as rides_five_days_ago,
-                COUNT(*) FILTER (WHERE created_at::date = CURRENT_DATE - INTERVAL '6 days') as rides_six_days_ago
-            FROM rides
-        ");
-
         return [
-            'active_rides' => (int) $stats->active_rides,
-            'rides_today' => (int) $stats->rides_today,
-            'rides_yesterday' => (int) $stats->rides_yesterday,
-            'rides_day_before' => (int) $stats->rides_day_before,
-            'rides_three_days_ago' => (int) $stats->rides_three_days_ago,
-            'rides_four_days_ago' => (int) $stats->rides_four_days_ago,
-            'rides_five_days_ago' => (int) $stats->rides_five_days_ago,
-            'rides_six_days_ago' => (int) $stats->rides_six_days_ago,
+            RideAnalytics::class,
         ];
     }
 }
