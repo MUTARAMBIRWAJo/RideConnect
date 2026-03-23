@@ -13,8 +13,6 @@ class AdminDashboard extends \Filament\Pages\Dashboard
 
     protected static string $routePath = '/admin-dashboard';
 
-    protected static string $view = 'filament.pages.admin-dashboard';
-
     public static function getNavigationLabel(): string
     {
         return 'Admin Dashboard';
