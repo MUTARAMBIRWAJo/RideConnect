@@ -12,6 +12,8 @@ class AdminDashboard extends \Filament\Pages\Dashboard
 {
     use HandlesRoleDashboards, HasFiltersForm;
 
+    protected static string $view = 'filament.pages.admin-dashboard';
+
     protected static string $routePath = '/admin-dashboard';
 
     public static function getNavigationLabel(): string
