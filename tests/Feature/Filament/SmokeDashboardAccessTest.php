@@ -17,6 +17,7 @@ class SmokeDashboardAccessTest extends TestCase
 {
     public function test_dashboard_role_access_matrix(): void
     {
+        $this->seed(\Database\Seeders\RoleSeeder::class);
         $matrix = [
             UserRole::SUPER_ADMIN->value => [
                 SuperDashboard::class => true,

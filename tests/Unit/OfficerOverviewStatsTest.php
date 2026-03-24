@@ -17,7 +17,7 @@ class OfficerOverviewStatsTest extends TestCase
         $rideForecastQuery = Mockery::mock();
         $rideForecastQuery->shouldReceive('count')->once()->andReturn(14);
 
-        $rideMock = Mockery::mock('alias:App\\Models\\Ride');
+        $rideMock = Mockery::mock('App\Models\Ride');
         $rideMock->shouldReceive('whereDate')
             ->once()
             ->with('created_at', Mockery::type('string'))
@@ -59,12 +59,12 @@ class OfficerOverviewStatsTest extends TestCase
 
         $stats = collect($widget->exposedGetStats());
 
-        $driverStatusStat = $stats->first(
-            fn ($stat) => $stat->getLabel() === 'Driver Status'
+        $driversOnlineStat = $stats->first(
+            fn ($stat) => $stat->getLabel() === 'Drivers Online'
         );
 
-        $this->assertNotNull($driverStatusStat);
-        $this->assertSame('2 online', $driverStatusStat->getValue());
+        $this->assertNotNull($driversOnlineStat);
+        $this->assertSame('2', $driversOnlineStat->getValue());
     }
 
     protected function tearDown(): void

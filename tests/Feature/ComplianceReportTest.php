@@ -45,9 +45,9 @@ class ComplianceReportTest extends TestCase
         $dto = new ComplianceReportDTO(
             reportType:  'daily_ride_summary',
             format:      'csv',
-            periodFrom:  '2025-01-01',
-            periodTo:    '2025-01-31',
-            requestedBy: 1,
+            periodStart:  '2025-01-01',
+            periodEnd:    '2025-01-31',
+            generatedBy: 1,
         );
 
         $report = $this->service->request($dto);
@@ -108,10 +108,10 @@ class ComplianceReportTest extends TestCase
         $report = ComplianceReport::create([
             'report_type'  => 'fraud_incident_report',
             'format'       => 'json',
-            'period_from'  => '2025-01-01',
-            'period_to'    => '2025-01-31',
+            'period_start' => '2025-01-01',
+            'period_end'   => '2025-01-31',
             'status'       => 'pending',
-            'requested_by' => 1,
+            'generated_by' => 1,
         ]);
 
         $generated = $this->service->generate($report->id);
@@ -158,10 +158,10 @@ class ComplianceReportTest extends TestCase
         $report = ComplianceReport::forceCreate([
             'report_type'  => 'invalid_type',
             'format'       => 'csv',
-            'period_from'  => '2025-01-01',
-            'period_to'    => '2025-01-31',
+            'period_start' => '2025-01-01',
+            'period_end'   => '2025-01-31',
             'status'       => 'pending',
-            'requested_by' => 1,
+            'generated_by' => 1,
         ]);
 
         $this->expectException(\InvalidArgumentException::class);

@@ -202,76 +202,81 @@ return new class extends Migration
             $table->index('date_key');
         });
 
-        // ------------------------------------------------------------------
-        // MATERIALIZED VIEW: Daily Revenue
-        // ------------------------------------------------------------------
-        DB::statement(<<<'SQL'
-            CREATE MATERIALIZED VIEW mv_daily_revenue AS
-            SELECT
-                ft.date_key,
-                SUM(ft.gross_amount)          AS total_gross,
-                SUM(ft.commission_amount)     AS total_commission,
-                SUM(ft.driver_payout)         AS total_driver_payout,
-                SUM(ft.tax_amount)            AS total_tax,
-                SUM(ft.net_platform_revenue)  AS total_net_revenue,
-                COUNT(*)                      AS transaction_count
-            FROM dw_fact_transactions ft
-            WHERE ft.transaction_type = 'payment'
-            GROUP BY ft.date_key
-            ORDER BY ft.date_key;
-        SQL);
+        // Materialized views only for PostgreSQL
+        if (DB::getDriverName() === 'pgsql') {
+            // ------------------------------------------------------------------
+            // MATERIALIZED VIEW: Daily Revenue
+            // ------------------------------------------------------------------
+            DB::statement(<<<'SQL'
+                CREATE MATERIALIZED VIEW mv_daily_revenue AS
+                SELECT
+                    ft.date_key,
+                    SUM(ft.gross_amount)          AS total_gross,
+                    SUM(ft.commission_amount)     AS total_commission,
+                    SUM(ft.driver_payout)         AS total_driver_payout,
+                    SUM(ft.tax_amount)            AS total_tax,
+                    SUM(ft.net_platform_revenue)  AS total_net_revenue,
+                    COUNT(*)                      AS transaction_count
+                FROM dw_fact_transactions ft
+                WHERE ft.transaction_type = 'payment'
+                GROUP BY ft.date_key
+                ORDER BY ft.date_key;
+            SQL);
 
-        DB::statement('CREATE UNIQUE INDEX ON mv_daily_revenue (date_key)');
+            DB::statement('CREATE UNIQUE INDEX ON mv_daily_revenue (date_key)');
 
-        // ------------------------------------------------------------------
-        // MATERIALIZED VIEW: Monthly Growth
-        // ------------------------------------------------------------------
-        DB::statement(<<<'SQL'
-            CREATE MATERIALIZED VIEW mv_monthly_growth AS
-            SELECT
-                date_trunc('month', date_key::timestamp) AS month,
-                SUM(gross_amount)         AS gross_revenue,
-                SUM(commission_amount)    AS commission_revenue,
-                SUM(tax_amount)           AS tax_collected,
-                COUNT(*)                  AS transaction_count,
-                SUM(gross_amount) - LAG(SUM(gross_amount)) OVER (ORDER BY date_trunc('month', date_key::timestamp))
-                    AS revenue_growth
-            FROM dw_fact_transactions
-            WHERE transaction_type = 'payment'
-            GROUP BY date_trunc('month', date_key::timestamp)
-            ORDER BY month;
-        SQL);
+            // ------------------------------------------------------------------
+            // MATERIALIZED VIEW: Monthly Growth
+            // ------------------------------------------------------------------
+            DB::statement(<<<'SQL'
+                CREATE MATERIALIZED VIEW mv_monthly_growth AS
+                SELECT
+                    date_trunc('month', date_key::timestamp) AS month,
+                    SUM(gross_amount)         AS gross_revenue,
+                    SUM(commission_amount)    AS commission_revenue,
+                    SUM(tax_amount)           AS tax_collected,
+                    COUNT(*)                  AS transaction_count,
+                    SUM(gross_amount) - LAG(SUM(gross_amount)) OVER (ORDER BY date_trunc('month', date_key::timestamp))
+                        AS revenue_growth
+                FROM dw_fact_transactions
+                WHERE transaction_type = 'payment'
+                GROUP BY date_trunc('month', date_key::timestamp)
+                ORDER BY month;
+            SQL);
 
-        DB::statement('CREATE UNIQUE INDEX ON mv_monthly_growth (month)');
+            DB::statement('CREATE UNIQUE INDEX ON mv_monthly_growth (month)');
 
-        // ------------------------------------------------------------------
-        // MATERIALIZED VIEW: Driver Rankings (last 30 days)
-        // ------------------------------------------------------------------
-        DB::statement(<<<'SQL'
-            CREATE MATERIALIZED VIEW mv_driver_rankings AS
-            SELECT
-                e.driver_dim_id,
-                d.driver_name,
-                d.region,
-                SUM(e.total_rides)       AS total_rides,
-                SUM(e.gross_earnings)    AS gross_earnings,
-                SUM(e.net_payout)        AS net_payout,
-                AVG(e.avg_ride_fare)     AS avg_fare,
-                RANK() OVER (ORDER BY SUM(e.gross_earnings) DESC) AS earnings_rank
-            FROM dw_fact_driver_earnings e
-            JOIN dw_dim_driver d ON d.id = e.driver_dim_id AND d.is_current = true
-            WHERE e.date_key >= CURRENT_DATE - INTERVAL '30 days'
-            GROUP BY e.driver_dim_id, d.driver_name, d.region;
-        SQL);
+            // ------------------------------------------------------------------
+            // MATERIALIZED VIEW: Driver Rankings (last 30 days)
+            // ------------------------------------------------------------------
+            DB::statement(<<<'SQL'
+                CREATE MATERIALIZED VIEW mv_driver_rankings AS
+                SELECT
+                    e.driver_dim_id,
+                    d.driver_name,
+                    d.region,
+                    SUM(e.total_rides)       AS total_rides,
+                    SUM(e.gross_earnings)    AS gross_earnings,
+                    SUM(e.net_payout)        AS net_payout,
+                    AVG(e.avg_ride_fare)     AS avg_fare,
+                    RANK() OVER (ORDER BY SUM(e.gross_earnings) DESC) AS earnings_rank
+                FROM dw_fact_driver_earnings e
+                JOIN dw_dim_driver d ON d.id = e.driver_dim_id AND d.is_current = true
+                WHERE e.date_key >= CURRENT_DATE - INTERVAL '30 days'
+                GROUP BY e.driver_dim_id, d.driver_name, d.region;
+            SQL);
 
-        DB::statement('CREATE UNIQUE INDEX ON mv_driver_rankings (driver_dim_id)');
+            DB::statement('CREATE UNIQUE INDEX ON mv_driver_rankings (driver_dim_id)');
+        }
     }
 
     public function down(): void
     {
-        DB::statement('DROP MATERIALIZED VIEW IF EXISTS mv_driver_rankings');
-        DB::statement('DROP MATERIALIZED VIEW IF EXISTS mv_monthly_growth');
-        DB::statement('DROP MATERIALIZED VIEW IF EXISTS mv_daily_revenue');
+        if (DB::getDriverName() === 'pgsql') {
+            DB::statement('DROP MATERIALIZED VIEW IF EXISTS mv_driver_rankings');
+            DB::statement('DROP MATERIALIZED VIEW IF EXISTS mv_monthly_growth');
+            DB::statement('DROP MATERIALIZED VIEW IF EXISTS mv_daily_revenue');
+        }
 
         Schema::dropIfExists('dw_fact_commissions');
         Schema::dropIfExists('dw_fact_driver_earnings');
