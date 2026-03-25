@@ -2,7 +2,6 @@
 
 use App\Http\Controllers\AuthController;
 use App\Http\Controllers\DashboardController;
-use App\Http\Controllers\Admin\AdminAuthController;
 use App\Http\Controllers\Admin\FinancialMatrixExportController;
 use App\Http\Controllers\Admin\GoogleMapsHealthController;
 use App\Http\Controllers\Admin\OperationsIntelligenceExportController;
@@ -25,9 +24,19 @@ Route::get('/', function () {
     return redirect()->route('auth.login');
 })->name('home');
 
-// Unified Login Page Route (for regular web users)
+// Unified Login Page Route - ONLY login page for all users
 Route::get('/auth/login', [AuthController::class, 'showLogin'])->name('auth.login');
 Route::post('/auth/login', [AuthController::class, 'login']);
+
+// Admin login route redirects to unified login
+Route::get('/admin/login', function () {
+    return redirect()->route('auth.login');
+})->name('admin.login');
+
+// Filament login compatibility route
+Route::get('/admin/filament-login', function () {
+    return redirect()->route('auth.login');
+})->name('filament.admin.auth.login');
 
 // Public authentication routes
 Route::middleware('guest')->group(function () {
@@ -37,37 +46,22 @@ Route::middleware('guest')->group(function () {
     
 });
 
-// Protected routes - Regular users (drivers, passengers)
+// Note: Filament handles admin authentication at /admin
+// All login routes are unified through /auth/login
+
+// Protected routes - All authenticated users
 Route::middleware(['auth'])->group(function () {
-    // User dashboard
+    // User dashboard (for drivers, passengers)
     Route::get('/dashboard', [DashboardController::class, 'index'])->name('dashboard');
     
     // User logout
     Route::post('/logout', [AuthController::class, 'logout'])->name('logout');
 });
 
-// Note: Filament handles admin authentication at /admin
-// No custom admin routes needed - Filament manages its own auth
-
-// Legacy admin-auth pages used by custom Blade templates.
-Route::middleware('guest')->group(function () {
-    Route::get('/admin/login', [AdminAuthController::class, 'showLogin'])->name('admin.login');
-    Route::post('/admin/login', [AdminAuthController::class, 'login']);
-
-    // Compatibility route expected by Filament auth middleware redirects.
-    Route::get('/admin/filament-login', [AuthController::class, 'showLogin'])
-        ->name('filament.admin.auth.login');
-});
-
-Route::middleware('auth:admin')->group(function () {
-    Route::get('/admin/register', [AdminAuthController::class, 'showRegister'])->name('admin.register');
-    Route::post('/admin/register', [AdminAuthController::class, 'register']);
-    Route::post('/admin/logout', [AdminAuthController::class, 'logout'])->name('admin.logout');
-
-    // Compatibility route expected by Filament user-menu/account widgets.
-    Route::match(['GET', 'POST'], '/admin/filament-logout', [AdminAuthController::class, 'logout'])
-        ->name('filament.admin.auth.logout');
-});
+// Admin logout compatibility route
+Route::post('/admin/logout', [AuthController::class, 'logout'])->name('admin.logout');
+Route::match(['GET', 'POST'], '/admin/filament-logout', [AuthController::class, 'logout'])
+    ->name('filament.admin.auth.logout');
 
 // Compatibility aliases for legacy admin view links.
 Route::middleware('auth')->group(function () {

@@ -1,0 +1,840 @@
+2026-03-06 18:36:24,821 INFO supervisord started with pid 1
+2026-03-06 18:36:25,828 INFO spawned: 'laravel-scheduler' with pid 7
+2026-03-06 18:36:25,835 INFO spawned: 'laravel-worker' with pid 8
+2026-03-06 18:36:25,842 INFO spawned: 'php-fpm' with pid 9
+2026-03-06 18:36:27,585 INFO success: laravel-scheduler entered RUNNING state, process has stayed up for > than 1 seconds (startsecs)
+2026-03-06 18:36:27,586 INFO success: laravel-worker entered RUNNING state, process has stayed up for > than 1 seconds (startsecs)
+2026-03-06 18:36:27,586 INFO success: php-fpm entered RUNNING state, process has stayed up for > than 1 seconds (startsecs)
+2026-03-06 19:29:58,025 WARN received SIGQUIT indicating exit request
+2026-03-06 19:29:58,044 INFO waiting for laravel-scheduler, laravel-worker, php-fpm to die
+2026-03-06 19:29:58,201 INFO stopped: php-fpm (exit status 0)
+2026-03-06 19:29:58,222 WARN stopped: laravel-worker (terminated by SIGTERM)
+2026-03-06 19:29:58,245 WARN stopped: laravel-scheduler (terminated by SIGTERM)
+2026-03-06 19:30:11,562 INFO supervisord started with pid 1
+2026-03-06 19:30:12,567 INFO spawned: 'laravel-scheduler' with pid 7
+2026-03-06 19:30:12,575 INFO spawned: 'laravel-web' with pid 9
+2026-03-06 19:30:12,583 INFO spawned: 'laravel-worker' with pid 11
+2026-03-06 19:30:12,588 INFO spawned: 'php-fpm' with pid 12
+2026-03-06 19:30:12,589 WARN exited: laravel-scheduler (exit status 126; not expected)
+2026-03-06 19:30:12,590 WARN exited: laravel-web (exit status 126; not expected)
+2026-03-06 19:30:12,592 WARN exited: laravel-worker (exit status 126; not expected)
+2026-03-06 19:30:13,834 INFO spawned: 'laravel-scheduler' with pid 16
+2026-03-06 19:30:13,845 INFO spawned: 'laravel-web' with pid 18
+2026-03-06 19:30:13,860 INFO spawned: 'laravel-worker' with pid 20
+2026-03-06 19:30:13,861 INFO success: php-fpm entered RUNNING state, process has stayed up for > than 1 seconds (startsecs)
+2026-03-06 19:30:13,863 WARN exited: laravel-scheduler (exit status 126; not expected)
+2026-03-06 19:30:13,865 WARN exited: laravel-web (exit status 126; not expected)
+2026-03-06 19:30:13,866 WARN exited: laravel-worker (exit status 126; not expected)
+2026-03-06 19:30:15,871 INFO spawned: 'laravel-scheduler' with pid 22
+2026-03-06 19:30:15,875 INFO spawned: 'laravel-web' with pid 23
+2026-03-06 19:30:15,878 INFO spawned: 'laravel-worker' with pid 24
+2026-03-06 19:30:15,882 WARN exited: laravel-scheduler (exit status 126; not expected)
+2026-03-06 19:30:15,887 WARN exited: laravel-web (exit status 126; not expected)
+2026-03-06 19:30:15,889 WARN exited: laravel-worker (exit status 126; not expected)
+2026-03-06 19:30:18,898 INFO spawned: 'laravel-scheduler' with pid 28
+2026-03-06 19:30:18,901 INFO spawned: 'laravel-web' with pid 29
+2026-03-06 19:30:18,906 INFO spawned: 'laravel-worker' with pid 31
+2026-03-06 19:30:18,908 WARN exited: laravel-scheduler (exit status 126; not expected)
+2026-03-06 19:30:18,912 WARN exited: laravel-worker (exit status 126; not expected)
+2026-03-06 19:30:18,915 INFO gave up: laravel-scheduler entered FATAL state, too many start retries too quickly
+2026-03-06 19:30:18,915 INFO gave up: laravel-worker entered FATAL state, too many start retries too quickly
+2026-03-06 19:30:18,915 WARN exited: laravel-web (exit status 126; not expected)
+2026-03-06 19:30:18,915 INFO gave up: laravel-web entered FATAL state, too many start retries too quickly
+2026-03-06 19:33:23,459 WARN received SIGQUIT indicating exit request
+2026-03-06 19:33:23,462 INFO waiting for php-fpm to die
+2026-03-06 19:33:23,527 INFO stopped: php-fpm (exit status 0)
+2026-03-06 19:33:35,720 INFO supervisord started with pid 1
+2026-03-06 19:33:36,724 INFO spawned: 'laravel-scheduler' with pid 7
+2026-03-06 19:33:36,728 INFO spawned: 'laravel-web' with pid 8
+2026-03-06 19:33:36,734 INFO spawned: 'laravel-worker' with pid 9
+2026-03-06 19:33:36,740 INFO spawned: 'php-fpm' with pid 14
+2026-03-06 19:33:37,878 INFO success: laravel-scheduler entered RUNNING state, process has stayed up for > than 1 seconds (startsecs)
+2026-03-06 19:33:37,879 INFO success: laravel-web entered RUNNING state, process has stayed up for > than 1 seconds (startsecs)
+2026-03-06 19:33:37,879 INFO success: laravel-worker entered RUNNING state, process has stayed up for > than 1 seconds (startsecs)
+2026-03-06 19:33:37,879 INFO success: php-fpm entered RUNNING state, process has stayed up for > than 1 seconds (startsecs)
+2026-03-06 19:54:42,900 INFO supervisord started with pid 1
+2026-03-06 19:54:43,906 INFO spawned: 'laravel-scheduler' with pid 7
+2026-03-06 19:54:43,912 INFO spawned: 'laravel-web' with pid 8
+2026-03-06 19:54:43,921 INFO spawned: 'laravel-worker' with pid 10
+2026-03-06 19:54:43,929 INFO spawned: 'php-fpm' with pid 13
+2026-03-06 19:54:44,935 INFO success: laravel-scheduler entered RUNNING state, process has stayed up for > than 1 seconds (startsecs)
+2026-03-06 19:54:44,935 INFO success: laravel-web entered RUNNING state, process has stayed up for > than 1 seconds (startsecs)
+2026-03-06 19:54:44,935 INFO success: laravel-worker entered RUNNING state, process has stayed up for > than 1 seconds (startsecs)
+2026-03-06 19:54:44,935 INFO success: php-fpm entered RUNNING state, process has stayed up for > than 1 seconds (startsecs)
+2026-03-06 20:03:17,850 WARN received SIGQUIT indicating exit request
+2026-03-06 20:03:17,878 INFO waiting for laravel-scheduler, laravel-web, laravel-worker, php-fpm to die
+2026-03-06 20:03:18,149 INFO stopped: php-fpm (exit status 0)
+2026-03-06 20:03:18,190 WARN stopped: laravel-worker (terminated by SIGTERM)
+2026-03-06 20:03:18,219 WARN stopped: laravel-web (terminated by SIGTERM)
+2026-03-06 20:03:18,237 WARN stopped: laravel-scheduler (terminated by SIGTERM)
+2026-03-06 20:03:21,611 INFO RPC interface 'supervisor' initialized
+2026-03-06 20:03:21,611 CRIT Server 'unix_http_server' running without any HTTP authentication checking
+2026-03-06 20:03:21,612 INFO supervisord started with pid 1
+2026-03-06 20:03:22,622 INFO spawned: 'laravel-scheduler' with pid 7
+2026-03-06 20:03:22,630 INFO spawned: 'laravel-web' with pid 8
+2026-03-06 20:03:22,640 INFO spawned: 'laravel-worker' with pid 11
+2026-03-06 20:03:22,661 INFO spawned: 'php-fpm' with pid 16
+2026-03-06 20:03:24,119 INFO success: laravel-scheduler entered RUNNING state, process has stayed up for > than 1 seconds (startsecs)
+2026-03-06 20:03:24,120 INFO success: laravel-web entered RUNNING state, process has stayed up for > than 1 seconds (startsecs)
+2026-03-06 20:03:24,120 INFO success: laravel-worker entered RUNNING state, process has stayed up for > than 1 seconds (startsecs)
+2026-03-06 20:03:24,121 INFO success: php-fpm entered RUNNING state, process has stayed up for > than 1 seconds (startsecs)
+2026-03-06 20:03:48,662 INFO waiting for laravel-web to stop
+2026-03-06 20:03:48,670 WARN stopped: laravel-web (terminated by SIGTERM)
+2026-03-06 20:03:48,673 INFO waiting for laravel-scheduler to stop
+2026-03-06 20:03:48,681 WARN stopped: laravel-scheduler (terminated by SIGTERM)
+2026-03-06 20:03:48,688 INFO spawned: 'laravel-web' with pid 55
+2026-03-06 20:03:50,355 INFO success: laravel-web entered RUNNING state, process has stayed up for > than 1 seconds (startsecs)
+2026-03-06 20:03:50,362 INFO spawned: 'laravel-scheduler' with pid 65
+2026-03-06 20:03:50,385 WARN exited: laravel-web (exit status 1; not expected)
+2026-03-06 20:03:50,924 INFO spawned: 'laravel-web' with pid 72
+2026-03-06 20:03:51,471 INFO success: laravel-scheduler entered RUNNING state, process has stayed up for > than 1 seconds (startsecs)
+2026-03-06 20:03:52,493 INFO success: laravel-web entered RUNNING state, process has stayed up for > than 1 seconds (startsecs)
+2026-03-06 20:03:52,543 WARN exited: laravel-web (exit status 1; not expected)
+2026-03-06 20:03:52,807 INFO spawned: 'laravel-web' with pid 85
+2026-03-06 20:03:54,492 INFO success: laravel-web entered RUNNING state, process has stayed up for > than 1 seconds (startsecs)
+2026-03-06 20:03:54,511 WARN exited: laravel-web (exit status 1; not expected)
+2026-03-06 20:03:55,517 INFO spawned: 'laravel-web' with pid 97
+2026-03-06 20:03:57,163 INFO success: laravel-web entered RUNNING state, process has stayed up for > than 1 seconds (startsecs)
+2026-03-06 20:03:57,183 WARN exited: laravel-web (exit status 1; not expected)
+2026-03-06 20:03:58,254 INFO spawned: 'laravel-web' with pid 107
+2026-03-06 20:03:59,937 INFO success: laravel-web entered RUNNING state, process has stayed up for > than 1 seconds (startsecs)
+2026-03-06 20:03:59,981 WARN exited: laravel-web (exit status 1; not expected)
+2026-03-06 20:04:00,988 INFO spawned: 'laravel-web' with pid 120
+2026-03-06 20:04:02,955 INFO success: laravel-web entered RUNNING state, process has stayed up for > than 1 seconds (startsecs)
+2026-03-06 20:04:03,022 WARN exited: laravel-web (exit status 1; not expected)
+2026-03-06 20:04:04,027 INFO spawned: 'laravel-web' with pid 130
+2026-03-06 20:04:05,816 INFO success: laravel-web entered RUNNING state, process has stayed up for > than 1 seconds (startsecs)
+2026-03-06 20:04:06,126 WARN exited: laravel-web (exit status 1; not expected)
+2026-03-06 20:04:06,583 INFO spawned: 'laravel-web' with pid 150
+2026-03-06 20:04:08,266 INFO success: laravel-web entered RUNNING state, process has stayed up for > than 1 seconds (startsecs)
+2026-03-06 20:04:08,301 WARN exited: laravel-web (exit status 1; not expected)
+2026-03-06 20:04:09,307 INFO spawned: 'laravel-web' with pid 160
+2026-03-06 20:04:10,888 INFO success: laravel-web entered RUNNING state, process has stayed up for > than 1 seconds (startsecs)
+2026-03-06 20:04:10,907 WARN exited: laravel-web (exit status 1; not expected)
+2026-03-06 20:04:11,913 INFO spawned: 'laravel-web' with pid 170
+2026-03-06 20:04:13,660 INFO success: laravel-web entered RUNNING state, process has stayed up for > than 1 seconds (startsecs)
+2026-03-06 20:04:13,703 WARN exited: laravel-web (exit status 1; not expected)
+2026-03-06 20:04:14,714 INFO spawned: 'laravel-web' with pid 180
+2026-03-06 20:04:16,339 INFO success: laravel-web entered RUNNING state, process has stayed up for > than 1 seconds (startsecs)
+2026-03-06 20:04:16,572 WARN exited: laravel-web (exit status 1; not expected)
+2026-03-06 20:04:17,577 INFO spawned: 'laravel-web' with pid 190
+2026-03-06 20:04:19,217 INFO success: laravel-web entered RUNNING state, process has stayed up for > than 1 seconds (startsecs)
+2026-03-06 20:04:19,327 WARN exited: laravel-web (exit status 1; not expected)
+2026-03-06 20:04:20,331 INFO spawned: 'laravel-web' with pid 200
+2026-03-06 20:04:21,934 INFO success: laravel-web entered RUNNING state, process has stayed up for > than 1 seconds (startsecs)
+2026-03-06 20:04:21,999 WARN exited: laravel-web (exit status 1; not expected)
+2026-03-06 20:04:23,002 INFO spawned: 'laravel-web' with pid 210
+2026-03-06 20:04:24,585 INFO success: laravel-web entered RUNNING state, process has stayed up for > than 1 seconds (startsecs)
+2026-03-06 20:04:24,604 WARN exited: laravel-web (exit status 1; not expected)
+2026-03-06 20:04:25,609 INFO spawned: 'laravel-web' with pid 220
+2026-03-06 20:04:27,502 INFO success: laravel-web entered RUNNING state, process has stayed up for > than 1 seconds (startsecs)
+2026-03-06 20:04:27,556 WARN exited: laravel-web (exit status 1; not expected)
+2026-03-06 20:04:28,614 INFO spawned: 'laravel-web' with pid 230
+2026-03-06 20:04:30,169 INFO success: laravel-web entered RUNNING state, process has stayed up for > than 1 seconds (startsecs)
+2026-03-06 20:04:30,189 WARN exited: laravel-web (exit status 1; not expected)
+2026-03-06 20:04:31,194 INFO spawned: 'laravel-web' with pid 240
+2026-03-06 20:04:32,729 INFO success: laravel-web entered RUNNING state, process has stayed up for > than 1 seconds (startsecs)
+2026-03-06 20:04:32,753 WARN exited: laravel-web (exit status 1; not expected)
+2026-03-06 20:04:33,758 INFO spawned: 'laravel-web' with pid 250
+2026-03-06 20:04:35,395 INFO success: laravel-web entered RUNNING state, process has stayed up for > than 1 seconds (startsecs)
+2026-03-06 20:04:35,946 WARN exited: laravel-web (exit status 1; not expected)
+2026-03-06 20:04:36,951 INFO spawned: 'laravel-web' with pid 260
+2026-03-06 20:04:38,608 INFO success: laravel-web entered RUNNING state, process has stayed up for > than 1 seconds (startsecs)
+2026-03-06 20:04:38,820 WARN exited: laravel-web (exit status 1; not expected)
+2026-03-06 20:04:39,824 INFO spawned: 'laravel-web' with pid 278
+2026-03-06 20:04:41,489 INFO success: laravel-web entered RUNNING state, process has stayed up for > than 1 seconds (startsecs)
+2026-03-06 20:04:41,640 WARN exited: laravel-web (exit status 1; not expected)
+2026-03-06 20:04:42,644 INFO spawned: 'laravel-web' with pid 288
+2026-03-06 20:04:44,447 INFO success: laravel-web entered RUNNING state, process has stayed up for > than 1 seconds (startsecs)
+2026-03-06 20:04:44,515 WARN exited: laravel-web (exit status 1; not expected)
+2026-03-06 20:04:44,525 INFO spawned: 'laravel-web' with pid 299
+2026-03-06 20:04:46,473 INFO success: laravel-web entered RUNNING state, process has stayed up for > than 1 seconds (startsecs)
+2026-03-06 20:04:47,245 WARN exited: laravel-web (exit status 1; not expected)
+2026-03-06 20:04:48,258 INFO spawned: 'laravel-web' with pid 310
+2026-03-06 20:04:49,879 INFO success: laravel-web entered RUNNING state, process has stayed up for > than 1 seconds (startsecs)
+2026-03-06 20:04:50,076 WARN exited: laravel-web (exit status 1; not expected)
+2026-03-06 20:04:51,081 INFO spawned: 'laravel-web' with pid 320
+2026-03-06 20:04:52,672 INFO success: laravel-web entered RUNNING state, process has stayed up for > than 1 seconds (startsecs)
+2026-03-06 20:04:52,691 WARN exited: laravel-web (exit status 1; not expected)
+2026-03-06 20:04:53,696 INFO spawned: 'laravel-web' with pid 330
+2026-03-06 20:04:55,260 INFO success: laravel-web entered RUNNING state, process has stayed up for > than 1 seconds (startsecs)
+2026-03-06 20:04:55,289 WARN exited: laravel-web (exit status 1; not expected)
+2026-03-06 20:04:56,293 INFO spawned: 'laravel-web' with pid 340
+2026-03-06 20:04:57,938 INFO success: laravel-web entered RUNNING state, process has stayed up for > than 1 seconds (startsecs)
+2026-03-06 20:04:57,960 WARN exited: laravel-web (exit status 1; not expected)
+2026-03-06 20:04:58,966 INFO spawned: 'laravel-web' with pid 350
+2026-03-06 20:05:00,632 INFO success: laravel-web entered RUNNING state, process has stayed up for > than 1 seconds (startsecs)
+2026-03-06 20:05:01,039 WARN exited: laravel-web (exit status 1; not expected)
+2026-03-06 20:05:02,043 INFO spawned: 'laravel-web' with pid 363
+2026-03-06 20:05:03,821 INFO success: laravel-web entered RUNNING state, process has stayed up for > than 1 seconds (startsecs)
+2026-03-06 20:05:03,897 WARN exited: laravel-web (exit status 1; not expected)
+2026-03-06 20:05:04,906 INFO spawned: 'laravel-web' with pid 373
+2026-03-06 20:05:06,701 INFO success: laravel-web entered RUNNING state, process has stayed up for > than 1 seconds (startsecs)
+2026-03-06 20:05:06,733 WARN exited: laravel-web (exit status 1; not expected)
+2026-03-06 20:05:07,739 INFO spawned: 'laravel-web' with pid 383
+2026-03-06 20:05:09,416 INFO success: laravel-web entered RUNNING state, process has stayed up for > than 1 seconds (startsecs)
+2026-03-06 20:05:09,510 WARN exited: laravel-web (exit status 1; not expected)
+2026-03-06 20:05:10,514 INFO spawned: 'laravel-web' with pid 393
+2026-03-06 20:05:12,066 INFO success: laravel-web entered RUNNING state, process has stayed up for > than 1 seconds (startsecs)
+2026-03-06 20:05:12,191 WARN exited: laravel-web (exit status 1; not expected)
+2026-03-06 20:05:13,195 INFO spawned: 'laravel-web' with pid 403
+2026-03-06 20:05:15,045 INFO success: laravel-web entered RUNNING state, process has stayed up for > than 1 seconds (startsecs)
+2026-03-06 20:05:15,128 WARN exited: laravel-web (exit status 1; not expected)
+2026-03-06 20:05:16,136 INFO spawned: 'laravel-web' with pid 421
+2026-03-06 20:05:17,767 INFO success: laravel-web entered RUNNING state, process has stayed up for > than 1 seconds (startsecs)
+2026-03-06 20:05:17,840 WARN exited: laravel-web (exit status 1; not expected)
+2026-03-06 20:05:18,416 INFO spawned: 'laravel-web' with pid 431
+2026-03-06 20:05:19,421 INFO success: laravel-web entered RUNNING state, process has stayed up for > than 1 seconds (startsecs)
+2026-03-06 20:05:20,822 WARN exited: laravel-web (exit status 1; not expected)
+2026-03-06 20:05:21,828 INFO spawned: 'laravel-web' with pid 441
+2026-03-06 20:05:23,600 INFO success: laravel-web entered RUNNING state, process has stayed up for > than 1 seconds (startsecs)
+2026-03-06 20:05:23,786 WARN exited: laravel-web (exit status 1; not expected)
+2026-03-06 20:05:24,791 INFO spawned: 'laravel-web' with pid 451
+2026-03-06 20:05:26,445 INFO success: laravel-web entered RUNNING state, process has stayed up for > than 1 seconds (startsecs)
+2026-03-06 20:05:26,570 WARN exited: laravel-web (exit status 1; not expected)
+2026-03-06 20:05:27,575 INFO spawned: 'laravel-web' with pid 461
+2026-03-06 20:05:29,369 INFO success: laravel-web entered RUNNING state, process has stayed up for > than 1 seconds (startsecs)
+2026-03-06 20:05:29,443 WARN exited: laravel-web (exit status 1; not expected)
+2026-03-06 20:05:30,449 INFO spawned: 'laravel-web' with pid 471
+2026-03-06 20:05:32,051 INFO success: laravel-web entered RUNNING state, process has stayed up for > than 1 seconds (startsecs)
+2026-03-06 20:05:32,109 WARN exited: laravel-web (exit status 1; not expected)
+2026-03-06 20:05:33,113 INFO spawned: 'laravel-web' with pid 481
+2026-03-06 20:05:34,754 INFO success: laravel-web entered RUNNING state, process has stayed up for > than 1 seconds (startsecs)
+2026-03-06 20:05:34,903 WARN exited: laravel-web (exit status 1; not expected)
+2026-03-06 20:05:35,908 INFO spawned: 'laravel-web' with pid 491
+2026-03-06 20:05:37,543 INFO success: laravel-web entered RUNNING state, process has stayed up for > than 1 seconds (startsecs)
+2026-03-06 20:05:37,608 WARN exited: laravel-web (exit status 1; not expected)
+2026-03-06 20:05:38,612 INFO spawned: 'laravel-web' with pid 501
+2026-03-06 20:05:40,356 INFO success: laravel-web entered RUNNING state, process has stayed up for > than 1 seconds (startsecs)
+2026-03-06 20:05:40,435 WARN exited: laravel-web (exit status 1; not expected)
+2026-03-06 20:05:41,442 INFO spawned: 'laravel-web' with pid 511
+2026-03-06 20:05:43,024 INFO success: laravel-web entered RUNNING state, process has stayed up for > than 1 seconds (startsecs)
+2026-03-06 20:05:43,129 WARN exited: laravel-web (exit status 1; not expected)
+2026-03-06 20:05:44,135 INFO spawned: 'laravel-web' with pid 528
+2026-03-06 20:05:45,882 INFO success: laravel-web entered RUNNING state, process has stayed up for > than 1 seconds (startsecs)
+2026-03-06 20:05:46,178 WARN exited: laravel-web (exit status 1; not expected)
+2026-03-06 20:05:47,182 INFO spawned: 'laravel-web' with pid 540
+2026-03-06 20:05:48,766 INFO success: laravel-web entered RUNNING state, process has stayed up for > than 1 seconds (startsecs)
+2026-03-06 20:05:48,811 WARN exited: laravel-web (exit status 1; not expected)
+2026-03-06 20:05:49,815 INFO spawned: 'laravel-web' with pid 550
+2026-03-06 20:05:51,367 INFO success: laravel-web entered RUNNING state, process has stayed up for > than 1 seconds (startsecs)
+2026-03-06 20:05:51,410 WARN exited: laravel-web (exit status 1; not expected)
+2026-03-06 20:05:52,415 INFO spawned: 'laravel-web' with pid 560
+2026-03-06 20:05:53,955 INFO success: laravel-web entered RUNNING state, process has stayed up for > than 1 seconds (startsecs)
+2026-03-06 20:05:54,035 WARN exited: laravel-web (exit status 1; not expected)
+2026-03-06 20:05:55,041 INFO spawned: 'laravel-web' with pid 570
+2026-03-06 20:05:56,830 INFO success: laravel-web entered RUNNING state, process has stayed up for > than 1 seconds (startsecs)
+2026-03-06 20:05:57,053 WARN exited: laravel-web (exit status 1; not expected)
+2026-03-06 20:05:58,123 INFO spawned: 'laravel-web' with pid 580
+2026-03-06 20:05:59,717 INFO success: laravel-web entered RUNNING state, process has stayed up for > than 1 seconds (startsecs)
+2026-03-06 20:05:59,760 WARN exited: laravel-web (exit status 1; not expected)
+2026-03-06 20:06:00,768 INFO spawned: 'laravel-web' with pid 592
+2026-03-06 20:06:02,645 INFO success: laravel-web entered RUNNING state, process has stayed up for > than 1 seconds (startsecs)
+2026-03-06 20:06:02,774 WARN exited: laravel-web (exit status 1; not expected)
+2026-03-06 20:06:03,780 INFO spawned: 'laravel-web' with pid 603
+2026-03-06 20:06:05,444 INFO success: laravel-web entered RUNNING state, process has stayed up for > than 1 seconds (startsecs)
+2026-03-06 20:06:05,468 WARN exited: laravel-web (exit status 1; not expected)
+2026-03-06 20:06:05,613 INFO spawned: 'laravel-web' with pid 613
+2026-03-06 20:06:07,262 INFO success: laravel-web entered RUNNING state, process has stayed up for > than 1 seconds (startsecs)
+2026-03-06 20:06:07,281 WARN exited: laravel-web (exit status 1; not expected)
+2026-03-06 20:06:08,287 INFO spawned: 'laravel-web' with pid 623
+2026-03-06 20:06:09,913 INFO success: laravel-web entered RUNNING state, process has stayed up for > than 1 seconds (startsecs)
+2026-03-06 20:06:10,046 WARN exited: laravel-web (exit status 1; not expected)
+2026-03-06 20:06:11,050 INFO spawned: 'laravel-web' with pid 633
+2026-03-06 20:06:12,641 INFO success: laravel-web entered RUNNING state, process has stayed up for > than 1 seconds (startsecs)
+2026-03-06 20:06:12,696 WARN exited: laravel-web (exit status 1; not expected)
+2026-03-06 20:06:13,700 INFO spawned: 'laravel-web' with pid 643
+2026-03-06 20:06:15,691 INFO success: laravel-web entered RUNNING state, process has stayed up for > than 1 seconds (startsecs)
+2026-03-06 20:06:15,864 WARN exited: laravel-web (exit status 1; not expected)
+2026-03-06 20:06:16,869 INFO spawned: 'laravel-web' with pid 653
+2026-03-06 20:06:18,473 INFO success: laravel-web entered RUNNING state, process has stayed up for > than 1 seconds (startsecs)
+2026-03-06 20:06:18,493 WARN exited: laravel-web (exit status 1; not expected)
+2026-03-06 20:06:19,499 INFO spawned: 'laravel-web' with pid 663
+2026-03-06 20:06:21,256 INFO success: laravel-web entered RUNNING state, process has stayed up for > than 1 seconds (startsecs)
+2026-03-06 20:06:21,302 WARN exited: laravel-web (exit status 1; not expected)
+2026-03-06 20:06:22,307 INFO spawned: 'laravel-web' with pid 673
+2026-03-06 20:06:23,951 INFO success: laravel-web entered RUNNING state, process has stayed up for > than 1 seconds (startsecs)
+2026-03-06 20:06:24,020 WARN exited: laravel-web (exit status 1; not expected)
+2026-03-06 20:06:25,026 INFO spawned: 'laravel-web' with pid 683
+2026-03-06 20:06:26,560 INFO success: laravel-web entered RUNNING state, process has stayed up for > than 1 seconds (startsecs)
+2026-03-06 20:06:26,628 WARN exited: laravel-web (exit status 1; not expected)
+2026-03-06 20:06:27,635 INFO spawned: 'laravel-web' with pid 693
+2026-03-06 20:06:29,377 INFO success: laravel-web entered RUNNING state, process has stayed up for > than 1 seconds (startsecs)
+2026-03-06 20:06:29,499 WARN exited: laravel-web (exit status 1; not expected)
+2026-03-06 20:06:30,505 INFO spawned: 'laravel-web' with pid 703
+2026-03-06 20:06:32,272 INFO success: laravel-web entered RUNNING state, process has stayed up for > than 1 seconds (startsecs)
+2026-03-06 20:06:32,332 WARN exited: laravel-web (exit status 1; not expected)
+2026-03-06 20:06:33,338 INFO spawned: 'laravel-web' with pid 719
+2026-03-06 20:06:35,001 INFO success: laravel-web entered RUNNING state, process has stayed up for > than 1 seconds (startsecs)
+2026-03-06 20:06:35,133 WARN exited: laravel-web (exit status 1; not expected)
+2026-03-06 20:06:36,141 INFO spawned: 'laravel-web' with pid 730
+2026-03-06 20:06:38,035 INFO success: laravel-web entered RUNNING state, process has stayed up for > than 1 seconds (startsecs)
+2026-03-06 20:06:38,167 WARN exited: laravel-web (exit status 1; not expected)
+2026-03-06 20:06:39,172 INFO spawned: 'laravel-web' with pid 740
+2026-03-06 20:06:40,725 INFO success: laravel-web entered RUNNING state, process has stayed up for > than 1 seconds (startsecs)
+2026-03-06 20:06:40,743 WARN exited: laravel-web (exit status 1; not expected)
+2026-03-06 20:06:41,748 INFO spawned: 'laravel-web' with pid 750
+2026-03-06 20:06:43,284 INFO success: laravel-web entered RUNNING state, process has stayed up for > than 1 seconds (startsecs)
+2026-03-06 20:06:43,305 WARN exited: laravel-web (exit status 1; not expected)
+2026-03-06 20:06:44,309 INFO spawned: 'laravel-web' with pid 760
+2026-03-06 20:06:45,957 INFO success: laravel-web entered RUNNING state, process has stayed up for > than 1 seconds (startsecs)
+2026-03-06 20:06:46,097 WARN exited: laravel-web (exit status 1; not expected)
+2026-03-06 20:06:47,103 INFO spawned: 'laravel-web' with pid 770
+2026-03-06 20:06:48,939 INFO success: laravel-web entered RUNNING state, process has stayed up for > than 1 seconds (startsecs)
+2026-03-06 20:06:49,092 WARN exited: laravel-web (exit status 1; not expected)
+2026-03-06 20:06:50,098 INFO spawned: 'laravel-web' with pid 780
+2026-03-06 20:06:51,790 INFO success: laravel-web entered RUNNING state, process has stayed up for > than 1 seconds (startsecs)
+2026-03-06 20:06:51,969 WARN exited: laravel-web (exit status 1; not expected)
+2026-03-06 20:06:52,974 INFO spawned: 'laravel-web' with pid 790
+2026-03-06 20:06:54,659 INFO success: laravel-web entered RUNNING state, process has stayed up for > than 1 seconds (startsecs)
+2026-03-06 20:06:54,763 WARN exited: laravel-web (exit status 1; not expected)
+2026-03-06 20:06:55,767 INFO spawned: 'laravel-web' with pid 800
+2026-03-06 20:06:57,514 INFO success: laravel-web entered RUNNING state, process has stayed up for > than 1 seconds (startsecs)
+2026-03-06 20:06:57,770 WARN exited: laravel-web (exit status 1; not expected)
+2026-03-06 20:06:58,819 INFO spawned: 'laravel-web' with pid 810
+2026-03-06 20:07:00,747 INFO success: laravel-web entered RUNNING state, process has stayed up for > than 1 seconds (startsecs)
+2026-03-06 20:07:01,257 WARN exited: laravel-web (exit status 1; not expected)
+2026-03-06 20:07:02,263 INFO spawned: 'laravel-web' with pid 823
+2026-03-06 20:07:03,920 INFO success: laravel-web entered RUNNING state, process has stayed up for > than 1 seconds (startsecs)
+2026-03-06 20:07:04,055 WARN exited: laravel-web (exit status 1; not expected)
+2026-03-06 20:07:04,361 INFO spawned: 'laravel-web' with pid 833
+2026-03-06 20:07:05,885 INFO success: laravel-web entered RUNNING state, process has stayed up for > than 1 seconds (startsecs)
+2026-03-06 20:07:05,911 WARN exited: laravel-web (exit status 1; not expected)
+2026-03-06 20:07:06,915 INFO spawned: 'laravel-web' with pid 843
+2026-03-06 20:07:08,558 INFO success: laravel-web entered RUNNING state, process has stayed up for > than 1 seconds (startsecs)
+2026-03-06 20:07:08,700 WARN exited: laravel-web (exit status 1; not expected)
+2026-03-06 20:07:09,705 INFO spawned: 'laravel-web' with pid 863
+2026-03-06 20:07:11,478 INFO success: laravel-web entered RUNNING state, process has stayed up for > than 1 seconds (startsecs)
+2026-03-06 20:07:11,647 WARN exited: laravel-web (exit status 1; not expected)
+2026-03-06 20:07:12,653 INFO spawned: 'laravel-web' with pid 873
+2026-03-06 20:07:14,150 INFO success: laravel-web entered RUNNING state, process has stayed up for > than 1 seconds (startsecs)
+2026-03-06 20:07:14,170 WARN exited: laravel-web (exit status 1; not expected)
+2026-03-06 20:07:15,175 INFO spawned: 'laravel-web' with pid 883
+2026-03-06 20:07:16,857 INFO success: laravel-web entered RUNNING state, process has stayed up for > than 1 seconds (startsecs)
+2026-03-06 20:07:16,968 WARN exited: laravel-web (exit status 1; not expected)
+2026-03-06 20:07:17,972 INFO spawned: 'laravel-web' with pid 893
+2026-03-06 20:07:19,682 INFO success: laravel-web entered RUNNING state, process has stayed up for > than 1 seconds (startsecs)
+2026-03-06 20:07:19,722 WARN exited: laravel-web (exit status 1; not expected)
+2026-03-06 20:07:20,727 INFO spawned: 'laravel-web' with pid 903
+2026-03-06 20:07:22,538 INFO success: laravel-web entered RUNNING state, process has stayed up for > than 1 seconds (startsecs)
+2026-03-06 20:07:22,632 WARN exited: laravel-web (exit status 1; not expected)
+2026-03-06 20:07:23,636 INFO spawned: 'laravel-web' with pid 913
+2026-03-06 20:07:24,660 INFO success: laravel-web entered RUNNING state, process has stayed up for > than 1 seconds (startsecs)
+2026-03-06 20:07:24,780 WARN exited: laravel-web (exit status 1; not expected)
+2026-03-06 20:07:25,787 INFO spawned: 'laravel-web' with pid 923
+2026-03-06 20:07:26,824 INFO success: laravel-web entered RUNNING state, process has stayed up for > than 1 seconds (startsecs)
+2026-03-06 20:07:27,101 WARN exited: laravel-web (exit status 1; not expected)
+2026-03-06 20:07:28,106 INFO spawned: 'laravel-web' with pid 933
+2026-03-06 20:07:29,224 INFO success: laravel-web entered RUNNING state, process has stayed up for > than 1 seconds (startsecs)
+2026-03-06 20:07:30,011 WARN exited: laravel-web (exit status 1; not expected)
+2026-03-06 20:07:31,018 INFO spawned: 'laravel-web' with pid 943
+2026-03-06 20:07:32,046 INFO success: laravel-web entered RUNNING state, process has stayed up for > than 1 seconds (startsecs)
+2026-03-06 20:07:32,235 WARN exited: laravel-web (exit status 1; not expected)
+2026-03-06 20:07:33,242 INFO spawned: 'laravel-web' with pid 953
+2026-03-06 20:07:34,276 INFO success: laravel-web entered RUNNING state, process has stayed up for > than 1 seconds (startsecs)
+2026-03-06 20:07:34,535 WARN exited: laravel-web (exit status 1; not expected)
+2026-03-06 20:07:35,541 INFO spawned: 'laravel-web' with pid 963
+2026-03-06 20:07:36,566 INFO success: laravel-web entered RUNNING state, process has stayed up for > than 1 seconds (startsecs)
+2026-03-06 20:07:36,944 WARN exited: laravel-web (exit status 1; not expected)
+2026-03-06 20:07:37,949 INFO spawned: 'laravel-web' with pid 973
+2026-03-06 20:07:38,969 INFO success: laravel-web entered RUNNING state, process has stayed up for > than 1 seconds (startsecs)
+2026-03-06 20:07:38,988 WARN exited: laravel-web (exit status 1; not expected)
+2026-03-06 20:07:39,994 INFO spawned: 'laravel-web' with pid 983
+2026-03-06 20:07:41,016 INFO success: laravel-web entered RUNNING state, process has stayed up for > than 1 seconds (startsecs)
+2026-03-06 20:07:41,070 WARN exited: laravel-web (exit status 1; not expected)
+2026-03-06 20:07:42,074 INFO spawned: 'laravel-web' with pid 993
+2026-03-06 20:07:43,093 INFO success: laravel-web entered RUNNING state, process has stayed up for > than 1 seconds (startsecs)
+2026-03-06 20:07:43,119 WARN exited: laravel-web (exit status 1; not expected)
+2026-03-06 20:07:44,123 INFO spawned: 'laravel-web' with pid 1003
+2026-03-06 20:07:45,149 INFO success: laravel-web entered RUNNING state, process has stayed up for > than 1 seconds (startsecs)
+2026-03-06 20:07:45,226 WARN exited: laravel-web (exit status 1; not expected)
+2026-03-06 20:07:46,233 INFO spawned: 'laravel-web' with pid 1013
+2026-03-06 20:07:47,266 INFO success: laravel-web entered RUNNING state, process has stayed up for > than 1 seconds (startsecs)
+2026-03-06 20:07:47,418 WARN exited: laravel-web (exit status 1; not expected)
+2026-03-06 20:07:48,425 INFO spawned: 'laravel-web' with pid 1023
+2026-03-06 20:07:49,451 INFO success: laravel-web entered RUNNING state, process has stayed up for > than 1 seconds (startsecs)
+2026-03-06 20:07:49,831 WARN exited: laravel-web (exit status 1; not expected)
+2026-03-06 20:07:50,835 INFO spawned: 'laravel-web' with pid 1033
+2026-03-06 20:07:51,859 INFO success: laravel-web entered RUNNING state, process has stayed up for > than 1 seconds (startsecs)
+2026-03-06 20:07:51,935 WARN exited: laravel-web (exit status 1; not expected)
+2026-03-06 20:07:52,939 INFO spawned: 'laravel-web' with pid 1043
+2026-03-06 20:07:53,962 INFO success: laravel-web entered RUNNING state, process has stayed up for > than 1 seconds (startsecs)
+2026-03-06 20:07:54,175 WARN exited: laravel-web (exit status 1; not expected)
+2026-03-06 20:07:55,182 INFO spawned: 'laravel-web' with pid 1053
+2026-03-06 20:07:56,214 INFO success: laravel-web entered RUNNING state, process has stayed up for > than 1 seconds (startsecs)
+2026-03-06 20:07:56,342 WARN exited: laravel-web (exit status 1; not expected)
+2026-03-06 20:07:57,348 INFO spawned: 'laravel-web' with pid 1063
+2026-03-06 20:07:58,456 INFO success: laravel-web entered RUNNING state, process has stayed up for > than 1 seconds (startsecs)
+2026-03-06 20:07:58,960 WARN exited: laravel-web (exit status 1; not expected)
+2026-03-06 20:07:59,966 INFO spawned: 'laravel-web' with pid 1073
+2026-03-06 20:08:01,009 INFO success: laravel-web entered RUNNING state, process has stayed up for > than 1 seconds (startsecs)
+2026-03-06 20:08:02,648 WARN exited: laravel-web (exit status 1; not expected)
+2026-03-06 20:08:03,655 INFO spawned: 'laravel-web' with pid 1086
+2026-03-06 20:08:04,696 INFO success: laravel-web entered RUNNING state, process has stayed up for > than 1 seconds (startsecs)
+2026-03-06 20:08:05,299 WARN exited: laravel-web (exit status 1; not expected)
+2026-03-06 20:08:06,307 INFO spawned: 'laravel-web' with pid 1096
+2026-03-06 20:08:07,365 INFO success: laravel-web entered RUNNING state, process has stayed up for > than 1 seconds (startsecs)
+2026-03-06 20:08:08,131 WARN exited: laravel-web (exit status 1; not expected)
+2026-03-06 20:08:09,136 INFO spawned: 'laravel-web' with pid 1106
+2026-03-06 20:08:10,161 INFO success: laravel-web entered RUNNING state, process has stayed up for > than 1 seconds (startsecs)
+2026-03-06 20:08:10,286 WARN exited: laravel-web (exit status 1; not expected)
+2026-03-06 20:08:11,293 INFO spawned: 'laravel-web' with pid 1116
+2026-03-06 20:08:12,324 INFO success: laravel-web entered RUNNING state, process has stayed up for > than 1 seconds (startsecs)
+2026-03-06 20:08:12,608 WARN exited: laravel-web (exit status 1; not expected)
+2026-03-06 20:08:13,614 INFO spawned: 'laravel-web' with pid 1126
+2026-03-06 20:08:14,641 INFO success: laravel-web entered RUNNING state, process has stayed up for > than 1 seconds (startsecs)
+2026-03-06 20:08:14,894 WARN exited: laravel-web (exit status 1; not expected)
+2026-03-06 20:08:15,900 INFO spawned: 'laravel-web' with pid 1136
+2026-03-06 20:08:16,927 INFO success: laravel-web entered RUNNING state, process has stayed up for > than 1 seconds (startsecs)
+2026-03-06 20:08:17,440 WARN exited: laravel-web (exit status 1; not expected)
+2026-03-06 20:08:18,446 INFO spawned: 'laravel-web' with pid 1146
+2026-03-06 20:08:19,484 INFO success: laravel-web entered RUNNING state, process has stayed up for > than 1 seconds (startsecs)
+2026-03-06 20:08:20,042 WARN exited: laravel-web (exit status 1; not expected)
+2026-03-06 20:08:21,050 INFO spawned: 'laravel-web' with pid 1156
+2026-03-06 20:08:22,084 INFO success: laravel-web entered RUNNING state, process has stayed up for > than 1 seconds (startsecs)
+2026-03-06 20:08:22,369 WARN exited: laravel-web (exit status 1; not expected)
+2026-03-06 20:08:23,373 INFO spawned: 'laravel-web' with pid 1166
+2026-03-06 20:08:24,400 INFO success: laravel-web entered RUNNING state, process has stayed up for > than 1 seconds (startsecs)
+2026-03-06 20:08:24,543 WARN exited: laravel-web (exit status 1; not expected)
+2026-03-06 20:08:25,550 INFO spawned: 'laravel-web' with pid 1176
+2026-03-06 20:08:26,584 INFO success: laravel-web entered RUNNING state, process has stayed up for > than 1 seconds (startsecs)
+2026-03-06 20:08:27,518 WARN exited: laravel-web (exit status 1; not expected)
+2026-03-06 20:08:28,578 INFO spawned: 'laravel-web' with pid 1186
+2026-03-06 20:08:29,604 INFO success: laravel-web entered RUNNING state, process has stayed up for > than 1 seconds (startsecs)
+2026-03-06 20:08:29,995 WARN exited: laravel-web (exit status 1; not expected)
+2026-03-06 20:08:31,000 INFO spawned: 'laravel-web' with pid 1196
+2026-03-06 20:08:32,025 INFO success: laravel-web entered RUNNING state, process has stayed up for > than 1 seconds (startsecs)
+2026-03-06 20:08:32,206 WARN exited: laravel-web (exit status 1; not expected)
+2026-03-06 20:08:33,212 INFO spawned: 'laravel-web' with pid 1206
+2026-03-06 20:08:34,237 INFO success: laravel-web entered RUNNING state, process has stayed up for > than 1 seconds (startsecs)
+2026-03-06 20:08:34,911 WARN exited: laravel-web (exit status 1; not expected)
+2026-03-06 20:08:35,917 INFO spawned: 'laravel-web' with pid 1216
+2026-03-06 20:08:36,950 INFO success: laravel-web entered RUNNING state, process has stayed up for > than 1 seconds (startsecs)
+2026-03-06 20:08:37,444 WARN exited: laravel-web (exit status 1; not expected)
+2026-03-06 20:08:38,455 INFO spawned: 'laravel-web' with pid 1226
+2026-03-06 20:08:39,553 INFO success: laravel-web entered RUNNING state, process has stayed up for > than 1 seconds (startsecs)
+2026-03-06 20:08:41,280 WARN exited: laravel-web (exit status 1; not expected)
+2026-03-06 20:08:42,303 INFO spawned: 'laravel-web' with pid 1236
+2026-03-06 20:08:43,319 INFO success: laravel-web entered RUNNING state, process has stayed up for > than 1 seconds (startsecs)
+2026-03-06 20:08:43,788 WARN exited: laravel-web (exit status 1; not expected)
+2026-03-06 20:08:44,795 INFO spawned: 'laravel-web' with pid 1246
+2026-03-06 20:08:45,820 INFO success: laravel-web entered RUNNING state, process has stayed up for > than 1 seconds (startsecs)
+2026-03-06 20:08:46,289 WARN exited: laravel-web (exit status 1; not expected)
+2026-03-06 20:08:47,295 INFO spawned: 'laravel-web' with pid 1256
+2026-03-06 20:08:48,327 INFO success: laravel-web entered RUNNING state, process has stayed up for > than 1 seconds (startsecs)
+2026-03-06 20:08:48,741 WARN exited: laravel-web (exit status 1; not expected)
+2026-03-06 20:08:49,746 INFO spawned: 'laravel-web' with pid 1266
+2026-03-06 20:08:50,773 INFO success: laravel-web entered RUNNING state, process has stayed up for > than 1 seconds (startsecs)
+2026-03-06 20:08:51,018 WARN exited: laravel-web (exit status 1; not expected)
+2026-03-06 20:08:52,029 INFO spawned: 'laravel-web' with pid 1276
+2026-03-06 20:08:53,048 INFO success: laravel-web entered RUNNING state, process has stayed up for > than 1 seconds (startsecs)
+2026-03-06 20:08:53,574 WARN exited: laravel-web (exit status 1; not expected)
+2026-03-06 20:08:54,591 INFO spawned: 'laravel-web' with pid 1286
+2026-03-06 20:08:55,630 INFO success: laravel-web entered RUNNING state, process has stayed up for > than 1 seconds (startsecs)
+2026-03-06 20:08:55,981 WARN exited: laravel-web (exit status 1; not expected)
+2026-03-06 20:08:56,994 INFO spawned: 'laravel-web' with pid 1296
+2026-03-06 20:08:58,025 INFO success: laravel-web entered RUNNING state, process has stayed up for > than 1 seconds (startsecs)
+2026-03-06 20:08:58,326 WARN exited: laravel-web (exit status 1; not expected)
+2026-03-06 20:08:59,404 INFO spawned: 'laravel-web' with pid 1306
+2026-03-06 20:09:00,426 INFO success: laravel-web entered RUNNING state, process has stayed up for > than 1 seconds (startsecs)
+2026-03-06 20:09:00,675 WARN exited: laravel-web (exit status 1; not expected)
+2026-03-06 20:09:01,682 INFO spawned: 'laravel-web' with pid 1317
+2026-03-06 20:09:02,747 INFO success: laravel-web entered RUNNING state, process has stayed up for > than 1 seconds (startsecs)
+2026-03-06 20:09:03,841 WARN exited: laravel-web (exit status 1; not expected)
+2026-03-06 20:09:04,846 INFO spawned: 'laravel-web' with pid 1329
+2026-03-06 20:09:05,879 INFO success: laravel-web entered RUNNING state, process has stayed up for > than 1 seconds (startsecs)
+2026-03-06 20:09:06,087 WARN exited: laravel-web (exit status 1; not expected)
+2026-03-06 20:09:06,995 INFO spawned: 'laravel-web' with pid 1339
+2026-03-06 20:09:08,042 INFO success: laravel-web entered RUNNING state, process has stayed up for > than 1 seconds (startsecs)
+2026-03-06 20:09:08,404 WARN exited: laravel-web (exit status 1; not expected)
+2026-03-06 20:09:09,409 INFO spawned: 'laravel-web' with pid 1349
+2026-03-06 20:09:10,432 INFO success: laravel-web entered RUNNING state, process has stayed up for > than 1 seconds (startsecs)
+2026-03-06 20:09:10,734 WARN exited: laravel-web (exit status 1; not expected)
+2026-03-06 20:09:10,740 INFO spawned: 'laravel-web' with pid 1359
+2026-03-06 20:09:11,786 INFO success: laravel-web entered RUNNING state, process has stayed up for > than 1 seconds (startsecs)
+2026-03-06 20:09:12,074 WARN exited: laravel-web (exit status 1; not expected)
+2026-03-06 20:09:13,079 INFO spawned: 'laravel-web' with pid 1369
+2026-03-06 20:09:14,101 INFO success: laravel-web entered RUNNING state, process has stayed up for > than 1 seconds (startsecs)
+2026-03-06 20:09:14,209 WARN exited: laravel-web (exit status 1; not expected)
+2026-03-06 20:09:15,213 INFO spawned: 'laravel-web' with pid 1379
+2026-03-06 20:09:16,240 INFO success: laravel-web entered RUNNING state, process has stayed up for > than 1 seconds (startsecs)
+2026-03-06 20:09:16,576 WARN exited: laravel-web (exit status 1; not expected)
+2026-03-06 20:09:17,580 INFO spawned: 'laravel-web' with pid 1389
+2026-03-06 20:09:18,601 INFO success: laravel-web entered RUNNING state, process has stayed up for > than 1 seconds (startsecs)
+2026-03-06 20:09:18,996 WARN exited: laravel-web (exit status 1; not expected)
+2026-03-06 20:09:20,000 INFO spawned: 'laravel-web' with pid 1399
+2026-03-06 20:09:21,036 INFO success: laravel-web entered RUNNING state, process has stayed up for > than 1 seconds (startsecs)
+2026-03-06 20:09:21,345 WARN exited: laravel-web (exit status 1; not expected)
+2026-03-06 20:09:22,349 INFO spawned: 'laravel-web' with pid 1409
+2026-03-06 20:09:23,375 INFO success: laravel-web entered RUNNING state, process has stayed up for > than 1 seconds (startsecs)
+2026-03-06 20:09:23,589 WARN exited: laravel-web (exit status 1; not expected)
+2026-03-06 20:09:24,593 INFO spawned: 'laravel-web' with pid 1419
+2026-03-06 20:09:25,615 INFO success: laravel-web entered RUNNING state, process has stayed up for > than 1 seconds (startsecs)
+2026-03-06 20:09:25,964 WARN exited: laravel-web (exit status 1; not expected)
+2026-03-06 20:09:26,971 INFO spawned: 'laravel-web' with pid 1429
+2026-03-06 20:09:27,995 INFO success: laravel-web entered RUNNING state, process has stayed up for > than 1 seconds (startsecs)
+2026-03-06 20:09:28,363 WARN exited: laravel-web (exit status 1; not expected)
+2026-03-06 20:09:29,427 INFO spawned: 'laravel-web' with pid 1439
+2026-03-06 20:09:30,454 INFO success: laravel-web entered RUNNING state, process has stayed up for > than 1 seconds (startsecs)
+2026-03-06 20:09:31,136 WARN exited: laravel-web (exit status 1; not expected)
+2026-03-06 20:09:32,143 INFO spawned: 'laravel-web' with pid 1449
+2026-03-06 20:09:33,181 INFO success: laravel-web entered RUNNING state, process has stayed up for > than 1 seconds (startsecs)
+2026-03-06 20:09:33,465 WARN exited: laravel-web (exit status 1; not expected)
+2026-03-06 20:09:34,472 INFO spawned: 'laravel-web' with pid 1459
+2026-03-06 20:09:35,502 INFO success: laravel-web entered RUNNING state, process has stayed up for > than 1 seconds (startsecs)
+2026-03-06 20:09:35,731 WARN exited: laravel-web (exit status 1; not expected)
+2026-03-06 20:09:36,735 INFO spawned: 'laravel-web' with pid 1469
+2026-03-06 20:09:37,758 INFO success: laravel-web entered RUNNING state, process has stayed up for > than 1 seconds (startsecs)
+2026-03-06 20:09:37,900 WARN exited: laravel-web (exit status 1; not expected)
+2026-03-06 20:09:38,904 INFO spawned: 'laravel-web' with pid 1479
+2026-03-06 20:09:39,931 INFO success: laravel-web entered RUNNING state, process has stayed up for > than 1 seconds (startsecs)
+2026-03-06 20:09:40,232 WARN exited: laravel-web (exit status 1; not expected)
+2026-03-06 20:09:41,238 INFO spawned: 'laravel-web' with pid 1489
+2026-03-06 20:09:42,269 INFO success: laravel-web entered RUNNING state, process has stayed up for > than 1 seconds (startsecs)
+2026-03-06 20:09:42,587 WARN exited: laravel-web (exit status 1; not expected)
+2026-03-06 20:09:43,592 INFO spawned: 'laravel-web' with pid 1499
+2026-03-06 20:09:44,616 INFO success: laravel-web entered RUNNING state, process has stayed up for > than 1 seconds (startsecs)
+2026-03-06 20:09:44,813 WARN exited: laravel-web (exit status 1; not expected)
+2026-03-06 20:09:45,817 INFO spawned: 'laravel-web' with pid 1509
+2026-03-06 20:09:46,839 INFO success: laravel-web entered RUNNING state, process has stayed up for > than 1 seconds (startsecs)
+2026-03-06 20:09:47,226 WARN exited: laravel-web (exit status 1; not expected)
+2026-03-06 20:09:48,232 INFO spawned: 'laravel-web' with pid 1519
+2026-03-06 20:09:49,258 INFO success: laravel-web entered RUNNING state, process has stayed up for > than 1 seconds (startsecs)
+2026-03-06 20:09:49,638 WARN exited: laravel-web (exit status 1; not expected)
+2026-03-06 20:09:50,644 INFO spawned: 'laravel-web' with pid 1529
+2026-03-06 20:09:51,671 INFO success: laravel-web entered RUNNING state, process has stayed up for > than 1 seconds (startsecs)
+2026-03-06 20:09:51,947 WARN exited: laravel-web (exit status 1; not expected)
+2026-03-06 20:09:52,954 INFO spawned: 'laravel-web' with pid 1539
+2026-03-06 20:09:53,990 INFO success: laravel-web entered RUNNING state, process has stayed up for > than 1 seconds (startsecs)
+2026-03-06 20:09:54,573 WARN exited: laravel-web (exit status 1; not expected)
+2026-03-06 20:09:55,580 INFO spawned: 'laravel-web' with pid 1549
+2026-03-06 20:09:56,621 INFO success: laravel-web entered RUNNING state, process has stayed up for > than 1 seconds (startsecs)
+2026-03-06 20:09:57,184 WARN exited: laravel-web (exit status 1; not expected)
+2026-03-06 20:09:58,191 INFO spawned: 'laravel-web' with pid 1559
+2026-03-06 20:09:59,279 INFO success: laravel-web entered RUNNING state, process has stayed up for > than 1 seconds (startsecs)
+2026-03-06 20:09:59,448 WARN exited: laravel-web (exit status 1; not expected)
+2026-03-06 20:10:00,455 INFO spawned: 'laravel-web' with pid 1570
+2026-03-06 20:10:01,497 INFO success: laravel-web entered RUNNING state, process has stayed up for > than 1 seconds (startsecs)
+2026-03-06 20:10:02,620 WARN exited: laravel-web (exit status 1; not expected)
+2026-03-06 20:10:03,625 INFO spawned: 'laravel-web' with pid 1582
+2026-03-06 20:10:04,653 INFO success: laravel-web entered RUNNING state, process has stayed up for > than 1 seconds (startsecs)
+2026-03-06 20:10:05,186 WARN exited: laravel-web (exit status 1; not expected)
+2026-03-06 20:10:06,189 INFO spawned: 'laravel-web' with pid 1592
+2026-03-06 20:10:07,385 INFO success: laravel-web entered RUNNING state, process has stayed up for > than 1 seconds (startsecs)
+2026-03-06 20:10:07,688 WARN exited: laravel-web (exit status 1; not expected)
+2026-03-06 20:10:08,693 INFO spawned: 'laravel-web' with pid 1602
+2026-03-06 20:10:09,719 INFO success: laravel-web entered RUNNING state, process has stayed up for > than 1 seconds (startsecs)
+2026-03-06 20:10:10,209 WARN exited: laravel-web (exit status 1; not expected)
+2026-03-06 20:10:11,213 INFO spawned: 'laravel-web' with pid 1612
+2026-03-06 20:10:12,238 INFO success: laravel-web entered RUNNING state, process has stayed up for > than 1 seconds (startsecs)
+2026-03-06 20:10:12,383 WARN exited: laravel-web (exit status 1; not expected)
+2026-03-06 20:10:13,390 INFO spawned: 'laravel-web' with pid 1622
+2026-03-06 20:10:14,453 INFO success: laravel-web entered RUNNING state, process has stayed up for > than 1 seconds (startsecs)
+2026-03-06 20:10:14,703 WARN exited: laravel-web (exit status 1; not expected)
+2026-03-06 20:10:15,707 INFO spawned: 'laravel-web' with pid 1632
+2026-03-06 20:10:16,736 INFO success: laravel-web entered RUNNING state, process has stayed up for > than 1 seconds (startsecs)
+2026-03-06 20:10:17,315 WARN exited: laravel-web (exit status 1; not expected)
+2026-03-06 20:10:18,320 INFO spawned: 'laravel-web' with pid 1642
+2026-03-06 20:10:19,343 INFO success: laravel-web entered RUNNING state, process has stayed up for > than 1 seconds (startsecs)
+2026-03-06 20:10:19,633 WARN exited: laravel-web (exit status 1; not expected)
+2026-03-06 20:10:20,638 INFO spawned: 'laravel-web' with pid 1652
+2026-03-06 20:10:21,666 INFO success: laravel-web entered RUNNING state, process has stayed up for > than 1 seconds (startsecs)
+2026-03-06 20:10:21,846 WARN exited: laravel-web (exit status 1; not expected)
+2026-03-06 20:10:22,851 INFO spawned: 'laravel-web' with pid 1662
+2026-03-06 20:10:23,887 INFO success: laravel-web entered RUNNING state, process has stayed up for > than 1 seconds (startsecs)
+2026-03-06 20:10:24,219 WARN exited: laravel-web (exit status 1; not expected)
+2026-03-06 20:10:25,225 INFO spawned: 'laravel-web' with pid 1672
+2026-03-06 20:10:26,261 INFO success: laravel-web entered RUNNING state, process has stayed up for > than 1 seconds (startsecs)
+2026-03-06 20:10:26,361 WARN exited: laravel-web (exit status 1; not expected)
+2026-03-06 20:10:27,365 INFO spawned: 'laravel-web' with pid 1682
+2026-03-06 20:10:28,395 INFO success: laravel-web entered RUNNING state, process has stayed up for > than 1 seconds (startsecs)
+2026-03-06 20:10:28,689 WARN exited: laravel-web (exit status 1; not expected)
+2026-03-06 20:10:29,694 INFO spawned: 'laravel-web' with pid 1692
+2026-03-06 20:10:30,724 INFO success: laravel-web entered RUNNING state, process has stayed up for > than 1 seconds (startsecs)
+2026-03-06 20:10:30,909 WARN exited: laravel-web (exit status 1; not expected)
+2026-03-06 20:10:31,914 INFO spawned: 'laravel-web' with pid 1702
+2026-03-06 20:10:32,938 INFO success: laravel-web entered RUNNING state, process has stayed up for > than 1 seconds (startsecs)
+2026-03-06 20:10:33,014 WARN exited: laravel-web (exit status 1; not expected)
+2026-03-06 20:10:34,018 INFO spawned: 'laravel-web' with pid 1712
+2026-03-06 20:10:35,038 INFO success: laravel-web entered RUNNING state, process has stayed up for > than 1 seconds (startsecs)
+2026-03-06 20:10:35,098 WARN exited: laravel-web (exit status 1; not expected)
+2026-03-06 20:10:36,106 INFO spawned: 'laravel-web' with pid 1722
+2026-03-06 20:10:37,157 INFO success: laravel-web entered RUNNING state, process has stayed up for > than 1 seconds (startsecs)
+2026-03-06 20:10:37,409 WARN exited: laravel-web (exit status 1; not expected)
+2026-03-06 20:10:37,412 INFO spawned: 'laravel-web' with pid 1732
+2026-03-06 20:10:38,435 INFO success: laravel-web entered RUNNING state, process has stayed up for > than 1 seconds (startsecs)
+2026-03-06 20:10:38,532 WARN exited: laravel-web (exit status 1; not expected)
+2026-03-06 20:10:39,536 INFO spawned: 'laravel-web' with pid 1742
+2026-03-06 20:10:40,560 INFO success: laravel-web entered RUNNING state, process has stayed up for > than 1 seconds (startsecs)
+2026-03-06 20:10:40,750 WARN exited: laravel-web (exit status 1; not expected)
+2026-03-06 20:10:41,754 INFO spawned: 'laravel-web' with pid 1752
+2026-03-06 20:10:42,777 INFO success: laravel-web entered RUNNING state, process has stayed up for > than 1 seconds (startsecs)
+2026-03-06 20:10:43,025 WARN exited: laravel-web (exit status 1; not expected)
+2026-03-06 20:10:43,027 INFO spawned: 'laravel-web' with pid 1762
+2026-03-06 20:10:44,050 INFO success: laravel-web entered RUNNING state, process has stayed up for > than 1 seconds (startsecs)
+2026-03-06 20:10:44,144 WARN exited: laravel-web (exit status 1; not expected)
+2026-03-06 20:10:45,149 INFO spawned: 'laravel-web' with pid 1772
+2026-03-06 20:10:46,178 INFO success: laravel-web entered RUNNING state, process has stayed up for > than 1 seconds (startsecs)
+2026-03-06 20:10:46,268 WARN exited: laravel-web (exit status 1; not expected)
+2026-03-06 20:10:47,273 INFO spawned: 'laravel-web' with pid 1782
+2026-03-06 20:10:48,302 INFO success: laravel-web entered RUNNING state, process has stayed up for > than 1 seconds (startsecs)
+2026-03-06 20:10:48,524 WARN exited: laravel-web (exit status 1; not expected)
+2026-03-06 20:10:49,529 INFO spawned: 'laravel-web' with pid 1792
+2026-03-06 20:10:50,558 INFO success: laravel-web entered RUNNING state, process has stayed up for > than 1 seconds (startsecs)
+2026-03-06 20:10:50,758 WARN exited: laravel-web (exit status 1; not expected)
+2026-03-06 20:10:51,768 INFO spawned: 'laravel-web' with pid 1802
+2026-03-06 20:10:52,799 INFO success: laravel-web entered RUNNING state, process has stayed up for > than 1 seconds (startsecs)
+2026-03-06 20:10:52,872 WARN exited: laravel-web (exit status 1; not expected)
+2026-03-06 20:10:53,876 INFO spawned: 'laravel-web' with pid 1812
+2026-03-06 20:10:54,901 INFO success: laravel-web entered RUNNING state, process has stayed up for > than 1 seconds (startsecs)
+2026-03-06 20:10:55,084 WARN exited: laravel-web (exit status 1; not expected)
+2026-03-06 20:10:56,093 INFO spawned: 'laravel-web' with pid 1822
+2026-03-06 20:10:57,135 INFO success: laravel-web entered RUNNING state, process has stayed up for > than 1 seconds (startsecs)
+2026-03-06 20:10:57,781 WARN exited: laravel-web (exit status 1; not expected)
+2026-03-06 20:10:58,879 INFO spawned: 'laravel-web' with pid 1832
+2026-03-06 20:10:59,907 INFO success: laravel-web entered RUNNING state, process has stayed up for > than 1 seconds (startsecs)
+2026-03-06 20:11:00,081 WARN exited: laravel-web (exit status 1; not expected)
+2026-03-06 20:11:01,105 INFO spawned: 'laravel-web' with pid 1843
+2026-03-06 20:11:02,155 INFO success: laravel-web entered RUNNING state, process has stayed up for > than 1 seconds (startsecs)
+2026-03-06 20:11:03,412 WARN exited: laravel-web (exit status 1; not expected)
+2026-03-06 20:11:04,424 INFO spawned: 'laravel-web' with pid 1855
+2026-03-06 20:11:05,467 INFO success: laravel-web entered RUNNING state, process has stayed up for > than 1 seconds (startsecs)
+2026-03-06 20:11:05,818 WARN exited: laravel-web (exit status 1; not expected)
+2026-03-06 20:11:06,824 INFO spawned: 'laravel-web' with pid 1865
+2026-03-06 20:11:07,874 INFO success: laravel-web entered RUNNING state, process has stayed up for > than 1 seconds (startsecs)
+2026-03-06 20:11:08,760 WARN exited: laravel-web (exit status 1; not expected)
+2026-03-06 20:11:09,766 INFO spawned: 'laravel-web' with pid 1875
+2026-03-06 20:11:10,790 INFO success: laravel-web entered RUNNING state, process has stayed up for > than 1 seconds (startsecs)
+2026-03-06 20:11:11,039 WARN exited: laravel-web (exit status 1; not expected)
+2026-03-06 20:11:12,043 INFO spawned: 'laravel-web' with pid 1885
+2026-03-06 20:11:13,069 INFO success: laravel-web entered RUNNING state, process has stayed up for > than 1 seconds (startsecs)
+2026-03-06 20:11:13,217 WARN exited: laravel-web (exit status 1; not expected)
+2026-03-06 20:11:14,222 INFO spawned: 'laravel-web' with pid 1895
+2026-03-06 20:11:15,254 INFO success: laravel-web entered RUNNING state, process has stayed up for > than 1 seconds (startsecs)
+2026-03-06 20:11:15,487 WARN exited: laravel-web (exit status 1; not expected)
+2026-03-06 20:11:16,498 INFO spawned: 'laravel-web' with pid 1905
+2026-03-06 20:11:17,526 INFO success: laravel-web entered RUNNING state, process has stayed up for > than 1 seconds (startsecs)
+2026-03-06 20:11:18,284 WARN exited: laravel-web (exit status 1; not expected)
+2026-03-06 20:11:19,288 INFO spawned: 'laravel-web' with pid 1915
+2026-03-06 20:11:20,320 INFO success: laravel-web entered RUNNING state, process has stayed up for > than 1 seconds (startsecs)
+2026-03-06 20:11:20,559 WARN exited: laravel-web (exit status 1; not expected)
+2026-03-06 20:11:21,564 INFO spawned: 'laravel-web' with pid 1925
+2026-03-06 20:11:22,599 INFO success: laravel-web entered RUNNING state, process has stayed up for > than 1 seconds (startsecs)
+2026-03-06 20:11:22,809 WARN exited: laravel-web (exit status 1; not expected)
+2026-03-06 20:11:23,815 INFO spawned: 'laravel-web' with pid 1935
+2026-03-06 20:11:24,855 INFO success: laravel-web entered RUNNING state, process has stayed up for > than 1 seconds (startsecs)
+2026-03-06 20:11:25,137 WARN exited: laravel-web (exit status 1; not expected)
+2026-03-06 20:11:26,143 INFO spawned: 'laravel-web' with pid 1945
+2026-03-06 20:11:27,184 INFO success: laravel-web entered RUNNING state, process has stayed up for > than 1 seconds (startsecs)
+2026-03-06 20:11:28,188 WARN exited: laravel-web (exit status 1; not expected)
+2026-03-06 20:11:29,271 INFO spawned: 'laravel-web' with pid 1955
+2026-03-06 20:11:30,310 INFO success: laravel-web entered RUNNING state, process has stayed up for > than 1 seconds (startsecs)
+2026-03-06 20:11:30,860 WARN exited: laravel-web (exit status 1; not expected)
+2026-03-06 20:11:31,867 INFO spawned: 'laravel-web' with pid 1965
+2026-03-06 20:11:32,900 INFO success: laravel-web entered RUNNING state, process has stayed up for > than 1 seconds (startsecs)
+2026-03-06 20:11:33,318 WARN exited: laravel-web (exit status 1; not expected)
+2026-03-06 20:11:34,323 INFO spawned: 'laravel-web' with pid 1975
+2026-03-06 20:11:35,351 INFO success: laravel-web entered RUNNING state, process has stayed up for > than 1 seconds (startsecs)
+2026-03-06 20:11:35,646 WARN exited: laravel-web (exit status 1; not expected)
+2026-03-06 20:11:36,651 INFO spawned: 'laravel-web' with pid 1985
+2026-03-06 20:11:37,679 INFO success: laravel-web entered RUNNING state, process has stayed up for > than 1 seconds (startsecs)
+2026-03-06 20:11:38,567 WARN exited: laravel-web (exit status 1; not expected)
+2026-03-06 20:11:39,575 INFO spawned: 'laravel-web' with pid 1995
+2026-03-06 20:11:40,604 INFO success: laravel-web entered RUNNING state, process has stayed up for > than 1 seconds (startsecs)
+2026-03-06 20:11:41,088 WARN exited: laravel-web (exit status 1; not expected)
+2026-03-06 20:11:42,094 INFO spawned: 'laravel-web' with pid 2005
+2026-03-06 20:11:43,133 INFO success: laravel-web entered RUNNING state, process has stayed up for > than 1 seconds (startsecs)
+2026-03-06 20:11:43,374 WARN exited: laravel-web (exit status 1; not expected)
+2026-03-06 20:11:44,382 INFO spawned: 'laravel-web' with pid 2015
+2026-03-06 20:11:45,419 INFO success: laravel-web entered RUNNING state, process has stayed up for > than 1 seconds (startsecs)
+2026-03-06 20:11:45,618 WARN exited: laravel-web (exit status 1; not expected)
+2026-03-06 20:11:46,624 INFO spawned: 'laravel-web' with pid 2025
+2026-03-06 20:11:47,659 INFO success: laravel-web entered RUNNING state, process has stayed up for > than 1 seconds (startsecs)
+2026-03-06 20:11:48,035 WARN exited: laravel-web (exit status 1; not expected)
+2026-03-06 20:11:49,039 INFO spawned: 'laravel-web' with pid 2035
+2026-03-06 20:11:50,062 INFO success: laravel-web entered RUNNING state, process has stayed up for > than 1 seconds (startsecs)
+2026-03-06 20:11:50,063 WARN received SIGQUIT indicating exit request
+2026-03-06 20:11:50,069 INFO waiting for laravel-scheduler, laravel-web, laravel-worker, php-fpm to die
+2026-03-06 20:11:50,202 INFO stopped: php-fpm (exit status 0)
+2026-03-06 20:11:50,213 WARN stopped: laravel-worker (terminated by SIGTERM)
+2026-03-06 20:11:50,226 WARN stopped: laravel-web (terminated by SIGTERM)
+2026-03-06 20:11:50,227 INFO reaped unknown pid 2044 (exit status 1)
+2026-03-06 20:11:50,240 WARN stopped: laravel-scheduler (terminated by SIGTERM)
+2026-03-06 20:11:54,968 INFO RPC interface 'supervisor' initialized
+2026-03-06 20:11:54,968 CRIT Server 'unix_http_server' running without any HTTP authentication checking
+2026-03-06 20:11:54,969 INFO supervisord started with pid 1
+2026-03-06 20:11:55,974 INFO spawned: 'laravel-scheduler' with pid 7
+2026-03-06 20:11:55,978 INFO spawned: 'laravel-web' with pid 8
+2026-03-06 20:11:55,982 INFO spawned: 'laravel-worker' with pid 9
+2026-03-06 20:11:56,005 INFO spawned: 'php-fpm' with pid 13
+2026-03-06 20:11:57,376 INFO success: laravel-scheduler entered RUNNING state, process has stayed up for > than 1 seconds (startsecs)
+2026-03-06 20:11:57,377 INFO success: laravel-web entered RUNNING state, process has stayed up for > than 1 seconds (startsecs)
+2026-03-06 20:11:57,377 INFO success: laravel-worker entered RUNNING state, process has stayed up for > than 1 seconds (startsecs)
+2026-03-06 20:11:57,377 INFO success: php-fpm entered RUNNING state, process has stayed up for > than 1 seconds (startsecs)
+2026-03-06 21:24:38,653 WARN exited: laravel-worker (exit status 1; not expected)
+2026-03-06 21:24:39,749 INFO spawned: 'laravel-worker' with pid 258
+2026-03-06 21:24:40,758 INFO success: laravel-worker entered RUNNING state, process has stayed up for > than 1 seconds (startsecs)
+2026-03-06 21:31:43,731 WARN exited: laravel-worker (exit status 1; not expected)
+2026-03-06 21:31:44,747 INFO spawned: 'laravel-worker' with pid 407
+2026-03-06 21:31:45,750 INFO success: laravel-worker entered RUNNING state, process has stayed up for > than 1 seconds (startsecs)
+2026-03-06 21:38:47,976 WARN exited: laravel-worker (exit status 1; not expected)
+2026-03-06 21:38:48,987 INFO spawned: 'laravel-worker' with pid 556
+2026-03-06 21:38:49,990 INFO success: laravel-worker entered RUNNING state, process has stayed up for > than 1 seconds (startsecs)
+2026-03-06 21:40:38,737 INFO exited: laravel-worker (exit status 0; expected)
+2026-03-06 21:40:39,899 INFO spawned: 'laravel-worker' with pid 310
+2026-03-06 21:40:41,687 INFO success: laravel-worker entered RUNNING state, process has stayed up for > than 1 seconds (startsecs)
+2026-03-06 21:45:52,463 WARN exited: laravel-worker (exit status 1; not expected)
+2026-03-06 21:45:53,468 INFO spawned: 'laravel-worker' with pid 705
+2026-03-06 21:45:54,465 INFO success: laravel-worker entered RUNNING state, process has stayed up for > than 1 seconds (startsecs)
+2026-03-06 21:47:43,250 WARN exited: laravel-worker (exit status 1; not expected)
+2026-03-06 21:47:44,271 INFO spawned: 'laravel-worker' with pid 459
+2026-03-06 21:47:45,275 INFO success: laravel-worker entered RUNNING state, process has stayed up for > than 1 seconds (startsecs)
+2026-03-06 21:52:56,675 WARN exited: laravel-worker (exit status 1; not expected)
+2026-03-06 21:52:57,681 INFO spawned: 'laravel-worker' with pid 854
+2026-03-06 21:52:58,684 INFO success: laravel-worker entered RUNNING state, process has stayed up for > than 1 seconds (startsecs)
+2026-03-06 21:54:47,591 WARN exited: laravel-worker (exit status 1; not expected)
+2026-03-06 21:54:48,599 INFO spawned: 'laravel-worker' with pid 608
+2026-03-06 21:54:49,601 INFO success: laravel-worker entered RUNNING state, process has stayed up for > than 1 seconds (startsecs)
+2026-03-06 22:00:00,990 WARN exited: laravel-worker (exit status 1; not expected)
+2026-03-06 22:00:01,998 INFO spawned: 'laravel-worker' with pid 1006
+2026-03-06 22:00:03,002 INFO success: laravel-worker entered RUNNING state, process has stayed up for > than 1 seconds (startsecs)
+2026-03-06 22:01:51,890 WARN exited: laravel-worker (exit status 1; not expected)
+2026-03-06 22:01:52,911 INFO spawned: 'laravel-worker' with pid 757
+2026-03-06 22:01:53,914 INFO success: laravel-worker entered RUNNING state, process has stayed up for > than 1 seconds (startsecs)
+2026-03-06 22:07:05,425 WARN exited: laravel-worker (exit status 1; not expected)
+2026-03-06 22:07:06,433 INFO spawned: 'laravel-worker' with pid 1155
+2026-03-06 22:07:07,437 INFO success: laravel-worker entered RUNNING state, process has stayed up for > than 1 seconds (startsecs)
+2026-03-06 22:08:56,103 WARN exited: laravel-worker (exit status 1; not expected)
+2026-03-06 22:08:57,107 INFO spawned: 'laravel-worker' with pid 906
+2026-03-06 22:08:58,109 INFO success: laravel-worker entered RUNNING state, process has stayed up for > than 1 seconds (startsecs)
+2026-03-06 22:14:09,654 WARN exited: laravel-worker (exit status 1; not expected)
+2026-03-06 22:14:09,658 INFO spawned: 'laravel-worker' with pid 1304
+2026-03-06 22:14:10,662 INFO success: laravel-worker entered RUNNING state, process has stayed up for > than 1 seconds (startsecs)
+2026-03-06 22:16:00,458 WARN exited: laravel-worker (exit status 1; not expected)
+2026-03-06 22:16:00,477 INFO spawned: 'laravel-worker' with pid 1056
+2026-03-06 22:16:01,481 INFO success: laravel-worker entered RUNNING state, process has stayed up for > than 1 seconds (startsecs)
+2026-03-06 22:21:13,018 WARN exited: laravel-worker (exit status 1; not expected)
+2026-03-06 22:21:14,023 INFO spawned: 'laravel-worker' with pid 1453
+2026-03-06 22:21:15,026 INFO success: laravel-worker entered RUNNING state, process has stayed up for > than 1 seconds (startsecs)
+2026-03-06 22:23:03,839 WARN exited: laravel-worker (exit status 1; not expected)
+2026-03-06 22:23:04,859 INFO spawned: 'laravel-worker' with pid 1207
+2026-03-06 22:23:05,862 INFO success: laravel-worker entered RUNNING state, process has stayed up for > than 1 seconds (startsecs)
+2026-03-08 18:54:38,437 INFO supervisord started with pid 1
+2026-03-08 18:54:39,442 INFO spawned: 'laravel-scheduler' with pid 7
+2026-03-08 18:54:39,447 INFO spawned: 'laravel-web' with pid 8
+2026-03-08 18:54:39,453 INFO spawned: 'laravel-worker' with pid 10
+2026-03-08 18:54:39,457 INFO spawned: 'php-fpm' with pid 14
+2026-03-08 18:54:40,533 INFO success: laravel-scheduler entered RUNNING state, process has stayed up for > than 1 seconds (startsecs)
+2026-03-08 18:54:40,533 INFO success: laravel-web entered RUNNING state, process has stayed up for > than 1 seconds (startsecs)
+2026-03-08 18:54:40,533 INFO success: laravel-worker entered RUNNING state, process has stayed up for > than 1 seconds (startsecs)
+2026-03-08 18:54:40,533 INFO success: php-fpm entered RUNNING state, process has stayed up for > than 1 seconds (startsecs)
+2026-03-08 19:22:19,890 WARN received SIGQUIT indicating exit request
+2026-03-08 19:22:19,899 INFO waiting for laravel-scheduler, laravel-web, laravel-worker, php-fpm to die
+2026-03-08 19:22:19,943 INFO stopped: php-fpm (exit status 0)
+2026-03-08 19:22:19,951 WARN stopped: laravel-worker (terminated by SIGTERM)
+2026-03-08 19:22:19,958 WARN stopped: laravel-web (terminated by SIGTERM)
+2026-03-08 19:22:19,964 WARN stopped: laravel-scheduler (terminated by SIGTERM)
+2026-03-08 19:43:38,522 INFO RPC interface 'supervisor' initialized
+2026-03-08 19:43:38,523 CRIT Server 'unix_http_server' running without any HTTP authentication checking
+2026-03-08 19:43:38,523 INFO supervisord started with pid 1
+2026-03-08 19:43:39,530 INFO spawned: 'laravel-scheduler' with pid 7
+2026-03-08 19:43:39,535 INFO spawned: 'laravel-web' with pid 8
+2026-03-08 19:43:39,542 INFO spawned: 'laravel-worker' with pid 11
+2026-03-08 19:43:39,550 INFO spawned: 'php-fpm' with pid 16
+2026-03-08 19:43:41,478 INFO success: laravel-scheduler entered RUNNING state, process has stayed up for > than 1 seconds (startsecs)
+2026-03-08 19:43:41,479 INFO success: laravel-web entered RUNNING state, process has stayed up for > than 1 seconds (startsecs)
+2026-03-08 19:43:41,479 INFO success: laravel-worker entered RUNNING state, process has stayed up for > than 1 seconds (startsecs)
+2026-03-08 19:43:41,479 INFO success: php-fpm entered RUNNING state, process has stayed up for > than 1 seconds (startsecs)
+2026-03-08 19:47:49,266 WARN received SIGQUIT indicating exit request
+2026-03-08 19:47:49,267 INFO waiting for laravel-scheduler, laravel-web, laravel-worker, php-fpm to die
+2026-03-08 19:47:49,282 INFO stopped: php-fpm (exit status 0)
+2026-03-08 19:47:49,286 WARN stopped: laravel-worker (terminated by SIGTERM)
+2026-03-08 19:47:49,291 WARN stopped: laravel-web (terminated by SIGTERM)
+2026-03-08 19:47:49,294 WARN stopped: laravel-scheduler (terminated by SIGTERM)
+2026-03-12 07:51:45,061 INFO RPC interface 'supervisor' initialized
+2026-03-12 07:51:45,064 CRIT Server 'unix_http_server' running without any HTTP authentication checking
+2026-03-12 07:51:45,065 INFO supervisord started with pid 1
+2026-03-12 07:51:46,070 INFO spawned: 'laravel-scheduler' with pid 7
+2026-03-12 07:51:46,077 INFO spawned: 'laravel-web' with pid 8
+2026-03-12 07:51:46,083 INFO spawned: 'laravel-worker' with pid 9
+2026-03-12 07:51:46,086 INFO spawned: 'php-fpm' with pid 12
+2026-03-12 07:51:47,306 INFO success: laravel-scheduler entered RUNNING state, process has stayed up for > than 1 seconds (startsecs)
+2026-03-12 07:51:47,306 INFO success: laravel-web entered RUNNING state, process has stayed up for > than 1 seconds (startsecs)
+2026-03-12 07:51:47,306 INFO success: laravel-worker entered RUNNING state, process has stayed up for > than 1 seconds (startsecs)
+2026-03-12 07:51:47,307 INFO success: php-fpm entered RUNNING state, process has stayed up for > than 1 seconds (startsecs)
+2026-03-12 09:33:34,529 INFO exited: laravel-worker (exit status 0; expected)
+2026-03-12 09:33:35,671 INFO spawned: 'laravel-worker' with pid 437
+2026-03-12 09:33:36,684 INFO success: laravel-worker entered RUNNING state, process has stayed up for > than 1 seconds (startsecs)
+2026-03-12 10:01:25,349 INFO exited: laravel-worker (exit status 0; expected)
+2026-03-12 10:01:26,360 INFO spawned: 'laravel-worker' with pid 537
+2026-03-12 10:01:27,362 INFO success: laravel-worker entered RUNNING state, process has stayed up for > than 1 seconds (startsecs)
+2026-03-12 13:49:23,909 INFO exited: laravel-worker (exit status 0; expected)
+2026-03-12 13:49:24,951 INFO spawned: 'laravel-worker' with pid 1079
+2026-03-12 13:49:25,955 INFO success: laravel-worker entered RUNNING state, process has stayed up for > than 1 seconds (startsecs)
+2026-03-12 17:25:33,535 INFO exited: laravel-worker (exit status 0; expected)
+2026-03-12 17:25:34,569 INFO spawned: 'laravel-worker' with pid 1417
+2026-03-12 17:25:35,577 INFO success: laravel-worker entered RUNNING state, process has stayed up for > than 1 seconds (startsecs)
+2026-03-12 17:32:37,220 WARN exited: laravel-worker (exit status 1; not expected)
+2026-03-12 17:32:38,235 INFO spawned: 'laravel-worker' with pid 1573
+2026-03-12 17:32:39,237 INFO success: laravel-worker entered RUNNING state, process has stayed up for > than 1 seconds (startsecs)
+2026-03-12 17:39:41,200 WARN exited: laravel-worker (exit status 1; not expected)
+2026-03-12 17:39:41,206 INFO spawned: 'laravel-worker' with pid 1729
+2026-03-12 17:39:42,208 INFO success: laravel-worker entered RUNNING state, process has stayed up for > than 1 seconds (startsecs)
+2026-03-19 13:26:20,566 INFO RPC interface 'supervisor' initialized
+2026-03-19 13:26:20,575 CRIT Server 'unix_http_server' running without any HTTP authentication checking
+2026-03-19 13:26:20,576 INFO supervisord started with pid 1
+2026-03-19 13:26:21,586 INFO spawned: 'laravel-scheduler' with pid 7
+2026-03-19 13:26:21,619 INFO spawned: 'laravel-web' with pid 8
+2026-03-19 13:26:21,628 INFO spawned: 'laravel-worker' with pid 18
+2026-03-19 13:26:21,650 INFO spawned: 'php-fpm' with pid 23
+2026-03-19 13:26:23,413 INFO success: laravel-scheduler entered RUNNING state, process has stayed up for > than 1 seconds (startsecs)
+2026-03-19 13:26:23,413 INFO success: laravel-web entered RUNNING state, process has stayed up for > than 1 seconds (startsecs)
+2026-03-19 13:26:23,414 INFO success: laravel-worker entered RUNNING state, process has stayed up for > than 1 seconds (startsecs)
+2026-03-19 13:26:23,414 INFO success: php-fpm entered RUNNING state, process has stayed up for > than 1 seconds (startsecs)
+2026-03-19 20:51:18,903 INFO exited: laravel-worker (exit status 0; expected)
+2026-03-19 20:51:19,151 INFO spawned: 'laravel-worker' with pid 1035
+2026-03-19 20:51:20,159 INFO success: laravel-worker entered RUNNING state, process has stayed up for > than 1 seconds (startsecs)
+2026-03-19 20:59:05,959 WARN exited: laravel-worker (exit status 1; not expected)
+2026-03-19 20:59:06,972 INFO spawned: 'laravel-worker' with pid 1195
+2026-03-19 20:59:07,974 INFO success: laravel-worker entered RUNNING state, process has stayed up for > than 1 seconds (startsecs)
+2026-03-19 21:13:03,980 INFO exited: laravel-worker (exit status 0; expected)
+2026-03-19 21:13:04,987 INFO spawned: 'laravel-worker' with pid 1327
+2026-03-19 21:13:05,989 INFO success: laravel-worker entered RUNNING state, process has stayed up for > than 1 seconds (startsecs)
+2026-03-19 21:20:07,729 WARN exited: laravel-worker (exit status 1; not expected)
+2026-03-19 21:20:08,740 INFO spawned: 'laravel-worker' with pid 1487
+2026-03-19 21:20:09,744 INFO success: laravel-worker entered RUNNING state, process has stayed up for > than 1 seconds (startsecs)
+2026-03-19 21:27:11,480 WARN exited: laravel-worker (exit status 1; not expected)
+2026-03-19 21:27:12,485 INFO spawned: 'laravel-worker' with pid 1647
+2026-03-19 21:27:13,488 INFO success: laravel-worker entered RUNNING state, process has stayed up for > than 1 seconds (startsecs)
+2026-03-19 21:34:15,207 WARN exited: laravel-worker (exit status 1; not expected)
+2026-03-19 21:34:16,217 INFO spawned: 'laravel-worker' with pid 1804
+2026-03-19 21:34:17,215 INFO success: laravel-worker entered RUNNING state, process has stayed up for > than 1 seconds (startsecs)
+2026-03-19 21:41:18,952 WARN exited: laravel-worker (exit status 1; not expected)
+2026-03-19 21:41:19,961 INFO spawned: 'laravel-worker' with pid 1964
+2026-03-19 21:41:20,964 INFO success: laravel-worker entered RUNNING state, process has stayed up for > than 1 seconds (startsecs)
+2026-03-19 21:48:22,748 WARN exited: laravel-worker (exit status 1; not expected)
+2026-03-19 21:48:23,765 INFO spawned: 'laravel-worker' with pid 2121
+2026-03-19 21:48:24,768 INFO success: laravel-worker entered RUNNING state, process has stayed up for > than 1 seconds (startsecs)
+2026-03-19 21:55:26,560 WARN exited: laravel-worker (exit status 1; not expected)
+2026-03-19 21:55:27,575 INFO spawned: 'laravel-worker' with pid 2284
+2026-03-19 21:55:28,578 INFO success: laravel-worker entered RUNNING state, process has stayed up for > than 1 seconds (startsecs)
+2026-03-19 22:02:30,422 WARN exited: laravel-worker (exit status 1; not expected)
+2026-03-19 22:02:31,436 INFO spawned: 'laravel-worker' with pid 2441
+2026-03-19 22:02:32,438 INFO success: laravel-worker entered RUNNING state, process has stayed up for > than 1 seconds (startsecs)
+2026-03-20 18:22:08,348 INFO RPC interface 'supervisor' initialized
+2026-03-20 18:22:08,354 CRIT Server 'unix_http_server' running without any HTTP authentication checking
+2026-03-20 18:22:08,355 INFO supervisord started with pid 1
+2026-03-20 18:22:09,358 INFO spawned: 'laravel-scheduler' with pid 7
+2026-03-20 18:22:09,366 INFO spawned: 'laravel-web' with pid 8
+2026-03-20 18:22:09,371 INFO spawned: 'laravel-worker' with pid 11
+2026-03-20 18:22:09,381 INFO spawned: 'php-fpm' with pid 15
+2026-03-20 18:22:10,585 INFO success: laravel-scheduler entered RUNNING state, process has stayed up for > than 1 seconds (startsecs)
+2026-03-20 18:22:10,586 INFO success: laravel-web entered RUNNING state, process has stayed up for > than 1 seconds (startsecs)
+2026-03-20 18:22:10,589 INFO success: laravel-worker entered RUNNING state, process has stayed up for > than 1 seconds (startsecs)
+2026-03-20 18:22:10,589 INFO success: php-fpm entered RUNNING state, process has stayed up for > than 1 seconds (startsecs)
+2026-03-20 18:41:41,264 WARN received SIGQUIT indicating exit request
+2026-03-20 18:41:41,270 INFO waiting for laravel-scheduler, laravel-web, laravel-worker, php-fpm to die
+2026-03-20 18:41:41,294 INFO stopped: php-fpm (exit status 0)
+2026-03-20 18:41:41,317 WARN stopped: laravel-worker (terminated by SIGTERM)
+2026-03-20 18:41:41,332 WARN stopped: laravel-web (terminated by SIGTERM)
+2026-03-20 18:41:41,341 WARN stopped: laravel-scheduler (terminated by SIGTERM)

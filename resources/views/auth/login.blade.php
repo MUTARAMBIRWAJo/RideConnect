@@ -271,7 +271,7 @@
                 </a>
 
                 <h1>Welcome back</h1>
-                <p class="subtitle">Log in to access your RideConnect account</p>
+                <p class="subtitle">Log in to access your RideConnect account (Drivers, Passengers, & Managers)</p>
 
                 @if (session('success'))
                     <div class="alert alert-success">{{ session('success') }}</div>
@@ -335,7 +335,8 @@
             <div class="top-lang">🇬🇧 English</div>
 
             <div class="hero">
-                <h2>RideConnect Passenger & Driver Portal</h2>
+                <h2>RideConnect Unified Portal</h2>
+                <p style="text-align: center; margin-top: 1rem; opacity: 0.9;">For Passengers, Drivers, and Management Staff</p>
                 <div class="hero-art">
                     <svg viewBox="0 0 760 360" width="100%" height="360" role="img" aria-label="Portal illustration">
                         <defs>

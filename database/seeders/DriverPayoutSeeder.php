@@ -97,11 +97,21 @@ class DriverPayoutSeeder extends Seeder
 
         if ($rideIds->isNotEmpty()) {
             foreach ($payouts as $payoutRecord) {
+                // Verify driver still exists before creating commissions
+                if (!Driver::where('id', $payoutRecord->driver_id)->exists()) {
+                    continue;
+                }
+                
                 $rideSample = $rideIds->random(min(2, $rideIds->count()));
                 $perRide    = round((float) $payoutRecord->commission_amount / max($rideSample->count(), 1), 2);
                 $date       = Carbon::parse($payoutRecord->payout_date)->toDateString();
 
                 foreach ($rideSample as $rideId) {
+                    // Verify ride still exists before creating commission
+                    if (!Ride::where('id', $rideId)->exists()) {
+                        continue;
+                    }
+                    
                     PlatformCommission::updateOrCreate(
                         [
                             'driver_id' => $payoutRecord->driver_id,

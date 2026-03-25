@@ -35,31 +35,33 @@ return new class extends Migration
         });
 
         // PostgreSQL check constraints to enforce non-negative amounts
-        DB::statement('ALTER TABLE ledger_entries ADD CONSTRAINT chk_ledger_debit_nn CHECK (debit >= 0)');
-        DB::statement('ALTER TABLE ledger_entries ADD CONSTRAINT chk_ledger_credit_nn CHECK (credit >= 0)');
-        DB::statement('ALTER TABLE ledger_entries ADD CONSTRAINT chk_ledger_nonzero CHECK (debit > 0 OR credit > 0)');
+        if (DB::getDriverName() === 'pgsql') {
+            DB::statement('ALTER TABLE ledger_entries ADD CONSTRAINT chk_ledger_debit_nn CHECK (debit >= 0)');
+            DB::statement('ALTER TABLE ledger_entries ADD CONSTRAINT chk_ledger_credit_nn CHECK (credit >= 0)');
+            DB::statement('ALTER TABLE ledger_entries ADD CONSTRAINT chk_ledger_nonzero CHECK (debit > 0 OR credit > 0)');
 
-        // PostgreSQL triggers to enforce immutability
-        DB::statement("
-            CREATE OR REPLACE FUNCTION prevent_ledger_entry_modification()
-            RETURNS trigger AS \$\$
-            BEGIN
-                RAISE EXCEPTION 'Ledger entries are immutable and cannot be modified or deleted';
-            END;
-            \$\$ LANGUAGE plpgsql
-        ");
+            // PostgreSQL triggers to enforce immutability
+            DB::statement("
+                CREATE OR REPLACE FUNCTION prevent_ledger_entry_modification()
+                RETURNS trigger AS \$\$
+                BEGIN
+                    RAISE EXCEPTION 'Ledger entries are immutable and cannot be modified or deleted';
+                END;
+                \$\$ LANGUAGE plpgsql
+            ");
 
-        DB::statement("
-            CREATE TRIGGER trg_ledger_entry_no_update
-            BEFORE UPDATE ON ledger_entries
-            FOR EACH ROW EXECUTE FUNCTION prevent_ledger_entry_modification()
-        ");
+            DB::statement("
+                CREATE TRIGGER trg_ledger_entry_no_update
+                BEFORE UPDATE ON ledger_entries
+                FOR EACH ROW EXECUTE FUNCTION prevent_ledger_entry_modification()
+            ");
 
-        DB::statement("
-            CREATE TRIGGER trg_ledger_entry_no_delete
-            BEFORE DELETE ON ledger_entries
-            FOR EACH ROW EXECUTE FUNCTION prevent_ledger_entry_modification()
-        ");
+            DB::statement("
+                CREATE TRIGGER trg_ledger_entry_no_delete
+                BEFORE DELETE ON ledger_entries
+                FOR EACH ROW EXECUTE FUNCTION prevent_ledger_entry_modification()
+            ");
+        }
     }
 
     public function down(): void

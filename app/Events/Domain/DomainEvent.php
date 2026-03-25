@@ -3,6 +3,7 @@
 namespace App\Events\Domain;
 
 use Illuminate\Foundation\Events\Dispatchable;
+use Illuminate\Support\Str;
 
 abstract class DomainEvent
 {
@@ -27,7 +28,7 @@ abstract class DomainEvent
 
     public function eventType(): string
     {
-        return class_basename(static::class);
+        return Str::snake(class_basename(static::class));
     }
 
     public function toOutboxRecord(string $topic = ''): array

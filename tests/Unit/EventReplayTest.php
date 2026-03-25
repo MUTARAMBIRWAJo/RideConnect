@@ -136,9 +136,9 @@ class EventReplayTest extends TestCase
         }
 
         $allEvents  = $this->dispatcher->replay('ride', $rideId);
-        $thirdVersion = $allEvents->nth(3)->first()?->version ?? 1;
+        $fourthVersion = $allEvents->nth(3)?->version ?? 4;
 
-        $filtered = $this->dispatcher->replay('ride', $rideId, $thirdVersion);
+        $filtered = $this->dispatcher->replay('ride', $rideId, $fourthVersion + 1);
 
         $this->assertLessThan($allEvents->count(), $filtered->count(), 'Filtered replay should have fewer events');
     }

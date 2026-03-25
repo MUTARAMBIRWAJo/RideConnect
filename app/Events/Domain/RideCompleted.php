@@ -6,18 +6,22 @@ class RideCompleted extends DomainEvent
 {
     public const VERSION = 1;
 
+    public readonly string $completedAt;
+
     public function __construct(
-        public readonly int    $rideId,
+        public readonly string $rideId,
         public readonly int    $driverId,
         public readonly int    $passengerId,
         public readonly float  $fareAmount,
-        public readonly string $currency,
-        public readonly string $completedAt,
+        public readonly string $currency = 'RWF',
+        ?string $completedAt = null,
     ) {
+        $this->completedAt = $completedAt ?? now()->toIso8601String();
+
         parent::__construct();
     }
 
-    public function aggregateId(): string   { return (string) $this->rideId; }
+    public function aggregateId(): string   { return $this->rideId; }
     public function aggregateType(): string { return 'ride'; }
 
     public function toPayload(): array
