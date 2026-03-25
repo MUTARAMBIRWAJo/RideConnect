@@ -15,9 +15,16 @@ class VehicleSeeder extends Seeder
      */
     public function run(): void
     {
+        // Get the first 3 drivers
+        $drivers = \App\Models\Driver::limit(3)->get();
+
+        if ($drivers->isEmpty()) {
+            return; // No drivers to seed vehicles for
+        }
+
         $vehicles = [
             [
-                'driver_id' => 1,
+                'driver_id' => $drivers[0]->id,
                 'make' => 'Toyota',
                 'model' => 'Camry',
                 'year' => 2022,
@@ -29,7 +36,7 @@ class VehicleSeeder extends Seeder
                 'verified_at' => now()->subDays(25),
             ],
             [
-                'driver_id' => 2,
+                'driver_id' => $drivers[1]->id ?? $drivers[0]->id,
                 'make' => 'Honda',
                 'model' => 'CR-V',
                 'year' => 2023,
@@ -41,7 +48,7 @@ class VehicleSeeder extends Seeder
                 'verified_at' => now()->subDays(55),
             ],
             [
-                'driver_id' => 3,
+                'driver_id' => $drivers[2]->id ?? $drivers[0]->id,
                 'make' => 'Toyota',
                 'model' => 'Corolla',
                 'year' => 2021,
