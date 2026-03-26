@@ -120,7 +120,7 @@ class AuthController extends Controller
                 UserRole::SUPER_ADMIN->value => "{$panelPath}/super-dashboard",
                 UserRole::ADMIN->value => "{$panelPath}/admin-dashboard",
                 UserRole::ACCOUNTANT->value => "{$panelPath}/accountant-dashboard",
-                UserRole::OFFICER->value => "{$panelPath}/officer-dashboard",
+                UserRole::OFFICER->value => "{$panelPath}/officer-dashboard-v2",
                 default => "{$panelPath}",
             };
 
