@@ -1,3 +1,3 @@
 <x-filament-panels::page>
-    <x-filament::dashboard-widgets/>
+    {{-- Superadmin dashboard content goes here. Widgets are rendered by the Dashboard class. --}}
 </x-filament-panels::page>
