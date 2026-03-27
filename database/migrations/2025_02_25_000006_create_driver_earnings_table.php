@@ -13,7 +13,7 @@ return new class extends Migration
     {
         Schema::create('driver_earnings', function (Blueprint $table) {
             $table->id();
-            $table->foreignId('driver_id')->constrained('mobile_users')->onDelete('cascade');
+            $table->foreignId('driver_id')->constrained('drivers')->onDelete('cascade');
             $table->foreignId('trip_id')->constrained('trips')->onDelete('cascade');
             $table->decimal('amount', 10, 2);
             $table->decimal('commission', 10, 2);

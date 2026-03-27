@@ -15,10 +15,15 @@ class RideSeeder extends Seeder
      */
     public function run(): void
     {
+        // Fetch the first three driver IDs
+        $driverIds = \App\Models\Driver::orderBy('id')->limit(3)->pluck('id')->toArray();
+        // Fetch the first three vehicle IDs
+        $vehicleIds = \App\Models\Vehicle::orderBy('id')->limit(3)->pluck('id')->toArray();
+
         $rides = [
             [
-                'driver_id' => 1,
-                'vehicle_id' => 1,
+                'driver_id' => $driverIds[0] ?? null,
+                'vehicle_id' => $vehicleIds[0] ?? null,
                 'origin_address' => 'Kigali City Center, Rwanda',
                 'origin_lat' => -1.9706,
                 'origin_lng' => 30.0444,
@@ -38,8 +43,8 @@ class RideSeeder extends Seeder
                 'smoking_allowed' => false,
             ],
             [
-                'driver_id' => 2,
-                'vehicle_id' => 2,
+                'driver_id' => $driverIds[1] ?? null,
+                'vehicle_id' => $vehicleIds[1] ?? null,
                 'origin_address' => 'Kigali International Airport, Rwanda',
                 'origin_lat' => -1.9686,
                 'origin_lng' => 30.1394,
@@ -59,8 +64,8 @@ class RideSeeder extends Seeder
                 'smoking_allowed' => false,
             ],
             [
-                'driver_id' => 3,
-                'vehicle_id' => 3,
+                'driver_id' => $driverIds[2] ?? null,
+                'vehicle_id' => $vehicleIds[2] ?? null,
                 'origin_address' => 'Rubavu, Rwanda',
                 'origin_lat' => -1.6833,
                 'origin_lng' => 29.2667,
