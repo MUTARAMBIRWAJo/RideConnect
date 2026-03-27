@@ -58,4 +58,17 @@ class OfficerDashboardV2 extends \Filament\Pages\Dashboard
     {
         return [];
     }
+
+    protected function getWidgets(): array
+    {
+        return [
+            \App\Filament\Widgets\Dashboard\OfficerOverviewStats::class,
+            \App\Filament\Widgets\Dashboard\ActivityFeedWidget::class,
+            \App\Filament\Widgets\Dashboard\NotificationsWidget::class,
+            \App\Filament\Widgets\Dashboard\TransactionsTableWidget::class,
+            \App\Filament\Widgets\LatestRidesTable::class,
+            \App\Filament\Widgets\RideMapWidget::class,
+            \App\Filament\Widgets\DemandHeatmapWidget::class,
+        ];
+    }
 }
