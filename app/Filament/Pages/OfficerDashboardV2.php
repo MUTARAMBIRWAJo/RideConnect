@@ -59,7 +59,7 @@ class OfficerDashboardV2 extends \Filament\Pages\Dashboard
         return [];
     }
 
-    protected function getWidgets(): array
+    public function getWidgets(): array
     {
         return [
             \App\Filament\Widgets\Dashboard\OfficerOverviewStats::class,
