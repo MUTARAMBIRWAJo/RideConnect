@@ -26,7 +26,6 @@ class ManagerSeeder extends Seeder
                 'email' => 'superadmin@rideconnect.rw',
                 'password' => Hash::make('SuperAdmin@123'),
                 'role' => 'SUPER_ADMIN',
-                'is_approved' => true,
                 'created_at' => now()->subDays(90),
                 'updated_at' => now()->subDays(90),
             ],
@@ -35,7 +34,6 @@ class ManagerSeeder extends Seeder
                 'email' => 'john.kamanzi@rideconnect.rw',
                 'password' => Hash::make('Admin@123'),
                 'role' => 'ADMIN',
-                'is_approved' => true,
                 'created_at' => now()->subDays(80),
                 'updated_at' => now()->subDays(80),
             ],
@@ -44,7 +42,6 @@ class ManagerSeeder extends Seeder
                 'email' => 'sarah.uwase@rideconnect.rw',
                 'password' => Hash::make('Officer@123'),
                 'role' => 'OFFICER',
-                'is_approved' => true,
                 'created_at' => now()->subDays(60),
                 'updated_at' => now()->subDays(60),
             ],
@@ -53,7 +50,6 @@ class ManagerSeeder extends Seeder
                 'email' => 'peter.ndayisaba@rideconnect.rw',
                 'password' => Hash::make('Officer@123'),
                 'role' => 'OFFICER',
-                'is_approved' => true,
                 'created_at' => now()->subDays(45),
                 'updated_at' => now()->subDays(45),
             ],
@@ -62,14 +58,13 @@ class ManagerSeeder extends Seeder
                 'email' => 'yvonne.mutoni@rideconnect.rw',
                 'password' => Hash::make('Accountant@123'),
                 'role' => 'ACCOUNTANT',
-                'is_approved' => true,
                 'created_at' => now()->subDays(50),
                 'updated_at' => now()->subDays(50),
             ],
         ];
 
         foreach ($managers as $manager) {
-            DB::table('users')->updateOrInsert(
+            DB::table('managers')->updateOrInsert(
                 ['email' => $manager['email']],
                 $manager
             );

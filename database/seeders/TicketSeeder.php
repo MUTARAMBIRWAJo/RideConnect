@@ -17,17 +17,8 @@ class TicketSeeder extends Seeder
     {
         $tickets = [
             [
-                'trip_id' => 9,    // Cancelled trip
-                'issued_by' => 3,  // Sarah Uwase (OFFICER)
-                'reason' => 'Driver cancelled trip without valid reason. Passenger reported inconvenience.',
-                'amount' => 5000.00,
-                'status' => 'OPEN',
-                'issued_at' => now()->subDays(4)->setHour(10)->setMinute(0),
-                'created_at' => now()->subDays(4),
-            ],
-            [
                 'trip_id' => 1,    // Completed trip
-                'issued_by' => 4,  // Peter Ndayisaba (OFFICER)
+                'issued_by' => 3,  // Sarah Uwase (OFFICER)
                 'reason' => 'Passenger complaint about overcharging. Fare discrepancy reported.',
                 'amount' => 1000.00,
                 'status' => 'RESOLVED',
@@ -36,7 +27,7 @@ class TicketSeeder extends Seeder
             ],
             [
                 'trip_id' => 2,    // Completed trip
-                'issued_by' => 3,  // Sarah Uwase (OFFICER)
+                'issued_by' => 4,  // Peter Ndayisaba (OFFICER)
                 'reason' => 'Speeding violation reported by passenger during ride.',
                 'amount' => 10000.00,
                 'status' => 'OPEN',
@@ -44,22 +35,22 @@ class TicketSeeder extends Seeder
                 'created_at' => now()->subDays(17),
             ],
             [
+                'trip_id' => 3,    // Completed trip
+                'issued_by' => 2,  // John Kamanzi (ADMIN)
+                'reason' => 'Driver cancelled trip without valid reason. Passenger reported inconvenience.',
+                'amount' => 5000.00,
+                'status' => 'OPEN',
+                'issued_at' => now()->subDays(4)->setHour(10)->setMinute(0),
+                'created_at' => now()->subDays(4),
+            ],
+            [
                 'trip_id' => null,  // Not linked to a specific trip
-                'issued_by' => 4,   // Peter Ndayisaba (OFFICER)
+                'issued_by' => 1,   // Admin Super (SUPER_ADMIN)
                 'reason' => 'Vehicle inspection failure. Driver operating with expired registration.',
                 'amount' => 15000.00,
                 'status' => 'PENDING',
                 'issued_at' => now()->subDays(2)->setHour(16)->setMinute(0),
                 'created_at' => now()->subDays(2),
-            ],
-            [
-                'trip_id' => 5,    // Completed trip
-                'issued_by' => 3,  // Sarah Uwase (OFFICER)
-                'reason' => 'Wrong route taken by driver, resulting in higher fare.',
-                'amount' => 2000.00,
-                'status' => 'CLOSED',
-                'issued_at' => now()->subDays(6)->setHour(11)->setMinute(15),
-                'created_at' => now()->subDays(6),
             ],
         ];
 
