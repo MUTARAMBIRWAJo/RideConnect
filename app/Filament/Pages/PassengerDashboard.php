@@ -26,14 +26,12 @@ class PassengerDashboard extends \Filament\Pages\Dashboard
 
     public static function shouldRegisterNavigation(): bool
     {
-        // Passenger Dashboard is for mobile app only, not Filament
-        return false;
+        return static::userHasRole(auth()->user(), 'Passenger', UserRole::PASSENGER);
     }
 
     public static function canAccess(): bool
     {
-        // Passenger Dashboard is for mobile app only, not Filament
-        return false;
+        return static::userHasRole(auth()->user(), 'Passenger', UserRole::PASSENGER);
     }
 
     public function mount(): void

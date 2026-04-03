@@ -1,28 +1,3 @@
-    /**
-     * Ensure all widgets are rendered on the Super Dashboard (Filament v3+ requirement)
-     */
-    public function getWidgets(): array
-    {
-        return [
-            SuperAdminOverviewStats::class,
-            LiveRevenueTickerWidget::class,
-            RideMapWidget::class,
-            DemandHeatmapWidget::class,
-            FinancialMatrixWidget::class,
-            RideStatsOverview::class,
-            DriverAvailabilityChart::class,
-            OperationsIntelligenceWidget::class,
-            RevenueOverTimeChartWidget::class,
-            FraudRiskHeatmapWidget::class,
-            CommissionTodayWidget::class,
-            LatestRidesTable::class,
-            TransactionsTableWidget::class,
-            TopDriversLeaderboardWidget::class,
-            ActivityFeedWidget::class,
-            NotificationsWidget::class,
-            SystemLogsWidget::class,
-        ];
-    }
 <?php
 
 namespace App\Filament\Pages;

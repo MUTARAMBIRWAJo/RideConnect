@@ -1,8 +1,3 @@
-    'ai_service' => [
-        'url' => env('RIDE_AI_BASE_URL', 'https://rideconnect-ai.onrender.com'),
-        'key' => env('RIDE_AI_API_KEY'),
-        'timeout' => env('RIDE_AI_TIMEOUT', 10),
-    ],
 <?php
 
 return [
@@ -18,6 +13,12 @@ return [
     | a conventional file to locate the various service credentials.
     |
     */
+
+    'ai_service' => [
+        'url' => env('RIDE_AI_BASE_URL', 'https://rideconnect-ai.onrender.com'),
+        'key' => env('RIDE_AI_API_KEY'),
+        'timeout' => env('RIDE_AI_TIMEOUT', 10),
+    ],
 
     'postmark' => [
         'key' => env('POSTMARK_API_KEY'),

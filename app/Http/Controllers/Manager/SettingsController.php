@@ -63,3 +63,4 @@ class SettingsController extends Controller
             'message' => $settings['maintenance_mode'] ? 'Maintenance mode enabled' : 'Maintenance mode disabled'
         ]);
     }
+}

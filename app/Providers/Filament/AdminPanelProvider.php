@@ -129,7 +129,15 @@ class AdminPanelProvider extends PanelProvider
             ->discoverPages(app_path('Filament/Pages'), 'App\\Filament\\Pages')
             ->pages([
                 Dashboard::class,
+                \App\Filament\Pages\SuperDashboard::class,
+                \App\Filament\Pages\AdminDashboard::class,
+                \App\Filament\Pages\AccountantDashboard::class,
                 \App\Filament\Pages\OfficerDashboardV2::class,
+                \App\Filament\Pages\DriverDashboard::class,
+                \App\Filament\Pages\PassengerDashboard::class,
+                \App\Filament\Pages\BiDashboard::class,
+                \App\Filament\Pages\ComplianceDashboard::class,
+                \App\Filament\Pages\AIMonitoringDashboard::class,
             ])
             ->discoverWidgets(app_path('Filament/Widgets'), 'App\\Filament\\Widgets')
             ->middleware([
