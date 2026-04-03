@@ -4,6 +4,7 @@ namespace App\Filament\Pages;
 
 use App\Enums\UserRole;
 use App\Filament\Pages\Concerns\HandlesRoleDashboards;
+use App\Filament\Support\RoleDashboardConfig;
 use Filament\Pages\Dashboard\Concerns\HasFiltersForm;
 use Illuminate\Contracts\Support\Htmlable;
 
@@ -14,8 +15,6 @@ class OfficerDashboardV2 extends \Filament\Pages\Dashboard
     protected static ?string $navigationGroup = 'Dashboards';
 
     protected static string $routePath = '/officer-dashboard-v2';
-
-    protected static string $view = 'filament.pages.officer-dashboard-v2';
 
     public static function getNavigationLabel(): string
     {
@@ -47,28 +46,13 @@ class OfficerDashboardV2 extends \Filament\Pages\Dashboard
         abort_unless(static::canAccess(), 403);
     }
 
-    protected function getHeaderWidgets(): array
-    {
-        return [
-            \App\Filament\Widgets\Dashboard\OfficerOverviewStats::class,
-        ];
-    }
-
-    protected function getFooterWidgets(): array
-    {
-        return [];
-    }
-
     public function getWidgets(): array
     {
-        return [
-            \App\Filament\Widgets\Dashboard\OfficerOverviewStats::class,
-            \App\Filament\Widgets\Dashboard\ActivityFeedWidget::class,
-            \App\Filament\Widgets\Dashboard\NotificationsWidget::class,
-            \App\Filament\Widgets\Dashboard\TransactionsTableWidget::class,
-            \App\Filament\Widgets\LatestRidesTable::class,
-            \App\Filament\Widgets\RideMapWidget::class,
-            \App\Filament\Widgets\DemandHeatmapWidget::class,
-        ];
+        return RoleDashboardConfig::visibleWidgetsForRole(UserRole::OFFICER->value);
+    }
+
+    public function getColumns(): int | string | array
+    {
+        return RoleDashboardConfig::columnsForRole(UserRole::OFFICER->value);
     }
 }

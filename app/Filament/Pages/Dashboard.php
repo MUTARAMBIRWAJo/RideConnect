@@ -19,12 +19,25 @@ class Dashboard extends \Filament\Pages\Dashboard
         $panel = Filament::getCurrentPanel();
         $user = auth()->user();
 
-        if (!$panel || !$user) {
+        if (!$user) {
             abort(403);
         }
 
-        $panelId = $panel->getId();
+        $panelId = $panel?->getId() ?? 'admin';
         $roleValue = static::resolveUserRoleValue($user);
+
+        // Fallback for accounts managed only through Spatie roles.
+        if (!$roleValue) {
+            $roleValue = match (true) {
+                static::userHasRole($user, 'Super_admin', UserRole::SUPER_ADMIN) => UserRole::SUPER_ADMIN->value,
+                static::userHasRole($user, 'Admin', UserRole::ADMIN) => UserRole::ADMIN->value,
+                static::userHasRole($user, 'Accountant', UserRole::ACCOUNTANT) => UserRole::ACCOUNTANT->value,
+                static::userHasRole($user, 'Officer', UserRole::OFFICER) => UserRole::OFFICER->value,
+                static::userHasRole($user, 'Driver', UserRole::DRIVER) => UserRole::DRIVER->value,
+                static::userHasRole($user, 'Passenger', UserRole::PASSENGER) => UserRole::PASSENGER->value,
+                default => null,
+            };
+        }
 
         $targetRoute = match ($roleValue) {
             UserRole::SUPER_ADMIN->value => "filament.{$panelId}.pages.super-dashboard",

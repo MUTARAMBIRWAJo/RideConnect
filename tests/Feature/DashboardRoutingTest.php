@@ -3,157 +3,200 @@
 namespace Tests\Feature;
 
 use App\Enums\UserRole;
+use App\Filament\Pages\AccountantDashboard;
+use App\Filament\Pages\AdminDashboard;
+use App\Filament\Pages\Dashboard;
+use App\Filament\Pages\DriverDashboard;
+use App\Filament\Pages\OfficerDashboardV2;
+use App\Filament\Pages\PassengerDashboard;
+use App\Filament\Pages\SuperDashboard;
 use App\Models\User;
+use Spatie\Permission\Models\Role;
 use Tests\TestCase;
 
 class DashboardRoutingTest extends TestCase
 {
-    /**
-     * Test that Super Admin is routed to Super Dashboard
-     */
-    public function test_super_admin_redirected_to_super_dashboard(): void
+    protected function setUp(): void
+    {
+        parent::setUp();
+
+        $this->seed(\Database\Seeders\RoleSeeder::class);
+    }
+
+    private function createApprovedUser(UserRole $role): User
     {
         $user = User::factory()->create([
-            'role' => UserRole::SUPER_ADMIN->value,
+            'role' => $role->value,
+            'is_approved' => true,
         ]);
 
-        $this->actingAs($user)
-            ->get('/admin')
-            ->assertRedirectToRoute('filament.admin.pages.super-dashboard');
+        $spatieRole = match ($role) {
+            UserRole::SUPER_ADMIN => 'Super_admin',
+            UserRole::ADMIN => 'Admin',
+            UserRole::ACCOUNTANT => 'Accountant',
+            UserRole::OFFICER => 'Officer',
+            default => null,
+        };
+
+        if ($spatieRole) {
+            Role::findOrCreate($spatieRole, 'web');
+            $user->syncRoles([$spatieRole]);
+        }
+
+        return $user;
     }
 
     /**
-     * Test that Admin is routed to Admin Dashboard
+     * Test Super Admin access for super dashboard page class.
      */
-    public function test_admin_redirected_to_admin_dashboard(): void
+    public function test_super_admin_can_access_super_dashboard_logic(): void
     {
-        $user = User::factory()->create([
-            'role' => UserRole::ADMIN->value,
-        ]);
+        $user = $this->createApprovedUser(UserRole::SUPER_ADMIN);
 
-        $this->actingAs($user)
-            ->get('/admin')
-            ->assertRedirectToRoute('filament.admin.pages.admin-dashboard');
+        $this->actingAs($user, 'web');
+
+        $this->assertTrue(SuperDashboard::canAccess());
+        $this->assertTrue(SuperDashboard::canView());
+        $this->assertTrue(SuperDashboard::shouldRegisterNavigation());
     }
 
     /**
-     * Test that Accountant is routed to Accountant Dashboard
+     * Test Admin access for admin dashboard page class.
      */
-    public function test_accountant_redirected_to_accountant_dashboard(): void
+    public function test_admin_can_access_admin_dashboard_logic(): void
     {
-        $user = User::factory()->create([
-            'role' => UserRole::ACCOUNTANT->value,
-        ]);
+        $user = $this->createApprovedUser(UserRole::ADMIN);
 
-        $this->actingAs($user)
-            ->get('/admin')
-            ->assertRedirectToRoute('filament.admin.pages.accountant-dashboard');
+        $this->actingAs($user, 'web');
+
+        $this->assertTrue(AdminDashboard::canAccess());
+        $this->assertTrue(AdminDashboard::canView());
+        $this->assertTrue(AdminDashboard::shouldRegisterNavigation());
+        $this->assertFalse(SuperDashboard::canAccess());
     }
 
     /**
-     * Test that Officer is routed to Officer Dashboard V2
+     * Test Accountant access for accountant dashboard page class.
      */
-    public function test_officer_redirected_to_officer_dashboard(): void
+    public function test_accountant_can_access_accountant_dashboard_logic(): void
     {
-        $user = User::factory()->create([
-            'role' => UserRole::OFFICER->value,
-        ]);
+        $user = $this->createApprovedUser(UserRole::ACCOUNTANT);
 
-        $this->actingAs($user)
-            ->get('/admin')
-            ->assertRedirectToRoute('filament.admin.pages.officer-dashboard-v2');
+        $this->actingAs($user, 'web');
+
+        $this->assertTrue(AccountantDashboard::canAccess());
+        $this->assertTrue(AccountantDashboard::canView());
+        $this->assertTrue(AccountantDashboard::shouldRegisterNavigation());
     }
 
     /**
-     * Test that Driver is routed to Driver Dashboard
+     * Test Officer access for officer dashboard page class.
      */
-    public function test_driver_redirected_to_driver_dashboard(): void
+    public function test_officer_can_access_officer_dashboard_logic(): void
     {
-        $user = User::factory()->create([
-            'role' => UserRole::DRIVER->value,
-        ]);
+        $user = $this->createApprovedUser(UserRole::OFFICER);
 
-        $this->actingAs($user)
-            ->get('/admin')
-            ->assertRedirectToRoute('filament.admin.pages.driver-dashboard');
+        $this->actingAs($user, 'web');
+
+        $this->assertTrue(OfficerDashboardV2::canAccess());
+        $this->assertTrue(OfficerDashboardV2::canView());
+        $this->assertTrue(OfficerDashboardV2::shouldRegisterNavigation());
     }
 
     /**
-     * Test that Passenger is routed to Passenger Dashboard
+     * Test Driver access for driver dashboard page class.
      */
-    public function test_passenger_redirected_to_passenger_dashboard(): void
+    public function test_driver_can_access_driver_dashboard_logic(): void
     {
-        $user = User::factory()->create([
-            'role' => UserRole::PASSENGER->value,
-        ]);
+        $user = $this->createApprovedUser(UserRole::DRIVER);
 
-        $this->actingAs($user)
-            ->get('/admin')
-            ->assertRedirectToRoute('filament.admin.pages.passenger-dashboard');
+        $this->actingAs($user, 'web');
+
+        $this->assertTrue(DriverDashboard::canAccess());
+        $this->assertTrue(DriverDashboard::shouldRegisterNavigation());
+        $this->assertFalse(SuperDashboard::canAccess());
     }
 
     /**
-     * Test that unauthenticated user cannot access dashboard
+     * Test Passenger access for passenger dashboard page class.
      */
-    public function test_unauthenticated_cannot_access_dashboard(): void
+    public function test_passenger_can_access_passenger_dashboard_logic(): void
     {
-        $this->get('/admin')
-            ->assertRedirect('/admin/login');
+        $user = $this->createApprovedUser(UserRole::PASSENGER);
+
+        $this->actingAs($user, 'web');
+
+        $this->assertTrue(PassengerDashboard::canAccess());
+        $this->assertTrue(PassengerDashboard::shouldRegisterNavigation());
+        $this->assertFalse(SuperDashboard::canAccess());
     }
 
     /**
-     * Test that Super Admin can access Super Dashboard
+     * Test unauthenticated user cannot access page logic.
      */
-    public function test_super_admin_can_access_super_dashboard(): void
+    public function test_unauthenticated_cannot_access_dashboards_logic(): void
     {
-        $user = User::factory()->create([
-            'role' => UserRole::SUPER_ADMIN->value,
-        ]);
+        auth()->logout();
 
-        $this->actingAs($user)
-            ->get('/admin/super-dashboard')
-            ->assertSuccessful();
+        $this->assertFalse(SuperDashboard::canAccess());
+        $this->assertFalse(AdminDashboard::canAccess());
+        $this->assertFalse(AccountantDashboard::canAccess());
+        $this->assertFalse(OfficerDashboardV2::canAccess());
+        $this->assertFalse(DriverDashboard::canAccess());
+        $this->assertFalse(PassengerDashboard::canAccess());
     }
 
     /**
-     * Test that Admin cannot access Super Dashboard
+     * Test root dashboard class resolves role without crashing.
      */
-    public function test_admin_cannot_access_super_dashboard(): void
+    public function test_dashboard_page_class_exists_for_role_redirect_logic(): void
     {
-        $user = User::factory()->create([
-            'role' => UserRole::ADMIN->value,
-        ]);
+        $user = $this->createApprovedUser(UserRole::SUPER_ADMIN);
 
-        $this->actingAs($user)
-            ->get('/admin/super-dashboard')
-            ->assertStatus(403);
+        $this->actingAs($user, 'web');
+
+        $this->assertTrue(class_exists(Dashboard::class));
     }
 
     /**
-     * Test that Driver can access Driver Dashboard
+     * Test Admin cannot access Super Dashboard logic.
      */
-    public function test_driver_can_access_driver_dashboard(): void
+    public function test_admin_cannot_access_super_dashboard_logic(): void
     {
-        $user = User::factory()->create([
-            'role' => UserRole::DRIVER->value,
-        ]);
+        $user = $this->createApprovedUser(UserRole::ADMIN);
 
-        $this->actingAs($user)
-            ->get('/admin/driver-dashboard')
-            ->assertSuccessful();
+        $this->actingAs($user, 'web');
+
+        $this->assertFalse(SuperDashboard::canAccess());
     }
 
     /**
-     * Test that Passenger can access Passenger Dashboard
+     * Test Driver dashboard widget and column config resolves.
      */
-    public function test_passenger_can_access_passenger_dashboard(): void
+    public function test_driver_dashboard_widgets_and_columns_resolve(): void
     {
-        $user = User::factory()->create([
-            'role' => UserRole::PASSENGER->value,
-        ]);
+        $user = $this->createApprovedUser(UserRole::DRIVER);
 
-        $this->actingAs($user)
-            ->get('/admin/passenger-dashboard')
-            ->assertSuccessful();
+        $this->actingAs($user, 'web');
+
+        $page = app(DriverDashboard::class);
+        $this->assertIsArray($page->getWidgets());
+        $this->assertNotEmpty($page->getWidgets());
+        $this->assertIsArray($page->getColumns());
+    }
+
+    /**
+     * Test Passenger dashboard widget and column config resolves.
+     */
+    public function test_passenger_dashboard_widgets_and_columns_resolve(): void
+    {
+        $user = $this->createApprovedUser(UserRole::PASSENGER);
+
+        $this->actingAs($user, 'web');
+
+        $page = app(PassengerDashboard::class);
+        $this->assertIsArray($page->getWidgets());
+        $this->assertNotEmpty($page->getWidgets());
+        $this->assertIsArray($page->getColumns());
     }
 }

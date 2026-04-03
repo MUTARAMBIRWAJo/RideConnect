@@ -4,16 +4,13 @@ namespace App\Filament\Pages;
 
 use App\Enums\UserRole;
 use App\Filament\Pages\Concerns\HandlesRoleDashboards;
-use App\Filament\Widgets\AdminStats;
-use App\Filament\Widgets\RideAnalytics;
+use App\Filament\Support\RoleDashboardConfig;
 use Filament\Pages\Dashboard\Concerns\HasFiltersForm;
 use Illuminate\Contracts\Support\Htmlable;
 
 class AdminDashboard extends \Filament\Pages\Dashboard
 {
     use HandlesRoleDashboards, HasFiltersForm;
-
-    protected static string $view = 'filament.pages.admin-dashboard';
 
     protected static ?string $navigationGroup = 'Dashboards';
 
@@ -49,17 +46,13 @@ class AdminDashboard extends \Filament\Pages\Dashboard
         abort_unless(static::canAccess(), 403);
     }
 
-    protected function getHeaderWidgets(): array
+    public function getWidgets(): array
     {
-        return [
-            AdminStats::class,
-        ];
+        return RoleDashboardConfig::visibleWidgetsForRole(UserRole::ADMIN->value);
     }
 
-    protected function getFooterWidgets(): array
+    public function getColumns(): int | string | array
     {
-        return [
-            RideAnalytics::class,
-        ];
+        return RoleDashboardConfig::columnsForRole(UserRole::ADMIN->value);
     }
 }

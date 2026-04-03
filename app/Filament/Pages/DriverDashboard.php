@@ -41,7 +41,7 @@ class DriverDashboard extends \Filament\Pages\Dashboard
 
     public function getWidgets(): array
     {
-        return RoleDashboardConfig::widgetsForRole(UserRole::DRIVER->value);
+        return RoleDashboardConfig::visibleWidgetsForRole(UserRole::DRIVER->value);
     }
 
     public function getColumns(): int | string | array

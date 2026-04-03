@@ -2,6 +2,8 @@
 
 namespace App\Filament\Support;
 
+use Illuminate\Contracts\Auth\Authenticatable;
+
 class RoleDashboardConfig
 {
     /**
@@ -16,6 +18,77 @@ class RoleDashboardConfig
         $roles = config('dashboard.roles', []);
 
         return $roles[$role]['widgets'] ?? [];
+    }
+
+    /**
+     * Return role widgets filtered by each widget's own visibility rules.
+     *
+     * @return array<class-string>
+     */
+    public static function visibleWidgetsForRole(?string $role): array
+    {
+        $widgets = self::widgetsForRole($role);
+        $roleConfig = config("dashboard.roles.{$role}", []);
+        $widgetPermissions = is_array($roleConfig['widget_permissions'] ?? null)
+            ? $roleConfig['widget_permissions']
+            : [];
+        $requireAllPermissions = (bool) ($roleConfig['widget_permissions_require_all'] ?? false);
+
+        return array_values(array_filter($widgets, static function (string $widgetClass) use ($widgetPermissions, $requireAllPermissions): bool {
+            if (!class_exists($widgetClass)) {
+                return false;
+            }
+
+            if (!self::passesWidgetPermissionGate($widgetClass, $widgetPermissions, $requireAllPermissions)) {
+                return false;
+            }
+
+            if (method_exists($widgetClass, 'canView')) {
+                return (bool) $widgetClass::canView();
+            }
+
+            if (method_exists($widgetClass, 'canAccess')) {
+                return (bool) $widgetClass::canAccess();
+            }
+
+            return true;
+        }));
+    }
+
+    /**
+     * @param array<string, array<int, string>> $widgetPermissions
+     */
+    private static function passesWidgetPermissionGate(string $widgetClass, array $widgetPermissions, bool $requireAll): bool
+    {
+        $permissions = $widgetPermissions[$widgetClass] ?? [];
+
+        if (!is_array($permissions) || $permissions === []) {
+            return true;
+        }
+
+        $user = auth()->user();
+
+        if (!$user instanceof Authenticatable || !method_exists($user, 'can')) {
+            return false;
+        }
+
+        if ($requireAll) {
+            foreach ($permissions as $permission) {
+                if (!$user->can($permission)) {
+                    return false;
+                }
+            }
+
+            return true;
+        }
+
+        foreach ($permissions as $permission) {
+            if ($user->can($permission)) {
+                return true;
+            }
+        }
+
+        return false;
     }
 
     /**

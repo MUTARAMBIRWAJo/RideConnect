@@ -41,7 +41,7 @@ class PassengerDashboard extends \Filament\Pages\Dashboard
 
     public function getWidgets(): array
     {
-        return RoleDashboardConfig::widgetsForRole(UserRole::PASSENGER->value);
+        return RoleDashboardConfig::visibleWidgetsForRole(UserRole::PASSENGER->value);
     }
 
     public function getColumns(): int | string | array

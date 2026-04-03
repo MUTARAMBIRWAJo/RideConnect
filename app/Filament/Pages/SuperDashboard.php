@@ -4,23 +4,7 @@ namespace App\Filament\Pages;
 
 use App\Enums\UserRole;
 use App\Filament\Pages\Concerns\HandlesRoleDashboards;
-use App\Filament\Widgets\BI\CommissionTodayWidget;
-use App\Filament\Widgets\BI\FraudRiskHeatmapWidget;
-use App\Filament\Widgets\BI\LiveRevenueTickerWidget;
-use App\Filament\Widgets\BI\RevenueOverTimeChartWidget;
-use App\Filament\Widgets\BI\TopDriversLeaderboardWidget;
-use App\Filament\Widgets\Dashboard\ActivityFeedWidget;
-use App\Filament\Widgets\Dashboard\FinancialMatrixWidget;
-use App\Filament\Widgets\Dashboard\NotificationsWidget;
-use App\Filament\Widgets\Dashboard\OperationsIntelligenceWidget;
-use App\Filament\Widgets\Dashboard\SuperAdminOverviewStats;
-use App\Filament\Widgets\Dashboard\SystemLogsWidget;
-use App\Filament\Widgets\Dashboard\TransactionsTableWidget;
-use App\Filament\Widgets\DemandHeatmapWidget;
-use App\Filament\Widgets\DriverAvailabilityChart;
-use App\Filament\Widgets\LatestRidesTable;
-use App\Filament\Widgets\RideMapWidget;
-use App\Filament\Widgets\RideStatsOverview;
+use App\Filament\Support\RoleDashboardConfig;
 use App\Models\User;
 use Filament\Pages\Dashboard\Concerns\HasFiltersForm;
 use Illuminate\Contracts\Support\Htmlable;
@@ -30,8 +14,6 @@ class SuperDashboard extends \Filament\Pages\Dashboard
     use HandlesRoleDashboards, HasFiltersForm;
 
     protected static string $routePath = '/super-dashboard';
-
-    protected static string $view = 'filament.pages.super-dashboard';
 
     public static function getNavigationLabel(): string
     {
@@ -65,152 +47,15 @@ class SuperDashboard extends \Filament\Pages\Dashboard
 
     public function getColumns(): int | string | array
     {
-        return [
-            'default' => 1,
-            'sm' => 1,
-            'md' => 2,
-            'lg' => 3,
-            'xl' => 4,
-            '2xl' => 4,
-        ];
+        return RoleDashboardConfig::columnsForRole(UserRole::SUPER_ADMIN->value);
     }
 
     /**
      * @return array<class-string>
      */
-    public function getExecutiveWidgets(): array
+    public function getWidgets(): array
     {
-        return [
-            SuperAdminOverviewStats::class,
-            LiveRevenueTickerWidget::class,
-        ];
-    }
-
-    /**
-     * @return array<class-string>
-     */
-    public function getMapWidgets(): array
-    {
-        return [
-            RideMapWidget::class,
-            DemandHeatmapWidget::class,
-        ];
-    }
-
-    /**
-     * @return array<class-string>
-     */
-    public function getChartWidgets(): array
-    {
-        return [
-            FinancialMatrixWidget::class,
-            RideStatsOverview::class,
-            DriverAvailabilityChart::class,
-            OperationsIntelligenceWidget::class,
-            RevenueOverTimeChartWidget::class,
-            FraudRiskHeatmapWidget::class,
-            CommissionTodayWidget::class,
-        ];
-    }
-
-    /**
-     * @return array<class-string>
-     */
-    public function getOperationalTableWidgets(): array
-    {
-        return [
-            LatestRidesTable::class,
-            TransactionsTableWidget::class,
-            TopDriversLeaderboardWidget::class,
-            ActivityFeedWidget::class,
-            NotificationsWidget::class,
-            SystemLogsWidget::class,
-        ];
-    }
-
-    /**
-     * @return array<class-string>
-     */
-    public function getIntelligenceWidgets(): array
-    {
-        return [
-            RevenueOverTimeChartWidget::class,
-            FraudRiskHeatmapWidget::class,
-            TopDriversLeaderboardWidget::class,
-        ];
-    }
-
-    /**
-     * @return array<string, int>
-     */
-    public function getIntelligenceColumns(): array
-    {
-        return [
-            'default' => 1,
-            'sm' => 1,
-            'md' => 2,
-            'xl' => 2,
-        ];
-    }
-
-    /**
-     * @return array<string, int>
-     */
-    public function getExecutiveColumns(): array
-    {
-        return [
-            'default' => 1,
-            'sm' => 1,
-            'md' => 2,
-            'lg' => 3,
-            'xl' => 4,
-            '2xl' => 4,
-        ];
-    }
-
-    /**
-     * @return array<string, int>
-     */
-    public function getMapColumns(): array
-    {
-        return [
-            'default' => 1,
-            'sm' => 1,
-            'md' => 1,
-            'lg' => 1,
-            'xl' => 1,
-            '2xl' => 1,
-        ];
-    }
-
-    /**
-     * @return array<string, int>
-     */
-    public function getChartColumns(): array
-    {
-        return [
-            'default' => 1,
-            'sm' => 1,
-            'md' => 2,
-            'lg' => 3,
-            'xl' => 4,
-            '2xl' => 4,
-        ];
-    }
-
-    /**
-     * @return array<string, int>
-     */
-    public function getOperationalTableColumns(): array
-    {
-        return [
-            'default' => 1,
-            'sm' => 1,
-            'md' => 2,
-            'lg' => 3,
-            'xl' => 3,
-            '2xl' => 4,
-        ];
+        return RoleDashboardConfig::visibleWidgetsForRole(UserRole::SUPER_ADMIN->value);
     }
 
     public function canManageUsers(): bool

@@ -4,6 +4,7 @@ namespace App\Filament\Pages;
 
 use App\Enums\UserRole;
 use App\Filament\Pages\Concerns\HandlesRoleDashboards;
+use App\Filament\Support\RoleDashboardConfig;
 use Filament\Pages\Dashboard\Concerns\HasFiltersForm;
 use Illuminate\Contracts\Support\Htmlable;
 
@@ -45,17 +46,13 @@ class AccountantDashboard extends \Filament\Pages\Dashboard
         abort_unless(static::canAccess(), 403);
     }
 
-    protected function getHeaderWidgets(): array
+    public function getWidgets(): array
     {
-        return [
-            // Add accountant-specific widgets here
-        ];
+        return RoleDashboardConfig::visibleWidgetsForRole(UserRole::ACCOUNTANT->value);
     }
 
-    protected function getFooterWidgets(): array
+    public function getColumns(): int | string | array
     {
-        return [
-            // Add accountant-specific widgets here
-        ];
+        return RoleDashboardConfig::columnsForRole(UserRole::ACCOUNTANT->value);
     }
 }
