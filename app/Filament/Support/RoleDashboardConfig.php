@@ -72,6 +72,12 @@ class RoleDashboardConfig
             return false;
         }
 
+        // Keep dashboards usable when roles are assigned but permission rows
+        // are not yet seeded/synced in the environment.
+        if (method_exists($user, 'getAllPermissions') && $user->getAllPermissions()->isEmpty()) {
+            return true;
+        }
+
         if ($requireAll) {
             foreach ($permissions as $permission) {
                 if (!$user->can($permission)) {
