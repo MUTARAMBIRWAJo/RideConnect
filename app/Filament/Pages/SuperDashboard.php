@@ -27,6 +27,11 @@ class SuperDashboard extends BaseDashboard
         return 'heroicon-o-shield-check';
     }
 
+    protected function getHeaderWidgets(): array
+    {
+        return $this->getVisibleWidgets();
+    }
+
     public function canManageUsers(): bool
     {
         $user = auth()->user();
