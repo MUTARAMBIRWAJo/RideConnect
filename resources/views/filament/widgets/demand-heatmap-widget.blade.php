@@ -1,4 +1,5 @@
-<div class="fi-section rounded-2xl p-4 sm:p-6">
+<x-filament-widgets::widget>
+<div class="w-full fi-section rounded-2xl p-4 sm:p-6">
   <div class="mb-4 flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
     <div>
       <h3 class="text-lg font-semibold text-gray-900 dark:text-white">AI Demand Heatmap — Kigali</h3>
@@ -933,3 +934,4 @@
     })();
   </script>
 </div>
+</x-filament-widgets::widget>
