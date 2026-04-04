@@ -51,13 +51,12 @@ RETRY_DELAY_SECONDS = float(os.getenv("PREDICT_RETRY_DELAY", "0.2"))
 # API contract shapes used for strict model compatibility checks.
 FARE_CONTRACT_FEATURES = int(os.getenv("FARE_CONTRACT_FEATURES", "23"))
 DRIVER_CONTRACT_FEATURES = int(os.getenv("DRIVER_CONTRACT_FEATURES", "21"))
-DEMAND_CONTRACT_TIMESTEPS = int(os.getenv("DEMAND_CONTRACT_TIMESTEPS", "24"))
-DEMAND_CONTRACT_FEATURES = int(os.getenv("DEMAND_CONTRACT_FEATURES", "8"))
+DEMAND_CONTRACT_SEQUENCE_LENGTH = int(os.getenv("DEMAND_CONTRACT_SEQUENCE_LENGTH", "8"))
 
 # -----------------------------------------------------------------------------
 # App initialization
 # -----------------------------------------------------------------------------
-app = FastAPI(title="RideConnect ML Service", version="1.1.0")
+app = FastAPI(title="RideConnect ML Service", version="1.2.0")
 
 
 @app.exception_handler(RequestValidationError)
@@ -107,38 +106,34 @@ class PredictFareRequest(BaseModel):
 
 
 class RankDriversRequest(BaseModel):
-	# Batch ranking input: each row must have exactly 21 feature values.
-	features: list[list[float]] = Field(..., min_length=1)
+	# Driver ranker requires exactly 21 feature values.
+	features: list[float] = Field(..., min_length=DRIVER_CONTRACT_FEATURES, max_length=DRIVER_CONTRACT_FEATURES)
 
 	@field_validator("features")
 	@classmethod
-	def validate_features(cls, value: list[list[float]]) -> list[list[float]]:
-		if not value:
-			raise ValueError("features cannot be empty; provide at least one driver feature row")
-		for index, row in enumerate(value):
-			if len(row) != DRIVER_CONTRACT_FEATURES:
-				raise ValueError(
-					f"features[{index}] must contain exactly {DRIVER_CONTRACT_FEATURES} values"
-				)
+	def validate_features(cls, value: list[float]) -> list[float]:
+		if len(value) != DRIVER_CONTRACT_FEATURES:
+			raise ValueError(
+				f"features must contain exactly {DRIVER_CONTRACT_FEATURES} values for driver ranking"
+			)
 		return value
 
 
 class PredictDemandRequest(BaseModel):
-	# LSTM endpoint accepts a 2D sequence: 24 timesteps x 8 features.
-	features: list[list[float]] = Field(..., min_length=DEMAND_CONTRACT_TIMESTEPS)
+	# LSTM endpoint accepts a single-feature sequence with exactly 8 timesteps.
+	features: list[float] = Field(
+		...,
+		min_length=DEMAND_CONTRACT_SEQUENCE_LENGTH,
+		max_length=DEMAND_CONTRACT_SEQUENCE_LENGTH,
+	)
 
 	@field_validator("features")
 	@classmethod
-	def validate_features(cls, value: list[list[float]]) -> list[list[float]]:
-		if len(value) != DEMAND_CONTRACT_TIMESTEPS:
+	def validate_features(cls, value: list[float]) -> list[float]:
+		if len(value) != DEMAND_CONTRACT_SEQUENCE_LENGTH:
 			raise ValueError(
-				f"features must contain exactly {DEMAND_CONTRACT_TIMESTEPS} timesteps for demand prediction"
+				f"features must contain exactly {DEMAND_CONTRACT_SEQUENCE_LENGTH} values for demand prediction"
 			)
-		for index, row in enumerate(value):
-			if len(row) != DEMAND_CONTRACT_FEATURES:
-				raise ValueError(
-					f"features[{index}] must contain exactly {DEMAND_CONTRACT_FEATURES} values"
-				)
 		return value
 
 
@@ -361,14 +356,6 @@ def _log_prediction(model_name: str, input_payload: dict[str, Any], output_paylo
 	LOGGER.exception("Failed to log prediction for %s: %s", model_name, last_error)
 
 
-def _fallback_fare(distance_km: float, hour: int, day_of_week: int) -> float:
-	"""Fallback heuristic so API remains available if model is not ready."""
-	peak_multiplier = 1.2 if hour in {7, 8, 9, 17, 18, 19} else 1.0
-	weekend_multiplier = 1.1 if day_of_week in {5, 6} else 1.0
-	base_fare = 500.0
-	return round((base_fare + (distance_km * 300.0)) * peak_multiplier * weekend_multiplier, 2)
-
-
 def _model_versions() -> dict[str, str]:
 	"""Return lightweight model version metadata for operations visibility."""
 	versions: dict[str, str] = {
@@ -425,8 +412,8 @@ def _model_compatibility() -> dict[str, dict[str, Any]]:
 	driver_compatible = driver_ranker is not None and driver_expected == DRIVER_CONTRACT_FEATURES
 	demand_compatible = (
 		demand_model is not None
-		and demand_timesteps == DEMAND_CONTRACT_TIMESTEPS
-		and demand_expected_features == DEMAND_CONTRACT_FEATURES
+		and demand_timesteps == DEMAND_CONTRACT_SEQUENCE_LENGTH
+		and demand_expected_features == 1
 	)
 
 	return {
@@ -445,8 +432,8 @@ def _model_compatibility() -> dict[str, dict[str, Any]]:
 		"demand_lstm": {
 			"loaded": demand_model is not None,
 			"compatible": demand_compatible,
-			"endpoint_expected_timesteps": DEMAND_CONTRACT_TIMESTEPS,
-			"endpoint_expected_features": DEMAND_CONTRACT_FEATURES,
+			"endpoint_expected_timesteps": DEMAND_CONTRACT_SEQUENCE_LENGTH,
+			"endpoint_expected_features": 1,
 			"model_expected_timesteps": demand_timesteps,
 			"model_expected_features": demand_expected_features,
 		},
@@ -521,10 +508,10 @@ def examples() -> dict[str, Any]:
 			"features": [0.1] * FARE_CONTRACT_FEATURES,
 		},
 		"rank_drivers": {
-			"features": [[0.1] * DRIVER_CONTRACT_FEATURES, [0.2] * DRIVER_CONTRACT_FEATURES],
+			"features": [0.1] * DRIVER_CONTRACT_FEATURES,
 		},
 		"predict_demand": {
-			"features": [[0.1] * DEMAND_CONTRACT_FEATURES for _ in range(DEMAND_CONTRACT_TIMESTEPS)],
+			"features": [0.1] * DEMAND_CONTRACT_SEQUENCE_LENGTH,
 		},
 	}
 
@@ -549,9 +536,9 @@ def rank_drivers_help() -> dict[str, Any]:
 		"detail": "Use POST for this endpoint.",
 		"expected_method": "POST",
 		"example_payload": {
-			"features": [[0.1] * DRIVER_CONTRACT_FEATURES, [0.2] * DRIVER_CONTRACT_FEATURES],
+			"features": [0.1] * DRIVER_CONTRACT_FEATURES,
 		},
-		"example_curl": "curl -X POST http://localhost:8080/ml/rank-drivers -H 'Content-Type: application/json' -d '{\"features\":[[0.1,0.1,...],[0.2,0.2,...]]}'",
+		"example_curl": "curl -X POST http://localhost:8080/ml/rank-drivers -H 'Content-Type: application/json' -d '{\"features\":[0.1,0.1,...]}'",
 	}
 
 
@@ -562,9 +549,9 @@ def predict_demand_help() -> dict[str, Any]:
 		"detail": "Use POST for this endpoint.",
 		"expected_method": "POST",
 		"example_payload": {
-			"features": [[0.1] * DEMAND_CONTRACT_FEATURES for _ in range(DEMAND_CONTRACT_TIMESTEPS)],
+			"features": [0.1] * DEMAND_CONTRACT_SEQUENCE_LENGTH,
 		},
-		"example_curl": "curl -X POST http://localhost:8080/ml/predict-demand -H 'Content-Type: application/json' -d '{\"features\":[[0.1,...],[...]]}'",
+		"example_curl": "curl -X POST http://localhost:8080/ml/predict-demand -H 'Content-Type: application/json' -d '{\"features\":[0.1,0.1,...]}'",
 	}
 
 
@@ -608,13 +595,11 @@ def predict_fare(payload: PredictFareRequest) -> dict[str, Any]:
 
 @app.post("/ml/rank-drivers")
 def rank_drivers(payload: RankDriversRequest) -> dict[str, Any]:
-	"""Rank one or many drivers using strict 21-feature rows."""
+	"""Rank a driver using strict 21-feature input validation."""
 	if driver_ranker is None:
 		raise HTTPException(status_code=503, detail="driver ranker model is not loaded")
 
-	features = np.array(payload.features, dtype=np.float32)
-	if features.ndim != 2:
-		raise HTTPException(status_code=400, detail="features must be a 2D array of driver rows")
+	features = np.array(payload.features, dtype=np.float32).reshape(1, -1)
 	if features.shape[1] != DRIVER_CONTRACT_FEATURES:
 		raise HTTPException(
 			status_code=400,
@@ -638,21 +623,38 @@ def rank_drivers(payload: RankDriversRequest) -> dict[str, Any]:
 
 @app.post("/ml/predict-demand")
 def predict_demand(payload: PredictDemandRequest) -> dict[str, Any]:
-	"""Predict demand using a strict 24x8 sequence input."""
+	"""Predict demand using a strict single-feature sequence of length 8."""
 	if demand_model is None:
 		raise HTTPException(status_code=503, detail="demand model is not loaded")
 
-	features = np.array(payload.features, dtype=np.float32).reshape(
-		1, DEMAND_CONTRACT_TIMESTEPS, DEMAND_CONTRACT_FEATURES
-	)
-	if features.shape[1] != DEMAND_CONTRACT_TIMESTEPS or features.shape[2] != DEMAND_CONTRACT_FEATURES:
+	sequence = np.array(payload.features, dtype=np.float32)
+	model_input_shape = getattr(demand_model, "input_shape", None)
+	model_timesteps = None
+	model_feature_count = 1
+
+	if isinstance(model_input_shape, tuple) and len(model_input_shape) >= 3:
+		model_timesteps = _safe_int(model_input_shape[1])
+		model_feature_count = _safe_int(model_input_shape[2]) or 1
+
+	if model_timesteps is not None and model_timesteps != DEMAND_CONTRACT_SEQUENCE_LENGTH:
 		raise HTTPException(
-			status_code=400,
+			status_code=500,
 			detail=(
-				f"invalid demand input shape: expected ({DEMAND_CONTRACT_TIMESTEPS}, {DEMAND_CONTRACT_FEATURES}), "
-				f"got ({features.shape[1]}, {features.shape[2]})"
+				f"demand model expects sequence length {model_timesteps}, "
+				f"but API contract is {DEMAND_CONTRACT_SEQUENCE_LENGTH}"
 			),
 		)
+
+	if model_feature_count != 1:
+		raise HTTPException(
+			status_code=500,
+			detail=(
+				f"demand model expects {model_feature_count} features per timestep, "
+				"but API contract provides 1"
+			),
+		)
+
+	features = sequence.reshape(1, DEMAND_CONTRACT_SEQUENCE_LENGTH, 1)
 
 	try:
 		prediction = _predict_with_retries(demand_model, features)

@@ -26,6 +26,7 @@ use App\Http\Controllers\Api\Accountant\PayoutController;
 use App\Http\Controllers\Api\Analytics\AnalyticsController;
 use App\Http\Controllers\Api\HealthCheckController;
 use App\Http\Controllers\Api\AIController;
+use App\Http\Controllers\Api\MlController;
 use App\Http\Controllers\Api\Webhooks\StripeWebhookController;
 use App\Http\Controllers\Api\Webhooks\MTNWebhookController;
 use App\Models\Manager;
@@ -240,6 +241,15 @@ Route::prefix('v1')->group(function () {
             Route::get('/driver-idle', [AIController::class, 'driverIdle']);
             Route::get('/cancellation-anomalies', [AIController::class, 'cancellationAnomalies']);
             Route::get('/system-health', [AIController::class, 'systemHealth']);
+        });
+
+        // FastAPI ML proxy endpoints
+        Route::prefix('ml')->group(function () {
+            Route::post('/predict-fare', [MlController::class, 'predictFare']);
+            Route::post('/rank-drivers', [MlController::class, 'rankDrivers']);
+            Route::post('/predict-demand', [MlController::class, 'predictDemand']);
+            Route::get('/health', [MlController::class, 'health']);
+            Route::post('/reload-models', [MlController::class, 'reloadModels']);
         });
     });
 

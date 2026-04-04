@@ -88,6 +88,12 @@ return [
         'timeout' => env('RIDE_AI_TIMEOUT', 5),
     ],
 
+    'ml_service' => [
+        'url' => env('ML_SERVICE_URL', env('RIDE_AI_BASE_URL', 'http://ai-service:8001')),
+        'api_key' => env('ML_SERVICE_API_KEY', env('RIDE_AI_API_KEY')),
+        'timeout' => env('ML_SERVICE_TIMEOUT', 10),
+    ],
+
     'push' => [
         // FCM legacy server key (or use your own gateway if preferred).
         'fcm_server_key' => env('FCM_SERVER_KEY'),

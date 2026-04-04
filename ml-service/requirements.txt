@@ -4,7 +4,7 @@ joblib
 numpy
 pandas
 tensorflow
-scikit-learn
+scikit-learn==1.6.1
 psycopg2-binary
 python-dotenv
 xgboost
