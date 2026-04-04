@@ -3,17 +3,19 @@
 namespace App\Filament\Pages;
 
 use App\Enums\UserRole;
-use App\Filament\Pages\Concerns\HandlesRoleDashboards;
-use App\Filament\Support\RoleDashboardConfig;
 use App\Models\User;
-use Filament\Pages\Dashboard\Concerns\HasFiltersForm;
 use Illuminate\Contracts\Support\Htmlable;
 
-class SuperDashboard extends \Filament\Pages\Dashboard
+class SuperDashboard extends BaseDashboard
 {
-    use HandlesRoleDashboards, HasFiltersForm;
-
     protected static string $routePath = '/super-dashboard';
+
+    protected static string $view = 'filament.pages.super-dashboard';
+
+    protected static function dashboardRole(): UserRole
+    {
+        return UserRole::SUPER_ADMIN;
+    }
 
     public static function getNavigationLabel(): string
     {
@@ -23,39 +25,6 @@ class SuperDashboard extends \Filament\Pages\Dashboard
     public static function getNavigationIcon(): string | Htmlable | null
     {
         return 'heroicon-o-shield-check';
-    }
-
-    public static function shouldRegisterNavigation(): bool
-    {
-        return static::userHasRole(auth()->user(), 'Super_admin', UserRole::SUPER_ADMIN);
-    }
-
-    public static function canAccess(): bool
-    {
-        return static::userHasRole(auth()->user(), 'Super_admin', UserRole::SUPER_ADMIN);
-    }
-
-    public static function canView(): bool
-    {
-        return static::userHasRole(auth()->user(), 'Super_admin', UserRole::SUPER_ADMIN);
-    }
-
-    public function mount(): void
-    {
-        abort_unless(static::canAccess(), 403);
-    }
-
-    public function getColumns(): int | string | array
-    {
-        return RoleDashboardConfig::columnsForRole(UserRole::SUPER_ADMIN->value);
-    }
-
-    /**
-     * @return array<class-string>
-     */
-    public function getWidgets(): array
-    {
-        return RoleDashboardConfig::visibleWidgetsForRole(UserRole::SUPER_ADMIN->value);
     }
 
     public function canManageUsers(): bool
