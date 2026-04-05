@@ -11,6 +11,8 @@ class OfficerDashboardV2 extends BaseDashboard
 
     protected static string $routePath = '/officer-dashboard-v2';
 
+    protected static string $view = 'filament.pages.officer-dashboard-v2';
+
     protected static function dashboardRole(): UserRole
     {
         return UserRole::OFFICER;
