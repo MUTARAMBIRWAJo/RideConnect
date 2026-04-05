@@ -6,18 +6,15 @@ use App\Enums\UserRole;
 use App\Filament\Widgets\SuperAdmin\AiInsightsWidget;
 use App\Filament\Widgets\SuperAdmin\BookingTripRatioChartWidget;
 use App\Filament\Widgets\SuperAdmin\DriverActivityChartWidget;
-use App\Filament\Widgets\SuperAdmin\KpiOverviewWidget;
-use App\Filament\Widgets\SuperAdmin\LiveRideMapWidget;
-use App\Filament\Widgets\SuperAdmin\RecentActivityWidget;
 use App\Filament\Widgets\SuperAdmin\RevenueTrendChartWidget;
 use App\Filament\Widgets\SuperAdmin\RidesPerHourChartWidget;
 use Illuminate\Contracts\Support\Htmlable;
 
-class SuperDashboard extends BaseDashboard
+class AnalyticsDashboard extends BaseDashboard
 {
-    protected static string $routePath = '/super-dashboard';
+    protected static string $routePath = '/analytics-dashboard';
 
-    protected static string $view = 'filament.pages.super-dashboard';
+    protected static string $view = 'filament.pages.analytics-dashboard';
 
     protected static function dashboardRole(): UserRole
     {
@@ -26,35 +23,27 @@ class SuperDashboard extends BaseDashboard
 
     public static function getNavigationLabel(): string
     {
-        return 'Super Dashboard';
+        return 'Analytics Dashboard';
     }
 
     public static function getNavigationIcon(): string | Htmlable | null
     {
-        return 'heroicon-o-shield-check';
+        return 'heroicon-o-chart-bar-square';
     }
 
     public function getWidgets(): array
     {
-        // Keep this dashboard deterministic and avoid role-configured widget side effects.
         return [];
     }
 
     protected function getHeaderWidgets(): array
     {
-        if ((bool) config('dashboard.super_dashboard_static_mode', false)) {
-            return [];
-        }
-
         return [
-            KpiOverviewWidget::class,
-            LiveRideMapWidget::class,
-            AiInsightsWidget::class,
             RidesPerHourChartWidget::class,
             RevenueTrendChartWidget::class,
             DriverActivityChartWidget::class,
             BookingTripRatioChartWidget::class,
-            RecentActivityWidget::class,
+            AiInsightsWidget::class,
         ];
     }
 

@@ -3,7 +3,7 @@ services:
     name: rideconnect-api
     runtime: docker
     plan: free
-    dockerfilePath: ./Dockerfile
+    dockerfilePath: Dockerfile
     dockerContext: .
     startCommand: /bin/sh /var/www/scripts/start.sh
     envVars:
@@ -38,7 +38,7 @@ services:
     name: rideconnect-queue
     runtime: docker
     plan: free
-    dockerfilePath: ./Dockerfile
+    dockerfilePath: Dockerfile
     dockerContext: .
     startCommand: php artisan queue:work --tries=3 --timeout=90
     envVars:
@@ -65,7 +65,7 @@ services:
     name: rideconnect-scheduler
     runtime: docker
     plan: free
-    dockerfilePath: ./Dockerfile
+    dockerfilePath: Dockerfile
     dockerContext: .
     startCommand: php artisan schedule:work
     envVars:

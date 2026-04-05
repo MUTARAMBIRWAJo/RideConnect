@@ -130,6 +130,11 @@ class AdminPanelProvider extends PanelProvider
             ->pages([
                 Dashboard::class,
                 \App\Filament\Pages\SuperDashboard::class,
+                \App\Filament\Pages\RideManagement::class,
+                \App\Filament\Pages\DriverManagement::class,
+                \App\Filament\Pages\PassengerManagement::class,
+                \App\Filament\Pages\AnalyticsDashboard::class,
+                \App\Filament\Pages\SystemMonitoring::class,
                 \App\Filament\Pages\AdminDashboard::class,
                 \App\Filament\Pages\AccountantDashboard::class,
                 \App\Filament\Pages\OfficerDashboardV2::class,
