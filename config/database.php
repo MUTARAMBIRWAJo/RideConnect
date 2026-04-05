@@ -17,8 +17,8 @@ return [
     */
 
     'default' => env('APP_ENV') === 'testing'
-        ? 'sqlite'
-        : env('DB_CONNECTION', 'sqlite'),
+        ? env('TEST_DB_CONNECTION', env('DB_CONNECTION', 'pgsql'))
+        : env('DB_CONNECTION', 'pgsql'),
 
     /*
     |--------------------------------------------------------------------------
@@ -88,16 +88,16 @@ return [
         'pgsql' => [
             'driver' => 'pgsql',
             'url' => env('DATABASE_URL'),
-            'host' => env('DB_HOST', '127.0.0.1'),
-            'port' => env('DB_PORT', '5432'),
-            'database' => env('DB_DATABASE', 'forge'),
-            'username' => env('DB_USERNAME', 'forge'),
-            'password' => env('DB_PASSWORD', ''),
+            'host' => env('TEST_DB_HOST', env('DB_HOST', '127.0.0.1')),
+            'port' => env('TEST_DB_PORT', env('DB_PORT', '5432')),
+            'database' => env('TEST_DB_DATABASE', env('DB_DATABASE', 'forge')),
+            'username' => env('TEST_DB_USERNAME', env('DB_USERNAME', 'forge')),
+            'password' => env('TEST_DB_PASSWORD', env('DB_PASSWORD', '')),
             'charset' => 'utf8',
             'prefix' => '',
             'prefix_indexes' => true,
-            'search_path' => 'public',
-            'sslmode' => env('DB_SSLMODE', 'prefer'),
+            'search_path' => env('TEST_DB_SCHEMA', 'public'),
+            'sslmode' => env('TEST_DB_SSLMODE', env('DB_SSLMODE', 'prefer')),
             'options' => [
                 PDO::ATTR_TIMEOUT => 5,
             ],

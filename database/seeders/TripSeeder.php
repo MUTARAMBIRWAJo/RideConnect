@@ -15,6 +15,12 @@ class TripSeeder extends Seeder
      */
     public function run(): void
     {
+        $seedNow = now()->startOfMinute();
+
+        if (DB::getDriverName() === 'pgsql') {
+            DB::statement("SELECT setval(pg_get_serial_sequence('trips','id'), COALESCE((SELECT MAX(id) FROM trips), 0) + 1, false)");
+        }
+
         $driverIds = \App\Models\Driver::orderBy('id')->pluck('id')->toArray();
         $passengerIds = \App\Models\MobileUser::where('role', 'PASSENGER')->orderBy('id')->pluck('id')->toArray();
 
@@ -32,11 +38,11 @@ class TripSeeder extends Seeder
                 'dropoff_lng' => 30.1394,
                 'fare' => 5500.00,
                 'status' => 'COMPLETED',
-                'requested_at' => now()->subDays(20)->setHour(8)->setMinute(0),
-                'started_at' => now()->subDays(20)->setHour(8)->setMinute(10),
-                'completed_at' => now()->subDays(20)->setHour(8)->setMinute(45),
-                'created_at' => now()->subDays(20),
-                'updated_at' => now()->subDays(20),
+                'requested_at' => $seedNow->copy()->subDays(20)->setHour(8)->setMinute(0),
+                'started_at' => $seedNow->copy()->subDays(20)->setHour(8)->setMinute(10),
+                'completed_at' => $seedNow->copy()->subDays(20)->setHour(8)->setMinute(45),
+                'created_at' => $seedNow->copy()->subDays(20),
+                'updated_at' => $seedNow->copy()->subDays(20),
             ];
             $trips[] = [
                 'passenger_id' => $passengerIds[1],
@@ -49,11 +55,11 @@ class TripSeeder extends Seeder
                 'dropoff_lng' => 30.0444,
                 'fare' => 3200.00,
                 'status' => 'COMPLETED',
-                'requested_at' => now()->subDays(18)->setHour(14)->setMinute(0),
-                'started_at' => now()->subDays(18)->setHour(14)->setMinute(8),
-                'completed_at' => now()->subDays(18)->setHour(14)->setMinute(35),
-                'created_at' => now()->subDays(18),
-                'updated_at' => now()->subDays(18),
+                'requested_at' => $seedNow->copy()->subDays(18)->setHour(14)->setMinute(0),
+                'started_at' => $seedNow->copy()->subDays(18)->setHour(14)->setMinute(8),
+                'completed_at' => $seedNow->copy()->subDays(18)->setHour(14)->setMinute(35),
+                'created_at' => $seedNow->copy()->subDays(18),
+                'updated_at' => $seedNow->copy()->subDays(18),
             ];
             $trips[] = [
                 'passenger_id' => $passengerIds[2],
@@ -66,17 +72,26 @@ class TripSeeder extends Seeder
                 'dropoff_lng' => 29.5944,
                 'fare' => 2000.00,
                 'status' => 'COMPLETED',
-                'requested_at' => now()->subDays(15)->setHour(10)->setMinute(0),
-                'started_at' => now()->subDays(15)->setHour(10)->setMinute(5),
-                'completed_at' => now()->subDays(15)->setHour(10)->setMinute(20),
-                'created_at' => now()->subDays(15),
-                'updated_at' => now()->subDays(15),
+                'requested_at' => $seedNow->copy()->subDays(15)->setHour(10)->setMinute(0),
+                'started_at' => $seedNow->copy()->subDays(15)->setHour(10)->setMinute(5),
+                'completed_at' => $seedNow->copy()->subDays(15)->setHour(10)->setMinute(20),
+                'created_at' => $seedNow->copy()->subDays(15),
+                'updated_at' => $seedNow->copy()->subDays(15),
             ];
             // ...add more trips as needed, following the same pattern and using available IDs...
         }
 
         foreach ($trips as $trip) {
-            DB::table('trips')->insert($trip);
+            DB::table('trips')->updateOrInsert(
+                [
+                    'passenger_id' => $trip['passenger_id'],
+                    'driver_id' => $trip['driver_id'],
+                    'pickup_location' => $trip['pickup_location'],
+                    'dropoff_location' => $trip['dropoff_location'],
+                    'requested_at' => $trip['requested_at'],
+                ],
+                $trip
+            );
         }
     }
 }

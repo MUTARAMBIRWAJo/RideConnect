@@ -15,10 +15,11 @@ class DriverLocationSeeder extends Seeder
      */
     public function run(): void
     {
+        // driver_locations.driver_id references mobile_users.id in current schema.
         $drivers = DB::table('mobile_users')
-            ->join('drivers', 'drivers.user_id', '=', 'mobile_users.id')
             ->where('mobile_users.role', 'DRIVER')
-            ->get(['drivers.id']);
+            ->orderBy('mobile_users.id')
+            ->get(['mobile_users.id']);
 
         $kigaliLat = -1.9441;
         $kigaliLng = 30.0619;

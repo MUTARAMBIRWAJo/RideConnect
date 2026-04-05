@@ -26,6 +26,8 @@ use App\Filament\Widgets\BI\RevenueOverTimeChartWidget;
 use App\Filament\Widgets\BI\TopDriversLeaderboardWidget;
 
 return [
+    'super_dashboard_static_mode' => env('DASHBOARD_SUPER_STATIC_MODE', false),
+
     // Mobile-first dashboard column breakpoints.
     'default_columns' => [
         'default' => 1,

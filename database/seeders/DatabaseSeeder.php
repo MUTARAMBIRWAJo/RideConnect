@@ -22,15 +22,22 @@ class DatabaseSeeder extends Seeder
     {
         $resumeMode = (bool) env('DB_SEED_RESUME', false);
         $skipReset = (bool) env('DB_SEED_SKIP_RESET', true); // Default to skip reset to avoid foreign key issues
+        $skipRoleSeeder = (bool) env('DB_SEED_SKIP_ROLE_SEEDER', false);
+        $skipTopUp = (bool) env('DB_SEED_SKIP_TOP_UP', false);
 
         // Resume mode keeps already-seeded data and only runs the final top-up pass.
         if ($resumeMode) {
             $this->command?->info('DB_SEED_RESUME enabled: skipping truncation and completed seeders.');
-            $this->call([
-                RoleSeeder::class,
+            $resumeSeeders = [
                 AIRwandaTrainingSeeder::class,
                 RwandaFiftyTopUpSeeder::class,
-            ]);
+            ];
+
+            if (!$skipRoleSeeder) {
+                array_unshift($resumeSeeders, RoleSeeder::class);
+            }
+
+            $this->call($resumeSeeders);
 
             return;
         }
@@ -40,11 +47,16 @@ class DatabaseSeeder extends Seeder
         $this->command?->info('Skipping database reset. Seeding roles and managers...');
 
         // Run seeders for mobile_users and managers tables FIRST (source of truth)
-        $this->call([
-            RoleSeeder::class,
+        $baseSeeders = [
             MobileUserSeeder::class,
             ManagerSeeder::class,
-        ]);
+        ];
+
+        if (!$skipRoleSeeder) {
+            array_unshift($baseSeeders, RoleSeeder::class);
+        }
+
+        $this->call($baseSeeders);
 
         // Sync to Users table NOW so DriverSeeder can find the users
         $this->syncMobileUsersToUsers();
@@ -76,15 +88,20 @@ class DatabaseSeeder extends Seeder
             $this->call(\Database\Seeders\RuraTariffSeeder::class);
 
         // Fintech architecture seeders (depend on drivers, rides, payments, users)
-        $this->call([
+        $fintechSeeders = [
             LedgerAccountSeeder::class,
             LedgerTransactionSeeder::class,
             DriverWalletSeeder::class,
             DriverPayoutSeeder::class,
             FraudFlagSeeder::class,
-            AIRwandaTrainingSeeder::class,
-            RwandaFiftyTopUpSeeder::class,
-        ]);
+        ];
+
+        if (!$skipTopUp) {
+            $fintechSeeders[] = AIRwandaTrainingSeeder::class;
+            $fintechSeeders[] = RwandaFiftyTopUpSeeder::class;
+        }
+
+        $this->call($fintechSeeders);
     }
 
     /**

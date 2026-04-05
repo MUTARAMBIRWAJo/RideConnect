@@ -16,6 +16,10 @@ php artisan route:cache --no-interaction || true
 php artisan view:cache --no-interaction || true
 php artisan migrate --force --no-interaction || true
 
+if [ "${DASHBOARD_WARM_ON_BOOT:-true}" = "true" ]; then
+	php artisan dashboard:warm-cache --clear --days="${DASHBOARD_WARM_DAYS:-7}" --no-interaction || true
+fi
+
 export PORT="${PORT_VALUE}"
 mkdir -p /var/www/storage/logs /etc/nginx/conf.d
 envsubst '${PORT}' < /etc/nginx/templates/default.conf.template > /etc/nginx/conf.d/default.conf

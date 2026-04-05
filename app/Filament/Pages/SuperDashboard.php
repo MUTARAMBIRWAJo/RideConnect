@@ -3,7 +3,9 @@
 namespace App\Filament\Pages;
 
 use App\Enums\UserRole;
-use App\Models\User;
+use App\Filament\Widgets\AdminStatsOverview;
+use App\Filament\Widgets\RevenueWidget;
+use App\Filament\Widgets\RideAnalyticsChart;
 use Illuminate\Contracts\Support\Htmlable;
 
 class SuperDashboard extends BaseDashboard
@@ -27,37 +29,31 @@ class SuperDashboard extends BaseDashboard
         return 'heroicon-o-shield-check';
     }
 
+    public function getWidgets(): array
+    {
+        // Keep this dashboard deterministic and avoid role-configured widget side effects.
+        return [];
+    }
+
     protected function getHeaderWidgets(): array
     {
-        return $this->getVisibleWidgets();
-    }
-
-    public function canManageUsers(): bool
-    {
-        $user = auth()->user();
-
-        if (!$user) {
-            return false;
+        if ((bool) config('dashboard.super_dashboard_static_mode', false)) {
+            return [];
         }
 
-        $isSuperAdminByRoleEnum = ($user->role?->value ?? $user->role) === UserRole::SUPER_ADMIN->value;
-        $isSuperAdminBySpatie = method_exists($user, 'hasRole')
-            ? ($user->hasRole('Super_admin') || $user->hasRole('SUPER_ADMIN'))
-            : false;
-
-        return $isSuperAdminByRoleEnum || $isSuperAdminBySpatie || ($user->can('view users') ?? false);
+        return [
+            AdminStatsOverview::class,
+            RideAnalyticsChart::class,
+            RevenueWidget::class,
+        ];
     }
 
-    /**
-     * @return array<string, int>
-     */
-    public function getUserManagementStats(): array
+    public function getColumns(): int | string | array
     {
         return [
-            'total' => (int) User::query()->count(),
-            'pending' => (int) User::query()->where('is_approved', false)->count(),
-            'managers' => (int) User::query()->whereIn('role', UserRole::managerRoles())->count(),
-            'mobile' => (int) User::query()->whereIn('role', UserRole::mobileUserRoles())->count(),
+            'default' => 1,
+            'md' => 2,
+            'xl' => 2,
         ];
     }
 }

@@ -57,3 +57,33 @@ If you discover a security vulnerability within Laravel, please send an e-mail t
 ## License
 
 The Laravel framework is open-sourced software licensed under the [MIT license](https://opensource.org/licenses/MIT).
+
+## RideConnect Ops Notes
+
+### Supabase/Postgres Test Configuration
+
+This project is Postgres-first. Testing is configured to use Postgres-compatible settings instead of SQLite in-memory defaults.
+
+1. Copy `.env.testing.example` to `.env.testing`.
+2. Point `TEST_DB_*` values to a dedicated test database (or isolated schema).
+3. Never run tests against production Supabase data.
+
+Run targeted dashboard tests:
+
+```bash
+php artisan test --filter=SuperDashboardRenderTest
+php artisan test --filter=DashboardRoutingTest
+```
+
+### Dashboard Cache Warmup
+
+After deployment (or during container boot), warm dashboard caches to reduce first-load latency:
+
+```bash
+php artisan dashboard:warm-cache --clear --days=7
+```
+
+Render startup script supports:
+
+- `DASHBOARD_WARM_ON_BOOT=true|false`
+- `DASHBOARD_WARM_DAYS=7`

@@ -15,9 +15,19 @@ class VehicleV2Seeder extends Seeder
      */
     public function run(): void
     {
+        $driverIds = DB::table('mobile_users')
+            ->where('role', 'DRIVER')
+            ->orderBy('id')
+            ->pluck('id')
+            ->values();
+
+        if ($driverIds->isEmpty()) {
+            return;
+        }
+
         $vehicles = [
             [
-                'driver_id' => 1, // Jean Mugabo (DRIVER)
+                'driver_id' => $driverIds[0] ?? null,
                 'plate_number' => 'RAC 123 A',
                 'vehicle_type' => 'Sedan',
                 'brand' => 'Toyota',
@@ -29,7 +39,7 @@ class VehicleV2Seeder extends Seeder
                 'updated_at' => now()->subDays(58),
             ],
             [
-                'driver_id' => 2, // Patrick Habimana (DRIVER)
+                'driver_id' => $driverIds[1] ?? $driverIds[0],
                 'plate_number' => 'RAD 456 B',
                 'vehicle_type' => 'SUV',
                 'brand' => 'Honda',
@@ -41,7 +51,7 @@ class VehicleV2Seeder extends Seeder
                 'updated_at' => now()->subDays(43),
             ],
             [
-                'driver_id' => 3, // Claude Niyonzima (DRIVER)
+                'driver_id' => $driverIds[2] ?? $driverIds[0],
                 'plate_number' => 'RAE 789 C',
                 'vehicle_type' => 'Sedan',
                 'brand' => 'Hyundai',
@@ -53,7 +63,7 @@ class VehicleV2Seeder extends Seeder
                 'updated_at' => now()->subDays(28),
             ],
             [
-                'driver_id' => 4, // Eric Nsanzimana (DRIVER - not verified)
+                'driver_id' => $driverIds[3] ?? $driverIds[0],
                 'plate_number' => 'RAF 321 D',
                 'vehicle_type' => 'Minivan',
                 'brand' => 'Toyota',
@@ -65,7 +75,7 @@ class VehicleV2Seeder extends Seeder
                 'updated_at' => now()->subDays(4),
             ],
             [
-                'driver_id' => 1, // Jean Mugabo - second vehicle
+                'driver_id' => $driverIds[0],
                 'plate_number' => 'RAG 654 E',
                 'vehicle_type' => 'Hatchback',
                 'brand' => 'Volkswagen',
@@ -79,7 +89,14 @@ class VehicleV2Seeder extends Seeder
         ];
 
         foreach ($vehicles as $vehicle) {
-            DB::table('vehicles_v2')->insert($vehicle);
+            if ($vehicle['driver_id'] === null) {
+                continue;
+            }
+
+            DB::table('vehicles_v2')->updateOrInsert(
+                ['plate_number' => $vehicle['plate_number']],
+                $vehicle
+            );
         }
     }
 }

@@ -29,6 +29,10 @@ services:
         value: rideconnect-redis
       - key: REDIS_PORT
         value: 6379
+      - key: DASHBOARD_WARM_ON_BOOT
+        value: true
+      - key: DASHBOARD_WARM_DAYS
+        value: 7
 
   - type: worker
     name: rideconnect-queue
