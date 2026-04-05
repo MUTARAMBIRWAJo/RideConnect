@@ -4,8 +4,8 @@ services:
     runtime: docker
     plan: free
     rootDir: .
-    dockerfilePath: Dockerfile
-    dockerContext: .
+    dockerfilePath: ./Dockerfile
+    dockerContext: ./
     startCommand: /bin/sh /var/www/scripts/start.sh
     envVars:
       - key: APP_ENV
@@ -40,8 +40,8 @@ services:
     runtime: docker
     plan: free
     rootDir: .
-    dockerfilePath: Dockerfile
-    dockerContext: .
+    dockerfilePath: ./Dockerfile
+    dockerContext: ./
     startCommand: php artisan queue:work --tries=3 --timeout=90
     envVars:
       - key: APP_ENV
@@ -68,8 +68,8 @@ services:
     runtime: docker
     plan: free
     rootDir: .
-    dockerfilePath: Dockerfile
-    dockerContext: .
+    dockerfilePath: ./Dockerfile
+    dockerContext: ./
     startCommand: php artisan schedule:work
     envVars:
       - key: APP_ENV

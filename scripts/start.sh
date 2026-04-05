@@ -15,7 +15,6 @@ php artisan config:cache --no-interaction || true
 php artisan route:cache --no-interaction || true
 php artisan view:cache --no-interaction || true
 php artisan migrate --force --no-interaction || true
-php artisan app:seed-database --no-interaction || true
 
 if [ "${DASHBOARD_WARM_ON_BOOT:-true}" = "true" ]; then
 	php artisan dashboard:warm-cache --clear --days="${DASHBOARD_WARM_DAYS:-7}" --no-interaction || true
