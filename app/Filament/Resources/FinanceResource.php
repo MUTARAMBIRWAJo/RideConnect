@@ -69,6 +69,7 @@ class FinanceResource extends Resource
                         Forms\Components\Select::make('status')
                             ->options([
                                 'pending' => 'Pending',
+                                'processing' => 'Processing',
                                 'completed' => 'Completed',
                                 'failed' => 'Failed',
                                 'refunded' => 'Refunded',
@@ -117,11 +118,13 @@ class FinanceResource extends Resource
                     ->toggleable(),
                 Tables\Columns\TextColumn::make('status')
                     ->badge()
-                    ->color(fn (string $state): string => match ($state) {
+                    ->color(fn (?string $state): string => match (strtolower((string) $state)) {
                         'completed' => 'success',
                         'pending' => 'warning',
+                        'processing' => 'gray',
                         'failed' => 'danger',
                         'refunded' => 'info',
+                        default => 'secondary',
                     }),
                 Tables\Columns\TextColumn::make('paid_at')
                     ->dateTime()
@@ -136,6 +139,7 @@ class FinanceResource extends Resource
                 Tables\Filters\SelectFilter::make('status')
                     ->options([
                         'pending' => 'Pending',
+                        'processing' => 'Processing',
                         'completed' => 'Completed',
                         'failed' => 'Failed',
                         'refunded' => 'Refunded',
