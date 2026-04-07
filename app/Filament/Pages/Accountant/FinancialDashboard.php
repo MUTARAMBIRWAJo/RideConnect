@@ -2,6 +2,7 @@
 
 namespace App\Filament\Pages\Accountant;
 
+use App\Services\ActionAuditLogger;
 use Filament\Notifications\Notification;
 use Filament\Pages\Page;
 use Illuminate\Contracts\Support\Htmlable;
@@ -92,6 +93,12 @@ class FinancialDashboard extends Page
             DB::table('payments')->where('id', $paymentId)->update($update);
         }
 
+        app(ActionAuditLogger::class)->log(
+            'payment.retry',
+            'Accountant retried payment #'.$paymentId,
+            ['payment_id' => $paymentId],
+        );
+
         $this->refreshDashboardData();
 
         Notification::make()
@@ -121,6 +128,12 @@ class FinancialDashboard extends Page
         if ($update !== []) {
             DB::table('driver_payouts')->where('id', $payoutId)->update($update);
         }
+
+        app(ActionAuditLogger::class)->log(
+            'payout.approve',
+            'Accountant approved payout #'.$payoutId,
+            ['payout_id' => $payoutId],
+        );
 
         $this->refreshDashboardData();
 

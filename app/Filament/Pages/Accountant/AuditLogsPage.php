@@ -48,27 +48,45 @@ class AuditLogsPage extends Page
 
     private function loadAuditLogs(): void
     {
-        // Try to load from activity_logs or audit tables if they exist
-        if (Schema::hasTable('activity_log')) {
-            $columns = collect(['id', 'subject_type', 'subject_id', 'description', 'user_id', 'created_at'])
-                ->filter(fn (string $column): bool => Schema::hasColumn('activity_log', $column))
-                ->values()
+        if (Schema::hasTable('activity_logs')) {
+            $query = DB::table('activity_logs');
+            $actorExpression = DB::raw("'System' as actor");
+
+            if (Schema::hasTable('managers') && Schema::hasColumn('activity_logs', 'manager_id')) {
+                $query->leftJoin('managers', 'managers.id', '=', 'activity_logs.manager_id');
+                $actorExpression = DB::raw("COALESCE(managers.name, 'System') as actor");
+            }
+
+            $this->auditLogs = $query
+                ->select([
+                    'activity_logs.id',
+                    DB::raw("COALESCE(activity_logs.action, 'system.event') as action"),
+                    DB::raw("COALESCE(activity_logs.description, '') as description"),
+                    DB::raw("COALESCE(activity_logs.created_at, NOW()) as created_at"),
+                    $actorExpression,
+                ])
+                ->latest('activity_logs.id')
+                ->limit(50)
+                ->get()
+                ->map(function ($row): array {
+                    $item = (array) $row;
+                    $action = strtolower((string) ($item['action'] ?? ''));
+
+                    return [
+                        'id' => $item['id'] ?? null,
+                        'ride_id' => 'N/A',
+                        'fare_difference' => 0,
+                        'status' => str_contains($action, 'reject') || str_contains($action, 'cancel') ? 'Suspicious' : 'Valid',
+                        'actor' => $item['actor'] ?? 'System',
+                        'created_at' => $item['created_at'] ?? now()->toDateTimeString(),
+                    ];
+                })
                 ->all();
 
-            if ($columns !== []) {
-                $this->auditLogs = DB::table('activity_log')
-                    ->select($columns)
-                    ->where('subject_type', 'like', '%Payment%')
-                    ->orWhere('subject_type', 'like', '%Payout%')
-                    ->latest('id')
-                    ->limit(50)
-                    ->get()
-                    ->map(fn ($row): array => (array) $row)
-                    ->all();
+            $this->totalAuditEntries = count($this->auditLogs);
+            $this->suspiciousTransactions = collect($this->auditLogs)->filter(fn ($log) => ($log['status'] ?? '') === 'Suspicious')->count();
 
-                $this->totalAuditEntries = count($this->auditLogs);
-                return;
-            }
+            return;
         }
 
         // Fallback: create mock data

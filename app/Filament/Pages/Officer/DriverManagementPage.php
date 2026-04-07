@@ -2,6 +2,7 @@
 
 namespace App\Filament\Pages\Officer;
 
+use App\Services\ActionAuditLogger;
 use Filament\Notifications\Notification;
 use Filament\Pages\Page;
 use Illuminate\Contracts\Support\Htmlable;
@@ -88,6 +89,12 @@ class DriverManagementPage extends Page
             ->where('id', $driverId)
             ->update($updates);
 
+        app(ActionAuditLogger::class)->log(
+            'driver.approve',
+            'Officer approved driver #'.$driverId,
+            ['driver_id' => $driverId],
+        );
+
         $this->loadDrivers();
 
         Notification::make()
@@ -110,6 +117,12 @@ class DriverManagementPage extends Page
         DB::table('drivers')
             ->where('id', $driverId)
             ->update($updates);
+
+        app(ActionAuditLogger::class)->log(
+            'driver.suspend',
+            'Officer suspended driver #'.$driverId,
+            ['driver_id' => $driverId, 'reason' => $reason],
+        );
 
         $this->loadDrivers();
 
@@ -135,6 +148,12 @@ class DriverManagementPage extends Page
             DB::table('drivers')
                 ->where('id', $driverId)
                 ->update($updates);
+
+            app(ActionAuditLogger::class)->log(
+                'driver.toggle_online_status',
+                'Officer toggled online status for driver #'.$driverId,
+                ['driver_id' => $driverId, 'is_online' => !$driver->is_online],
+            );
 
             Notification::make()
                 ->title('Driver online status updated')

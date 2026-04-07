@@ -2,6 +2,7 @@
 
 namespace App\Filament\Pages\Officer;
 
+use App\Services\ActionAuditLogger;
 use Filament\Notifications\Notification;
 use Filament\Pages\Page;
 use Illuminate\Contracts\Support\Htmlable;
@@ -88,6 +89,12 @@ class ComplaintsPage extends Page
             ->where('id', $complaintId)
             ->update($updates);
 
+        app(ActionAuditLogger::class)->log(
+            'ticket.resolve',
+            'Officer resolved complaint/ticket #'.$complaintId,
+            ['ticket_id' => $complaintId],
+        );
+
         $this->loadComplaints();
 
         Notification::make()
@@ -110,6 +117,12 @@ class ComplaintsPage extends Page
         DB::table('tickets')
             ->where('id', $complaintId)
             ->update($updates);
+
+        app(ActionAuditLogger::class)->log(
+            'ticket.review',
+            'Officer marked complaint/ticket as reviewed #'.$complaintId,
+            ['ticket_id' => $complaintId],
+        );
 
         $this->loadComplaints();
 

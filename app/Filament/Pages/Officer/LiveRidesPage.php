@@ -2,6 +2,7 @@
 
 namespace App\Filament\Pages\Officer;
 
+use App\Services\ActionAuditLogger;
 use Filament\Notifications\Notification;
 use Filament\Pages\Page;
 use Illuminate\Contracts\Support\Htmlable;
@@ -88,6 +89,12 @@ class LiveRidesPage extends Page
             ->where('id', $rideId)
             ->update($updates);
 
+        app(ActionAuditLogger::class)->log(
+            'ride.force_cancel',
+            'Officer force-cancelled ride #'.$rideId,
+            ['ride_id' => $rideId],
+        );
+
         $this->loadActiveRides();
 
         Notification::make()
@@ -110,6 +117,12 @@ class LiveRidesPage extends Page
         DB::table('rides')
             ->where('id', $rideId)
             ->update($updates);
+
+        app(ActionAuditLogger::class)->log(
+            'ride.reassign',
+            'Officer reassigned ride #'.$rideId,
+            ['ride_id' => $rideId, 'new_driver_id' => $newDriverId],
+        );
 
         $this->loadActiveRides();
 

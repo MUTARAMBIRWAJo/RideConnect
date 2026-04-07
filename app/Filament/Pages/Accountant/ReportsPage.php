@@ -2,6 +2,7 @@
 
 namespace App\Filament\Pages\Accountant;
 
+use App\Services\ActionAuditLogger;
 use Filament\Notifications\Notification;
 use Filament\Pages\Page;
 use Illuminate\Contracts\Support\Htmlable;
@@ -78,6 +79,12 @@ class ReportsPage extends Page
 
         $this->reportType = $type;
 
+        app(ActionAuditLogger::class)->log(
+            'report.generate',
+            'Accountant generated '.$type.' report',
+            ['report_type' => $type],
+        );
+
         Notification::make()
             ->title('Report generated: '.strtoupper($type))
             ->success()
@@ -93,6 +100,12 @@ class ReportsPage extends Page
         $this->reportType = $type;
         $this->exportFormat = 'csv';
 
+        app(ActionAuditLogger::class)->log(
+            'report.export_csv',
+            'Accountant exported '.$type.' report as CSV',
+            ['report_type' => $type, 'format' => 'csv'],
+        );
+
         Notification::make()
             ->title('CSV export requested: '.strtoupper($type))
             ->success()
@@ -107,6 +120,12 @@ class ReportsPage extends Page
 
         $this->reportType = $type;
         $this->exportFormat = 'pdf';
+
+        app(ActionAuditLogger::class)->log(
+            'report.export_pdf',
+            'Accountant exported '.$type.' report as PDF',
+            ['report_type' => $type, 'format' => 'pdf'],
+        );
 
         Notification::make()
             ->title('PDF export requested: '.strtoupper($type))

@@ -2,6 +2,7 @@
 
 namespace App\Filament\Pages\Accountant;
 
+use App\Services\ActionAuditLogger;
 use Filament\Notifications\Notification;
 use Filament\Pages\Page;
 use Illuminate\Contracts\Support\Htmlable;
@@ -110,6 +111,12 @@ class TransactionsPage extends Page
         DB::table('payments')
             ->where('id', $transactionId)
             ->update($updates);
+
+        app(ActionAuditLogger::class)->log(
+            'transaction.review',
+            'Accountant reviewed transaction #'.$transactionId,
+            ['payment_id' => $transactionId],
+        );
 
         $this->loadTransactions();
 

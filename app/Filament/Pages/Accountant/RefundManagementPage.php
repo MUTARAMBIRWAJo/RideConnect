@@ -2,6 +2,7 @@
 
 namespace App\Filament\Pages\Accountant;
 
+use App\Services\ActionAuditLogger;
 use Filament\Notifications\Notification;
 use Filament\Pages\Page;
 use Illuminate\Contracts\Support\Htmlable;
@@ -118,6 +119,12 @@ class RefundManagementPage extends Page
 
         DB::table('refunds')->where('id', $refundId)->update($update);
 
+        app(ActionAuditLogger::class)->log(
+            'refund.approve',
+            'Accountant approved refund #'.$refundId,
+            ['refund_id' => $refundId],
+        );
+
         $this->loadRefundRequests();
 
         Notification::make()
@@ -151,6 +158,12 @@ class RefundManagementPage extends Page
         }
 
         DB::table('refunds')->where('id', $refundId)->update($update);
+
+        app(ActionAuditLogger::class)->log(
+            'refund.reject',
+            'Accountant rejected refund #'.$refundId,
+            ['refund_id' => $refundId, 'reason' => $reason],
+        );
 
         $this->loadRefundRequests();
 
@@ -190,6 +203,12 @@ class RefundManagementPage extends Page
         }
 
         DB::table('payments')->where('ride_id', $this->adjustRideId)->update($update);
+
+        app(ActionAuditLogger::class)->log(
+            'fare.adjust',
+            'Accountant adjusted fare for ride #'.$this->adjustRideId,
+            ['ride_id' => $this->adjustRideId, 'new_fare' => $this->adjustFareAmount, 'reason' => $this->adjustReason],
+        );
 
         $this->adjustRideId = null;
         $this->adjustFareAmount = null;
