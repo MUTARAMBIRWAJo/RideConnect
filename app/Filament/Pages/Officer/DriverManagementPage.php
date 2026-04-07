@@ -2,6 +2,7 @@
 
 namespace App\Filament\Pages\Officer;
 
+use Filament\Notifications\Notification;
 use Filament\Pages\Page;
 use Illuminate\Contracts\Support\Htmlable;
 use Illuminate\Support\Facades\DB;
@@ -78,11 +79,21 @@ class DriverManagementPage extends Page
             abort(403);
         }
 
+        $updates = ['status' => 'approved'];
+        if (Schema::hasColumn('drivers', 'updated_at')) {
+            $updates['updated_at'] = now();
+        }
+
         DB::table('drivers')
             ->where('id', $driverId)
-            ->update(['status' => 'approved', 'updated_at' => now()]);
+            ->update($updates);
 
         $this->loadDrivers();
+
+        Notification::make()
+            ->title('Driver approved successfully')
+            ->success()
+            ->send();
     }
 
     public function suspendDriver(int $driverId, ?string $reason = null): void
@@ -91,11 +102,21 @@ class DriverManagementPage extends Page
             abort(403);
         }
 
+        $updates = ['status' => 'suspended'];
+        if (Schema::hasColumn('drivers', 'updated_at')) {
+            $updates['updated_at'] = now();
+        }
+
         DB::table('drivers')
             ->where('id', $driverId)
-            ->update(['status' => 'suspended', 'updated_at' => now()]);
+            ->update($updates);
 
         $this->loadDrivers();
+
+        Notification::make()
+            ->title('Driver suspended successfully')
+            ->warning()
+            ->send();
     }
 
     public function toggleOnlineStatus(int $driverId): void
@@ -106,9 +127,19 @@ class DriverManagementPage extends Page
 
         $driver = DB::table('drivers')->where('id', $driverId)->first();
         if ($driver) {
+            $updates = ['is_online' => !$driver->is_online];
+            if (Schema::hasColumn('drivers', 'updated_at')) {
+                $updates['updated_at'] = now();
+            }
+
             DB::table('drivers')
                 ->where('id', $driverId)
-                ->update(['is_online' => !$driver->is_online, 'updated_at' => now()]);
+                ->update($updates);
+
+            Notification::make()
+                ->title('Driver online status updated')
+                ->success()
+                ->send();
         }
 
         $this->loadDrivers();

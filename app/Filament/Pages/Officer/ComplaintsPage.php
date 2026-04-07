@@ -2,6 +2,7 @@
 
 namespace App\Filament\Pages\Officer;
 
+use Filament\Notifications\Notification;
 use Filament\Pages\Page;
 use Illuminate\Contracts\Support\Htmlable;
 use Illuminate\Support\Facades\DB;
@@ -78,11 +79,21 @@ class ComplaintsPage extends Page
             abort(403);
         }
 
+        $updates = ['status' => 'resolved'];
+        if (Schema::hasColumn('tickets', 'updated_at')) {
+            $updates['updated_at'] = now();
+        }
+
         DB::table('tickets')
             ->where('id', $complaintId)
-            ->update(['status' => 'resolved', 'updated_at' => now()]);
+            ->update($updates);
 
         $this->loadComplaints();
+
+        Notification::make()
+            ->title('Complaint resolved')
+            ->success()
+            ->send();
     }
 
     public function markReviewed(int $complaintId): void
@@ -91,10 +102,20 @@ class ComplaintsPage extends Page
             abort(403);
         }
 
+        $updates = ['status' => 'reviewed'];
+        if (Schema::hasColumn('tickets', 'updated_at')) {
+            $updates['updated_at'] = now();
+        }
+
         DB::table('tickets')
             ->where('id', $complaintId)
-            ->update(['status' => 'reviewed', 'updated_at' => now()]);
+            ->update($updates);
 
         $this->loadComplaints();
+
+        Notification::make()
+            ->title('Complaint marked as reviewed')
+            ->success()
+            ->send();
     }
 }

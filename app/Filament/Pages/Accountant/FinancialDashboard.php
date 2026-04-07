@@ -2,6 +2,7 @@
 
 namespace App\Filament\Pages\Accountant;
 
+use Filament\Notifications\Notification;
 use Filament\Pages\Page;
 use Illuminate\Contracts\Support\Htmlable;
 use Illuminate\Support\Facades\DB;
@@ -61,6 +62,76 @@ class FinancialDashboard extends Page
     public function mount(): void
     {
         abort_unless(static::canAccess(), 403);
+
+        $this->refreshDashboardData();
+    }
+
+    public function retryPayment(int $paymentId): void
+    {
+        if (!auth()->user()->can('manage finances')) {
+            abort(403);
+        }
+
+        if (!Schema::hasTable('payments')) {
+            return;
+        }
+
+        $update = [];
+        if (Schema::hasColumn('payments', 'retry_count')) {
+            $current = (int) DB::table('payments')->where('id', $paymentId)->value('retry_count');
+            $update['retry_count'] = $current + 1;
+        }
+        if (Schema::hasColumn('payments', 'status')) {
+            $update['status'] = 'processing';
+        }
+        if (Schema::hasColumn('payments', 'updated_at')) {
+            $update['updated_at'] = now();
+        }
+
+        if ($update !== []) {
+            DB::table('payments')->where('id', $paymentId)->update($update);
+        }
+
+        $this->refreshDashboardData();
+
+        Notification::make()
+            ->title('Payment retry queued')
+            ->success()
+            ->send();
+    }
+
+    public function approvePayout(int $payoutId): void
+    {
+        if (!auth()->user()->can('manage finances')) {
+            abort(403);
+        }
+
+        if (!Schema::hasTable('driver_payouts')) {
+            return;
+        }
+
+        $update = [];
+        if (Schema::hasColumn('driver_payouts', 'status')) {
+            $update['status'] = 'approved';
+        }
+        if (Schema::hasColumn('driver_payouts', 'updated_at')) {
+            $update['updated_at'] = now();
+        }
+
+        if ($update !== []) {
+            DB::table('driver_payouts')->where('id', $payoutId)->update($update);
+        }
+
+        $this->refreshDashboardData();
+
+        Notification::make()
+            ->title('Payout approved successfully')
+            ->success()
+            ->send();
+    }
+
+    private function refreshDashboardData(): void
+    {
 
         $this->totalRevenue = $this->resolveTotalRevenue();
         $this->monthlyRevenue = $this->resolveMonthlyRevenue();

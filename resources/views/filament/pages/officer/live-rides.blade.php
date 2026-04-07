@@ -50,8 +50,31 @@
                                 <td class="py-3 pr-3 font-semibold text-slate-900">{{ isset($ride['estimated_fare']) ? '$' . number_format($ride['estimated_fare'], 2) : 'N/A' }}</td>
                                 <td class="py-3">
                                     <div class="flex gap-2">
-                                        <button class="text-xs bg-orange-100 text-orange-700 px-2 py-1 rounded hover:bg-orange-200 transition">Reassign</button>
-                                        <button class="text-xs bg-red-100 text-red-700 px-2 py-1 rounded hover:bg-red-200 transition">Cancel</button>
+                                        <x-filament::modal width="md">
+                                            <x-slot name="trigger">
+                                                <button type="button" class="text-xs bg-orange-100 text-orange-700 px-2 py-1 rounded hover:bg-orange-200 transition">Reassign</button>
+                                            </x-slot>
+
+                                            <div class="space-y-4">
+                                                <p class="text-sm text-slate-700">Reassign this ride and clear its current driver assignment?</p>
+                                                <div class="flex justify-end">
+                                                    <x-filament::button size="sm" color="warning" wire:click="reassignDriver({{ (int) ($ride['id'] ?? 0) }})">Confirm Reassign</x-filament::button>
+                                                </div>
+                                            </div>
+                                        </x-filament::modal>
+
+                                        <x-filament::modal width="md">
+                                            <x-slot name="trigger">
+                                                <button type="button" class="text-xs bg-red-100 text-red-700 px-2 py-1 rounded hover:bg-red-200 transition">Cancel</button>
+                                            </x-slot>
+
+                                            <div class="space-y-4">
+                                                <p class="text-sm text-slate-700">Force cancel this ride? Use only for operational emergencies.</p>
+                                                <div class="flex justify-end">
+                                                    <x-filament::button size="sm" color="danger" wire:click="forceCancel({{ (int) ($ride['id'] ?? 0) }})">Confirm Cancel</x-filament::button>
+                                                </div>
+                                            </div>
+                                        </x-filament::modal>
                                     </div>
                                 </td>
                             </tr>

@@ -2,6 +2,7 @@
 
 namespace App\Filament\Pages\Accountant;
 
+use Filament\Notifications\Notification;
 use Filament\Pages\Page;
 use Illuminate\Contracts\Support\Htmlable;
 use Illuminate\Support\Facades\DB;
@@ -21,6 +22,12 @@ class RefundManagementPage extends Page
     public int $approvedRefunds = 0;
 
     public float $totalRefundAmount = 0.0;
+
+    public ?int $adjustRideId = null;
+
+    public ?float $adjustFareAmount = null;
+
+    public string $adjustReason = 'customer_complaint';
 
     public static function getNavigationLabel(): string
     {
@@ -85,43 +92,114 @@ class RefundManagementPage extends Page
         $this->totalRefundAmount = 46.25;
     }
 
-    public function approveRefund(int $refundId, float $amount): void
+    public function approveRefund(int $refundId): void
     {
         if (!auth()->user()->can('manage finances')) {
             abort(403);
         }
 
-        // Update refund status
-        DB::table('refunds')
-            ->where('id', $refundId)
-            ->update(['status' => 'approved', 'approved_at' => now(), 'approved_by' => auth()->id()]);
+        if (!Schema::hasTable('refunds')) {
+            return;
+        }
+
+        $update = [];
+        if (Schema::hasColumn('refunds', 'status')) {
+            $update['status'] = 'approved';
+        }
+        if (Schema::hasColumn('refunds', 'approved_at')) {
+            $update['approved_at'] = now();
+        }
+        if (Schema::hasColumn('refunds', 'approved_by')) {
+            $update['approved_by'] = auth()->id();
+        }
+        if (Schema::hasColumn('refunds', 'updated_at')) {
+            $update['updated_at'] = now();
+        }
+
+        DB::table('refunds')->where('id', $refundId)->update($update);
 
         $this->loadRefundRequests();
+
+        Notification::make()
+            ->title('Refund approved successfully')
+            ->success()
+            ->send();
     }
 
-    public function rejectRefund(int $refundId, string $reason): void
+    public function rejectRefund(int $refundId, string $reason = 'rejected_by_accountant'): void
     {
         if (!auth()->user()->can('manage finances')) {
             abort(403);
         }
 
-        DB::table('refunds')
-            ->where('id', $refundId)
-            ->update(['status' => 'rejected', 'rejection_reason' => $reason, 'rejected_at' => now()]);
+        if (!Schema::hasTable('refunds')) {
+            return;
+        }
+
+        $update = [];
+        if (Schema::hasColumn('refunds', 'status')) {
+            $update['status'] = 'rejected';
+        }
+        if (Schema::hasColumn('refunds', 'rejection_reason')) {
+            $update['rejection_reason'] = $reason;
+        }
+        if (Schema::hasColumn('refunds', 'rejected_at')) {
+            $update['rejected_at'] = now();
+        }
+        if (Schema::hasColumn('refunds', 'updated_at')) {
+            $update['updated_at'] = now();
+        }
+
+        DB::table('refunds')->where('id', $refundId)->update($update);
 
         $this->loadRefundRequests();
+
+        Notification::make()
+            ->title('Refund rejected')
+            ->warning()
+            ->send();
     }
 
-    public function adjustFare(int $rideId, float $newFare, string $reason): void
+    public function adjustFare(): void
     {
         if (!auth()->user()->can('manage finances')) {
             abort(403);
         }
 
-        DB::table('payments')
-            ->where('ride_id', $rideId)
-            ->update(['actual_fare' => $newFare, 'adjustment_reason' => $reason, 'adjusted_at' => now()]);
+        if (!Schema::hasTable('payments') || $this->adjustRideId === null || $this->adjustFareAmount === null) {
+            Notification::make()
+                ->title('Ride ID and fare amount are required')
+                ->danger()
+                ->send();
+
+            return;
+        }
+
+        $update = [];
+        if (Schema::hasColumn('payments', 'actual_fare')) {
+            $update['actual_fare'] = $this->adjustFareAmount;
+        }
+        if (Schema::hasColumn('payments', 'adjustment_reason')) {
+            $update['adjustment_reason'] = $this->adjustReason;
+        }
+        if (Schema::hasColumn('payments', 'adjusted_at')) {
+            $update['adjusted_at'] = now();
+        }
+        if (Schema::hasColumn('payments', 'updated_at')) {
+            $update['updated_at'] = now();
+        }
+
+        DB::table('payments')->where('ride_id', $this->adjustRideId)->update($update);
+
+        $this->adjustRideId = null;
+        $this->adjustFareAmount = null;
+        $this->adjustReason = 'customer_complaint';
 
         $this->loadRefundRequests();
+
+        Notification::make()
+            ->title('Fare adjustment applied successfully')
+            ->success()
+            ->send();
     }
 }

@@ -48,11 +48,34 @@
                                 <td class="py-3">
                                     @if (in_array($refund['status'] ?? '', ['pending', 'PENDING']))
                                         <div class="flex gap-1">
-                                            <button class="text-xs bg-green-100 text-green-700 px-2 py-1 rounded hover:bg-green-200 transition">Approve</button>
-                                            <button class="text-xs bg-red-100 text-red-700 px-2 py-1 rounded hover:bg-red-200 transition">Reject</button>
+                                            <x-filament::modal width="md">
+                                                <x-slot name="trigger">
+                                                    <button type="button" class="text-xs bg-green-100 text-green-700 px-2 py-1 rounded hover:bg-green-200 transition">Approve</button>
+                                                </x-slot>
+
+                                                <div class="space-y-4">
+                                                    <p class="text-sm text-slate-700">Approve this refund request?</p>
+                                                    <div class="flex justify-end">
+                                                        <x-filament::button size="sm" color="success" wire:click="approveRefund({{ (int) ($refund['id'] ?? 0) }})">Confirm Approve</x-filament::button>
+                                                    </div>
+                                                </div>
+                                            </x-filament::modal>
+
+                                            <x-filament::modal width="md">
+                                                <x-slot name="trigger">
+                                                    <button type="button" class="text-xs bg-red-100 text-red-700 px-2 py-1 rounded hover:bg-red-200 transition">Reject</button>
+                                                </x-slot>
+
+                                                <div class="space-y-4">
+                                                    <p class="text-sm text-slate-700">Reject this refund request?</p>
+                                                    <div class="flex justify-end">
+                                                        <x-filament::button size="sm" color="danger" wire:click="rejectRefund({{ (int) ($refund['id'] ?? 0) }})">Confirm Reject</x-filament::button>
+                                                    </div>
+                                                </div>
+                                            </x-filament::modal>
                                         </div>
                                     @else
-                                        <button class="text-xs bg-blue-100 text-blue-700 px-2 py-1 rounded hover:bg-blue-200 transition">Details</button>
+                                        <a href="{{ \App\Filament\Pages\Accountant\TransactionsPage::getUrl(panel: 'accountant') }}?ride={{ $refund['ride_id'] ?? '' }}" class="text-xs bg-blue-100 text-blue-700 px-2 py-1 rounded hover:bg-blue-200 transition">Details</a>
                                     @endif
                                 </td>
                             </tr>
@@ -69,24 +92,24 @@
         <!-- Fare Adjustment Section -->
         <section class="rounded-xl border border-slate-200 bg-white p-5 shadow-sm">
             <h2 class="text-base font-semibold text-slate-900 mb-4">Manual Fare Adjustment</h2>
-            <form class="space-y-4">
+            <form class="space-y-4" wire:submit.prevent="adjustFare">
                 <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
                     <div>
                         <label class="block text-xs font-semibold text-slate-700 mb-2">Ride ID</label>
-                        <input type="text" placeholder="Enter ride ID" class="w-full px-3 py-2 border border-slate-200 rounded text-sm focus:outline-none focus:border-blue-500" />
+                        <input type="number" wire:model.defer="adjustRideId" placeholder="Enter ride ID" class="w-full px-3 py-2 border border-slate-200 rounded text-sm focus:outline-none focus:border-blue-500" />
                     </div>
                     <div>
                         <label class="block text-xs font-semibold text-slate-700 mb-2">New Fare Amount</label>
-                        <input type="number" placeholder="0.00" step="0.01" class="w-full px-3 py-2 border border-slate-200 rounded text-sm focus:outline-none focus:border-blue-500" />
+                        <input type="number" wire:model.defer="adjustFareAmount" placeholder="0.00" step="0.01" class="w-full px-3 py-2 border border-slate-200 rounded text-sm focus:outline-none focus:border-blue-500" />
                     </div>
                     <div>
                         <label class="block text-xs font-semibold text-slate-700 mb-2">Reason</label>
-                        <select class="w-full px-3 py-2 border border-slate-200 rounded text-sm focus:outline-none focus:border-blue-500">
-                            <option>Customer complaint</option>
-                            <option>System error</option>
-                            <option>Loyalty adjustment</option>
-                            <option>Promotion credit</option>
-                            <option>Other</option>
+                        <select wire:model.defer="adjustReason" class="w-full px-3 py-2 border border-slate-200 rounded text-sm focus:outline-none focus:border-blue-500">
+                            <option value="customer_complaint">Customer complaint</option>
+                            <option value="system_error">System error</option>
+                            <option value="loyalty_adjustment">Loyalty adjustment</option>
+                            <option value="promotion_credit">Promotion credit</option>
+                            <option value="other">Other</option>
                         </select>
                     </div>
                 </div>

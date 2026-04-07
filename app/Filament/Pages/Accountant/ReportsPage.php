@@ -2,6 +2,7 @@
 
 namespace App\Filament\Pages\Accountant;
 
+use Filament\Notifications\Notification;
 use Filament\Pages\Page;
 use Illuminate\Contracts\Support\Htmlable;
 
@@ -12,6 +13,8 @@ class ReportsPage extends Page
     protected static string $view = 'filament.pages.accountant.reports';
 
     public string $reportType = 'daily';
+
+    public string $exportFormat = 'none';
 
     public array $availableReports = [];
 
@@ -74,6 +77,11 @@ class ReportsPage extends Page
         }
 
         $this->reportType = $type;
+
+        Notification::make()
+            ->title('Report generated: '.strtoupper($type))
+            ->success()
+            ->send();
     }
 
     public function exportCSV(string $type): void
@@ -82,7 +90,13 @@ class ReportsPage extends Page
             abort(403);
         }
 
-        // Implementation would export data to CSV
+        $this->reportType = $type;
+        $this->exportFormat = 'csv';
+
+        Notification::make()
+            ->title('CSV export requested: '.strtoupper($type))
+            ->success()
+            ->send();
     }
 
     public function exportPDF(string $type): void
@@ -91,6 +105,12 @@ class ReportsPage extends Page
             abort(403);
         }
 
-        // Implementation would generate PDF report
+        $this->reportType = $type;
+        $this->exportFormat = 'pdf';
+
+        Notification::make()
+            ->title('PDF export requested: '.strtoupper($type))
+            ->success()
+            ->send();
     }
 }

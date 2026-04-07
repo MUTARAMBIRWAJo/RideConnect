@@ -27,10 +27,10 @@
                     <h3 class="text-sm font-semibold text-slate-900">{{ $report['name'] }}</h3>
                     <p class="mt-2 text-xs text-slate-600">{{ $report['description'] }}</p>
                     <div class="mt-4 flex gap-2">
-                        <button class="flex-1 px-3 py-2 bg-purple-100 text-purple-700 text-xs font-medium rounded hover:bg-purple-200 transition">
+                        <button type="button" wire:click="generateReport('{{ $report['action'] }}')" class="flex-1 px-3 py-2 bg-purple-100 text-purple-700 text-xs font-medium rounded hover:bg-purple-200 transition text-center">
                             Generate
                         </button>
-                        <button class="px-3 py-2 bg-slate-100 text-slate-700 text-xs font-medium rounded hover:bg-slate-200 transition" title="Download CSV">
+                        <button type="button" wire:click="exportCSV('{{ $report['action'] }}')" class="px-3 py-2 bg-slate-100 text-slate-700 text-xs font-medium rounded hover:bg-slate-200 transition" title="Download CSV">
                             📥
                         </button>
                     </div>
@@ -52,9 +52,9 @@
                         <span class="text-sm text-slate-500">📅 {{ now()->format('M d, Y') }}</span>
                     </div>
                     <div class="mt-3 flex gap-2">
-                        <button class="px-4 py-2 bg-blue-100 text-blue-700 text-sm rounded hover:bg-blue-200 transition">View Report</button>
-                        <button class="px-4 py-2 bg-slate-100 text-slate-700 text-sm rounded hover:bg-slate-200 transition">Download PDF</button>
-                        <button class="px-4 py-2 bg-slate-100 text-slate-700 text-sm rounded hover:bg-slate-200 transition">Export CSV</button>
+                        <button type="button" wire:click="generateReport('daily')" class="px-4 py-2 bg-blue-100 text-blue-700 text-sm rounded hover:bg-blue-200 transition">View Report</button>
+                        <button type="button" wire:click="exportPDF('daily')" class="px-4 py-2 bg-slate-100 text-slate-700 text-sm rounded hover:bg-slate-200 transition">Download PDF</button>
+                        <button type="button" wire:click="exportCSV('daily')" class="px-4 py-2 bg-slate-100 text-slate-700 text-sm rounded hover:bg-slate-200 transition">Export CSV</button>
                     </div>
                 </div>
 
@@ -68,9 +68,9 @@
                         <span class="text-sm text-slate-500">📆 {{ now()->format('F Y') }}</span>
                     </div>
                     <div class="mt-3 flex gap-2">
-                        <button class="px-4 py-2 bg-blue-100 text-blue-700 text-sm rounded hover:bg-blue-200 transition">View Report</button>
-                        <button class="px-4 py-2 bg-slate-100 text-slate-700 text-sm rounded hover:bg-slate-200 transition">Download PDF</button>
-                        <button class="px-4 py-2 bg-slate-100 text-slate-700 text-sm rounded hover:bg-slate-200 transition">Export CSV</button>
+                        <button type="button" wire:click="generateReport('monthly')" class="px-4 py-2 bg-blue-100 text-blue-700 text-sm rounded hover:bg-blue-200 transition">View Report</button>
+                        <button type="button" wire:click="exportPDF('monthly')" class="px-4 py-2 bg-slate-100 text-slate-700 text-sm rounded hover:bg-slate-200 transition">Download PDF</button>
+                        <button type="button" wire:click="exportCSV('monthly')" class="px-4 py-2 bg-slate-100 text-slate-700 text-sm rounded hover:bg-slate-200 transition">Export CSV</button>
                     </div>
                 </div>
 
@@ -84,9 +84,9 @@
                         <span class="text-sm text-slate-500">👥 All Drivers</span>
                     </div>
                     <div class="mt-3 flex gap-2">
-                        <button class="px-4 py-2 bg-blue-100 text-blue-700 text-sm rounded hover:bg-blue-200 transition">View Report</button>
-                        <button class="px-4 py-2 bg-slate-100 text-slate-700 text-sm rounded hover:bg-slate-200 transition">Download PDF</button>
-                        <button class="px-4 py-2 bg-slate-100 text-slate-700 text-sm rounded hover:bg-slate-200 transition">Export CSV</button>
+                        <button type="button" wire:click="generateReport('settlement')" class="px-4 py-2 bg-blue-100 text-blue-700 text-sm rounded hover:bg-blue-200 transition">View Report</button>
+                        <button type="button" wire:click="exportPDF('settlement')" class="px-4 py-2 bg-slate-100 text-slate-700 text-sm rounded hover:bg-slate-200 transition">Download PDF</button>
+                        <button type="button" wire:click="exportCSV('settlement')" class="px-4 py-2 bg-slate-100 text-slate-700 text-sm rounded hover:bg-slate-200 transition">Export CSV</button>
                     </div>
                 </div>
 
@@ -100,12 +100,23 @@
                         <span class="text-sm text-slate-500">💳 Tax Year</span>
                     </div>
                     <div class="mt-3 flex gap-2">
-                        <button class="px-4 py-2 bg-blue-100 text-blue-700 text-sm rounded hover:bg-blue-200 transition">View Report</button>
-                        <button class="px-4 py-2 bg-slate-100 text-slate-700 text-sm rounded hover:bg-slate-200 transition">Download PDF</button>
-                        <button class="px-4 py-2 bg-slate-100 text-slate-700 text-sm rounded hover:bg-slate-200 transition">Export CSV</button>
+                        <button type="button" wire:click="generateReport('tax')" class="px-4 py-2 bg-blue-100 text-blue-700 text-sm rounded hover:bg-blue-200 transition">View Report</button>
+                        <button type="button" wire:click="exportPDF('tax')" class="px-4 py-2 bg-slate-100 text-slate-700 text-sm rounded hover:bg-slate-200 transition">Download PDF</button>
+                        <button type="button" wire:click="exportCSV('tax')" class="px-4 py-2 bg-slate-100 text-slate-700 text-sm rounded hover:bg-slate-200 transition">Export CSV</button>
                     </div>
                 </div>
             </div>
+        </section>
+
+        <section class="rounded-xl border border-slate-200 bg-white p-4 shadow-sm">
+            <p class="text-xs text-slate-600">
+                Current report context:
+                <span class="font-semibold text-slate-800">{{ strtoupper($reportType) }}</span>
+                @if ($exportFormat !== 'none')
+                    | Last export:
+                    <span class="font-semibold text-slate-800">{{ strtoupper($exportFormat) }}</span>
+                @endif
+            </p>
         </section>
 
         <!-- Export Information -->

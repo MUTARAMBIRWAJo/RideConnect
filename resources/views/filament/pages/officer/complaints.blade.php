@@ -55,8 +55,31 @@
                                 <td class="py-3 pr-3 text-slate-600 text-xs">{{ \Carbon\Carbon::parse($complaint['created_at'])->format('M d, H:i') ?? '-' }}</td>
                                 <td class="py-3">
                                     <div class="flex gap-2">
-                                        <button class="text-xs bg-blue-100 text-blue-700 px-2 py-1 rounded hover:bg-blue-200 transition">Review</button>
-                                        <button class="text-xs bg-green-100 text-green-700 px-2 py-1 rounded hover:bg-green-200 transition">Resolve</button>
+                                        <x-filament::modal width="md">
+                                            <x-slot name="trigger">
+                                                <button type="button" class="text-xs bg-blue-100 text-blue-700 px-2 py-1 rounded hover:bg-blue-200 transition">Review</button>
+                                            </x-slot>
+
+                                            <div class="space-y-4">
+                                                <p class="text-sm text-slate-700">Mark this complaint as reviewed?</p>
+                                                <div class="flex justify-end">
+                                                    <x-filament::button size="sm" color="info" wire:click="markReviewed({{ (int) ($complaint['id'] ?? 0) }})">Confirm Review</x-filament::button>
+                                                </div>
+                                            </div>
+                                        </x-filament::modal>
+
+                                        <x-filament::modal width="md">
+                                            <x-slot name="trigger">
+                                                <button type="button" class="text-xs bg-green-100 text-green-700 px-2 py-1 rounded hover:bg-green-200 transition">Resolve</button>
+                                            </x-slot>
+
+                                            <div class="space-y-4">
+                                                <p class="text-sm text-slate-700">Resolve this complaint now?</p>
+                                                <div class="flex justify-end">
+                                                    <x-filament::button size="sm" color="success" wire:click="resolveComplaint({{ (int) ($complaint['id'] ?? 0) }})">Confirm Resolve</x-filament::button>
+                                                </div>
+                                            </div>
+                                        </x-filament::modal>
                                     </div>
                                 </td>
                             </tr>

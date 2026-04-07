@@ -2,6 +2,7 @@
 
 namespace App\Filament\Pages\Officer;
 
+use Filament\Notifications\Notification;
 use Filament\Pages\Page;
 use Illuminate\Contracts\Support\Htmlable;
 use Illuminate\Support\Facades\DB;
@@ -78,23 +79,43 @@ class LiveRidesPage extends Page
             abort(403);
         }
 
+        $updates = ['status' => 'CANCELLED'];
+        if (Schema::hasColumn('rides', 'updated_at')) {
+            $updates['updated_at'] = now();
+        }
+
         DB::table('rides')
             ->where('id', $rideId)
-            ->update(['status' => 'CANCELLED', 'updated_at' => now()]);
+            ->update($updates);
 
         $this->loadActiveRides();
+
+        Notification::make()
+            ->title('Ride cancelled successfully')
+            ->success()
+            ->send();
     }
 
-    public function reassignDriver(int $rideId, ?int $newDriverId): void
+    public function reassignDriver(int $rideId, ?int $newDriverId = null): void
     {
         if (!auth()->user()->can('manage rides')) {
             abort(403);
         }
 
+        $updates = ['driver_id' => $newDriverId];
+        if (Schema::hasColumn('rides', 'updated_at')) {
+            $updates['updated_at'] = now();
+        }
+
         DB::table('rides')
             ->where('id', $rideId)
-            ->update(['driver_id' => $newDriverId, 'updated_at' => now()]);
+            ->update($updates);
 
         $this->loadActiveRides();
+
+        Notification::make()
+            ->title('Ride reassigned successfully')
+            ->success()
+            ->send();
     }
 }

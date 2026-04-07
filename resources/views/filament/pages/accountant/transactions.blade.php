@@ -25,8 +25,8 @@
                     Total mismatch amount: <strong>${{ number_format($totalMismatchAmount, 2) }}</strong>
                 </p>
                 <div class="mt-3 flex gap-2">
-                    <button class="px-4 py-2 bg-red-600 text-white text-sm rounded hover:bg-red-700 transition">Investigate All</button>
-                    <button class="px-4 py-2 bg-red-100 text-red-700 text-sm rounded hover:bg-red-200 transition">Export Report</button>
+                    <a href="{{ \App\Filament\Pages\Accountant\AuditLogsPage::getUrl(panel: 'accountant') }}?scope=mismatch" class="px-4 py-2 bg-red-600 text-white text-sm rounded hover:bg-red-700 transition">Investigate All</a>
+                    <a href="{{ \App\Filament\Pages\Accountant\ReportsPage::getUrl(panel: 'accountant') }}?report=mismatch&format=csv" class="px-4 py-2 bg-red-100 text-red-700 text-sm rounded hover:bg-red-200 transition">Export Report</a>
                 </div>
             </section>
         @endif
@@ -71,7 +71,18 @@
                                     </span>
                                 </td>
                                 <td class="py-3">
-                                    <button class="text-xs bg-blue-100 text-blue-700 px-2 py-1 rounded hover:bg-blue-200 transition">Review</button>
+                                    <x-filament::modal width="md">
+                                        <x-slot name="trigger">
+                                            <button type="button" class="text-xs bg-blue-100 text-blue-700 px-2 py-1 rounded hover:bg-blue-200 transition">Review</button>
+                                        </x-slot>
+
+                                        <div class="space-y-4">
+                                            <p class="text-sm text-slate-700">Mark this transaction as reviewed?</p>
+                                            <div class="flex justify-end">
+                                                <x-filament::button size="sm" color="info" wire:click="reviewTransaction({{ (int) ($transaction['id'] ?? 0) }})">Confirm Review</x-filament::button>
+                                            </div>
+                                        </div>
+                                    </x-filament::modal>
                                 </td>
                             </tr>
                         @empty

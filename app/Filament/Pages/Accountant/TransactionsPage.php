@@ -2,6 +2,7 @@
 
 namespace App\Filament\Pages\Accountant;
 
+use Filament\Notifications\Notification;
 use Filament\Pages\Page;
 use Illuminate\Contracts\Support\Htmlable;
 use Illuminate\Support\Facades\DB;
@@ -92,10 +93,29 @@ class TransactionsPage extends Page
             abort(403);
         }
 
+        $updates = [];
+        if (Schema::hasColumn('payments', 'reviewed')) {
+            $updates['reviewed'] = true;
+        }
+        if (Schema::hasColumn('payments', 'reviewed_at')) {
+            $updates['reviewed_at'] = now();
+        }
+        if ($updates === [] && Schema::hasColumn('payments', 'status')) {
+            $updates['status'] = 'reviewed';
+        }
+        if (Schema::hasColumn('payments', 'updated_at')) {
+            $updates['updated_at'] = now();
+        }
+
         DB::table('payments')
             ->where('id', $transactionId)
-            ->update(['reviewed' => true, 'reviewed_at' => now()]);
+            ->update($updates);
 
         $this->loadTransactions();
+
+        Notification::make()
+            ->title('Transaction reviewed successfully')
+            ->success()
+            ->send();
     }
 }

@@ -52,9 +52,31 @@
                                 <td class="py-3">
                                     <div class="flex gap-2">
                                         @if (!in_array($driver['status'] ?? '', ['approved', 'APPROVED']))
-                                            <button class="text-xs bg-green-100 text-green-700 px-2 py-1 rounded hover:bg-green-200 transition">Approve</button>
+                                            <x-filament::modal width="md">
+                                                <x-slot name="trigger">
+                                                    <button type="button" class="text-xs bg-green-100 text-green-700 px-2 py-1 rounded hover:bg-green-200 transition">Approve</button>
+                                                </x-slot>
+
+                                                <div class="space-y-4">
+                                                    <p class="text-sm text-slate-700">Approve this driver account for dispatch eligibility?</p>
+                                                    <div class="flex justify-end">
+                                                        <x-filament::button size="sm" color="success" wire:click="approveDriver({{ (int) ($driver['id'] ?? 0) }})">Confirm Approve</x-filament::button>
+                                                    </div>
+                                                </div>
+                                            </x-filament::modal>
                                         @endif
-                                        <button class="text-xs bg-red-100 text-red-700 px-2 py-1 rounded hover:bg-red-200 transition">Suspend</button>
+                                        <x-filament::modal width="md">
+                                            <x-slot name="trigger">
+                                                <button type="button" class="text-xs bg-red-100 text-red-700 px-2 py-1 rounded hover:bg-red-200 transition">Suspend</button>
+                                            </x-slot>
+
+                                            <div class="space-y-4">
+                                                <p class="text-sm text-slate-700">Suspend this driver account?</p>
+                                                <div class="flex justify-end">
+                                                    <x-filament::button size="sm" color="danger" wire:click="suspendDriver({{ (int) ($driver['id'] ?? 0) }})">Confirm Suspend</x-filament::button>
+                                                </div>
+                                            </div>
+                                        </x-filament::modal>
                                     </div>
                                 </td>
                             </tr>

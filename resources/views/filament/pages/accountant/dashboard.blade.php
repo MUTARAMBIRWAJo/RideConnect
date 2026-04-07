@@ -27,19 +27,19 @@
         <section class="rounded-xl border border-slate-200 bg-white p-5 shadow-sm">
             <h2 class="text-base font-semibold text-slate-900">Financial Tools</h2>
             <div class="mt-3 grid gap-3 sm:grid-cols-2 xl:grid-cols-5">
-                <a href="#transactions" class="rounded-xl border border-blue-200 bg-blue-50 p-3 text-center text-sm font-medium text-blue-700 hover:bg-blue-100 transition">
+                <a href="{{ \App\Filament\Pages\Accountant\TransactionsPage::getUrl(panel: 'accountant') }}" class="rounded-xl border border-blue-200 bg-blue-50 p-3 text-center text-sm font-medium text-blue-700 hover:bg-blue-100 transition">
                     💰 Transactions
                 </a>
-                <a href="#earnings" class="rounded-xl border border-green-200 bg-green-50 p-3 text-center text-sm font-medium text-green-700 hover:bg-green-100 transition">
+                <a href="{{ \App\Filament\Pages\Accountant\DriverEarningsPage::getUrl(panel: 'accountant') }}" class="rounded-xl border border-green-200 bg-green-50 p-3 text-center text-sm font-medium text-green-700 hover:bg-green-100 transition">
                     📊 Earnings
                 </a>
-                <a href="#reports" class="rounded-xl border border-purple-200 bg-purple-50 p-3 text-center text-sm font-medium text-purple-700 hover:bg-purple-100 transition">
+                <a href="{{ \App\Filament\Pages\Accountant\ReportsPage::getUrl(panel: 'accountant') }}" class="rounded-xl border border-purple-200 bg-purple-50 p-3 text-center text-sm font-medium text-purple-700 hover:bg-purple-100 transition">
                     📋 Reports
                 </a>
-                <a href="#refunds" class="rounded-xl border border-orange-200 bg-orange-50 p-3 text-center text-sm font-medium text-orange-700 hover:bg-orange-100 transition">
+                <a href="{{ \App\Filament\Pages\Accountant\RefundManagementPage::getUrl(panel: 'accountant') }}" class="rounded-xl border border-orange-200 bg-orange-50 p-3 text-center text-sm font-medium text-orange-700 hover:bg-orange-100 transition">
                     ↩️ Refunds
                 </a>
-                <a href="#audit" class="rounded-xl border border-red-200 bg-red-50 p-3 text-center text-sm font-medium text-red-700 hover:bg-red-100 transition">
+                <a href="{{ \App\Filament\Pages\Accountant\AuditLogsPage::getUrl(panel: 'accountant') }}" class="rounded-xl border border-red-200 bg-red-50 p-3 text-center text-sm font-medium text-red-700 hover:bg-red-100 transition">
                     🔍 Audit
                 </a>
             </div>
@@ -101,7 +101,18 @@
                                     <td class="py-2 pr-3 font-semibold text-red-900">${{ number_format($payment['amount'] ?? 0, 2) }}</td>
                                     <td class="py-2 pr-3 text-red-700">{{ $payment['retry_count'] ?? 0 }}/3</td>
                                     <td class="py-2">
-                                        <button class="text-xs bg-red-600 text-white px-2 py-1 rounded hover:bg-red-700 transition">Retry</button>
+                                        <x-filament::modal width="md">
+                                            <x-slot name="trigger">
+                                                <button type="button" class="text-xs bg-red-600 text-white px-2 py-1 rounded hover:bg-red-700 transition">Retry</button>
+                                            </x-slot>
+
+                                            <div class="space-y-4">
+                                                <p class="text-sm text-slate-700">Retry this failed payment now?</p>
+                                                <div class="flex justify-end">
+                                                    <x-filament::button size="sm" color="danger" wire:click="retryPayment({{ (int) ($payment['id'] ?? 0) }})">Confirm Retry</x-filament::button>
+                                                </div>
+                                            </div>
+                                        </x-filament::modal>
                                     </td>
                                 </tr>
                             @empty
@@ -142,7 +153,18 @@
                                     </span>
                                 </td>
                                 <td class="py-2">
-                                    <button class="text-xs bg-green-100 text-green-700 px-2 py-1 rounded hover:bg-green-200 transition">Approve</button>
+                                    <x-filament::modal width="md">
+                                        <x-slot name="trigger">
+                                            <button type="button" class="text-xs bg-green-100 text-green-700 px-2 py-1 rounded hover:bg-green-200 transition">Approve</button>
+                                        </x-slot>
+
+                                        <div class="space-y-4">
+                                            <p class="text-sm text-slate-700">Approve this pending payout?</p>
+                                            <div class="flex justify-end">
+                                                <x-filament::button size="sm" color="success" wire:click="approvePayout({{ (int) ($payout['id'] ?? 0) }})">Confirm Approve</x-filament::button>
+                                            </div>
+                                        </div>
+                                    </x-filament::modal>
                                 </td>
                             </tr>
                         @empty

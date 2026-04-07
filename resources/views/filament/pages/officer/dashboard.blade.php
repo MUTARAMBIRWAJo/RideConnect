@@ -28,19 +28,19 @@
         <section class="rounded-xl border border-slate-200 bg-white p-5 shadow-sm">
             <h2 class="text-base font-semibold text-slate-900">Quick Actions</h2>
             <div class="mt-3 grid gap-3 sm:grid-cols-2 xl:grid-cols-5">
-                <a href="#live-rides" class="rounded-xl border border-blue-200 bg-blue-50 p-3 text-center text-sm font-medium text-blue-700 hover:bg-blue-100 transition">
+                <a href="{{ \App\Filament\Pages\Officer\LiveRidesPage::getUrl(panel: 'officer') }}" class="rounded-xl border border-blue-200 bg-blue-50 p-3 text-center text-sm font-medium text-blue-700 hover:bg-blue-100 transition">
                     📍 Live Rides
                 </a>
-                <a href="#drivers" class="rounded-xl border border-purple-200 bg-purple-50 p-3 text-center text-sm font-medium text-purple-700 hover:bg-purple-100 transition">
+                <a href="{{ \App\Filament\Pages\Officer\DriverManagementPage::getUrl(panel: 'officer') }}" class="rounded-xl border border-purple-200 bg-purple-50 p-3 text-center text-sm font-medium text-purple-700 hover:bg-purple-100 transition">
                     🚗 Drivers
                 </a>
-                <a href="#complaints" class="rounded-xl border border-red-200 bg-red-50 p-3 text-center text-sm font-medium text-red-700 hover:bg-red-100 transition">
+                <a href="{{ \App\Filament\Pages\Officer\ComplaintsPage::getUrl(panel: 'officer') }}" class="rounded-xl border border-red-200 bg-red-50 p-3 text-center text-sm font-medium text-red-700 hover:bg-red-100 transition">
                     🔔 Complaints
                 </a>
-                <a href="#insights" class="rounded-xl border border-indigo-200 bg-indigo-50 p-3 text-center text-sm font-medium text-indigo-700 hover:bg-indigo-100 transition">
+                <a href="{{ \App\Filament\Pages\Officer\AIInsightsPage::getUrl(panel: 'officer') }}" class="rounded-xl border border-indigo-200 bg-indigo-50 p-3 text-center text-sm font-medium text-indigo-700 hover:bg-indigo-100 transition">
                     💡 Insights
                 </a>
-                <a href="#escalations" class="rounded-xl border border-orange-200 bg-orange-50 p-3 text-center text-sm font-medium text-orange-700 hover:bg-orange-100 transition">
+                <a href="{{ \App\Filament\Pages\Officer\ComplaintsPage::getUrl(panel: 'officer') }}?filter=urgent" class="rounded-xl border border-orange-200 bg-orange-50 p-3 text-center text-sm font-medium text-orange-700 hover:bg-orange-100 transition">
                     ⚡ Escalations
                 </a>
             </div>

@@ -44,7 +44,7 @@
                                     </span>
                                 </td>
                                 <td class="py-3">
-                                    <button class="text-xs bg-blue-100 text-blue-700 px-2 py-1 rounded hover:bg-blue-200 transition">View</button>
+                                    <a href="{{ \App\Filament\Pages\Accountant\ReportsPage::getUrl(panel: 'accountant') }}?report=settlement&driver={{ $earning['driver_id'] ?? '' }}" class="text-xs bg-blue-100 text-blue-700 px-2 py-1 rounded hover:bg-blue-200 transition">View</a>
                                 </td>
                             </tr>
                         @empty
