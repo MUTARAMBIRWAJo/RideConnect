@@ -3,7 +3,6 @@
 namespace App\Filament\Pages;
 
 use App\Enums\UserRole;
-use App\Filament\Support\RoleDashboardConfig;
 use Filament\Pages\Page;
 use Illuminate\Contracts\Support\Htmlable;
 
@@ -13,7 +12,7 @@ class AccountantDashboard extends Page
 
     protected static string $routePath = '/accountant-dashboard';
 
-    protected static string $view = 'filament.pages.accountant-dashboard';
+    protected static string $view = 'filament.pages.accountant-dashboard-static';
 
     public static function getNavigationLabel(): string
     {
@@ -51,13 +50,4 @@ class AccountantDashboard extends Page
         return 'Accountant Dashboard';
     }
 
-    public function getWidgets(): array
-    {
-        return RoleDashboardConfig::visibleWidgetsForRole(UserRole::ACCOUNTANT->value);
-    }
-
-    public function getColumns(): int | string | array
-    {
-        return RoleDashboardConfig::columnsForRole(UserRole::ACCOUNTANT->value);
-    }
 }
