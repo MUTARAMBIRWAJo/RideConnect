@@ -3,6 +3,7 @@
 namespace App\Filament\Pages;
 
 use App\Enums\UserRole;
+use App\Filament\Support\RoleDashboardConfig;
 use Filament\Pages\Page;
 use Illuminate\Contracts\Support\Htmlable;
 
@@ -52,11 +53,11 @@ class OfficerDashboardV2 extends Page
 
     public function getWidgets(): array
     {
-        return [];
+        return RoleDashboardConfig::visibleWidgetsForRole(UserRole::OFFICER->value);
     }
 
     public function getColumns(): int | string | array
     {
-        return ['default' => 1, 'md' => 2, 'xl' => 3];
+        return RoleDashboardConfig::columnsForRole(UserRole::OFFICER->value);
     }
 }

@@ -1,6 +1,5 @@
 <x-filament-panels::page>
     <div class="space-y-6">
-        <!-- Hero Section -->
         <x-filament::section class="overflow-hidden border-0 bg-gradient-to-r from-amber-600 to-orange-600 text-white shadow-lg">
             <div class="flex flex-col gap-4 md:flex-row md:items-end md:justify-between">
                 <div>
@@ -17,7 +16,6 @@
             </div>
         </x-filament::section>
 
-        <!-- Quick Actions -->
         <x-filament::section>
             <x-slot name="heading">Quick Actions</x-slot>
             <x-slot name="description">Fast access to key operations for your role.</x-slot>
@@ -50,38 +48,10 @@
             </div>
         </x-filament::section>
 
-        <!-- Content -->
-        <div class="space-y-4">
-            <p class="text-sm text-gray-600 dark:text-gray-400">
-                Welcome to the Officer Dashboard. Use the quick actions above to navigate to key operational areas.
-            </p>
-        </div>
-    </div>
-</x-filament-panels::page>
-        <!-- Dashboard Widgets & Metrics -->
-        <div class="space-y-6">
-            <h2 class="text-lg font-semibold text-gray-900 dark:text-white">Dashboard Metrics</h2>
-            
-            <!-- Widget Grid -->
-            <div class="grid auto-rows-max gap-4 sm:grid-cols-1 md:grid-cols-2 lg:grid-cols-3">
-                <!-- Widgets will be rendered here by Filament's widget system -->
-                @if (method_exists($this, 'getWidgets') && method_exists(app(\App\Filament\Support\RoleDashboardConfig::class), 'visibleWidgetsForRole'))
-                    @php
-                        $widgets = \App\Filament\Support\RoleDashboardConfig::visibleWidgetsForRole('OFFICER');
-                    @endphp
-                    @foreach ($widgets as $widgetClass)
-                        @php
-                            $widget = app($widgetClass);
-                            if (method_exists($widget, 'canView') && !$widget->canView()) {
-                                continue;
-                            }
-                        @endphp
-                        <div class="fi-widget">
-                            @include('filament.components.widget', ['widget' => $widget])
-                        </div>
-                    @endforeach
-                @endif
-            </div>
-        </div>
+        <x-filament-widgets::widgets
+            :columns="$this->getColumns()"
+            :widgets="$this->getWidgets()"
+            :data="$this->getWidgetData()"
+        />
     </div>
 </x-filament-panels::page>

@@ -1,6 +1,5 @@
 <x-filament-panels::page>
     <div class="space-y-6">
-        <!-- Hero Section -->
         <x-filament::section class="overflow-hidden border-0 bg-gradient-to-r from-emerald-600 to-teal-600 text-white shadow-lg">
             <div class="flex flex-col gap-4 md:flex-row md:items-end md:justify-between">
                 <div>
@@ -17,12 +16,11 @@
             </div>
         </x-filament::section>
 
-        <!-- Quick Actions -->
         <x-filament::section>
             <x-slot name="heading">Financial Operations</x-slot>
-            <x-slot name="description">Key financial management tools and resources.</x-slot>
+            <x-slot name="description">Key financial management tools, exports, and payout controls.</x-slot>
 
-            <div class="grid gap-3 sm:grid-cols-2 xl:grid-cols-3">
+            <div class="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
                 @if (auth()->user()->can('view finances'))
                     <a href="{{ route('filament.admin.resources.payments.index') }}" class="rounded-xl border border-emerald-200 bg-emerald-50 p-4 text-sm text-emerald-700 shadow-sm transition hover:bg-emerald-100 dark:border-emerald-800 dark:bg-emerald-900 dark:text-emerald-200 dark:hover:bg-emerald-800">
                         <p class="font-semibold">Payments</p>
@@ -43,14 +41,20 @@
                         <p class="mt-1 text-teal-600 dark:text-teal-300">Monitor revenue trends and summaries.</p>
                     </a>
                 @endif
+
+                @if (\Illuminate\Support\Facades\Route::has('filament.admin.resources.driver-payouts.index') && auth()->user()->can('view finances'))
+                    <a href="{{ route('filament.admin.resources.driver-payouts.index') }}" class="rounded-xl border border-amber-200 bg-amber-50 p-4 text-sm text-amber-700 shadow-sm transition hover:bg-amber-100 dark:border-amber-800 dark:bg-amber-900 dark:text-amber-200 dark:hover:bg-amber-800">
+                        <p class="font-semibold">Driver Payouts</p>
+                        <p class="mt-1 text-amber-600 dark:text-amber-300">Track pending and processed payout pipeline.</p>
+                    </a>
+                @endif
             </div>
         </x-filament::section>
 
-        <!-- Content -->
-        <div class="space-y-4">
-            <p class="text-sm text-gray-600 dark:text-gray-400">
-                Welcome to the Accountant Dashboard. Use the quick actions above to access key financial management areas.
-            </p>
-        </div>
+        <x-filament-widgets::widgets
+            :columns="$this->getColumns()"
+            :widgets="$this->getWidgets()"
+            :data="$this->getWidgetData()"
+        />
     </div>
 </x-filament-panels::page>

@@ -1,6 +1,8 @@
 <?php
 
 use App\Filament\Widgets\Dashboard\AccountantRevenueSummary;
+use App\Filament\Widgets\Dashboard\AccountantPaymentHealthWidget;
+use App\Filament\Widgets\Dashboard\AccountantPayoutPipelineWidget;
 use App\Filament\Widgets\Dashboard\ActivityFeedWidget;
 use App\Filament\Widgets\Dashboard\AdminOverviewStats;
 use App\Filament\Widgets\Dashboard\CommissionOverviewWidget;
@@ -19,6 +21,7 @@ use App\Filament\Widgets\Dashboard\OfficerTicketTrendWidget;
 use App\Filament\Widgets\Dashboard\SuperAdminOverviewStats;
 use App\Filament\Widgets\Dashboard\SystemLogsWidget;
 use App\Filament\Widgets\Dashboard\TransactionsTableWidget;
+use App\Filament\Widgets\Dashboard\FinancialMatrixWidget;
 use App\Filament\Widgets\DemandHeatmapWidget;
 use App\Filament\Widgets\DriverAvailabilityChart;
 use App\Filament\Widgets\LatestRidesTable;
@@ -40,9 +43,7 @@ return [
         'md' => 2,
         'xl' => 3,
     ],
-                OfficerActiveRidesWidget::class,
-                OfficerComplianceMetricsWidget::class,
-                OfficerTicketTrendWidget::class,
+
     'realtime' => [
         'enabled' => env('DASHBOARD_REALTIME_ENABLED', true),
         'polling_interval' => env('DASHBOARD_POLLING_INTERVAL', '30s'),
@@ -54,9 +55,7 @@ return [
         'polling' => [
             'default' => env('DASHBOARD_POLLING_DEFAULT', '90s'),
             'sections' => [
-                OfficerActiveRidesWidget::class => ['view rides', 'manage rides'],
-                OfficerComplianceMetricsWidget::class => ['view rides', 'manage rides'],
-                OfficerTicketTrendWidget::class => ['manage tickets'],
+                'operational' => env('DASHBOARD_POLLING_OPERATIONAL', '60s'),
                 'intelligence' => env('DASHBOARD_POLLING_INTELLIGENCE', '180s'),
             ],
             'widgets' => [
@@ -199,8 +198,11 @@ return [
         'ACCOUNTANT' => [
             'columns' => ['default' => 1, 'md' => 2, 'xl' => 3],
             'widgets' => [
+                AccountantPaymentHealthWidget::class,
+                AccountantPayoutPipelineWidget::class,
                 EscrowBalanceWidget::class,
                 AccountantRevenueSummary::class,
+                FinancialMatrixWidget::class,
                 RideMapWidget::class,
                 DemandHeatmapWidget::class,
                 CommissionOverviewWidget::class,
@@ -212,8 +214,11 @@ return [
                 NotificationsWidget::class,
             ],
             'widget_permissions' => [
+                AccountantPaymentHealthWidget::class => ['view finances'],
+                AccountantPayoutPipelineWidget::class => ['view finances'],
                 EscrowBalanceWidget::class => ['view finances'],
                 AccountantRevenueSummary::class => ['view finances'],
+                FinancialMatrixWidget::class => ['view finances'],
                 RideMapWidget::class => ['view rides'],
                 DemandHeatmapWidget::class => ['view demand forecasts'],
                 CommissionOverviewWidget::class => ['view finances'],
@@ -230,7 +235,10 @@ return [
             'columns' => ['default' => 1, 'md' => 2, 'xl' => 3],
             'widgets' => [
                 OfficerOverviewStats::class,
+                OfficerActiveRidesWidget::class,
                 OfficerMatchingQueueTableWidget::class,
+                OfficerComplianceMetricsWidget::class,
+                OfficerTicketTrendWidget::class,
                 RideMapWidget::class,
                 DriverAvailabilityChart::class,
                 DemandHeatmapWidget::class,
@@ -241,7 +249,10 @@ return [
             ],
             'widget_permissions' => [
                 OfficerOverviewStats::class => ['view users'],
+                OfficerActiveRidesWidget::class => ['view rides', 'manage rides'],
                 OfficerMatchingQueueTableWidget::class => ['view rides', 'manage rides'],
+                OfficerComplianceMetricsWidget::class => ['view rides', 'manage rides'],
+                OfficerTicketTrendWidget::class => ['manage tickets'],
                 RideMapWidget::class => ['view rides'],
                 DriverAvailabilityChart::class => ['view rides'],
                 DemandHeatmapWidget::class => ['view demand forecasts'],
