@@ -3,18 +3,16 @@
 namespace App\Filament\Pages;
 
 use App\Enums\UserRole;
+use Filament\Pages\Page;
 use Illuminate\Contracts\Support\Htmlable;
 
-class AccountantDashboard extends BaseDashboard
+class AccountantDashboard extends Page
 {
     protected static ?string $navigationGroup = 'Dashboards';
 
     protected static string $routePath = '/accountant-dashboard';
 
-    protected static function dashboardRole(): UserRole
-    {
-        return UserRole::ACCOUNTANT;
-    }
+    protected static string $view = 'filament.pages.accountant-dashboard';
 
     public static function getNavigationLabel(): string
     {
@@ -24,5 +22,31 @@ class AccountantDashboard extends BaseDashboard
     public static function getNavigationIcon(): string | Htmlable | null
     {
         return 'heroicon-o-banknotes';
+    }
+
+    public static function canAccess(): bool
+    {
+        $user = auth()->user();
+
+        if (!$user) {
+            return false;
+        }
+
+        $role = $user->role;
+        if ($role instanceof UserRole) {
+            return $role === UserRole::ACCOUNTANT;
+        }
+
+        return (string) $role === UserRole::ACCOUNTANT->value;
+    }
+
+    public static function shouldRegisterNavigation(): bool
+    {
+        return static::canAccess();
+    }
+
+    public function getTitle(): string
+    {
+        return 'Accountant Dashboard';
     }
 }
