@@ -11,8 +11,6 @@ class AccountantDashboard extends BaseDashboard
 
     protected static string $routePath = '/accountant-dashboard';
 
-    protected static string $view = 'filament.pages.accountant-dashboard';
-
     protected static function dashboardRole(): UserRole
     {
         return UserRole::ACCOUNTANT;
