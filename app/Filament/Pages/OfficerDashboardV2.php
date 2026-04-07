@@ -13,7 +13,7 @@ class OfficerDashboardV2 extends Page
 
     protected static string $routePath = '/officer-dashboard-v2';
 
-    protected static string $view = 'filament.pages.officer-dashboard-v2';
+    protected static string $view = 'filament.pages.officer-dashboard-v2-safe';
 
     public static function getNavigationLabel(): string
     {
