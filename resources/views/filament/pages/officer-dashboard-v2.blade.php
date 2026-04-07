@@ -58,3 +58,30 @@
         </div>
     </div>
 </x-filament-panels::page>
+        <!-- Dashboard Widgets & Metrics -->
+        <div class="space-y-6">
+            <h2 class="text-lg font-semibold text-gray-900 dark:text-white">Dashboard Metrics</h2>
+            
+            <!-- Widget Grid -->
+            <div class="grid auto-rows-max gap-4 sm:grid-cols-1 md:grid-cols-2 lg:grid-cols-3">
+                <!-- Widgets will be rendered here by Filament's widget system -->
+                @if (method_exists($this, 'getWidgets') && method_exists(app(\App\Filament\Support\RoleDashboardConfig::class), 'visibleWidgetsForRole'))
+                    @php
+                        $widgets = \App\Filament\Support\RoleDashboardConfig::visibleWidgetsForRole('OFFICER');
+                    @endphp
+                    @foreach ($widgets as $widgetClass)
+                        @php
+                            $widget = app($widgetClass);
+                            if (method_exists($widget, 'canView') && !$widget->canView()) {
+                                continue;
+                            }
+                        @endphp
+                        <div class="fi-widget">
+                            @include('filament.components.widget', ['widget' => $widget])
+                        </div>
+                    @endforeach
+                @endif
+            </div>
+        </div>
+    </div>
+</x-filament-panels::page>

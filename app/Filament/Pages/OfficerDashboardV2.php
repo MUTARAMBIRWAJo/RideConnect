@@ -49,4 +49,14 @@ class OfficerDashboardV2 extends Page
     {
         return 'Officer Dashboard';
     }
+
+    public function getWidgets(): array
+    {
+        return [];
+    }
+
+    public function getColumns(): int | string | array
+    {
+        return ['default' => 1, 'md' => 2, 'xl' => 3];
+    }
 }

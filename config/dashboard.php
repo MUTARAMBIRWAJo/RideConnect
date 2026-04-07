@@ -10,9 +10,12 @@ use App\Filament\Widgets\Dashboard\FinanceExportActionsWidget;
 use App\Filament\Widgets\Dashboard\FraudAlertsWidget;
 use App\Filament\Widgets\Dashboard\MonthlyEarningsChartWidget;
 use App\Filament\Widgets\Dashboard\NotificationsWidget;
-use App\Filament\Widgets\Dashboard\OfficerOverviewStats;
+use App\Filament\Widgets\Dashboard\OfficerActiveRidesWidget;
+use App\Filament\Widgets\Dashboard\OfficerComplianceMetricsWidget;
 use App\Filament\Widgets\Dashboard\OfficerMatchingQueueTableWidget;
+use App\Filament\Widgets\Dashboard\OfficerOverviewStats;
 use App\Filament\Widgets\Dashboard\OfficerSupportCasesTableWidget;
+use App\Filament\Widgets\Dashboard\OfficerTicketTrendWidget;
 use App\Filament\Widgets\Dashboard\SuperAdminOverviewStats;
 use App\Filament\Widgets\Dashboard\SystemLogsWidget;
 use App\Filament\Widgets\Dashboard\TransactionsTableWidget;
@@ -37,7 +40,9 @@ return [
         'md' => 2,
         'xl' => 3,
     ],
-
+                OfficerActiveRidesWidget::class,
+                OfficerComplianceMetricsWidget::class,
+                OfficerTicketTrendWidget::class,
     'realtime' => [
         'enabled' => env('DASHBOARD_REALTIME_ENABLED', true),
         'polling_interval' => env('DASHBOARD_POLLING_INTERVAL', '30s'),
@@ -49,7 +54,9 @@ return [
         'polling' => [
             'default' => env('DASHBOARD_POLLING_DEFAULT', '90s'),
             'sections' => [
-                'operational' => env('DASHBOARD_POLLING_OPERATIONAL', '60s'),
+                OfficerActiveRidesWidget::class => ['view rides', 'manage rides'],
+                OfficerComplianceMetricsWidget::class => ['view rides', 'manage rides'],
+                OfficerTicketTrendWidget::class => ['manage tickets'],
                 'intelligence' => env('DASHBOARD_POLLING_INTELLIGENCE', '180s'),
             ],
             'widgets' => [
