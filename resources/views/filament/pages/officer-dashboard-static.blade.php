@@ -14,6 +14,12 @@
         <x-dashboard-card title="Drivers Online" :value="number_format($onlineDriversCount)" subtitle="Available pool" tone="blue" />
     </section>
 
+    <section class="grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-3">
+        <x-dashboard-card title="Overdue Bookings" :value="number_format($overdueBookingsCount)" subtitle="Pending over 15 minutes" tone="amber" />
+        <x-dashboard-card title="High Priority Tickets" :value="number_format($highPriorityTicketsCount)" subtitle="Urgent passenger/driver issues" tone="red" />
+        <x-dashboard-card title="Cancelled Today" :value="number_format($cancelledRidesTodayCount)" subtitle="Needs follow-up and retention" tone="purple" />
+    </section>
+
     <section class="rounded-xl border border-slate-200 bg-white p-5 shadow-sm">
         <h2 class="text-base font-semibold text-slate-900">Operations Tools</h2>
         <div class="mt-3 grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
@@ -80,6 +86,75 @@
                         @empty
                             <tr>
                                 <td colspan="4" class="py-4 text-center text-slate-500">No tickets found.</td>
+                            </tr>
+                        @endforelse
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </section>
+
+    <section class="grid grid-cols-1 gap-4 xl:grid-cols-2">
+        <div class="rounded-xl border border-slate-200 bg-white p-5 shadow-sm">
+            <h3 class="text-base font-semibold text-slate-900">Escalation Queue</h3>
+            <p class="mt-1 text-xs text-slate-500">Urgent tickets that impact passenger safety or driver continuity.</p>
+            <div class="mt-3 overflow-x-auto">
+                <table class="w-full text-sm">
+                    <thead>
+                        <tr class="border-b border-slate-200 text-left text-xs uppercase tracking-wide text-slate-500">
+                            <th class="py-2 pr-3">Ticket</th>
+                            <th class="py-2 pr-3">Status</th>
+                            <th class="py-2 pr-3">Priority</th>
+                            <th class="py-2">Created</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @forelse ($escalationTickets as $ticket)
+                            <tr class="border-b border-slate-100">
+                                <td class="py-2 pr-3 font-medium text-slate-900">#{{ $ticket['id'] ?? '-' }}</td>
+                                <td class="py-2 pr-3 text-slate-700">{{ strtoupper((string) ($ticket['status'] ?? '-')) }}</td>
+                                <td class="py-2 pr-3 text-slate-700">{{ strtoupper((string) ($ticket['priority'] ?? 'N/A')) }}</td>
+                                <td class="py-2 text-slate-600">{{ $ticket['created_at'] ?? '-' }}</td>
+                            </tr>
+                        @empty
+                            <tr>
+                                <td colspan="4" class="py-4 text-center text-slate-500">No urgent escalations right now.</td>
+                            </tr>
+                        @endforelse
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <div class="rounded-xl border border-slate-200 bg-white p-5 shadow-sm">
+            <h3 class="text-base font-semibold text-slate-900">Unassigned Ride Queue</h3>
+            <p class="mt-1 text-xs text-slate-500">Dispatch these quickly to reduce passenger wait times.</p>
+            <div class="mt-3 overflow-x-auto">
+                <table class="w-full text-sm">
+                    <thead>
+                        <tr class="border-b border-slate-200 text-left text-xs uppercase tracking-wide text-slate-500">
+                            <th class="py-2 pr-3">Ride</th>
+                            <th class="py-2 pr-3">Status</th>
+                            <th class="py-2 pr-3">Route</th>
+                            <th class="py-2">Created</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @forelse ($unassignedRides as $ride)
+                            <tr class="border-b border-slate-100">
+                                <td class="py-2 pr-3 font-medium text-slate-900">#{{ $ride['id'] ?? '-' }}</td>
+                                <td class="py-2 pr-3 text-slate-700">{{ strtoupper((string) ($ride['status'] ?? '-')) }}</td>
+                                <td class="py-2 pr-3 text-slate-700">
+                                    {{ ($ride['origin_address'] ?? 'N/A') }}
+                                    @if (!empty($ride['destination_address']))
+                                        → {{ $ride['destination_address'] }}
+                                    @endif
+                                </td>
+                                <td class="py-2 text-slate-600">{{ $ride['created_at'] ?? '-' }}</td>
+                            </tr>
+                        @empty
+                            <tr>
+                                <td colspan="4" class="py-4 text-center text-slate-500">No unassigned rides in queue.</td>
                             </tr>
                         @endforelse
                     </tbody>

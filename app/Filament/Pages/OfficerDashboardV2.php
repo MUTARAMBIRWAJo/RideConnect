@@ -24,11 +24,23 @@ class OfficerDashboardV2 extends Page
 
     public int $onlineDriversCount = 0;
 
+    public int $overdueBookingsCount = 0;
+
+    public int $highPriorityTicketsCount = 0;
+
+    public int $cancelledRidesTodayCount = 0;
+
     /** @var array<int, array<string, mixed>> */
     public array $recentBookings = [];
 
     /** @var array<int, array<string, mixed>> */
     public array $recentTickets = [];
+
+    /** @var array<int, array<string, mixed>> */
+    public array $escalationTickets = [];
+
+    /** @var array<int, array<string, mixed>> */
+    public array $unassignedRides = [];
 
     public static function getNavigationLabel(): string
     {
@@ -79,8 +91,13 @@ class OfficerDashboardV2 extends Page
         $this->pendingBookingsCount = $this->resolvePendingBookingsCount();
         $this->openTicketsCount = $this->resolveOpenTicketsCount();
         $this->onlineDriversCount = $this->resolveOnlineDriversCount();
+        $this->overdueBookingsCount = $this->resolveOverdueBookingsCount();
+        $this->highPriorityTicketsCount = $this->resolveHighPriorityTicketsCount();
+        $this->cancelledRidesTodayCount = $this->resolveCancelledRidesTodayCount();
         $this->recentBookings = $this->resolveRecentBookings();
         $this->recentTickets = $this->resolveRecentTickets();
+        $this->escalationTickets = $this->resolveEscalationTickets();
+        $this->unassignedRides = $this->resolveUnassignedRides();
     }
 
     private function resolveActiveRidesCount(): int
@@ -135,6 +152,48 @@ class OfficerDashboardV2 extends Page
         return 0;
     }
 
+    private function resolveOverdueBookingsCount(): int
+    {
+        if (! Schema::hasTable('bookings') || ! Schema::hasColumn('bookings', 'status') || ! Schema::hasColumn('bookings', 'created_at')) {
+            return 0;
+        }
+
+        return (int) DB::table('bookings')
+            ->whereIn('status', ['pending', 'PENDING', 'confirmed', 'CONFIRMED'])
+            ->where('created_at', '<=', now()->subMinutes(15))
+            ->count();
+    }
+
+    private function resolveHighPriorityTicketsCount(): int
+    {
+        if (! Schema::hasTable('tickets') || ! Schema::hasColumn('tickets', 'status') || ! Schema::hasColumn('tickets', 'priority')) {
+            return 0;
+        }
+
+        return (int) DB::table('tickets')
+            ->whereIn('status', ['open', 'OPEN', 'pending', 'PENDING'])
+            ->whereIn('priority', ['high', 'HIGH', 'urgent', 'URGENT'])
+            ->count();
+    }
+
+    private function resolveCancelledRidesTodayCount(): int
+    {
+        if (! Schema::hasTable('rides') || ! Schema::hasColumn('rides', 'status')) {
+            return 0;
+        }
+
+        $query = DB::table('rides')
+            ->whereIn('status', ['cancelled', 'CANCELLED']);
+
+        if (Schema::hasColumn('rides', 'updated_at')) {
+            $query->whereDate('updated_at', now()->toDateString());
+        } elseif (Schema::hasColumn('rides', 'created_at')) {
+            $query->whereDate('created_at', now()->toDateString());
+        }
+
+        return (int) $query->count();
+    }
+
     /** @return array<int, array<string, mixed>> */
     private function resolveRecentBookings(): array
     {
@@ -178,6 +237,70 @@ class OfficerDashboardV2 extends Page
 
         return DB::table('tickets')
             ->select($columns)
+            ->latest('id')
+            ->limit(8)
+            ->get()
+            ->map(fn ($row): array => (array) $row)
+            ->all();
+    }
+
+    /** @return array<int, array<string, mixed>> */
+    private function resolveEscalationTickets(): array
+    {
+        if (! Schema::hasTable('tickets') || ! Schema::hasColumn('tickets', 'status')) {
+            return [];
+        }
+
+        $columns = collect(['id', 'status', 'priority', 'created_at'])
+            ->filter(fn (string $column): bool => Schema::hasColumn('tickets', $column))
+            ->values()
+            ->all();
+
+        if ($columns === []) {
+            return [];
+        }
+
+        $query = DB::table('tickets')
+            ->select($columns)
+            ->whereIn('status', ['open', 'OPEN', 'pending', 'PENDING']);
+
+        if (Schema::hasColumn('tickets', 'priority')) {
+            $query->whereIn('priority', ['high', 'HIGH', 'urgent', 'URGENT']);
+        }
+
+        return $query
+            ->latest('id')
+            ->limit(8)
+            ->get()
+            ->map(fn ($row): array => (array) $row)
+            ->all();
+    }
+
+    /** @return array<int, array<string, mixed>> */
+    private function resolveUnassignedRides(): array
+    {
+        if (! Schema::hasTable('rides') || ! Schema::hasColumn('rides', 'status')) {
+            return [];
+        }
+
+        $columns = collect(['id', 'status', 'driver_id', 'origin_address', 'destination_address', 'created_at'])
+            ->filter(fn (string $column): bool => Schema::hasColumn('rides', $column))
+            ->values()
+            ->all();
+
+        if ($columns === []) {
+            return [];
+        }
+
+        $query = DB::table('rides')
+            ->select($columns)
+            ->whereIn('status', ['pending', 'PENDING', 'confirmed', 'CONFIRMED']);
+
+        if (Schema::hasColumn('rides', 'driver_id')) {
+            $query->whereNull('driver_id');
+        }
+
+        return $query
             ->latest('id')
             ->limit(8)
             ->get()
