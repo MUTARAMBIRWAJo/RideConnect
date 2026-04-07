@@ -11,6 +11,8 @@ use App\Filament\Widgets\Dashboard\FraudAlertsWidget;
 use App\Filament\Widgets\Dashboard\MonthlyEarningsChartWidget;
 use App\Filament\Widgets\Dashboard\NotificationsWidget;
 use App\Filament\Widgets\Dashboard\OfficerOverviewStats;
+use App\Filament\Widgets\Dashboard\OfficerMatchingQueueTableWidget;
+use App\Filament\Widgets\Dashboard\OfficerSupportCasesTableWidget;
 use App\Filament\Widgets\Dashboard\SuperAdminOverviewStats;
 use App\Filament\Widgets\Dashboard\SystemLogsWidget;
 use App\Filament\Widgets\Dashboard\TransactionsTableWidget;
@@ -221,20 +223,24 @@ return [
             'columns' => ['default' => 1, 'md' => 2, 'xl' => 3],
             'widgets' => [
                 OfficerOverviewStats::class,
+                OfficerMatchingQueueTableWidget::class,
                 RideMapWidget::class,
                 DriverAvailabilityChart::class,
                 DemandHeatmapWidget::class,
                 NotificationsWidget::class,
                 LatestRidesTable::class,
+                OfficerSupportCasesTableWidget::class,
                 ActivityFeedWidget::class,
             ],
             'widget_permissions' => [
                 OfficerOverviewStats::class => ['view users'],
+                OfficerMatchingQueueTableWidget::class => ['view rides', 'manage rides'],
                 RideMapWidget::class => ['view rides'],
                 DriverAvailabilityChart::class => ['view rides'],
                 DemandHeatmapWidget::class => ['view demand forecasts'],
                 NotificationsWidget::class => ['manage tickets'],
                 LatestRidesTable::class => ['view rides'],
+                OfficerSupportCasesTableWidget::class => ['manage tickets', 'view rides'],
                 ActivityFeedWidget::class => ['view users'],
             ],
             'widget_permissions_require_all' => false,

@@ -17,25 +17,47 @@
         </x-filament::section>
 
         <x-filament::section>
-            <x-slot name="heading">Officer Notes</x-slot>
-            <x-slot name="description">This page intentionally uses a single-root structure for Livewire stability.</x-slot>
+            <x-slot name="heading">Officer Quick Actions</x-slot>
+            <x-slot name="description">Use these shortcuts to resolve support cases, dispatch drivers faster, and track passenger service quality.</x-slot>
 
-            <div class="grid gap-3 sm:grid-cols-2 xl:grid-cols-3">
-                <div class="rounded-xl border border-gray-200 bg-white p-4 text-sm text-gray-700 shadow-sm dark:border-gray-800 dark:bg-gray-900 dark:text-gray-200">
-                    <p class="font-semibold">Permissions</p>
-                    <p class="mt-1 text-gray-500 dark:text-gray-400">Dashboard widgets and actions remain governed by your existing role and policy checks.</p>
-                </div>
+            <div class="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
+                @if (\App\Filament\Resources\BookingResource::canViewAny())
+                    <a href="{{ \App\Filament\Resources\BookingResource::getUrl('index') }}" class="rounded-xl border border-emerald-200 bg-emerald-50 p-4 text-sm shadow-sm transition hover:bg-emerald-100 dark:border-emerald-900/60 dark:bg-emerald-900/20 dark:hover:bg-emerald-900/35">
+                        <p class="font-semibold text-emerald-800 dark:text-emerald-200">Booking Queue</p>
+                        <p class="mt-1 text-emerald-700/80 dark:text-emerald-300/90">Handle pending and confirmed bookings needing assignment.</p>
+                    </a>
+                @endif
 
-                <div class="rounded-xl border border-gray-200 bg-white p-4 text-sm text-gray-700 shadow-sm dark:border-gray-800 dark:bg-gray-900 dark:text-gray-200">
-                    <p class="font-semibold">Routing</p>
-                    <p class="mt-1 text-gray-500 dark:text-gray-400">Role-based redirects still route officers to this page via the same dashboard mapping.</p>
-                </div>
+                @if (\App\Filament\Resources\TripResource::canViewAny())
+                    <a href="{{ \App\Filament\Resources\TripResource::getUrl('index') }}" class="rounded-xl border border-blue-200 bg-blue-50 p-4 text-sm shadow-sm transition hover:bg-blue-100 dark:border-blue-900/60 dark:bg-blue-900/20 dark:hover:bg-blue-900/35">
+                        <p class="font-semibold text-blue-800 dark:text-blue-200">Trip Requests</p>
+                        <p class="mt-1 text-blue-700/80 dark:text-blue-300/90">Review pending trip requests and move them to active service.</p>
+                    </a>
+                @endif
 
-                <div class="rounded-xl border border-gray-200 bg-white p-4 text-sm text-gray-700 shadow-sm dark:border-gray-800 dark:bg-gray-900 dark:text-gray-200 sm:col-span-2 xl:col-span-1">
-                    <p class="font-semibold">Reliability</p>
-                    <p class="mt-1 text-gray-500 dark:text-gray-400">Single-root markup prevents Livewire multiple-root exceptions in production and local runs.</p>
-                </div>
+                @if (\App\Filament\Resources\DriverResource::canViewAny())
+                    <a href="{{ \App\Filament\Resources\DriverResource::getUrl('index') }}" class="rounded-xl border border-indigo-200 bg-indigo-50 p-4 text-sm shadow-sm transition hover:bg-indigo-100 dark:border-indigo-900/60 dark:bg-indigo-900/20 dark:hover:bg-indigo-900/35">
+                        <p class="font-semibold text-indigo-800 dark:text-indigo-200">Driver Pool</p>
+                        <p class="mt-1 text-indigo-700/80 dark:text-indigo-300/90">Find approved and available drivers for fast dispatching.</p>
+                    </a>
+                @endif
+
+                @if (\App\Filament\Resources\TicketResource::canViewAny())
+                    <a href="{{ \App\Filament\Resources\TicketResource::getUrl('index') }}" class="rounded-xl border border-amber-200 bg-amber-50 p-4 text-sm shadow-sm transition hover:bg-amber-100 dark:border-amber-900/60 dark:bg-amber-900/20 dark:hover:bg-amber-900/35">
+                        <p class="font-semibold text-amber-800 dark:text-amber-200">Support Tickets</p>
+                        <p class="mt-1 text-amber-700/80 dark:text-amber-300/90">Resolve complaints and keep passengers and drivers informed.</p>
+                    </a>
+                @endif
             </div>
         </x-filament::section>
+
+        <x-filament-widgets::widgets
+            :columns="$this->getColumns()"
+            :data="[
+                ...(property_exists($this, 'filters') ? ['filters' => $this->filters] : []),
+                ...$this->getWidgetData(),
+            ]"
+            :widgets="$this->getVisibleWidgets()"
+        />
     </div>
 </x-filament-panels::page>
