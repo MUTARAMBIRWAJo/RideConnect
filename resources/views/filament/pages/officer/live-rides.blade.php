@@ -56,7 +56,7 @@
                                             </x-slot>
 
                                             <div class="space-y-4">
-                                                <p class="text-sm text-slate-700">Reassign this ride and clear its current driver assignment?</p>
+                                                <p class="text-sm text-slate-700">Reassign this ride to another available driver?</p>
                                                 <div class="flex justify-end">
                                                     <x-filament::button size="sm" color="warning" wire:click="reassignDriver({{ (int) ($ride['id'] ?? 0) }})">Confirm Reassign</x-filament::button>
                                                 </div>
