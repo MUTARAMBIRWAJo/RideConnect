@@ -1,5 +1,5 @@
 <x-filament-panels::page>
-    <div class="space-y-6">
+    <div class="space-y-6" wire:poll.30s>
         <!-- Hero Section -->
         <section class="rounded-xl border-0 bg-gradient-to-r from-indigo-600 to-blue-600 p-6 text-white shadow-lg">
             <p class="text-xs font-semibold uppercase tracking-wider text-indigo-100">AI & Analytics</p>

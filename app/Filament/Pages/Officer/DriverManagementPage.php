@@ -58,6 +58,11 @@ class DriverManagementPage extends Page
         $this->loadDrivers();
     }
 
+    public function refreshRealtimeData(): void
+    {
+        $this->loadDrivers();
+    }
+
     private function loadDrivers(): void
     {
         if (!Schema::hasTable('drivers')) {

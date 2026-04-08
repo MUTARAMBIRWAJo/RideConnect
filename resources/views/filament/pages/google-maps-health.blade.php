@@ -1,5 +1,5 @@
 <x-filament-panels::page>
-    <div class="space-y-4">
+    <div class="space-y-4" wire:poll.15s>
         <section
             id="gmaps-health-panel"
             class="rounded-xl border border-gray-200 bg-white p-4 shadow-sm"

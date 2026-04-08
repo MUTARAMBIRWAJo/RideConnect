@@ -1,5 +1,5 @@
 <x-filament-panels::page>
-    <div class="space-y-6">
+    <div class="space-y-6" wire:poll.60s>
         <x-filament::section class="overflow-hidden border-0 bg-gradient-to-r from-emerald-600 to-teal-600 text-white shadow-lg">
             <div class="flex flex-col gap-4 md:flex-row md:items-end md:justify-between">
                 <div>

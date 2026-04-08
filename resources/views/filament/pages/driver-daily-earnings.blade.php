@@ -1,3 +1,5 @@
 <x-filament-panels::page>
-    {{ $this->table }}
+    <div wire:poll.30s>
+        {{ $this->table }}
+    </div>
 </x-filament-panels::page>

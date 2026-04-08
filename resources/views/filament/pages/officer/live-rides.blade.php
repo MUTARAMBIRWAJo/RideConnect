@@ -1,5 +1,5 @@
 <x-filament-panels::page>
-    <div class="space-y-6">
+    <div class="space-y-6" wire:poll.15s="refreshRealtimeData">
         <!-- Hero Section -->
         <section class="rounded-xl border-0 bg-gradient-to-r from-blue-600 to-cyan-600 p-6 text-white shadow-lg">
             <p class="text-xs font-semibold uppercase tracking-wider text-blue-100">Live Monitoring</p>
@@ -91,24 +91,50 @@
                                             @if (empty($availableDrivers))
                                                 <p class="text-sm text-amber-700">No available drivers were found for reassignment.</p>
                                             @else
+                                                <p class="text-xs text-slate-600">
+                                                    Showing best online matches ranked by proximity and ML-assisted score.
+                                                </p>
                                                 <div class="grid gap-3 md:grid-cols-2 xl:grid-cols-3">
                                                     @foreach ($availableDrivers as $driver)
                                                         @php
                                                             $isSelected = (int) ($selectedDriverId ?? 0) === (int) ($driver['driver_id'] ?? 0);
+                                                            $isOnline = (bool) ($driver['is_online'] ?? false);
                                                         @endphp
                                                         <button
                                                             type="button"
                                                             wire:click="$set('selectedDriverId', {{ (int) ($driver['driver_id'] ?? 0) }})"
                                                             class="text-left rounded-lg border p-3 transition {{ $isSelected ? 'border-orange-500 bg-orange-50 ring-1 ring-orange-300' : 'border-slate-200 bg-white hover:border-orange-300' }}"
                                                         >
-                                                            <p class="text-sm font-semibold text-slate-900">{{ $driver['driver_name'] ?? 'Driver' }}</p>
+                                                            <div class="flex items-start justify-between gap-2">
+                                                                <p class="text-sm font-semibold text-slate-900">{{ $driver['driver_name'] ?? 'Driver' }}</p>
+                                                                <span class="rounded-full px-2 py-0.5 text-[11px] font-semibold {{ ((int) ($driver['rank'] ?? 99) <= 3) ? 'bg-emerald-100 text-emerald-700' : 'bg-slate-100 text-slate-700' }}">
+                                                                    Rank #{{ $driver['rank'] ?? '-' }}
+                                                                </span>
+                                                            </div>
                                                             <p class="text-xs text-slate-600 mt-1">Driver ID: #{{ $driver['driver_id'] ?? '-' }}</p>
                                                             <p class="text-xs text-slate-600">Plate: {{ $driver['license_plate'] ?? 'N/A' }}</p>
                                                             <p class="text-xs text-slate-600">Vehicle: {{ $driver['vehicle'] ?? 'N/A' }}</p>
                                                             <p class="text-xs text-slate-600">Location: {{ $driver['location'] ?? 'Unknown' }}</p>
-                                                            <p class="mt-2 inline-block rounded-full px-2 py-1 text-[11px] font-semibold {{ strtolower((string) ($driver['availability'] ?? 'offline')) === 'online' ? 'bg-emerald-100 text-emerald-700' : 'bg-slate-100 text-slate-700' }}">
-                                                                {{ strtoupper((string) ($driver['availability'] ?? 'OFFLINE')) }}
-                                                            </p>
+                                                            <div class="mt-1">
+                                                                <span class="inline-block rounded-full px-2 py-0.5 text-[11px] font-semibold
+                                                                    {{ ($driver['location_freshness_tone'] ?? 'slate') === 'emerald' ? 'bg-emerald-100 text-emerald-700' : '' }}
+                                                                    {{ ($driver['location_freshness_tone'] ?? 'slate') === 'amber' ? 'bg-amber-100 text-amber-700' : '' }}
+                                                                    {{ ($driver['location_freshness_tone'] ?? 'slate') === 'rose' ? 'bg-rose-100 text-rose-700' : '' }}
+                                                                    {{ ($driver['location_freshness_tone'] ?? 'slate') === 'slate' ? 'bg-slate-100 text-slate-700' : '' }}">
+                                                                    Location: {{ $driver['location_freshness_label'] ?? 'UNKNOWN' }}
+                                                                </span>
+                                                            </div>
+                                                            <p class="text-xs text-slate-600">Distance to pickup: <span class="font-semibold text-slate-800">{{ $driver['distance_label'] ?? 'Unknown distance' }}</span></p>
+                                                            <p class="text-xs text-slate-600">ML match score: <span class="font-semibold text-slate-800">{{ isset($driver['ml_match_score']) ? number_format((float) $driver['ml_match_score'], 2) : 'N/A (fallback used)' }}</span></p>
+                                                            <p class="text-xs text-slate-600">Final score: <span class="font-semibold text-slate-800">{{ number_format((float) ($driver['final_match_score'] ?? 0), 2) }}</span></p>
+                                                            <div class="mt-2 flex items-center gap-2">
+                                                                <span class="inline-block rounded-full px-2 py-1 text-[11px] font-semibold {{ $isOnline ? 'bg-emerald-100 text-emerald-700' : 'bg-slate-100 text-slate-700' }}">
+                                                                    {{ strtoupper((string) ($driver['availability'] ?? 'OFFLINE')) }}
+                                                                </span>
+                                                                <span class="inline-block rounded-full bg-blue-100 px-2 py-1 text-[11px] font-semibold text-blue-700">
+                                                                    Load: {{ (int) ($driver['active_load'] ?? 0) }} active
+                                                                </span>
+                                                            </div>
                                                         </button>
                                                     @endforeach
                                                 </div>

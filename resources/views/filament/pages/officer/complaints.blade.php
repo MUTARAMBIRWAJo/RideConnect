@@ -1,5 +1,5 @@
 <x-filament-panels::page>
-    <div class="space-y-6">
+    <div class="space-y-6" wire:poll.20s>
         <!-- Hero Section -->
         <section class="rounded-xl border-0 bg-gradient-to-r from-red-600 to-orange-600 p-6 text-white shadow-lg">
             <p class="text-xs font-semibold uppercase tracking-wider text-red-100">Support & Escalations</p>

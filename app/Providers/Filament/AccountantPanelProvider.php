@@ -10,6 +10,8 @@ use Filament\Panel;
 use Filament\PanelProvider;
 use Filament\Support\Colors\Color;
 use Filament\Navigation\NavigationGroup;
+use Filament\View\PanelsRenderHook;
+use Illuminate\Support\Facades\Blade;
 use Illuminate\Cookie\Middleware\AddQueuedCookiesToResponse;
 use Illuminate\Cookie\Middleware\EncryptCookies;
 use Illuminate\Foundation\Http\Middleware\VerifyCsrfToken;
@@ -40,6 +42,10 @@ class AccountantPanelProvider extends PanelProvider
             ->brandLogo(asset('images/logo.svg'))
             ->brandLogoHeight('2.5rem')
             ->favicon(asset('images/favicon.png'))
+            ->renderHook(
+                PanelsRenderHook::HEAD_END,
+                fn (): string => Blade::render("@vite(['resources/js/app.js'])"),
+            )
             ->navigationGroups([
                 NavigationGroup::make('Dashboard')->collapsible(false),
                 NavigationGroup::make('Financial Operations')->collapsible(false),
