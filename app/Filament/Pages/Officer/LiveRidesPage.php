@@ -2,6 +2,7 @@
 
 namespace App\Filament\Pages\Officer;
 
+use App\Enums\UserRole;
 use App\Services\ActionAuditLogger;
 use Filament\Notifications\Notification;
 use Filament\Pages\Page;
@@ -32,7 +33,14 @@ class LiveRidesPage extends Page
 
     public static function canAccess(): bool
     {
-        return auth()->check() && (auth()->user()->hasRole('officer') || auth()->user()->hasRole('OFFICER'));
+        $user = auth()->user();
+
+        if (! $user) {
+            return false;
+        }
+
+        return ($user->role === UserRole::OFFICER)
+            || $user->hasAnyRole(['Officer', 'officer', 'OFFICER']);
     }
 
     public function getTitle(): string
