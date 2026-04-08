@@ -18,9 +18,24 @@ class SeedDatabaseIfMissing extends Command
     {
         $marker = (string) $this->option('marker');
         $force = (bool) $this->option('force');
+        $adoptExisting = filter_var((string) env('DB_SEED_ADOPT_EXISTING', 'true'), FILTER_VALIDATE_BOOL);
 
         if (!$force && $this->hasMarker($marker)) {
             $this->info(sprintf('Seed marker "%s" already exists; skipping database seeding.', $marker));
+
+            return self::SUCCESS;
+        }
+
+        if (!$force && $adoptExisting && $this->databaseLooksSeeded()) {
+            $this->recordMarker($marker, [
+                'mode' => 'adopt-existing',
+                'users' => $this->safeCount('users'),
+                'managers' => $this->safeCount('managers'),
+                'mobile_users' => $this->safeCount('mobile_users'),
+                'rides' => $this->safeCount('rides'),
+            ]);
+
+            $this->info(sprintf('Baseline data already exists; marker "%s" recorded without re-seeding.', $marker));
 
             return self::SUCCESS;
         }
@@ -39,16 +54,10 @@ class SeedDatabaseIfMissing extends Command
                 return self::FAILURE;
             }
 
-            DB::table('seed_runs')->updateOrInsert(
-                ['name' => $marker],
-                [
-                    'meta' => json_encode([
-                        'seeded_by' => 'app:seed-database',
-                        'seeded_at' => now()->toIso8601String(),
-                    ], JSON_THROW_ON_ERROR),
-                    'seeded_at' => now(),
-                ]
-            );
+            $this->recordMarker($marker, [
+                'mode' => 'seeded',
+                'seeded_by' => 'app:seed-database',
+            ]);
 
             $this->info(sprintf('Database seeded successfully and marker "%s" recorded.', $marker));
 
@@ -82,5 +91,42 @@ class SeedDatabaseIfMissing extends Command
             $table->json('meta')->nullable();
             $table->timestampTz('seeded_at')->useCurrent();
         });
+    }
+
+    private function recordMarker(string $marker, array $meta = []): void
+    {
+        $this->ensureMarkerTableExists();
+
+        DB::table('seed_runs')->updateOrInsert(
+            ['name' => $marker],
+            [
+                'meta' => json_encode(array_merge($meta, [
+                    'seeded_at' => now()->toIso8601String(),
+                ]), JSON_THROW_ON_ERROR),
+                'seeded_at' => now(),
+            ]
+        );
+    }
+
+    private function databaseLooksSeeded(): bool
+    {
+        foreach (['users', 'managers', 'mobile_users'] as $table) {
+            if (!Schema::hasTable($table)) {
+                return false;
+            }
+        }
+
+        return $this->safeCount('users') > 0
+            && $this->safeCount('managers') > 0
+            && $this->safeCount('mobile_users') > 0;
+    }
+
+    private function safeCount(string $table): int
+    {
+        try {
+            return (int) DB::table($table)->count();
+        } catch (\Throwable) {
+            return 0;
+        }
     }
 }

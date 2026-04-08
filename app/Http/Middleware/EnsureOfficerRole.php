@@ -2,6 +2,7 @@
 
 namespace App\Http\Middleware;
 
+use App\Enums\UserRole;
 use Closure;
 use Illuminate\Http\Request;
 
@@ -14,9 +15,12 @@ class EnsureOfficerRole
         }
 
         $user = auth()->user();
-        
-        // Check if user has officer role via Spatie Permissions
-        if (!$user->hasRole('officer') && !$user->hasRole('OFFICER')) {
+
+        // Accept either enum-backed role or Spatie role assignment.
+        $hasOfficerAccess = ($user->role === UserRole::OFFICER)
+            || $user->hasAnyRole(['Officer', 'officer', 'OFFICER']);
+
+        if (! $hasOfficerAccess) {
             abort(403, 'Only Officers can access this panel.');
         }
 

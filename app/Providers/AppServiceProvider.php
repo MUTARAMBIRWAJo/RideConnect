@@ -25,6 +25,7 @@ use Spatie\Permission\Models\Role;
 use App\Models\DriverPayout;
 use App\Models\FraudFlag;
 use App\Models\LedgerEntry;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\URL;
 
 // Register SafeEloquentUserProvider class
@@ -52,6 +53,9 @@ class AppServiceProvider extends ServiceProvider
         Trip::observe(TripObserver::class);
         if (app()->environment('production')) {
             URL::forceScheme('https');
+
+            // Prevent accidental destructive DB commands in production.
+            DB::prohibitDestructiveCommands();
         }
 
         // Filament/Livewire serializes all component data via json_encode with

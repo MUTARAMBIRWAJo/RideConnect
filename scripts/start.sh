@@ -14,7 +14,19 @@ PORT_VALUE="${PORT:-10000}"
 php artisan config:cache --no-interaction || true
 php artisan route:cache --no-interaction || true
 php artisan view:cache --no-interaction || true
-php artisan migrate --force --no-interaction || true
+
+if [ "${DB_MIGRATE_ON_BOOT:-true}" = "true" ]; then
+	php artisan migrate --force --no-interaction
+fi
+
+if [ "${DB_ENSURE_SEEDED_ON_BOOT:-true}" = "true" ]; then
+	SEED_FORCE_FLAG=""
+	if [ "${DB_FORCE_SEED_ON_BOOT:-false}" = "true" ]; then
+		SEED_FORCE_FLAG="--force"
+	fi
+
+	php artisan app:seed-database --marker="${DB_SEED_MARKER:-production-default}" ${SEED_FORCE_FLAG} --no-interaction
+fi
 
 if [ "${DASHBOARD_WARM_ON_BOOT:-true}" = "true" ]; then
 	php artisan dashboard:warm-cache --clear --days="${DASHBOARD_WARM_DAYS:-7}" --no-interaction || true

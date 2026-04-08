@@ -34,6 +34,16 @@ services:
         value: true
       - key: DASHBOARD_WARM_DAYS
         value: 7
+      - key: DB_MIGRATE_ON_BOOT
+        value: true
+      - key: DB_ENSURE_SEEDED_ON_BOOT
+        value: true
+      - key: DB_SEED_MARKER
+        value: rideconnect-production
+      - key: DB_SEED_SKIP_RESET
+        value: true
+      - key: DB_SEED_ADOPT_EXISTING
+        value: true
 
   - type: worker
     name: rideconnect-queue

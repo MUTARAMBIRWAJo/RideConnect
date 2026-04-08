@@ -45,6 +45,9 @@ composer install --optimize-autoloader --no-dev
 # Run pending migrations (if any)
 php artisan migrate --force
 
+# Ensure baseline seed data exists (idempotent, does not wipe existing rows)
+php artisan app:seed-database --marker=rideconnect-production --no-interaction
+
 # Verify users have proper roles assigned
 php artisan tinker
 # $users = User::all();
@@ -188,7 +191,15 @@ php artisan tinker
 # User::all()->pluck('email', 'role')->toArray()
 # Ensure all roles match UserRole enum cases
 # exit()
+
+# Re-run safe baseline seed (non-destructive)
+php artisan app:seed-database --marker=rideconnect-production --no-interaction
 ```
+
+## Production Safety Rule
+
+- Never run `php artisan migrate:fresh`, `php artisan migrate:reset`, or `php artisan db:wipe` in production.
+- Production is guarded to block these destructive commands.
 
 ### Full Rollback
 ```bash

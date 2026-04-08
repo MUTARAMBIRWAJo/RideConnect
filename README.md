@@ -87,3 +87,19 @@ Render startup script supports:
 
 - `DASHBOARD_WARM_ON_BOOT=true|false`
 - `DASHBOARD_WARM_DAYS=7`
+
+### Persistent Database Bootstrapping
+
+To keep production tables and baseline data consistent across deployments and restarts:
+
+- Startup runs `php artisan migrate --force` (non-destructive schema updates).
+- Startup runs `php artisan app:seed-database` with a marker, so baseline seed data is inserted once and not duplicated on every boot.
+- Production blocks destructive commands (`migrate:fresh`, `migrate:reset`, `migrate:rollback`, `db:wipe`).
+
+Environment flags:
+
+- `DB_MIGRATE_ON_BOOT=true|false`
+- `DB_ENSURE_SEEDED_ON_BOOT=true|false`
+- `DB_SEED_MARKER=rideconnect-production`
+- `DB_FORCE_SEED_ON_BOOT=true|false` (force re-run even when marker exists)
+- `DB_SEED_SKIP_RESET=true` (recommended for data retention)

@@ -115,12 +115,14 @@ class AuthController extends Controller
         // Role-based redirect
         if ($isManagerRole) {
             $panelPath = '/'.trim(Filament::getPanel('admin')->getPath(), '/');
+            $officerPanelPath = '/'.trim(Filament::getPanel('officer')->getPath(), '/');
+            $accountantPanelPath = '/'.trim(Filament::getPanel('accountant')->getPath(), '/');
 
             $redirectPath = match ($user->role?->value) {
                 UserRole::SUPER_ADMIN->value => "{$panelPath}/super-dashboard",
                 UserRole::ADMIN->value => "{$panelPath}/admin-dashboard",
-                UserRole::ACCOUNTANT->value => "{$panelPath}/accountant-dashboard",
-                UserRole::OFFICER->value => "{$panelPath}/officer-dashboard-v2",
+                UserRole::ACCOUNTANT->value => $accountantPanelPath,
+                UserRole::OFFICER->value => $officerPanelPath,
                 default => "{$panelPath}",
             };
 
