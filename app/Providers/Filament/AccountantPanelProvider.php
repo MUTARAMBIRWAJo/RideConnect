@@ -51,6 +51,7 @@ class AccountantPanelProvider extends PanelProvider
                 NavigationGroup::make('Financial Operations')->collapsible(false),
                 NavigationGroup::make('Reporting & Analytics')->collapsible(true),
                 NavigationGroup::make('Compliance')->collapsible(true),
+                NavigationGroup::make('Information Hub')->collapsible(true),
             ])
             ->discoverPages(app_path('Filament/Pages/Accountant'), 'App\\Filament\\Pages\\Accountant')
             ->pages([
@@ -60,6 +61,8 @@ class AccountantPanelProvider extends PanelProvider
                 \App\Filament\Pages\Accountant\ReportsPage::class,
                 \App\Filament\Pages\Accountant\AuditLogsPage::class,
                 \App\Filament\Pages\Accountant\RefundManagementPage::class,
+                \App\Filament\Pages\SystemNewsAndUpdates::class,
+                \App\Filament\Pages\PlatformMetricsAndHealth::class,
             ])
             ->middleware([
                 EncryptCookies::class,

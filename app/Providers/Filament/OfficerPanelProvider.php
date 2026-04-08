@@ -63,6 +63,8 @@ class OfficerPanelProvider extends PanelProvider
                 NavigationGroup::make('Live Operations')->collapsible(false),
                 NavigationGroup::make('Fleet Management')->collapsible(true),
                 NavigationGroup::make('Support & Complaints')->collapsible(true),
+                NavigationGroup::make('Maps & Tracking')->collapsible(true),
+                NavigationGroup::make('Information Hub')->collapsible(true),
             ])
             ->discoverPages(app_path('Filament/Pages/Officer'), 'App\\Filament\\Pages\\Officer')
             ->pages([
@@ -71,6 +73,8 @@ class OfficerPanelProvider extends PanelProvider
                 \App\Filament\Pages\Officer\DriverManagementPage::class,
                 \App\Filament\Pages\Officer\ComplaintsPage::class,
                 \App\Filament\Pages\Officer\AIInsightsPage::class,
+                \App\Filament\Pages\AdvancedGoogleMaps::class,
+                \App\Filament\Pages\SystemNewsAndUpdates::class,
             ])
             ->middleware([
                 EncryptCookies::class,

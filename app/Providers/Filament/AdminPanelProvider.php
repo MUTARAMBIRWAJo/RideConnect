@@ -111,11 +111,13 @@ class AdminPanelProvider extends PanelProvider
                 fn (): string => Blade::render("@vite(['resources/js/app.js'])"),
             )
             ->navigationGroups([
+                NavigationGroup::make('Dashboard')->collapsible(false),
                 NavigationGroup::make('Live Operations')->collapsible(false),
                 NavigationGroup::make('Fleet & Drivers')->collapsible(true),
                 NavigationGroup::make('Passengers')->collapsible(true),
                 NavigationGroup::make('AI & Analytics')->collapsible(true),
                 NavigationGroup::make('System')->collapsible(true),
+                NavigationGroup::make('Information Hub')->collapsible(true),
             ])
             ->widgets([
                 \App\Filament\Widgets\RideStatsOverview::class,
@@ -143,6 +145,9 @@ class AdminPanelProvider extends PanelProvider
                 \App\Filament\Pages\BiDashboard::class,
                 \App\Filament\Pages\ComplianceDashboard::class,
                 \App\Filament\Pages\AIMonitoringDashboard::class,
+                \App\Filament\Pages\SystemNewsAndUpdates::class,
+                \App\Filament\Pages\AdvancedGoogleMaps::class,
+                \App\Filament\Pages\PlatformMetricsAndHealth::class,
             ])
             ->discoverWidgets(app_path('Filament/Widgets'), 'App\\Filament\\Widgets')
             ->middleware([

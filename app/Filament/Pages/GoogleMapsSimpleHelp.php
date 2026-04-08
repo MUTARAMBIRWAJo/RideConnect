@@ -8,11 +8,11 @@ class GoogleMapsSimpleHelp extends Page
 {
     protected static ?string $navigationIcon = 'heroicon-o-lifebuoy';
 
-    protected static ?string $navigationLabel = 'Map Help (Simple)';
+    protected static ?string $navigationLabel = 'Map Help & Guide';
 
-    protected static ?string $navigationGroup = 'System';
+    protected static ?string $navigationGroup = 'Information Hub';
 
-    protected static ?int $navigationSort = 89;
+    protected static ?int $navigationSort = 203;
 
     protected static ?string $title = 'Map Help for Staff';
 

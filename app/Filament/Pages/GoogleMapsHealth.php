@@ -8,9 +8,9 @@ use Filament\Pages\Page;
 class GoogleMapsHealth extends Page
 {
     protected static ?string $navigationIcon = 'heroicon-o-wrench-screwdriver';
-    protected static ?string $navigationLabel = 'Map Diagnostics (Advanced)';
-    protected static ?string $navigationGroup = 'System';
-    protected static ?int $navigationSort = 92;
+    protected static ?string $navigationLabel = 'Map Diagnostics & API';
+    protected static ?string $navigationGroup = 'Information Hub';
+    protected static ?int $navigationSort = 204;
     protected static ?string $title = 'Map Diagnostics (Advanced)';
     protected static string $view = 'filament.pages.google-maps-health';
 
