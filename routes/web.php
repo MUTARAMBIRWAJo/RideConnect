@@ -1,6 +1,7 @@
 <?php
 
 use App\Http\Controllers\AuthController;
+use App\Http\Controllers\Accountant\ReportDownloadController;
 use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\Admin\FinancialMatrixExportController;
 use App\Http\Controllers\Admin\GoogleMapsHealthController;
@@ -104,6 +105,11 @@ Route::middleware(['auth'])
 Route::middleware(['auth'])
     ->get('/admin/google-maps-health/preflight', [GoogleMapsHealthController::class, 'preflight'])
     ->name('admin.maps.health.preflight');
+
+Route::middleware(['auth'])
+    ->get('/accountant/reports/download/{file}', ReportDownloadController::class)
+    ->where('file', '.*')
+    ->name('accountant.reports.download');
 
 Route::middleware(['auth'])
     ->prefix('/admin/exports/operations-intelligence')

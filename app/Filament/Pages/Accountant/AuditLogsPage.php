@@ -2,6 +2,7 @@
 
 namespace App\Filament\Pages\Accountant;
 
+use App\Enums\UserRole;
 use Filament\Pages\Page;
 use Illuminate\Contracts\Support\Htmlable;
 use Illuminate\Support\Facades\DB;
@@ -32,7 +33,14 @@ class AuditLogsPage extends Page
 
     public static function canAccess(): bool
     {
-        return auth()->check() && (auth()->user()->hasRole('accountant') || auth()->user()->hasRole('ACCOUNTANT'));
+        $user = auth()->user();
+
+        if (! $user) {
+            return false;
+        }
+
+        return ($user->role === UserRole::ACCOUNTANT)
+            || $user->hasAnyRole(['Accountant', 'accountant', 'ACCOUNTANT']);
     }
 
     public function getTitle(): string

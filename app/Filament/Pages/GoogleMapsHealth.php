@@ -8,10 +8,10 @@ use Filament\Pages\Page;
 class GoogleMapsHealth extends Page
 {
     protected static ?string $navigationIcon = 'heroicon-o-wrench-screwdriver';
-    protected static ?string $navigationLabel = 'Google Maps Health';
+    protected static ?string $navigationLabel = 'Map Diagnostics (Advanced)';
     protected static ?string $navigationGroup = 'System';
-    protected static ?int $navigationSort = 90;
-    protected static ?string $title = 'Google Maps Health Check';
+    protected static ?int $navigationSort = 92;
+    protected static ?string $title = 'Map Diagnostics (Advanced)';
     protected static string $view = 'filament.pages.google-maps-health';
 
     public static function canAccess(): bool

@@ -11,8 +11,8 @@
         >
             <div class="mb-4 flex flex-wrap items-center justify-between gap-3">
                 <div>
-                    <h2 class="text-base font-semibold text-gray-900">Google Maps Preflight</h2>
-                    <p class="text-sm text-gray-600">Checks key presence, config source, script loading, and live-map endpoint in one panel.</p>
+                    <h2 class="text-base font-semibold text-gray-900">Map Checkup</h2>
+                    <p class="text-sm text-gray-600">This page explains map issues in simple terms and suggests what to do next.</p>
                 </div>
 
                 <button
@@ -20,34 +20,66 @@
                     id="gmaps-run-check"
                     class="inline-flex items-center rounded-lg bg-gray-900 px-3 py-2 text-sm font-medium text-white hover:bg-black"
                 >
-                    Run Preflight
+                    Check Again
                 </button>
             </div>
 
             <div class="grid gap-3 md:grid-cols-2 xl:grid-cols-4">
                 <div class="rounded-lg border border-gray-200 p-3">
-                    <p class="text-xs uppercase tracking-wide text-gray-500">Key Present</p>
+                    <p class="text-xs uppercase tracking-wide text-gray-500">Map Access Code</p>
                     <p id="gmaps-key-status" class="mt-1 text-sm font-semibold text-gray-900">Pending</p>
                 </div>
                 <div class="rounded-lg border border-gray-200 p-3">
-                    <p class="text-xs uppercase tracking-wide text-gray-500">Config Source</p>
+                    <p class="text-xs uppercase tracking-wide text-gray-500">Where Settings Come From</p>
                     <p id="gmaps-config-source" class="mt-1 text-sm font-semibold text-gray-900">Pending</p>
                 </div>
                 <div class="rounded-lg border border-gray-200 p-3">
-                    <p class="text-xs uppercase tracking-wide text-gray-500">Script Load Status</p>
+                    <p class="text-xs uppercase tracking-wide text-gray-500">Map Screen Loading</p>
                     <p id="gmaps-script-status" class="mt-1 text-sm font-semibold text-gray-900">Pending</p>
                 </div>
                 <div class="rounded-lg border border-gray-200 p-3">
-                    <p class="text-xs uppercase tracking-wide text-gray-500">Live Map Endpoint</p>
+                    <p class="text-xs uppercase tracking-wide text-gray-500">Live Trip Data</p>
                     <p id="gmaps-live-status" class="mt-1 text-sm font-semibold text-gray-900">Pending</p>
                 </div>
             </div>
 
-            <p id="gmaps-health-note" class="mt-3 text-sm text-gray-600">Ready to run checks.</p>
+            <p id="gmaps-health-note" class="mt-3 text-sm text-gray-600">Ready to check map status.</p>
+
+            <div class="mt-4 rounded-lg border border-blue-200 bg-blue-50 p-4">
+                <h3 class="text-sm font-semibold text-blue-900">What these results mean</h3>
+                <ul class="mt-2 list-disc space-y-1 pl-5 text-sm text-blue-900">
+                    <li>If Map Access Code says <span class="font-semibold">No</span>, the system cannot open the map service.</li>
+                    <li>If Map Screen Loading shows an error, users may see a blank map or no pins.</li>
+                    <li>If Live Trip Data fails, map can open but active rides may not appear.</li>
+                    <li>If everything says OK, the map is healthy for both staff and riders.</li>
+                </ul>
+            </div>
+
+            <div class="mt-4 rounded-lg border border-gray-200 bg-gray-50 p-4">
+                <h3 class="text-sm font-semibold text-gray-900">Simple action guide</h3>
+                <div class="mt-2 grid gap-2 md:grid-cols-2">
+                    <div class="rounded-md border border-gray-200 bg-white p-3 text-sm text-gray-700">
+                        <p class="font-semibold text-gray-900">"No" on Map Access Code</p>
+                        <p class="mt-1">Add or fix the map key in your environment settings, then check again.</p>
+                    </div>
+                    <div class="rounded-md border border-gray-200 bg-white p-3 text-sm text-gray-700">
+                        <p class="font-semibold text-gray-900">Map screen does not load</p>
+                        <p class="mt-1">Make sure your allowed website list includes this site address.</p>
+                    </div>
+                    <div class="rounded-md border border-gray-200 bg-white p-3 text-sm text-gray-700">
+                        <p class="font-semibold text-gray-900">Live Trip Data shows error</p>
+                        <p class="mt-1">Check backend service health and database connectivity.</p>
+                    </div>
+                    <div class="rounded-md border border-gray-200 bg-white p-3 text-sm text-gray-700">
+                        <p class="font-semibold text-gray-900">Still not fixed</p>
+                        <p class="mt-1">Share this page screenshot with your support/admin team.</p>
+                    </div>
+                </div>
+            </div>
 
             <div id="gmaps-referrer-help" class="mt-3 hidden rounded-lg border border-amber-200 bg-amber-50 p-3">
                 <div class="flex flex-wrap items-center justify-between gap-2">
-                    <p class="text-xs font-semibold uppercase tracking-wide text-amber-800">Copy Referrer Rules</p>
+                    <p class="text-xs font-semibold uppercase tracking-wide text-amber-800">Copy Allowed Website Rules</p>
                     <button
                         type="button"
                         id="gmaps-copy-referrers"
@@ -56,7 +88,7 @@
                         Copy Rules
                     </button>
                 </div>
-                <p class="mt-1 text-xs text-amber-900">Add these HTTP referrer entries to your Google Maps browser key restrictions.</p>
+                <p class="mt-1 text-xs text-amber-900">Add these website addresses in your Google Maps key settings so this app is allowed to load maps.</p>
                 <textarea
                     id="gmaps-referrer-rules"
                     readonly
@@ -129,11 +161,11 @@
 
                 try {
                     await navigator.clipboard.writeText(referrerRulesEl.value);
-                    noteEl.textContent = 'Referrer rules copied to clipboard.';
+                    noteEl.textContent = 'Allowed website rules copied.';
                 } catch (error) {
                     referrerRulesEl.focus();
                     referrerRulesEl.select();
-                    noteEl.textContent = 'Unable to access clipboard. Referrer rules selected for manual copy.';
+                    noteEl.textContent = 'Clipboard is blocked. Rules are selected, so you can copy manually.';
                 }
             });
 
@@ -171,7 +203,7 @@
                 setState(configSourceEl, configSource, configSource !== 'missing');
                 setState(scriptStatusEl, 'Checking...', null);
                 setState(liveStatusEl, 'Checking...', null);
-                noteEl.textContent = 'Running checks...';
+                noteEl.textContent = 'Checking map health...';
                 hideReferrerHelp();
 
                 try {
@@ -187,17 +219,17 @@
                         setState(configSourceEl, checks.config_source || 'missing', (checks.config_source || 'missing') !== 'missing');
                     }
                 } catch (error) {
-                    setState(configSourceEl, 'preflight endpoint error', false);
+                    setState(configSourceEl, 'Unable to read settings', false);
                 }
 
                 try {
                     if (!hasKey) {
-                        throw new Error('API key missing');
+                        throw new Error('Map access code is missing');
                     }
 
                     const loaded = await loadGoogleScript();
                     if (!loaded) {
-                        throw new Error('Script loaded but google.maps unavailable');
+                        throw new Error('Map service did not finish loading');
                     }
 
                     setState(scriptStatusEl, 'Loaded', true);
@@ -240,16 +272,16 @@
                     });
 
                     if (!response.ok) {
-                        setState(liveStatusEl, `HTTP ${response.status}`, false);
+                        setState(liveStatusEl, `Service unavailable (${response.status})`, false);
                     } else {
                         const payload = await response.json();
                         setState(liveStatusEl, payload.success ? 'OK' : 'Unexpected payload', !!payload.success);
                     }
                 } catch (error) {
-                    setState(liveStatusEl, error.message || 'Request failed', false);
+                    setState(liveStatusEl, error.message || 'Unable to load live trip data', false);
                 }
 
-                noteEl.textContent = 'Preflight completed.';
+                noteEl.textContent = 'Check completed. See the simple action guide above if any item failed.';
             };
 
             runButton?.addEventListener('click', runPreflight);

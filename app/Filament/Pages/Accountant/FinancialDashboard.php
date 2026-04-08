@@ -2,6 +2,7 @@
 
 namespace App\Filament\Pages\Accountant;
 
+use App\Enums\UserRole;
 use App\Services\ActionAuditLogger;
 use Filament\Notifications\Notification;
 use Filament\Pages\Page;
@@ -52,7 +53,14 @@ class FinancialDashboard extends Page
 
     public static function canAccess(): bool
     {
-        return auth()->check() && (auth()->user()->hasRole('accountant') || auth()->user()->hasRole('ACCOUNTANT'));
+        $user = auth()->user();
+
+        if (! $user) {
+            return false;
+        }
+
+        return ($user->role === UserRole::ACCOUNTANT)
+            || $user->hasAnyRole(['Accountant', 'accountant', 'ACCOUNTANT']);
     }
 
     public function getTitle(): string

@@ -2,6 +2,7 @@
 
 namespace App\Filament\Pages\Accountant;
 
+use App\Enums\UserRole;
 use App\Services\ActionAuditLogger;
 use Filament\Notifications\Notification;
 use Filament\Pages\Page;
@@ -38,7 +39,14 @@ class TransactionsPage extends Page
 
     public static function canAccess(): bool
     {
-        return auth()->check() && (auth()->user()->hasRole('accountant') || auth()->user()->hasRole('ACCOUNTANT'));
+        $user = auth()->user();
+
+        if (! $user) {
+            return false;
+        }
+
+        return ($user->role === UserRole::ACCOUNTANT)
+            || $user->hasAnyRole(['Accountant', 'accountant', 'ACCOUNTANT']);
     }
 
     public function getTitle(): string
@@ -101,16 +109,31 @@ class TransactionsPage extends Page
         if (Schema::hasColumn('payments', 'reviewed_at')) {
             $updates['reviewed_at'] = now();
         }
-        if ($updates === [] && Schema::hasColumn('payments', 'status')) {
-            $updates['status'] = 'reviewed';
+        if (Schema::hasColumn('payments', 'metadata')) {
+            $currentMetadata = DB::table('payments')->where('id', $transactionId)->value('metadata');
+
+            if (is_string($currentMetadata)) {
+                $decoded = json_decode($currentMetadata, true);
+                $currentMetadata = is_array($decoded) ? $decoded : [];
+            }
+
+            if (! is_array($currentMetadata)) {
+                $currentMetadata = [];
+            }
+
+            $currentMetadata['reviewed_by_user_id'] = (int) auth()->id();
+            $currentMetadata['reviewed_at'] = now()->toIso8601String();
+            $updates['metadata'] = $currentMetadata;
         }
         if (Schema::hasColumn('payments', 'updated_at')) {
             $updates['updated_at'] = now();
         }
 
-        DB::table('payments')
-            ->where('id', $transactionId)
-            ->update($updates);
+        if ($updates !== []) {
+            DB::table('payments')
+                ->where('id', $transactionId)
+                ->update($updates);
+        }
 
         app(ActionAuditLogger::class)->log(
             'transaction.review',

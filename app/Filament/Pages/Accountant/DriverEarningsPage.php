@@ -2,6 +2,7 @@
 
 namespace App\Filament\Pages\Accountant;
 
+use App\Enums\UserRole;
 use Filament\Pages\Page;
 use Illuminate\Contracts\Support\Htmlable;
 use Illuminate\Support\Facades\DB;
@@ -34,7 +35,14 @@ class DriverEarningsPage extends Page
 
     public static function canAccess(): bool
     {
-        return auth()->check() && (auth()->user()->hasRole('accountant') || auth()->user()->hasRole('ACCOUNTANT'));
+        $user = auth()->user();
+
+        if (! $user) {
+            return false;
+        }
+
+        return ($user->role === UserRole::ACCOUNTANT)
+            || $user->hasAnyRole(['Accountant', 'accountant', 'ACCOUNTANT']);
     }
 
     public function getTitle(): string
@@ -54,17 +62,35 @@ class DriverEarningsPage extends Page
             return;
         }
 
-        $columns = collect(['driver_id', 'amount', 'commission_deducted', 'status', 'created_at'])
-            ->filter(fn (string $column): bool => Schema::hasColumn('driver_payouts', $column))
-            ->values()
-            ->all();
-
-        if ($columns === []) {
+        if (!Schema::hasColumn('driver_payouts', 'driver_id')) {
             return;
         }
 
-        $driverData = DB::table('driver_payouts')
-            ->select($columns)
+        $query = DB::table('driver_payouts')->select(['driver_id']);
+
+        if (Schema::hasColumn('driver_payouts', 'amount')) {
+            $query->addSelect(DB::raw('SUM(COALESCE(amount, 0)) as amount'));
+        } else {
+            $query->addSelect(DB::raw('0 as amount'));
+        }
+
+        if (Schema::hasColumn('driver_payouts', 'commission_deducted')) {
+            $query->addSelect(DB::raw('SUM(COALESCE(commission_deducted, 0)) as commission_deducted'));
+        } else {
+            $query->addSelect(DB::raw('0 as commission_deducted'));
+        }
+
+        if (Schema::hasColumn('driver_payouts', 'created_at')) {
+            $query->addSelect(DB::raw('MAX(created_at) as last_payout_at'));
+        }
+
+        if (Schema::hasColumn('driver_payouts', 'status')) {
+            $query->addSelect(DB::raw('MAX(status) as status'));
+        }
+
+        $query->addSelect(DB::raw('COUNT(*) as payout_count'));
+
+        $driverData = $query
             ->groupBy('driver_id')
             ->get()
             ->map(function ($row): array {

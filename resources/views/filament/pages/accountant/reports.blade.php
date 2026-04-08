@@ -119,6 +119,46 @@
             </p>
         </section>
 
+        <section class="rounded-xl border border-slate-200 bg-white p-5 shadow-sm">
+            <h2 class="text-base font-semibold text-slate-900 mb-3">Recent Downloads</h2>
+
+            @if (count($downloadHistory) === 0)
+                <p class="text-sm text-slate-600">No downloaded files yet. Export any report to see it here.</p>
+            @else
+                <div class="overflow-x-auto">
+                    <table class="min-w-full text-sm">
+                        <thead>
+                            <tr class="border-b border-slate-200 text-left text-xs uppercase tracking-wide text-slate-500">
+                                <th class="py-2 pr-4">File</th>
+                                <th class="py-2 pr-4">Generated</th>
+                                <th class="py-2 pr-4">Size</th>
+                                <th class="py-2">Action</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @foreach ($downloadHistory as $item)
+                                <tr class="border-b border-slate-100">
+                                    <td class="py-2 pr-4 font-medium text-slate-800">{{ $item['name'] }}</td>
+                                    <td class="py-2 pr-4 text-slate-600">{{ $item['generated_at'] }}</td>
+                                    <td class="py-2 pr-4 text-slate-600">{{ $item['size_label'] }}</td>
+                                    <td class="py-2">
+                                        <a
+                                            href="{{ $item['download_url'] }}"
+                                            target="_blank"
+                                            rel="noopener noreferrer"
+                                            class="inline-flex items-center rounded-md bg-slate-900 px-3 py-1.5 text-xs font-medium text-white hover:bg-black"
+                                        >
+                                            Download
+                                        </a>
+                                    </td>
+                                </tr>
+                            @endforeach
+                        </tbody>
+                    </table>
+                </div>
+            @endif
+        </section>
+
         <!-- Export Information -->
         <section class="rounded-xl border border-green-200 bg-green-50 p-4">
             <p class="text-xs text-green-900">

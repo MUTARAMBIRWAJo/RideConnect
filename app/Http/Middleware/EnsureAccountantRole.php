@@ -2,6 +2,7 @@
 
 namespace App\Http\Middleware;
 
+use App\Enums\UserRole;
 use Closure;
 use Illuminate\Http\Request;
 
@@ -14,9 +15,12 @@ class EnsureAccountantRole
         }
 
         $user = auth()->user();
-        
-        // Check if user has accountant role via Spatie Permissions
-        if (!$user->hasRole('accountant') && !$user->hasRole('ACCOUNTANT')) {
+
+        // Accept either enum-backed role or Spatie role assignment.
+        $hasAccountantAccess = ($user->role === UserRole::ACCOUNTANT)
+            || $user->hasAnyRole(['Accountant', 'accountant', 'ACCOUNTANT']);
+
+        if (! $hasAccountantAccess) {
             abort(403, 'Only Accountants can access this panel.');
         }
 
