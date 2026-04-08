@@ -20,6 +20,15 @@ class LiveRidesPage extends Page
     /** @var array<int, array<string, mixed>> */
     public array $activeRides = [];
 
+    /** @var array<int, array<string, mixed>> */
+    public array $availableDrivers = [];
+
+    public ?int $reassignRideId = null;
+
+    public ?int $reassignCurrentDriverId = null;
+
+    public ?int $selectedDriverId = null;
+
     public int $totalActiveCount = 0;
 
     public static function getNavigationLabel(): string
@@ -112,6 +121,57 @@ class LiveRidesPage extends Page
             ->send();
     }
 
+    public function prepareReassignment(int $rideId): void
+    {
+        if (!auth()->user()->can('manage rides')) {
+            abort(403);
+        }
+
+        $ride = DB::table('rides')->where('id', $rideId)->first(['id', 'driver_id']);
+
+        if (! $ride) {
+            Notification::make()
+                ->title('Ride not found')
+                ->danger()
+                ->send();
+
+            return;
+        }
+
+        $this->reassignRideId = (int) $ride->id;
+        $this->reassignCurrentDriverId = isset($ride->driver_id) ? (int) $ride->driver_id : null;
+        $this->availableDrivers = $this->resolveAvailableDrivers($this->reassignCurrentDriverId);
+        $this->selectedDriverId = $this->availableDrivers[0]['driver_id'] ?? null;
+    }
+
+    public function cancelReassignment(): void
+    {
+        $this->resetReassignmentState();
+    }
+
+    public function confirmReassignment(): void
+    {
+        if (! $this->reassignRideId) {
+            Notification::make()
+                ->title('No ride selected')
+                ->warning()
+                ->send();
+
+            return;
+        }
+
+        if (! $this->selectedDriverId) {
+            Notification::make()
+                ->title('Select a driver first')
+                ->warning()
+                ->send();
+
+            return;
+        }
+
+        $this->reassignDriver((int) $this->reassignRideId, (int) $this->selectedDriverId);
+    }
+
     public function reassignDriver(int $rideId, ?int $newDriverId = null): void
     {
         if (!auth()->user()->can('manage rides')) {
@@ -186,6 +246,108 @@ class LiveRidesPage extends Page
             ->body('Driver and passenger notifications have been sent.')
             ->success()
             ->send();
+
+        $this->resetReassignmentState();
+    }
+
+    /**
+     * @return array<int, array<string, mixed>>
+     */
+    private function resolveAvailableDrivers(?int $excludeDriverId = null): array
+    {
+        if (! Schema::hasTable('drivers')) {
+            return [];
+        }
+
+        $hasUsersTable = Schema::hasTable('users');
+        $hasVehiclesTable = Schema::hasTable('vehicles');
+
+        $query = DB::table('drivers')
+            ->select([
+                'drivers.id as driver_id',
+                'drivers.license_plate',
+                'drivers.status as driver_status',
+            ]);
+
+        if ($hasUsersTable && Schema::hasColumn('drivers', 'user_id') && Schema::hasColumn('users', 'id')) {
+            $query->leftJoin('users', 'users.id', '=', 'drivers.user_id');
+            if (Schema::hasColumn('users', 'name')) {
+                $query->addSelect('users.name as driver_name');
+            }
+        }
+
+        if (Schema::hasColumn('drivers', 'availability_status')) {
+            $query->addSelect('drivers.availability_status');
+            $query->orderByRaw("CASE WHEN LOWER(drivers.availability_status) = 'online' THEN 0 ELSE 1 END");
+        }
+
+        if (Schema::hasColumn('drivers', 'is_online')) {
+            $query->addSelect('drivers.is_online');
+            $query->orderByRaw('CASE WHEN drivers.is_online = true THEN 0 ELSE 1 END');
+        }
+
+        if (Schema::hasColumn('drivers', 'current_latitude')) {
+            $query->addSelect('drivers.current_latitude');
+        }
+
+        if (Schema::hasColumn('drivers', 'current_longitude')) {
+            $query->addSelect('drivers.current_longitude');
+        }
+
+        if ($excludeDriverId !== null) {
+            $query->where('drivers.id', '!=', $excludeDriverId);
+        }
+
+        if (Schema::hasColumn('drivers', 'status')) {
+            $query->whereIn(DB::raw('LOWER(drivers.status)'), ['approved', 'active', 'available']);
+        }
+
+        $drivers = $query
+            ->orderBy('drivers.id')
+            ->limit(30)
+            ->get();
+
+        $vehicleByDriver = collect();
+
+        if ($hasVehiclesTable && Schema::hasColumn('vehicles', 'driver_id')) {
+            $vehicleRows = DB::table('vehicles')
+                ->select(array_filter([
+                    'driver_id',
+                    Schema::hasColumn('vehicles', 'make') ? 'make' : null,
+                    Schema::hasColumn('vehicles', 'model') ? 'model' : null,
+                    Schema::hasColumn('vehicles', 'color') ? 'color' : null,
+                    Schema::hasColumn('vehicles', 'is_active') ? 'is_active' : null,
+                    Schema::hasColumn('vehicles', 'id') ? 'id' : null,
+                ]))
+                ->when(Schema::hasColumn('vehicles', 'is_active'), fn ($q) => $q->orderByDesc('is_active'))
+                ->orderByDesc('id')
+                ->get();
+
+            $vehicleByDriver = $vehicleRows->groupBy('driver_id')->map(fn ($group) => $group->first());
+        }
+
+        return $drivers->map(function ($driver) use ($vehicleByDriver): array {
+            $vehicle = $vehicleByDriver->get($driver->driver_id);
+            $vehicleLabelParts = array_filter([
+                $vehicle->make ?? null,
+                $vehicle->model ?? null,
+                $vehicle->color ?? null,
+            ]);
+
+            $lat = $driver->current_latitude ?? null;
+            $lng = $driver->current_longitude ?? null;
+
+            return [
+                'driver_id' => (int) $driver->driver_id,
+                'driver_name' => $driver->driver_name ?? ('Driver #'.$driver->driver_id),
+                'license_plate' => $driver->license_plate ?? 'N/A',
+                'vehicle' => ! empty($vehicleLabelParts) ? implode(' • ', $vehicleLabelParts) : 'Vehicle details unavailable',
+                'availability' => $driver->availability_status ?? ((isset($driver->is_online) && $driver->is_online) ? 'online' : 'offline'),
+                'location' => ($lat !== null && $lng !== null)
+                    ? number_format((float) $lat, 6).', '.number_format((float) $lng, 6)
+                    : 'Unknown location',
+            ];
+        })->values()->all();
     }
 
     private function resolveReplacementDriverId(?int $currentDriverId): ?int
@@ -291,5 +453,13 @@ class LiveRidesPage extends Page
                 ]
             );
         }
+    }
+
+    private function resetReassignmentState(): void
+    {
+        $this->reassignRideId = null;
+        $this->reassignCurrentDriverId = null;
+        $this->selectedDriverId = null;
+        $this->availableDrivers = [];
     }
 }

@@ -64,7 +64,7 @@ class DriverManagementPage extends Page
             return;
         }
 
-        $columns = collect(['id', 'name', 'status', 'is_online', 'rating', 'completed_rides', 'vehicle_id', 'created_at'])
+        $columns = collect(['id', 'name', 'status', 'is_online', 'availability_status', 'rating', 'completed_rides', 'vehicle_id', 'created_at'])
             ->filter(fn (string $column): bool => Schema::hasColumn('drivers', $column))
             ->values()
             ->all();
@@ -75,7 +75,14 @@ class DriverManagementPage extends Page
 
         $query = DB::table('drivers')->select($columns);
 
-        $this->drivers = $query->latest('id')->get()->map(fn ($row): array => (array) $row)->all();
+        $this->drivers = $query->latest('id')->get()->map(function ($row): array {
+            $driver = (array) $row;
+
+            $driver['is_online'] = (bool) ($driver['is_online'] ?? false)
+                || strtolower((string) ($driver['availability_status'] ?? '')) === 'online';
+
+            return $driver;
+        })->all();
 
         $this->totalDrivers = count($this->drivers);
         $this->onlineDrivers = collect($this->drivers)->filter(fn ($d) => $d['is_online'] ?? false)->count();
@@ -146,9 +153,33 @@ class DriverManagementPage extends Page
             abort(403);
         }
 
+        $hasIsOnlineColumn = Schema::hasColumn('drivers', 'is_online');
+        $hasAvailabilityStatusColumn = Schema::hasColumn('drivers', 'availability_status');
+
+        if (! $hasIsOnlineColumn && ! $hasAvailabilityStatusColumn) {
+            Notification::make()
+                ->title('Online status is not configurable in this environment')
+                ->warning()
+                ->send();
+
+            return;
+        }
+
         $driver = DB::table('drivers')->where('id', $driverId)->first();
         if ($driver) {
-            $updates = ['is_online' => !$driver->is_online];
+            $currentlyOnline = (bool) ($driver->is_online ?? false)
+                || strtolower((string) ($driver->availability_status ?? '')) === 'online';
+
+            $updates = [];
+
+            if ($hasIsOnlineColumn) {
+                $updates['is_online'] = ! $currentlyOnline;
+            }
+
+            if ($hasAvailabilityStatusColumn) {
+                $updates['availability_status'] = $currentlyOnline ? 'offline' : 'online';
+            }
+
             if (Schema::hasColumn('drivers', 'updated_at')) {
                 $updates['updated_at'] = now();
             }
@@ -160,7 +191,7 @@ class DriverManagementPage extends Page
             app(ActionAuditLogger::class)->log(
                 'driver.toggle_online_status',
                 'Officer toggled online status for driver #'.$driverId,
-                ['driver_id' => $driverId, 'is_online' => !$driver->is_online],
+                ['driver_id' => $driverId, 'is_online' => ! $currentlyOnline],
             );
 
             Notification::make()

@@ -34,6 +34,9 @@
                     </thead>
                     <tbody>
                         @forelse ($drivers as $driver)
+                            @php
+                                $isOnline = (bool) ($driver['is_online'] ?? false);
+                            @endphp
                             <tr class="border-b border-slate-100 hover:bg-slate-50 transition">
                                 <td class="py-3 pr-3 font-medium text-slate-900">{{ $driver['name'] ?? 'Unknown' }}</td>
                                 <td class="py-3 pr-3">
@@ -42,8 +45,8 @@
                                     </span>
                                 </td>
                                 <td class="py-3 pr-3">
-                                    <span class="inline-flex items-center {{ $driver['is_online'] ? 'text-green-600' : 'text-slate-400' }}">
-                                        <span class="mr-1">●</span> {{ $driver['is_online'] ? 'Online' : 'Offline' }}
+                                    <span class="inline-flex items-center {{ $isOnline ? 'text-green-600' : 'text-slate-400' }}">
+                                        <span class="mr-1">●</span> {{ $isOnline ? 'Online' : 'Offline' }}
                                     </span>
                                 </td>
                                 <td class="py-3 pr-3 font-semibold text-amber-600">⭐ {{ $driver['rating'] ?? '0' }}</td>

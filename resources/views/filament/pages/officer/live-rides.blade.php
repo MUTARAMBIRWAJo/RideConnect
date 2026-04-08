@@ -50,18 +50,13 @@
                                 <td class="py-3 pr-3 font-semibold text-slate-900">{{ isset($ride['estimated_fare']) ? '$' . number_format($ride['estimated_fare'], 2) : 'N/A' }}</td>
                                 <td class="py-3">
                                     <div class="flex gap-2">
-                                        <x-filament::modal width="md">
-                                            <x-slot name="trigger">
-                                                <button type="button" class="text-xs bg-orange-100 text-orange-700 px-2 py-1 rounded hover:bg-orange-200 transition">Reassign</button>
-                                            </x-slot>
-
-                                            <div class="space-y-4">
-                                                <p class="text-sm text-slate-700">Reassign this ride to another available driver?</p>
-                                                <div class="flex justify-end">
-                                                    <x-filament::button size="sm" color="warning" wire:click="reassignDriver({{ (int) ($ride['id'] ?? 0) }})">Confirm Reassign</x-filament::button>
-                                                </div>
-                                            </div>
-                                        </x-filament::modal>
+                                        <button
+                                            type="button"
+                                            class="text-xs bg-orange-100 text-orange-700 px-2 py-1 rounded hover:bg-orange-200 transition"
+                                            wire:click="prepareReassignment({{ (int) ($ride['id'] ?? 0) }})"
+                                        >
+                                            Reassign
+                                        </button>
 
                                         <x-filament::modal width="md">
                                             <x-slot name="trigger">
@@ -78,6 +73,55 @@
                                     </div>
                                 </td>
                             </tr>
+
+                            @if ((int) ($reassignRideId ?? 0) === (int) ($ride['id'] ?? 0))
+                                <tr class="bg-orange-50/60 border-b border-slate-100">
+                                    <td colspan="7" class="p-4">
+                                        <div class="rounded-xl border border-orange-200 bg-white p-4 space-y-4">
+                                            <div class="flex items-center justify-between gap-3">
+                                                <div>
+                                                    <p class="text-sm font-semibold text-slate-900">Reassign Ride #{{ $ride['id'] ?? '-' }}</p>
+                                                    <p class="text-xs text-slate-600">
+                                                        Current driver: {{ $reassignCurrentDriverId ? '#'.$reassignCurrentDriverId : 'N/A' }}
+                                                    </p>
+                                                </div>
+                                                <x-filament::button size="xs" color="gray" wire:click="cancelReassignment">Close</x-filament::button>
+                                            </div>
+
+                                            @if (empty($availableDrivers))
+                                                <p class="text-sm text-amber-700">No available drivers were found for reassignment.</p>
+                                            @else
+                                                <div class="grid gap-3 md:grid-cols-2 xl:grid-cols-3">
+                                                    @foreach ($availableDrivers as $driver)
+                                                        @php
+                                                            $isSelected = (int) ($selectedDriverId ?? 0) === (int) ($driver['driver_id'] ?? 0);
+                                                        @endphp
+                                                        <button
+                                                            type="button"
+                                                            wire:click="$set('selectedDriverId', {{ (int) ($driver['driver_id'] ?? 0) }})"
+                                                            class="text-left rounded-lg border p-3 transition {{ $isSelected ? 'border-orange-500 bg-orange-50 ring-1 ring-orange-300' : 'border-slate-200 bg-white hover:border-orange-300' }}"
+                                                        >
+                                                            <p class="text-sm font-semibold text-slate-900">{{ $driver['driver_name'] ?? 'Driver' }}</p>
+                                                            <p class="text-xs text-slate-600 mt-1">Driver ID: #{{ $driver['driver_id'] ?? '-' }}</p>
+                                                            <p class="text-xs text-slate-600">Plate: {{ $driver['license_plate'] ?? 'N/A' }}</p>
+                                                            <p class="text-xs text-slate-600">Vehicle: {{ $driver['vehicle'] ?? 'N/A' }}</p>
+                                                            <p class="text-xs text-slate-600">Location: {{ $driver['location'] ?? 'Unknown' }}</p>
+                                                            <p class="mt-2 inline-block rounded-full px-2 py-1 text-[11px] font-semibold {{ strtolower((string) ($driver['availability'] ?? 'offline')) === 'online' ? 'bg-emerald-100 text-emerald-700' : 'bg-slate-100 text-slate-700' }}">
+                                                                {{ strtoupper((string) ($driver['availability'] ?? 'OFFLINE')) }}
+                                                            </p>
+                                                        </button>
+                                                    @endforeach
+                                                </div>
+
+                                                <div class="flex items-center justify-end gap-2 pt-1">
+                                                    <x-filament::button size="sm" color="gray" wire:click="cancelReassignment">Cancel</x-filament::button>
+                                                    <x-filament::button size="sm" color="warning" wire:click="confirmReassignment" :disabled="! $selectedDriverId">Confirm Reassign</x-filament::button>
+                                                </div>
+                                            @endif
+                                        </div>
+                                    </td>
+                                </tr>
+                            @endif
                         @empty
                             <tr>
                                 <td colspan="7" class="py-8 text-center text-slate-500 text-sm">No active rides at this moment.</td>
