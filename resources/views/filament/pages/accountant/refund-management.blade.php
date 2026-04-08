@@ -11,7 +11,7 @@
 
         <!-- Refund Stats -->
         <section class="grid grid-cols-1 gap-4 md:grid-cols-3">
-            <x-dashboard-card title="Total Refunded" :value="'$' . number_format($totalRefundAmount, 2)" subtitle="All time" tone="orange" />
+            <x-dashboard-card title="Total Refunded" :value="'RWF ' . number_format($totalRefundAmount, 2)" subtitle="All time" tone="orange" />
             <x-dashboard-card title="Pending Refunds" :value="number_format($pendingRefunds)" subtitle="Awaiting approval" tone="red" />
             <x-dashboard-card title="Approved Refunds" :value="number_format($approvedRefunds)" subtitle="Already processed" tone="green" />
         </section>
@@ -37,7 +37,7 @@
                             <tr class="border-b border-slate-100 hover:bg-slate-50 transition">
                                 <td class="py-3 pr-3 font-mono text-slate-700">#{{ $refund['id'] ?? '-' }}</td>
                                 <td class="py-3 pr-3 text-slate-900">Ride #{{ $refund['ride_id'] ?? '-' }}</td>
-                                <td class="py-3 pr-3 font-semibold text-slate-900">${{ number_format($refund['amount'] ?? 0, 2) }}</td>
+                                <td class="py-3 pr-3 font-semibold text-slate-900">RWF {{ number_format($refund['amount'] ?? 0, 2) }}</td>
                                 <td class="py-3 pr-3 text-xs text-slate-600">{{ substr($refund['reason'] ?? 'No reason provided', 0, 30) }}...</td>
                                 <td class="py-3 pr-3">
                                     <span class="inline-block rounded-full {{ in_array($refund['status'] ?? '', ['pending', 'PENDING']) ? 'bg-yellow-100 text-yellow-700' : (in_array($refund['status'] ?? '', ['approved', 'APPROVED', 'completed', 'COMPLETED']) ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700') }} px-2 py-1 text-xs font-medium">

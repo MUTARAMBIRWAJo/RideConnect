@@ -11,10 +11,10 @@
 
         <!-- Primary KPI Cards -->
         <section class="grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-4">
-            <x-dashboard-card title="Total Revenue" :value="'$' . number_format($totalRevenue, 2)" subtitle="All time" tone="amber" />
-            <x-dashboard-card title="Monthly Revenue" :value="'$' . number_format($monthlyRevenue, 2)" subtitle="This month" tone="orange" />
-            <x-dashboard-card title="Commissions Today" :value="'$' . number_format($commissionToday, 2)" subtitle="Earned today" tone="green" />
-            <x-dashboard-card title="Pending Payouts" :value="'$' . number_format($pendingPayoutAmount, 2)" subtitle="{{ $pendingPayouts }} drivers" tone="red" />
+            <x-dashboard-card title="Total Revenue" :value="'RWF ' . number_format($totalRevenue, 2)" subtitle="All time" tone="amber" />
+            <x-dashboard-card title="Monthly Revenue" :value="'RWF ' . number_format($monthlyRevenue, 2)" subtitle="This month" tone="orange" />
+            <x-dashboard-card title="Commissions Today" :value="'RWF ' . number_format($commissionToday, 2)" subtitle="Earned today" tone="green" />
+            <x-dashboard-card title="Pending Payouts" :value="'RWF ' . number_format($pendingPayoutAmount, 2)" subtitle="{{ $pendingPayouts }} drivers" tone="red" />
         </section>
 
         <!-- Payment Stats -->
@@ -63,7 +63,7 @@
                             @forelse ($recentPayments as $payment)
                                 <tr class="border-b border-slate-100">
                                     <td class="py-2 pr-3 font-mono text-slate-700">#{{ $payment['id'] ?? '-' }}</td>
-                                    <td class="py-2 pr-3 font-semibold text-slate-900">${{ number_format($payment['amount'] ?? 0, 2) }}</td>
+                                    <td class="py-2 pr-3 font-semibold text-slate-900">RWF {{ number_format($payment['amount'] ?? 0, 2) }}</td>
                                     <td class="py-2 pr-3">
                                         <span class="inline-block rounded-full bg-green-100 px-2 py-1 text-xs font-medium text-green-700">
                                             {{ strtoupper($payment['status'] ?? '-') }}
@@ -98,7 +98,7 @@
                             @forelse ($failedPayments as $payment)
                                 <tr class="border-b border-red-100">
                                     <td class="py-2 pr-3 font-mono text-red-700">#{{ $payment['id'] ?? '-' }}</td>
-                                    <td class="py-2 pr-3 font-semibold text-red-900">${{ number_format($payment['amount'] ?? 0, 2) }}</td>
+                                    <td class="py-2 pr-3 font-semibold text-red-900">RWF {{ number_format($payment['amount'] ?? 0, 2) }}</td>
                                     <td class="py-2 pr-3 text-red-700">{{ $payment['retry_count'] ?? 0 }}/3</td>
                                     <td class="py-2">
                                         <x-filament::modal width="md">
@@ -146,7 +146,7 @@
                             <tr class="border-b border-orange-100">
                                 <td class="py-2 pr-3 font-mono text-orange-700">#{{ $payout['id'] ?? '-' }}</td>
                                 <td class="py-2 pr-3 text-orange-900">Driver #{{ $payout['driver_id'] ?? '-' }}</td>
-                                <td class="py-2 pr-3 font-semibold text-orange-900">${{ number_format($payout['amount'] ?? 0, 2) }}</td>
+                                <td class="py-2 pr-3 font-semibold text-orange-900">RWF {{ number_format($payout['amount'] ?? 0, 2) }}</td>
                                 <td class="py-2 pr-3">
                                     <span class="inline-block rounded-full bg-orange-200 px-2 py-1 text-xs font-medium text-orange-900">
                                         {{ strtoupper($payout['status'] ?? 'PENDING') }}

@@ -119,6 +119,46 @@
             </p>
         </section>
 
+        <section class="rounded-xl border border-indigo-200 bg-indigo-50 p-5">
+            <div class="flex flex-wrap items-center justify-between gap-2">
+                <div>
+                    <h2 class="text-base font-semibold text-indigo-900">Report Preview</h2>
+                    <p class="text-xs text-indigo-700">
+                        {{ $previewReportTitle ?? 'No preview selected' }}
+                        @if ($previewGeneratedAt)
+                            | Generated: {{ $previewGeneratedAt }}
+                        @endif
+                    </p>
+                </div>
+                <span class="rounded-md bg-indigo-100 px-2.5 py-1 text-xs font-medium text-indigo-800">View Report Output</span>
+            </div>
+
+            @if (count($reportPreviewRows) === 0)
+                <p class="mt-3 text-sm text-indigo-800">No preview data available for this report type.</p>
+            @else
+                <div class="mt-3 overflow-x-auto rounded-lg border border-indigo-200 bg-white">
+                    <table class="min-w-full text-xs">
+                        <thead>
+                            <tr class="border-b border-indigo-100 text-left uppercase tracking-wide text-indigo-600">
+                                @foreach ($reportPreviewHeaders as $header)
+                                    <th class="px-3 py-2">{{ $header }}</th>
+                                @endforeach
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @foreach ($reportPreviewRows as $row)
+                                <tr class="border-b border-indigo-50">
+                                    @foreach ($reportPreviewHeaders as $header)
+                                        <td class="px-3 py-2 text-slate-700">{{ $row[$header] ?? '' }}</td>
+                                    @endforeach
+                                </tr>
+                            @endforeach
+                        </tbody>
+                    </table>
+                </div>
+            @endif
+        </section>
+
         <section class="rounded-xl border border-slate-200 bg-white p-5 shadow-sm">
             <h2 class="text-base font-semibold text-slate-900 mb-3">Recent Downloads</h2>
 
@@ -132,6 +172,7 @@
                                 <th class="py-2 pr-4">File</th>
                                 <th class="py-2 pr-4">Generated</th>
                                 <th class="py-2 pr-4">Size</th>
+                                <th class="py-2 pr-4">Storage</th>
                                 <th class="py-2">Action</th>
                             </tr>
                         </thead>
@@ -141,6 +182,11 @@
                                     <td class="py-2 pr-4 font-medium text-slate-800">{{ $item['name'] }}</td>
                                     <td class="py-2 pr-4 text-slate-600">{{ $item['generated_at'] }}</td>
                                     <td class="py-2 pr-4 text-slate-600">{{ $item['size_label'] }}</td>
+                                    <td class="py-2 pr-4">
+                                        <span class="inline-flex items-center rounded-full border border-amber-200 bg-amber-50 px-2.5 py-1 text-xs font-medium text-amber-800">
+                                            {{ strtoupper($item['disk']) }}
+                                        </span>
+                                    </td>
                                     <td class="py-2">
                                         <a
                                             href="{{ $item['download_url'] }}"

@@ -22,7 +22,7 @@
                 <h2 class="text-base font-semibold text-red-900">⚠️ Fare Mismatch Summary</h2>
                 <p class="mt-1 text-sm text-red-800">
                     Found <strong>{{ $mismatchedCount }}</strong> transactions with discrepancies between estimated and actual fares.
-                    Total mismatch amount: <strong>${{ number_format($totalMismatchAmount, 2) }}</strong>
+                    Total mismatch amount: <strong>RWF {{ number_format($totalMismatchAmount, 2) }}</strong>
                 </p>
                 <div class="mt-3 flex gap-2">
                     <a href="{{ \App\Filament\Pages\Accountant\AuditLogsPage::getUrl(panel: 'accountant') }}?scope=mismatch" class="px-4 py-2 bg-red-600 text-white text-sm rounded hover:bg-red-700 transition">Investigate All</a>
@@ -51,9 +51,9 @@
                         @forelse ($transactions as $transaction)
                             <tr class="border-b border-slate-100 hover:bg-slate-50 transition {{ ($transaction['has_mismatch'] ?? false) ? 'bg-red-50' : '' }}">
                                 <td class="py-3 pr-3 font-mono text-slate-700">#{{ $transaction['id'] ?? '-' }}</td>
-                                <td class="py-3 pr-3 font-semibold text-slate-900">${{ number_format($transaction['amount'] ?? 0, 2) }}</td>
-                                <td class="py-3 pr-3 text-slate-700">${{ number_format($transaction['estimated_fare'] ?? 0, 2) }}</td>
-                                <td class="py-3 pr-3 text-slate-700">${{ number_format($transaction['actual_fare'] ?? 0, 2) }}</td>
+                                <td class="py-3 pr-3 font-semibold text-slate-900">RWF {{ number_format($transaction['amount'] ?? 0, 2) }}</td>
+                                <td class="py-3 pr-3 text-slate-700">RWF {{ number_format($transaction['estimated_fare'] ?? 0, 2) }}</td>
+                                <td class="py-3 pr-3 text-slate-700">RWF {{ number_format($transaction['actual_fare'] ?? 0, 2) }}</td>
                                 <td class="py-3 pr-3">
                                     @if ($transaction['has_mismatch'] ?? false)
                                         <span class="inline-flex items-center gap-1 rounded-full bg-red-100 px-2 py-1 text-xs font-medium text-red-700">

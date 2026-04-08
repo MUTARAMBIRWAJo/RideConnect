@@ -77,8 +77,13 @@ class FinancialDashboard extends Page
 
     public function retryPayment(int $paymentId): void
     {
-        if (!auth()->user()->can('manage finances')) {
-            abort(403);
+        if (! $this->canPerformFinancialActions()) {
+            Notification::make()
+                ->title('You are not authorized to retry payments.')
+                ->danger()
+                ->send();
+
+            return;
         }
 
         if (!Schema::hasTable('payments')) {
@@ -117,8 +122,13 @@ class FinancialDashboard extends Page
 
     public function approvePayout(int $payoutId): void
     {
-        if (!auth()->user()->can('manage finances')) {
-            abort(403);
+        if (! $this->canPerformFinancialActions()) {
+            Notification::make()
+                ->title('You are not authorized to approve payouts.')
+                ->danger()
+                ->send();
+
+            return;
         }
 
         if (!Schema::hasTable('driver_payouts')) {
@@ -165,6 +175,17 @@ class FinancialDashboard extends Page
         $this->recentPayments = $this->resolveRecentPayments();
         $this->failedPayments = $this->resolveFailedPayments();
         $this->pendingPayoutRows = $this->resolvePendingPayoutRows();
+    }
+
+    private function canPerformFinancialActions(): bool
+    {
+        $user = auth()->user();
+
+        if (! $user) {
+            return false;
+        }
+
+        return static::canAccess() || $user->can('manage finances');
     }
 
     private function resolveTotalRevenue(): float

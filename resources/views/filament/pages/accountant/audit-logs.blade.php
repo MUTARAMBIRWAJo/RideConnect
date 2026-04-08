@@ -40,7 +40,7 @@
                                 </td>
                                 <td class="py-3 pr-3">
                                     <span class="font-mono font-semibold {{ ($log['fare_difference'] ?? 0) > 0 ? 'text-orange-600' : 'text-slate-700' }}">
-                                        {{ ($log['fare_difference'] ?? 0) > 0 ? '+' : '' }}${{ number_format($log['fare_difference'] ?? 0, 2) }}
+                                        {{ ($log['fare_difference'] ?? 0) > 0 ? '+' : '' }}RWF {{ number_format($log['fare_difference'] ?? 0, 2) }}
                                     </span>
                                 </td>
                                 <td class="py-3 pr-3">

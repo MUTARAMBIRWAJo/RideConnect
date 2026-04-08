@@ -23,6 +23,12 @@ class DriverEarningsPage extends Page
 
     public float $totalCommissionEarned = 0.0;
 
+    public string $currencyCode = 'RWF';
+
+    public bool $isFallbackData = false;
+
+    public string $dataSourceLabel = 'driver payouts';
+
     public static function getNavigationLabel(): string
     {
         return 'Driver Earnings';
@@ -58,45 +64,83 @@ class DriverEarningsPage extends Page
 
     private function loadDriverEarnings(): void
     {
-        if (!Schema::hasTable('driver_payouts')) {
+        $this->isFallbackData = false;
+        $this->dataSourceLabel = 'driver payouts';
+
+        if (! Schema::hasTable('driver_payouts') || ! Schema::hasColumn('driver_payouts', 'driver_id')) {
+            $this->loadFromTripsFallback();
+
             return;
         }
 
-        if (!Schema::hasColumn('driver_payouts', 'driver_id')) {
+        $candidateColumns = [
+            'driver_id',
+            'total_income',
+            'amount',
+            'payout_amount',
+            'commission_amount',
+            'commission_deducted',
+            'commission',
+            'status',
+            'created_at',
+        ];
+
+        $selectColumns = collect($candidateColumns)
+            ->filter(fn (string $column): bool => Schema::hasColumn('driver_payouts', $column))
+            ->values()
+            ->all();
+
+        $rows = DB::table('driver_payouts')
+            ->select($selectColumns)
+            ->limit(10000)
+            ->get();
+
+        if ($rows->isEmpty()) {
+            $this->loadFromTripsFallback();
+
             return;
         }
 
-        $query = DB::table('driver_payouts')->select(['driver_id']);
+        $driverNameMap = $this->resolveDriverNames(
+            $rows->pluck('driver_id')->filter()->map(fn ($id) => (int) $id)->unique()->values()->all()
+        );
 
-        if (Schema::hasColumn('driver_payouts', 'amount')) {
-            $query->addSelect(DB::raw('SUM(COALESCE(amount, 0)) as amount'));
-        } else {
-            $query->addSelect(DB::raw('0 as amount'));
-        }
-
-        if (Schema::hasColumn('driver_payouts', 'commission_deducted')) {
-            $query->addSelect(DB::raw('SUM(COALESCE(commission_deducted, 0)) as commission_deducted'));
-        } else {
-            $query->addSelect(DB::raw('0 as commission_deducted'));
-        }
-
-        if (Schema::hasColumn('driver_payouts', 'created_at')) {
-            $query->addSelect(DB::raw('MAX(created_at) as last_payout_at'));
-        }
-
-        if (Schema::hasColumn('driver_payouts', 'status')) {
-            $query->addSelect(DB::raw('MAX(status) as status'));
-        }
-
-        $query->addSelect(DB::raw('COUNT(*) as payout_count'));
-
-        $driverData = $query
+        $driverData = $rows
             ->groupBy('driver_id')
-            ->get()
-            ->map(function ($row): array {
-                $row = (array) $row;
-                $row['net_earnings'] = ($row['amount'] ?? 0) - ($row['commission_deducted'] ?? 0);
-                return $row;
+            ->map(function ($group, $driverId) use ($driverNameMap): array {
+                $gross = (float) $group->sum(function ($row): float {
+                    $row = (array) $row;
+
+                    return (float) ($row['total_income'] ?? $row['amount'] ?? $row['payout_amount'] ?? 0);
+                });
+
+                $commission = (float) $group->sum(function ($row): float {
+                    $row = (array) $row;
+
+                    return (float) ($row['commission_amount'] ?? $row['commission_deducted'] ?? $row['commission'] ?? 0);
+                });
+
+                $payout = (float) $group->sum(function ($row): float {
+                    $row = (array) $row;
+
+                    return (float) ($row['payout_amount'] ?? $row['amount'] ?? 0);
+                });
+
+                $net = $payout > 0 ? $payout : max(0.0, $gross - $commission);
+
+                $latest = $group->sortByDesc(fn ($row) => (string) ((array) $row)['created_at'] ?? '')->first();
+                $latest = is_object($latest) ? (array) $latest : (array) ($latest ?? []);
+
+                return [
+                    'driver_id' => (int) $driverId,
+                    'driver_name' => $driverNameMap[(int) $driverId] ?? 'Driver #'.(int) $driverId,
+                    'gross_amount' => $gross,
+                    'amount' => $payout,
+                    'commission_deducted' => $commission,
+                    'net_earnings' => $net,
+                    'status' => (string) ($latest['status'] ?? 'pending'),
+                    'payout_count' => (int) $group->count(),
+                ];
             })
             ->sortByDesc('amount')
             ->values()
@@ -104,7 +148,141 @@ class DriverEarningsPage extends Page
 
         $this->driverEarnings = array_slice($driverData, 0, 50);
         $this->totalDriverCount = count($driverData);
-        $this->totalPaidOut = (float) array_sum(array_column($this->driverEarnings, 'amount'));
-        $this->totalCommissionEarned = (float) array_sum(array_column($this->driverEarnings, 'commission_deducted'));
+        $this->totalPaidOut = (float) array_sum(array_column($driverData, 'amount'));
+        $this->totalCommissionEarned = (float) array_sum(array_column($driverData, 'commission_deducted'));
+    }
+
+    private function loadFromTripsFallback(): void
+    {
+        $this->isFallbackData = true;
+        $this->dataSourceLabel = 'completed trips + platform commissions';
+
+        if (! Schema::hasTable('trips') || ! Schema::hasColumn('trips', 'driver_id')) {
+            return;
+        }
+
+        $select = ['driver_id'];
+
+        if (Schema::hasColumn('trips', 'actual_fare')) {
+            $select[] = 'actual_fare';
+        }
+
+        if (Schema::hasColumn('trips', 'fare')) {
+            $select[] = 'fare';
+        }
+
+        if (Schema::hasColumn('trips', 'status')) {
+            $select[] = 'status';
+        }
+
+        $tripRows = DB::table('trips')
+            ->select($select)
+            ->whereNotNull('driver_id')
+            ->when(Schema::hasColumn('trips', 'status'), function ($query) {
+                $query->whereRaw('LOWER(CAST(status AS TEXT)) = ?', ['completed']);
+            })
+            ->limit(100000)
+            ->get();
+
+        if ($tripRows->isEmpty()) {
+            return;
+        }
+
+        $driverNameMap = $this->resolveDriverNames(
+            $tripRows->pluck('driver_id')->filter()->map(fn ($id) => (int) $id)->unique()->values()->all()
+        );
+        $commissionMap = $this->resolveTripFallbackCommissions(
+            $tripRows->pluck('driver_id')->filter()->map(fn ($id) => (int) $id)->unique()->values()->all()
+        );
+
+        $driverData = $tripRows
+            ->groupBy('driver_id')
+            ->map(function ($group, $driverId) use ($driverNameMap, $commissionMap): array {
+                $gross = (float) $group->sum(function ($row): float {
+                    $row = (array) $row;
+
+                    return (float) ($row['actual_fare'] ?? $row['fare'] ?? 0);
+                });
+
+                $commission = (float) ($commissionMap[(int) $driverId] ?? 0.0);
+                $commission = min($commission, $gross);
+                $net = max(0.0, $gross - $commission);
+
+                return [
+                    'driver_id' => (int) $driverId,
+                    'driver_name' => $driverNameMap[(int) $driverId] ?? 'Driver #'.(int) $driverId,
+                    'gross_amount' => $gross,
+                    'amount' => $net,
+                    'commission_deducted' => $commission,
+                    'net_earnings' => $net,
+                    'status' => 'completed',
+                    'payout_count' => (int) $group->count(),
+                ];
+            })
+            ->sortByDesc('amount')
+            ->values()
+            ->all();
+
+        $this->driverEarnings = array_slice($driverData, 0, 50);
+        $this->totalDriverCount = count($driverData);
+        $this->totalPaidOut = (float) array_sum(array_column($driverData, 'amount'));
+        $this->totalCommissionEarned = (float) array_sum(array_column($driverData, 'commission_deducted'));
+    }
+
+    /**
+     * @param array<int, int> $driverIds
+     * @return array<int, float>
+     */
+    private function resolveTripFallbackCommissions(array $driverIds): array
+    {
+        if ($driverIds === []) {
+            return [];
+        }
+
+        if (! Schema::hasTable('platform_commissions')
+            || ! Schema::hasColumn('platform_commissions', 'driver_id')
+            || ! Schema::hasColumn('platform_commissions', 'commission_amount')) {
+            return [];
+        }
+
+        $rows = DB::table('platform_commissions')
+            ->select(['driver_id', DB::raw('SUM(commission_amount) as total_commission')])
+            ->whereIn('driver_id', $driverIds)
+            ->groupBy('driver_id')
+            ->get();
+
+        return $rows
+            ->mapWithKeys(fn ($row): array => [(int) $row->driver_id => (float) ($row->total_commission ?? 0)])
+            ->all();
+    }
+
+    /**
+     * @param array<int, int> $driverIds
+     * @return array<int, string>
+     */
+    private function resolveDriverNames(array $driverIds): array
+    {
+        if ($driverIds === []) {
+            return [];
+        }
+
+        if (! Schema::hasTable('drivers')) {
+            return [];
+        }
+
+        $query = DB::table('drivers')->whereIn('drivers.id', $driverIds);
+
+        if (Schema::hasTable('users') && Schema::hasColumn('drivers', 'user_id') && Schema::hasColumn('users', 'name')) {
+            $rows = $query
+                ->leftJoin('users', 'users.id', '=', 'drivers.user_id')
+                ->select(['drivers.id as driver_id', 'users.name as driver_name'])
+                ->get();
+
+            return $rows
+                ->mapWithKeys(fn ($row): array => [(int) $row->driver_id => (string) ($row->driver_name ?? 'Driver #'.$row->driver_id)])
+                ->all();
+        }
+
+        return [];
     }
 }

@@ -11,10 +11,19 @@
 
         <!-- Summary Stats -->
         <section class="grid grid-cols-1 gap-4 md:grid-cols-3">
-            <x-dashboard-card title="Total Paid" :value="'$' . number_format($totalPaidOut, 2)" subtitle="To all drivers" tone="green" />
-            <x-dashboard-card title="Commissions" :value="'$' . number_format($totalCommissionEarned, 2)" subtitle="Platform earned" tone="amber" />
+            <x-dashboard-card title="Total Paid" :value="'RWF ' . number_format($totalPaidOut, 2)" subtitle="To all drivers" tone="green" />
+            <x-dashboard-card title="Commissions" :value="'RWF ' . number_format($totalCommissionEarned, 2)" subtitle="Platform earned" tone="amber" />
             <x-dashboard-card title="Drivers Listed" :value="number_format($totalDriverCount)" subtitle="In earnings system" tone="blue" />
         </section>
+
+        @if ($isFallbackData)
+            <section class="rounded-xl border border-amber-200 bg-amber-50 p-4">
+                <p class="text-sm font-medium text-amber-900">Fallback data mode is active.</p>
+                <p class="mt-1 text-xs text-amber-800">
+                    Values are currently estimated from {{ $dataSourceLabel }} because payout records are missing or unavailable.
+                </p>
+            </section>
+        @endif
 
         <!-- Driver Earnings Table -->
         <section class="rounded-xl border border-slate-200 bg-white p-5 shadow-sm">
@@ -23,8 +32,10 @@
                 <table class="w-full text-sm">
                     <thead>
                         <tr class="border-b border-slate-200 text-left text-xs uppercase tracking-wide text-slate-500 font-semibold">
-                            <th class="py-3 pr-3">Driver ID</th>
+                            <th class="py-3 pr-3">Driver</th>
+                            <th class="py-3 pr-3">Payout Count</th>
                             <th class="py-3 pr-3">Gross Amount</th>
+                            <th class="py-3 pr-3">Payout Amount</th>
                             <th class="py-3 pr-3">Commission</th>
                             <th class="py-3 pr-3">Net Earnings</th>
                             <th class="py-3 pr-3">Status</th>
@@ -34,10 +45,15 @@
                     <tbody>
                         @forelse ($driverEarnings as $earning)
                             <tr class="border-b border-slate-100 hover:bg-slate-50 transition">
-                                <td class="py-3 pr-3 font-mono text-slate-700">#{{ $earning['driver_id'] ?? '-' }}</td>
-                                <td class="py-3 pr-3 font-semibold text-slate-900">${{ number_format($earning['amount'] ?? 0, 2) }}</td>
-                                <td class="py-3 pr-3 text-red-600">-${{ number_format($earning['commission_deducted'] ?? 0, 2) }}</td>
-                                <td class="py-3 pr-3 font-semibold text-green-600">${{ number_format($earning['net_earnings'] ?? 0, 2) }}</td>
+                                <td class="py-3 pr-3 text-slate-700">
+                                    <p class="font-medium text-slate-900">{{ $earning['driver_name'] ?? ('Driver #' . ($earning['driver_id'] ?? '-')) }}</p>
+                                    <p class="text-xs text-slate-500">ID: #{{ $earning['driver_id'] ?? '-' }}</p>
+                                </td>
+                                <td class="py-3 pr-3 text-slate-700">{{ number_format($earning['payout_count'] ?? 0) }}</td>
+                                <td class="py-3 pr-3 font-semibold text-slate-900">RWF {{ number_format($earning['gross_amount'] ?? 0, 2) }}</td>
+                                <td class="py-3 pr-3 font-semibold text-slate-900">RWF {{ number_format($earning['amount'] ?? 0, 2) }}</td>
+                                <td class="py-3 pr-3 text-red-600">- RWF {{ number_format($earning['commission_deducted'] ?? 0, 2) }}</td>
+                                <td class="py-3 pr-3 font-semibold text-green-600">RWF {{ number_format($earning['net_earnings'] ?? 0, 2) }}</td>
                                 <td class="py-3 pr-3">
                                     <span class="inline-block rounded-full bg-blue-100 px-2 py-1 text-xs font-medium text-blue-700">
                                         {{ strtoupper($earning['status'] ?? 'PENDING') }}
@@ -49,7 +65,7 @@
                             </tr>
                         @empty
                             <tr>
-                                <td colspan="6" class="py-8 text-center text-slate-500 text-sm">No driver earnings data.</td>
+                                <td colspan="8" class="py-8 text-center text-slate-500 text-sm">No driver earnings data.</td>
                             </tr>
                         @endforelse
                     </tbody>
