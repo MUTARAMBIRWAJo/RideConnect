@@ -69,6 +69,7 @@ class OfficerPanelProvider extends PanelProvider
             ->discoverPages(app_path('Filament/Pages/Officer'), 'App\\Filament\\Pages\\Officer')
             ->pages([
                 \App\Filament\Pages\Officer\OfficerDashboard::class,
+                \App\Filament\Pages\OfficerCreateBookingTrip::class,
                 \App\Filament\Pages\Officer\LiveRidesPage::class,
                 \App\Filament\Pages\Officer\DriverManagementPage::class,
                 \App\Filament\Pages\Officer\ComplaintsPage::class,

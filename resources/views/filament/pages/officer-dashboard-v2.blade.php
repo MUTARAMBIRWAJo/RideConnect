@@ -21,7 +21,7 @@
             <x-slot name="description">Fast access to key operations for your role.</x-slot>
 
             <div class="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
-                <a href="{{ route('filament.admin.pages.officer-create-booking-trip') }}" class="rounded-xl border border-indigo-200 bg-indigo-50 p-4 text-sm text-indigo-700 shadow-sm transition hover:bg-indigo-100 dark:border-indigo-800 dark:bg-indigo-900 dark:text-indigo-200 dark:hover:bg-indigo-800">
+                <a href="{{ route('filament.officer.pages.officer-create-booking-trip') }}" class="rounded-xl border border-indigo-200 bg-indigo-50 p-4 text-sm text-indigo-700 shadow-sm transition hover:bg-indigo-100 dark:border-indigo-800 dark:bg-indigo-900 dark:text-indigo-200 dark:hover:bg-indigo-800">
                     <p class="font-semibold">Create Booking/Trip</p>
                     <p class="mt-1 text-indigo-600 dark:text-indigo-300">Create transportation for passengers.</p>
                 </a>
