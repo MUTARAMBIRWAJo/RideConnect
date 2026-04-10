@@ -18,13 +18,13 @@
 
                 <div class="space-y-3">
                     <a
-                        href="{{ route('filament.admin.resources.bookings.create') }}"
+                        href="{{ route('filament.officer.resources.bookings.create') }}"
                         class="inline-flex w-full items-center justify-center rounded-lg bg-blue-600 px-4 py-2 text-sm font-semibold text-white transition hover:bg-blue-700"
                     >
                         Open Live Booking Form
                     </a>
                     <a
-                        href="{{ route('filament.admin.resources.bookings.index') }}"
+                        href="{{ route('filament.officer.resources.bookings.index') }}"
                         class="inline-flex w-full items-center justify-center rounded-lg border border-gray-300 px-4 py-2 text-sm font-semibold text-gray-700 transition hover:bg-gray-50"
                     >
                         View Booking List
@@ -38,13 +38,13 @@
 
                 <div class="space-y-3">
                     <a
-                        href="{{ route('filament.admin.resources.trips.create') }}"
+                        href="{{ route('filament.officer.resources.trips.create') }}"
                         class="inline-flex w-full items-center justify-center rounded-lg bg-emerald-600 px-4 py-2 text-sm font-semibold text-white transition hover:bg-emerald-700"
                     >
                         Open Live Trip Form
                     </a>
                     <a
-                        href="{{ route('filament.admin.resources.trips.index') }}"
+                        href="{{ route('filament.officer.resources.trips.index') }}"
                         class="inline-flex w-full items-center justify-center rounded-lg border border-gray-300 px-4 py-2 text-sm font-semibold text-gray-700 transition hover:bg-gray-50"
                     >
                         View Trip List

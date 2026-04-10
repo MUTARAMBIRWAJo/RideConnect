@@ -2,9 +2,12 @@
 
 namespace App\Filament\Resources;
 
+use App\Enums\UserRole;
 use App\Filament\Resources\TripResource\Pages;
 use App\Models\Booking;
 use App\Models\Ride;
+use App\Models\MobileUser;
+use App\Models\User;
 use App\Models\Trip;
 use Filament\Forms;
 use Filament\Forms\Form;
@@ -15,6 +18,8 @@ use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Builder as EloquentBuilder;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\SoftDeletingScope;
+use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Str;
 
 class TripResource extends Resource
 {
@@ -67,9 +72,75 @@ class TripResource extends Resource
                             ->searchable()
                             ->preload(),
                         Forms\Components\Select::make('passenger_id')
-                            ->relationship('passenger', 'first_name')
                             ->label('Passenger')
                             ->searchable()
+                            ->getSearchResultsUsing(function (string $search): array {
+                                return MobileUser::query()
+                                    ->where(function (Builder $query) use ($search): void {
+                                        $query->where('first_name', 'like', "%{$search}%")
+                                            ->orWhere('last_name', 'like', "%{$search}%")
+                                            ->orWhere('email', 'like', "%{$search}%")
+                                            ->orWhere('phone', 'like', "%{$search}%");
+                                    })
+                                    ->orderBy('first_name')
+                                    ->limit(20)
+                                    ->get()
+                                    ->mapWithKeys(fn (MobileUser $record): array => [
+                                        $record->id => trim($record->full_name . ' | ' . $record->phone),
+                                    ])
+                                    ->all();
+                            })
+                            ->getOptionLabelUsing(function ($value): ?string {
+                                $passenger = MobileUser::find($value);
+
+                                return $passenger?->full_name;
+                            })
+                            ->createOptionForm([
+                                Forms\Components\TextInput::make('name')
+                                    ->label('Passenger Name')
+                                    ->required()
+                                    ->maxLength(255),
+                                Forms\Components\TextInput::make('email')
+                                    ->email()
+                                    ->required()
+                                    ->maxLength(255),
+                                Forms\Components\TextInput::make('phone')
+                                    ->tel()
+                                    ->required()
+                                    ->maxLength(20),
+                            ])
+                            ->createOptionUsing(function (array $data): int {
+                                $name = trim((string) ($data['name'] ?? ''));
+                                $email = trim((string) ($data['email'] ?? ''));
+                                $phone = trim((string) ($data['phone'] ?? ''));
+
+                                $mobileUser = MobileUser::query()->updateOrCreate(
+                                    ['email' => $email],
+                                    [
+                                        'first_name' => Str::of($name)->before(' ')->trim()->value() ?: $name,
+                                        'last_name' => Str::of($name)->after(' ')->trim()->value() ?: 'Passenger',
+                                        'phone' => $phone,
+                                        'role' => UserRole::PASSENGER,
+                                        'is_verified' => true,
+                                    ]
+                                );
+
+                                User::query()->updateOrCreate(
+                                    ['email' => $email],
+                                    [
+                                        'name' => $name,
+                                        'phone' => $phone,
+                                        'password' => Hash::make(Str::random(16)),
+                                        'role' => UserRole::PASSENGER,
+                                        'mobile_user_id' => $mobileUser->id,
+                                        'is_verified' => true,
+                                        'is_approved' => true,
+                                        'approved_at' => now(),
+                                    ]
+                                );
+
+                                return (int) $mobileUser->id;
+                            })
                             ->preload(),
                         Forms\Components\Select::make('driver_id')
                             ->relationship('driver', 'id')
@@ -223,6 +294,13 @@ class TripResource extends Resource
     }
 
     public static function canCreate(): bool
+    {
+        $role = auth()->user()?->role?->value ?? auth()->user()?->role;
+
+        return in_array($role, ['OFFICER', 'ADMIN', 'SUPER_ADMIN'], true);
+    }
+
+    public static function canViewAny(): bool
     {
         $role = auth()->user()?->role?->value ?? auth()->user()?->role;
 

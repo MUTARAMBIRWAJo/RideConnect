@@ -2,9 +2,12 @@
 
 namespace App\Filament\Resources;
 
+use App\Enums\UserRole;
 use App\Filament\Resources\BookingResource\Pages;
 use App\Models\Booking;
 use App\Models\Ride;
+use App\Models\MobileUser;
+use App\Models\User;
 use Filament\Forms;
 use Filament\Forms\Form;
 use Filament\Resources\Resource;
@@ -14,6 +17,8 @@ use Illuminate\Database\Eloquent\Builder as EloquentBuilder;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\SoftDeletingScope;
+use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Str;
 
 class BookingResource extends Resource
 {
@@ -34,7 +39,72 @@ class BookingResource extends Resource
         return $form
             ->schema([
                 Forms\Components\Select::make('user_id')
-                    ->relationship('user', 'name')
+                    ->label('Passenger')
+                    ->searchable()
+                    ->getSearchResultsUsing(function (string $search): array {
+                        return User::query()
+                            ->where('role', UserRole::PASSENGER->value)
+                            ->where(function (Builder $query) use ($search): void {
+                                $query->where('name', 'like', "%{$search}%")
+                                    ->orWhere('email', 'like', "%{$search}%")
+                                    ->orWhere('phone', 'like', "%{$search}%");
+                            })
+                            ->orderBy('name')
+                            ->limit(20)
+                            ->pluck('name', 'id')
+                            ->all();
+                    })
+                    ->getOptionLabelUsing(function ($value): ?string {
+                        $user = User::find($value);
+
+                        return $user?->name;
+                    })
+                    ->createOptionForm([
+                        Forms\Components\TextInput::make('name')
+                            ->label('Passenger Name')
+                            ->required()
+                            ->maxLength(255),
+                        Forms\Components\TextInput::make('email')
+                            ->email()
+                            ->required()
+                            ->maxLength(255),
+                        Forms\Components\TextInput::make('phone')
+                            ->tel()
+                            ->required()
+                            ->maxLength(20),
+                    ])
+                    ->createOptionUsing(function (array $data): int {
+                        $name = trim((string) ($data['name'] ?? ''));
+                        $email = trim((string) ($data['email'] ?? ''));
+                        $phone = trim((string) ($data['phone'] ?? ''));
+
+                        $mobileUser = MobileUser::query()->updateOrCreate(
+                            ['email' => $email],
+                            [
+                                'first_name' => Str::of($name)->before(' ')->trim()->value() ?: $name,
+                                'last_name' => Str::of($name)->after(' ')->trim()->value() ?: 'Passenger',
+                                'phone' => $phone,
+                                'role' => UserRole::PASSENGER,
+                                'is_verified' => true,
+                            ]
+                        );
+
+                        $user = User::query()->updateOrCreate(
+                            ['email' => $email],
+                            [
+                                'name' => $name,
+                                'phone' => $phone,
+                                'password' => Hash::make(Str::random(16)),
+                                'role' => UserRole::PASSENGER,
+                                'mobile_user_id' => $mobileUser->id,
+                                'is_verified' => true,
+                                'is_approved' => true,
+                                'approved_at' => now(),
+                            ]
+                        );
+
+                        return (int) $user->id;
+                    })
                     ->searchable()
                     ->preload()
                     ->required(),
@@ -320,7 +390,10 @@ class BookingResource extends Resource
 
     public static function canViewAny(): bool
     {
-        return auth()->user()?->can('view rides') ?? false;
+        $role = auth()->user()?->role?->value ?? auth()->user()?->role;
+
+        return in_array($role, ['SUPER_ADMIN', 'ADMIN', 'OFFICER'], true)
+            || (auth()->user()?->can('view rides') ?? false);
     }
 
     public static function canCreate(): bool

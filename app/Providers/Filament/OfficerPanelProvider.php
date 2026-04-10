@@ -2,6 +2,8 @@
 
 namespace App\Providers\Filament;
 
+use App\Filament\Resources\BookingResource;
+use App\Filament\Resources\TripResource;
 use App\Filament\Pages\Auth\RedirectToUnifiedLogin;
 use Filament\Http\Middleware\Authenticate;
 use Filament\Http\Middleware\DisableBladeIconComponents;
@@ -65,6 +67,10 @@ class OfficerPanelProvider extends PanelProvider
                 NavigationGroup::make('Support & Complaints')->collapsible(true),
                 NavigationGroup::make('Maps & Tracking')->collapsible(true),
                 NavigationGroup::make('Information Hub')->collapsible(true),
+            ])
+            ->resources([
+                BookingResource::class,
+                TripResource::class,
             ])
             ->discoverPages(app_path('Filament/Pages/Officer'), 'App\\Filament\\Pages\\Officer')
             ->pages([
