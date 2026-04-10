@@ -245,7 +245,6 @@
                 </div>
             </form>
         </x-filament::section>
-    </div>
 
     <!-- New Passenger Modal -->
     <div id="newPassengerModal" class="fixed inset-0 z-50 flex items-center justify-center bg-black/50 hidden">
@@ -531,4 +530,5 @@
         // Initialize
         selectType('booking');
     </script>
+    </div>
 </x-filament-panels::page>
