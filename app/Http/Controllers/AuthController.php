@@ -37,7 +37,7 @@ class AuthController extends Controller
             'name' => $request->name,
             'email' => $request->email,
             'password' => Hash::make($request->password),
-            'role' => UserRole::from($request->role),
+            'role' => UserRole::from(strtoupper((string) $request->role)),
             'is_approved' => true, // Auto-approve for testing
         ]);
 
