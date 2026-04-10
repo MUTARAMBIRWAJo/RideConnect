@@ -40,5 +40,10 @@ class RuraZoneService
         return 'Other';
     }
 
+    public function getZoneForCoordinates(float $lat, float $lng): string
+    {
+        return $this->coordsToZone($lat, $lng);
+    }
+
     // Add more methods for fare lookup, corridor, etc.
 }

@@ -75,10 +75,11 @@ class RideResource extends Resource
                         if (!$originLat || !$originLng || !$destLat || !$destLng) return null;
                         $zoneService = app(\App\Services\RuraZoneService::class);
                         $tariffService = app(\App\Services\RuraTariffService::class);
-                        $originZone = $zoneService->getZoneForCoordinates($originLat, $originLng);
-                        $destinationZone = $zoneService->getZoneForCoordinates($destLat, $destLng);
-                        $legalFare = $tariffService->lookupTariff($originZone, $destinationZone, $vehicleType, $rideType);
-                        if ($legalFare) {
+                        $originZone = $zoneService->getZoneForCoordinates((float) $originLat, (float) $originLng);
+                        $destinationZone = $zoneService->getZoneForCoordinates((float) $destLat, (float) $destLng);
+                        $tariffRow = $tariffService->lookupTariff(null, $originZone, $destinationZone, null);
+                        $legalFare = is_array($tariffRow) ? (float) ($tariffRow['fare_rwf'] ?? 0) : 0;
+                        if ($legalFare > 0) {
                             return 'RURA Legal Fare per seat: RWF ' . number_format($legalFare, 2);
                         }
                         return 'No RURA tariff found for this route.';
@@ -98,11 +99,12 @@ class RideResource extends Resource
                         if (!$originLat || !$originLng || !$destLat || !$destLng || !$entered) return null;
                         $zoneService = app(\App\Services\RuraZoneService::class);
                         $tariffService = app(\App\Services\RuraTariffService::class);
-                        $originZone = $zoneService->getZoneForCoordinates($originLat, $originLng);
-                        $destinationZone = $zoneService->getZoneForCoordinates($destLat, $destLng);
-                        $legalFare = $tariffService->lookupTariff($originZone, $destinationZone, $vehicleType, $rideType);
-                        if ($legalFare) {
-                            return $entered == $legalFare ? null : 'rura_compliance';
+                        $originZone = $zoneService->getZoneForCoordinates((float) $originLat, (float) $originLng);
+                        $destinationZone = $zoneService->getZoneForCoordinates((float) $destLat, (float) $destLng);
+                        $tariffRow = $tariffService->lookupTariff(null, $originZone, $destinationZone, null);
+                        $legalFare = is_array($tariffRow) ? (float) ($tariffRow['fare_rwf'] ?? 0) : 0;
+                        if ($legalFare > 0) {
+                            return abs(((float) $entered) - $legalFare) < 0.01 ? null : 'rura_compliance';
                         }
                         return null;
                     }),
