@@ -279,7 +279,7 @@ class RideController extends Controller
         }
         
         // Cannot update if ride has already started
-        if (in_array($ride->status, ['STARTED', 'COMPLETED', 'CANCELLED'])) {
+        if (in_array(strtolower((string) $ride->status), ['started', 'in_progress', 'completed', 'cancelled'], true)) {
             return response()->json([
                 'success' => false,
                 'message' => 'Cannot update ride that has already started, completed, or cancelled',
@@ -298,11 +298,11 @@ class RideController extends Controller
             'available_seats' => 'sometimes|integer|min:1|max:8',
             'price_per_seat' => 'sometimes|numeric|min:0',
             'description' => 'nullable|string',
-            'status' => 'sometimes|in:ACTIVE,COMPLETED,CANCELLED',
+            'status' => 'sometimes|in:available,scheduled,in_progress,completed,cancelled,ACTIVE,SCHEDULED,IN_PROGRESS,COMPLETED,CANCELLED,STARTED',
         ]);
         
         // If cancelling, add cancellation reason
-        if (isset($validated['status']) && $validated['status'] === 'CANCELLED') {
+        if (isset($validated['status']) && strtolower((string) $validated['status']) === 'cancelled') {
             $validated['cancelled_at'] = now();
             $validated['cancellation_reason'] = $request->cancellation_reason;
         }
@@ -311,7 +311,7 @@ class RideController extends Controller
 
         if (array_key_exists('departure_time', $validated)
             || ($originalDepartureTime && $this->rideCategoryTransitionService->isTripCategory($ride))) {
-            $this->rideCategoryTransitionService->promoteEligibleBookingsToTrips($ride);
+            $this->rideCategoryTransitionService->synchronizeTravelCategories($ride);
         }
         
         return response()->json([
@@ -427,7 +427,7 @@ class RideController extends Controller
         $ride = Ride::findOrFail($validated['ride_id']);
 
         // Check if ride is available
-        if ($ride->status !== 'ACTIVE') {
+        if (! in_array(strtolower((string) $ride->status), ['active', 'available', 'scheduled'], true)) {
             return response()->json([
                 'success' => false,
                 'message' => 'This ride is not available',
@@ -512,7 +512,7 @@ class RideController extends Controller
             'total_price' => $totalPrice,
             'pickup_address' => $validated['pickup_address'],
             'dropoff_address' => $validated['dropoff_address'],
-            'status' => 'PENDING',
+            'status' => 'pending',
         ]);
 
         $this->mobileNotificationService->sendBookingRequestToDriver($booking->loadMissing('ride.driver'));
@@ -606,7 +606,7 @@ class RideController extends Controller
         ]);
 
         $booking->update([
-            'status' => 'CANCELLED',
+            'status' => 'cancelled',
             'cancellation_reason' => $validated['reason'] ?? null,
             'cancelled_at' => now(),
         ]);

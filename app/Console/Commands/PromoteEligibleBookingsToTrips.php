@@ -10,7 +10,7 @@ class PromoteEligibleBookingsToTrips extends Command
 {
     protected $signature = 'rides:promote-bookings-to-trips {--ride_id= : Optionally limit promotion to one ride ID}';
 
-    protected $description = 'Promote bookings into trips when departure is within or equal to 6 hours';
+    protected $description = 'Synchronize booking/trip categories based on departure time threshold';
 
     public function handle(RideCategoryTransitionService $transitionService): int
     {
@@ -27,10 +27,10 @@ class PromoteEligibleBookingsToTrips extends Command
             }
         }
 
-        $converted = $transitionService->promoteEligibleBookingsToTrips($ride);
+        $result = $transitionService->synchronizeTravelCategories($ride);
 
         $scope = $ride ? "ride {$ride->id}" : 'all rides';
-        $this->info("Promoted {$converted} booking(s) to trip(s) for {$scope}.");
+        $this->info("Synchronized travel categories for {$scope}: promoted {$result['promoted']} booking(s) to trip(s), demoted {$result['demoted']} trip(s) to booking(s).");
 
         return self::SUCCESS;
     }

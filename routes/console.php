@@ -51,10 +51,10 @@ Schedule::command('ai:retrain-models')
     ->onOneServer()
     ->name('ai-retrain-models');
 
-// Continuously enforce ride category transitions from bookings to trips.
+// Continuously enforce ride category transitions in both directions.
 Schedule::command('rides:promote-bookings-to-trips')
     ->everyFiveMinutes()
     ->withoutOverlapping()
     ->onOneServer()
-    ->name('promote-eligible-bookings-to-trips');
+    ->name('sync-travel-categories');
 

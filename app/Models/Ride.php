@@ -9,6 +9,16 @@ class Ride extends Model
 {
     use HasFactory;
 
+    private const STATUS_MAP = [
+        'scheduled' => 'scheduled',
+        'active' => 'available',
+        'available' => 'available',
+        'in_progress' => 'in_progress',
+        'started' => 'in_progress',
+        'completed' => 'completed',
+        'cancelled' => 'cancelled',
+    ];
+
     protected $fillable = [
         'driver_id',
         'vehicle_id',
@@ -66,5 +76,18 @@ class Ride extends Model
     public function reviews()
     {
         return $this->hasMany(Review::class);
+    }
+
+    public function setStatusAttribute($value): void
+    {
+        if ($value === null) {
+            $this->attributes['status'] = null;
+
+            return;
+        }
+
+        $normalized = strtolower(trim((string) $value));
+
+        $this->attributes['status'] = self::STATUS_MAP[$normalized] ?? $normalized;
     }
 }

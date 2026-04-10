@@ -18,7 +18,7 @@ class BookingController extends Controller
      */
     public function index(Request $request): JsonResponse
     {
-        $this->rideCategoryTransitionService->promoteEligibleBookingsToTrips();
+        $this->rideCategoryTransitionService->synchronizeTravelCategories();
 
         $user = $request->user();
         
@@ -84,7 +84,7 @@ class BookingController extends Controller
      */
     public function show(int $id): JsonResponse
     {
-        $this->rideCategoryTransitionService->promoteEligibleBookingsToTrips();
+        $this->rideCategoryTransitionService->synchronizeTravelCategories();
 
         $booking = Booking::with(['ride.driver.user', 'ride.vehicle', 'user', 'payment', 'review'])->findOrFail($id);
         
@@ -187,7 +187,7 @@ class BookingController extends Controller
         $ride = Ride::findOrFail($validated['ride_id']);
         
         // Check if ride is available
-        if ($ride->status !== 'ACTIVE') {
+        if (! in_array(strtolower((string) $ride->status), ['active', 'available', 'scheduled'], true)) {
             return response()->json([
                 'success' => false,
                 'message' => 'This ride is not available for booking',
@@ -254,7 +254,7 @@ class BookingController extends Controller
             'seats_booked' => $validated['seats_booked'],
             'total_price' => $totalPrice,
             'currency' => $ride->currency,
-            'status' => 'PENDING',
+            'status' => 'pending',
             'pickup_address' => $validated['pickup_address'],
             'pickup_lat' => $validated['pickup_lat'],
             'pickup_lng' => $validated['pickup_lng'],
@@ -368,7 +368,7 @@ class BookingController extends Controller
         ]);
         
         $booking->update([
-            'status' => 'CANCELLED',
+            'status' => 'cancelled',
             'cancelled_at' => now(),
             'cancellation_reason' => $request->cancellation_reason,
         ]);
@@ -393,7 +393,7 @@ class BookingController extends Controller
      */
     public function myBookings(Request $request): JsonResponse
     {
-        $this->rideCategoryTransitionService->promoteEligibleBookingsToTrips();
+        $this->rideCategoryTransitionService->synchronizeTravelCategories();
 
         $user = $request->user();
         
