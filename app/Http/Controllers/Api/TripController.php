@@ -187,10 +187,10 @@ class TripController extends Controller
     {
         $user = $request->user();
 
-        if (! $user->role->isSuperAdmin() && ! $user->role->isManager()) {
+        if (! $user->role->isSuperAdmin() && $user->role->value !== 'ADMIN') {
             return response()->json([
                 'success' => false,
-                'message' => 'Only Admin/Managers can create trip from booking',
+                'message' => 'Only Admin or Super Admin can create trip from booking',
             ], 403);
         }
 
@@ -404,9 +404,17 @@ class TripController extends Controller
     {
         $trip = Trip::findOrFail($id);
         $user = $request->user();
-        
+
+        $passengerMobileUserId = null;
+        if ($user->isPassenger()) {
+            $passengerMobileUserId = $user->mobile_user_id
+                ? (int) $user->mobile_user_id
+                : (int) (MobileUser::query()->where('email', $user->email)->value('id') ?? 0);
+        }
+
         // Check if user is passenger, driver, or admin
-        $isPassenger = $trip->passenger_id === $user->id;
+        $isPassenger = $passengerMobileUserId > 0
+            && (int) $trip->passenger_id === (int) $passengerMobileUserId;
         $isDriver = $trip->driver?->user_id === $user->id;
         $isAdmin = $user->role->isSuperAdmin() || $user->role->isManager();
         
@@ -570,4 +578,5 @@ class TripController extends Controller
             'user' => 'Passenger mobile profile is not linked. Please contact support.',
         ]);
     }
+
 }

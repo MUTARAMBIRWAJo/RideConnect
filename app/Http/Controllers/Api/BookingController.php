@@ -300,9 +300,10 @@ class BookingController extends Controller
     {
         $booking = Booking::findOrFail($id);
         $user = $request->user();
+        $isAdmin = $user->role->isSuperAdmin() || $user->role->value === 'ADMIN';
         
         // Only the booking owner can update (for now, just status changes)
-        if ($booking->user_id !== $user->id && !$user->role->isSuperAdmin()) {
+        if ($booking->user_id !== $user->id && ! $isAdmin) {
             return response()->json([
                 'success' => false,
                 'message' => 'Unauthorized to update this booking',
@@ -358,9 +359,10 @@ class BookingController extends Controller
         $ride = $booking->ride()->with('driver')->first();
         $driverUserId = $ride?->driver?->user_id;
         $isDriver = $driverUserId && (int) $driverUserId === (int) $user->id;
+        $isAdmin = $user->role->isSuperAdmin() || $user->role->value === 'ADMIN';
         
-        // Only the booking owner or SuperAdmin can cancel
-        if ($booking->user_id !== $user->id && ! $isDriver && !$user->role->isSuperAdmin()) {
+        // Only the booking owner, assigned driver, admin or superadmin can cancel
+        if ($booking->user_id !== $user->id && ! $isDriver && ! $isAdmin) {
             return response()->json([
                 'success' => false,
                 'message' => 'Unauthorized to cancel this booking',
@@ -459,12 +461,13 @@ class BookingController extends Controller
     {
         $booking = Booking::findOrFail($id);
         $user = request()->user();
+        $isAdmin = $user->role->isSuperAdmin() || $user->role->value === 'ADMIN';
         
-        // Only the driver who owns the ride can confirm
-        if ($booking->ride->driver?->user_id !== $user->id && !$user->role->isSuperAdmin()) {
+        // Only the driver who owns the ride, admin or superadmin can confirm
+        if ($booking->ride->driver?->user_id !== $user->id && ! $isAdmin) {
             return response()->json([
                 'success' => false,
-                'message' => 'Only the ride driver can confirm bookings',
+                'message' => 'Only the ride driver, admin or superadmin can confirm bookings',
             ], 403);
         }
         

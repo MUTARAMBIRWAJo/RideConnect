@@ -12,7 +12,7 @@
                         All Rides
                     </h1>
                     <p class="mt-2 text-sm text-gray-600">
-                        Manage all available rides and driver assignments.
+                        Admin and Super Admin can publish, update, and control ride availability.
                     </p>
                 </div>
                 <div class="flex space-x-3">
@@ -61,7 +61,7 @@
                             </div>
                             <div class="ml-5 w-0 flex-1">
                                 <dl>
-                                    <dt class="text-sm font-medium text-gray-500 truncate">Available</dt>
+                                    <dt class="text-sm font-medium text-gray-500 truncate">Published</dt>
                                     <dd>
                                         <div class="text-lg font-medium text-gray-900">89</div>
                                     </dd>
@@ -82,7 +82,7 @@
                             </div>
                             <div class="ml-5 w-0 flex-1">
                                 <dl>
-                                    <dt class="text-sm font-medium text-gray-500 truncate">In Use</dt>
+                                    <dt class="text-sm font-medium text-gray-500 truncate">In Progress</dt>
                                     <dd>
                                         <div class="text-lg font-medium text-gray-900">45</div>
                                     </dd>
@@ -104,7 +104,7 @@
                             </div>
                             <div class="ml-5 w-0 flex-1">
                                 <dl>
-                                    <dt class="text-sm font-medium text-gray-500 truncate">Maintenance</dt>
+                                    <dt class="text-sm font-medium text-gray-500 truncate">Cancelled</dt>
                                     <dd>
                                         <div class="text-lg font-medium text-gray-900">22</div>
                                     </dd>
@@ -130,7 +130,7 @@
                                         <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Ride ID</th>
                                         <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Driver</th>
                                         <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Vehicle</th>
-                                        <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Type</th>
+                                        <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Corridor</th>
                                         <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
                                         <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Location</th>
                                         <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
@@ -142,10 +142,10 @@
                                         <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">#RIDE001</td>
                                         <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">John Smith</td>
                                         <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">Toyota Camry - ABC123</td>
-                                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">Standard</td>
+                                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">REMERA -> NYABUGOGO</td>
                                         <td class="px-6 py-4 whitespace-nowrap">
                                             <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-green-100 text-green-800">
-                                                Available
+                                                PUBLISHED
                                             </span>
                                         </td>
                                         <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">Downtown</td>
@@ -159,10 +159,10 @@
                                         <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">#RIDE002</td>
                                         <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">Sarah Johnson</td>
                                         <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">Honda Accord - XYZ789</td>
-                                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">Premium</td>
+                                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">KIMIRONKO -> KACYIRU</td>
                                         <td class="px-6 py-4 whitespace-nowrap">
                                             <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-yellow-100 text-yellow-800">
-                                                In Use
+                                                IN_PROGRESS
                                             </span>
                                         </td>
                                         <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">Airport</td>

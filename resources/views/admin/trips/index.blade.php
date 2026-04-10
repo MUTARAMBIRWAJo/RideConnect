@@ -12,15 +12,15 @@
                         All Trips
                     </h1>
                     <p class="mt-2 text-sm text-gray-600">
-                        Manage all trip requests and track their status.
+                        Admin and Super Admin monitor trip execution and booking-to-trip conversion.
                     </p>
                 </div>
                 <div class="flex space-x-3">
                     <a href="{{ route('admin.trips.pending') }}" class="bg-yellow-100 text-yellow-700 hover:bg-yellow-200 px-4 py-2 rounded-md text-sm font-medium">
-                        Pending Requests
+                        PENDING Trips
                     </a>
                     <a href="{{ route('admin.trips.completed') }}" class="bg-green-100 text-green-700 hover:bg-green-200 px-4 py-2 rounded-md text-sm font-medium">
-                        Completed Trips
+                        COMPLETED Trips
                     </a>
                 </div>
             </div>
@@ -135,7 +135,7 @@
                                         <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Pickup</th>
                                         <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Destination</th>
                                         <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
-                                        <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Date</th>
+                                        <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Travel Type</th>
                                         <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
                                     </tr>
                                 </thead>
@@ -149,14 +149,14 @@
                                         <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">Airport</td>
                                         <td class="px-6 py-4 whitespace-nowrap">
                                             <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-yellow-100 text-yellow-800">
-                                                Pending
+                                                PENDING
                                             </span>
                                         </td>
-                                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">2024-01-15</td>
+                                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">TRIP</td>
                                         <td class="px-6 py-4 whitespace-nowrap text-sm font-medium">
                                             <a href="{{ route('admin.dashboard') }}" class="text-blue-600 hover:text-blue-900 mr-4">View</a>
-                                            <a href="{{ route('admin.dashboard') }}" class="text-green-600 hover:text-green-900 mr-4">Accept</a>
-                                            <a href="{{ route('admin.dashboard') }}" class="text-red-600 hover:text-red-900">Cancel</a>
+                                            <a href="{{ route('admin.dashboard') }}" class="text-green-600 hover:text-green-900 mr-4">Assign Driver</a>
+                                            <a href="{{ route('admin.dashboard') }}" class="text-red-600 hover:text-red-900">Force Cancel</a>
                                         </td>
                                     </tr>
                                     <!-- Add more rows as needed -->

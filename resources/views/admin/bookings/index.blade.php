@@ -12,12 +12,12 @@
                         All Bookings
                     </h1>
                     <p class="mt-2 text-sm text-gray-600">
-                        Manage all ride bookings and reservations.
+                        Admin and Super Admin manage bookings and convert eligible ones into trips.
                     </p>
                 </div>
                 <div class="flex space-x-3">
                     <a href="{{ route('admin.bookings.pending') }}" class="bg-yellow-100 text-yellow-700 hover:bg-yellow-200 px-4 py-2 rounded-md text-sm font-medium">
-                        Pending Bookings
+                        PENDING Bookings
                     </a>
                 </div>
             </div>
@@ -147,7 +147,7 @@
                                         <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">Jan 16, 2024 - 10:00 AM</td>
                                         <td class="px-6 py-4 whitespace-nowrap">
                                             <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-green-100 text-green-800">
-                                                Confirmed
+                                                CONFIRMED
                                             </span>
                                         </td>
                                         <td class="px-6 py-4 whitespace-nowrap text-sm font-medium">
@@ -165,12 +165,13 @@
                                         <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">Jan 16, 2024 - 2:30 PM</td>
                                         <td class="px-6 py-4 whitespace-nowrap">
                                             <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-yellow-100 text-yellow-800">
-                                                Pending
+                                                PENDING
                                             </span>
                                         </td>
                                         <td class="px-6 py-4 whitespace-nowrap text-sm font-medium">
                                             <a href="{{ route('admin.dashboard') }}" class="text-blue-600 hover:text-blue-900 mr-4">View Details</a>
                                             <a href="{{ route('admin.dashboard') }}" class="text-green-600 hover:text-green-900 mr-4">Confirm</a>
+                                            <a href="{{ route('admin.dashboard') }}" class="text-indigo-600 hover:text-indigo-900 mr-4">Create Trip</a>
                                             <a href="{{ route('admin.dashboard') }}" class="text-red-600 hover:text-red-900">Cancel</a>
                                         </td>
                                     </tr>
