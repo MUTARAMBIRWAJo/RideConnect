@@ -10,6 +10,7 @@ use App\Models\Ride;
 use App\Models\Trip;
 use App\Models\User;
 use App\Models\Zone;
+use App\Services\PassengerRegistrationService;
 use Illuminate\Http\Request;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Support\Facades\DB;
@@ -56,18 +57,27 @@ class OfficerBookingTripController extends Controller
             'last_name' => 'required|string|max:255',
             'email' => 'required|email|unique:mobile_users,email',
             'phone' => 'required|string|max:20|unique:mobile_users,phone',
+            'delivery_channel' => 'nullable|string|in:email,sms,whatsapp',
         ]);
 
         try {
-            $passenger = MobileUser::create($validated);
+            $fullName = trim($validated['first_name'] . ' ' . $validated['last_name']);
+            $user = app(PassengerRegistrationService::class)->createOrUpdatePassenger(
+                $fullName,
+                $validated['email'],
+                $validated['phone'],
+                (string) ($validated['delivery_channel'] ?? 'email')
+            );
+
+            $passenger = MobileUser::query()->where('email', $validated['email'])->first();
             
             return response()->json([
                 'success' => true,
                 'data' => [
-                    'id' => $passenger->id,
-                    'name' => "{$passenger->first_name} {$passenger->last_name}",
-                    'email' => $passenger->email,
-                    'phone' => $passenger->phone,
+                    'id' => $passenger?->id ?? $user->mobile_user_id,
+                    'name' => $passenger ? "{$passenger->first_name} {$passenger->last_name}" : $user->name,
+                    'email' => $passenger?->email ?? $user->email,
+                    'phone' => $passenger?->phone ?? $user->phone,
                 ]
             ], 201);
         } catch (\Exception $e) {

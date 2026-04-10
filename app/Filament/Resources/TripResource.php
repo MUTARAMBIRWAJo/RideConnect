@@ -9,6 +9,8 @@ use App\Models\Ride;
 use App\Models\MobileUser;
 use App\Models\User;
 use App\Models\Trip;
+use App\Services\PassengerRegistrationService;
+use App\Services\RuraTariffService;
 use Filament\Forms;
 use Filament\Forms\Form;
 use Filament\Resources\Resource;
@@ -18,8 +20,6 @@ use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Builder as EloquentBuilder;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\SoftDeletingScope;
-use Illuminate\Support\Facades\Hash;
-use Illuminate\Support\Str;
 
 class TripResource extends Resource
 {
@@ -55,7 +55,27 @@ class TripResource extends Resource
                             ))
                             ->searchable()
                             ->preload()
-                            ->live(),
+                            ->live()
+                            ->afterStateUpdated(function ($state, callable $set): void {
+                                if (! $state) {
+                                    return;
+                                }
+
+                                $ride = Ride::query()->find((int) $state);
+
+                                if (! $ride) {
+                                    return;
+                                }
+
+                                $fare = app(RuraTariffService::class)->lookupTariff(
+                                    null,
+                                    $ride->origin_address,
+                                    $ride->destination_address,
+                                    $ride->corridor?->name
+                                );
+
+                                $set('fare', (float) ($fare['fare_rwf'] ?? $ride->price_per_seat ?? 0));
+                            }),
                         Forms\Components\Select::make('booking_id')
                             ->relationship(
                                 name: 'booking',
@@ -70,20 +90,39 @@ class TripResource extends Resource
                                 $record->status ?? 'PENDING'
                             ))
                             ->searchable()
-                            ->preload(),
+                            ->preload()
+                            ->live()
+                            ->afterStateUpdated(function ($state, callable $set): void {
+                                if (! $state) {
+                                    return;
+                                }
+
+                                $booking = Booking::query()->with('ride')->find((int) $state);
+
+                                if (! $booking) {
+                                    return;
+                                }
+
+                                $set('fare', (float) ($booking->total_price ?? 0));
+
+                                if ($booking->ride_id) {
+                                    $set('ride_id', $booking->ride_id);
+                                }
+                            }),
                         Forms\Components\Select::make('passenger_id')
                             ->label('Passenger')
                             ->searchable()
                             ->getSearchResultsUsing(function (string $search): array {
                                 return MobileUser::query()
                                     ->where(function (Builder $query) use ($search): void {
-                                        $query->where('first_name', 'like', "%{$search}%")
-                                            ->orWhere('last_name', 'like', "%{$search}%")
-                                            ->orWhere('email', 'like', "%{$search}%")
-                                            ->orWhere('phone', 'like', "%{$search}%");
+                                        $query->where('first_name', 'ilike', "%{$search}%")
+                                            ->orWhere('last_name', 'ilike', "%{$search}%")
+                                            ->orWhere('email', 'ilike', "%{$search}%")
+                                            ->orWhere('phone', 'ilike', "%{$search}%");
                                     })
+                                    ->select(['id', 'first_name', 'last_name', 'phone'])
                                     ->orderBy('first_name')
-                                    ->limit(20)
+                                    ->limit(10)
                                     ->get()
                                     ->mapWithKeys(fn (MobileUser $record): array => [
                                         $record->id => trim($record->full_name . ' | ' . $record->phone),
@@ -108,44 +147,39 @@ class TripResource extends Resource
                                     ->tel()
                                     ->required()
                                     ->maxLength(20),
+                                Forms\Components\Select::make('delivery_channel')
+                                    ->label('Send Password Via')
+                                    ->options([
+                                        'email' => 'Email',
+                                        'sms' => 'SMS',
+                                        'whatsapp' => 'WhatsApp',
+                                    ])
+                                    ->default('email')
+                                    ->required(),
                             ])
                             ->createOptionUsing(function (array $data): int {
-                                $name = trim((string) ($data['name'] ?? ''));
-                                $email = trim((string) ($data['email'] ?? ''));
-                                $phone = trim((string) ($data['phone'] ?? ''));
-
-                                $mobileUser = MobileUser::query()->updateOrCreate(
-                                    ['email' => $email],
-                                    [
-                                        'first_name' => Str::of($name)->before(' ')->trim()->value() ?: $name,
-                                        'last_name' => Str::of($name)->after(' ')->trim()->value() ?: 'Passenger',
-                                        'phone' => $phone,
-                                        'role' => UserRole::PASSENGER,
-                                        'is_verified' => true,
-                                    ]
+                                $user = app(PassengerRegistrationService::class)->createOrUpdatePassenger(
+                                    (string) ($data['name'] ?? ''),
+                                    (string) ($data['email'] ?? ''),
+                                    (string) ($data['phone'] ?? ''),
+                                    (string) ($data['delivery_channel'] ?? 'email')
                                 );
 
-                                User::query()->updateOrCreate(
-                                    ['email' => $email],
-                                    [
-                                        'name' => $name,
-                                        'phone' => $phone,
-                                        'password' => Hash::make(Str::random(16)),
-                                        'role' => UserRole::PASSENGER,
-                                        'mobile_user_id' => $mobileUser->id,
-                                        'is_verified' => true,
-                                        'is_approved' => true,
-                                        'approved_at' => now(),
-                                    ]
-                                );
-
-                                return (int) $mobileUser->id;
+                                return (int) $user->mobile_user_id;
                             })
-                            ->preload(),
+                            ->required(),
                         Forms\Components\Select::make('driver_id')
                             ->relationship('driver', 'id')
                             ->searchable()
                             ->preload(),
+                        Forms\Components\TextInput::make('fare')
+                            ->label('Fare')
+                            ->numeric()
+                            ->required()
+                            ->minValue(0)
+                            ->default(0)
+                            ->helperText('Automatically set from the selected booking or ride. Keep this value if you override manually.')
+                            ->live(onBlur: true),
                         Forms\Components\Select::make('pickup_map_point')
                             ->label('Pickup Map Point')
                             ->options(fn (): array => collect(config('ride.map_points', []))
