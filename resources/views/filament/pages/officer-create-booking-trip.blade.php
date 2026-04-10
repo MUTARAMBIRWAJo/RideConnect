@@ -238,7 +238,7 @@
                             class="inline-flex items-center justify-center rounded-lg bg-blue-600 px-6 py-2 text-sm font-semibold text-white hover:bg-blue-700 disabled:opacity-50">
                         Create Booking
                     </button>
-                    <a href="{{ route('filament.admin.pages.officer-dashboard-v2') }}" 
+                    <a href="{{ route('filament.officer.pages.officer-dashboard') }}" 
                        class="inline-flex items-center justify-center rounded-lg bg-gray-300 px-6 py-2 text-sm font-semibold text-gray-900 hover:bg-gray-400">
                         Cancel
                     </a>
@@ -289,7 +289,10 @@
         </div>
     </div>
 
-    <!-- Styles -->
+    </div>
+</x-filament-panels::page>
+
+@push('styles')
     <style>
         #pickupMap, #dropoffMap {
             background: #f0f0f0;
@@ -312,8 +315,9 @@
             color: #6b7280;
         }
     </style>
+@endpush
 
-    <!-- Scripts -->
+@push('scripts')
     <script>
         const apiBase = '{{ config('app.url') }}/api';
 
@@ -504,7 +508,7 @@
                 const data = await res.json();
                 if (data.success) {
                     alert(`${bookingType.charAt(0).toUpperCase() + bookingType.slice(1)} created successfully!`);
-                    window.location.href = '{{ route('filament.admin.pages.officer-dashboard-v2') }}';
+                    window.location.href = '{{ route('filament.officer.pages.officer-dashboard') }}';
                 } else {
                     alert('Error: ' + (data.message || 'Unknown error'));
                 }
@@ -530,5 +534,4 @@
         // Initialize
         selectType('booking');
     </script>
-    </div>
-</x-filament-panels::page>
+@endpush
