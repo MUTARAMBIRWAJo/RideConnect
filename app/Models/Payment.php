@@ -10,8 +10,10 @@ class Payment extends Model
     use HasFactory;
 
     protected $fillable = [
+        'trip_id',
         'booking_id',
         'user_id',
+        'type',
         'amount',
         'platform_fee',
         'driver_amount',
@@ -24,6 +26,7 @@ class Payment extends Model
         'transaction_id',
         'supabase_payment_id',
         'status',
+        'metadata',
         'payment_details',
         'paid_at',
         'refunded_at',
@@ -33,9 +36,15 @@ class Payment extends Model
         'amount'        => 'decimal:2',
         'platform_fee'  => 'decimal:2',
         'driver_amount' => 'decimal:2',
+        'metadata'      => 'array',
         'paid_at'       => 'datetime',
         'refunded_at'   => 'datetime',
     ];
+
+    public function trip()
+    {
+        return $this->belongsTo(Trip::class);
+    }
 
     public function booking()
     {

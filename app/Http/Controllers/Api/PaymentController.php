@@ -11,6 +11,7 @@ use App\Services\LedgerService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Validation\ValidationException;
 
 class PaymentController extends Controller
 {
@@ -38,6 +39,8 @@ class PaymentController extends Controller
         ]);
 
         // Verify ownership
+        $resolvedTripId = null;
+
         if ($validated['type'] === 'trip') {
             $trip = Trip::findOrFail($validated['trip_id']);
             if ($trip->passenger?->user_id !== $user->id) {
@@ -46,6 +49,8 @@ class PaymentController extends Controller
                     'message' => 'You can only pay for your own trips',
                 ], 403);
             }
+
+            $resolvedTripId = (int) $trip->id;
         } else {
             $booking = Booking::findOrFail($validated['booking_id']);
             if ($booking->user_id !== $user->id) {
@@ -54,13 +59,43 @@ class PaymentController extends Controller
                     'message' => 'You can only pay for your own bookings',
                 ], 403);
             }
+
+            $trip = Trip::query()->where('booking_id', $booking->id)->first();
+
+            if (! $trip) {
+                $passengerId = $booking->user?->mobile_user_id ? (int) $booking->user->mobile_user_id : (int) $booking->user_id;
+
+                $trip = Trip::create([
+                    'booking_id' => $booking->id,
+                    'ride_id' => $booking->ride_id,
+                    'passenger_id' => $passengerId,
+                    'driver_id' => $booking->ride?->driver_id,
+                    'pickup_location' => $booking->pickup_address ?: $booking->ride?->origin_address,
+                    'pickup_lat' => $booking->pickup_lat ?: $booking->ride?->origin_lat,
+                    'pickup_lng' => $booking->pickup_lng ?: $booking->ride?->origin_lng,
+                    'dropoff_location' => $booking->dropoff_address ?: $booking->ride?->destination_address,
+                    'dropoff_lat' => $booking->dropoff_lat ?: $booking->ride?->destination_lat,
+                    'dropoff_lng' => $booking->dropoff_lng ?: $booking->ride?->destination_lng,
+                    'fare' => $booking->total_price,
+                    'status' => 'PENDING',
+                    'requested_at' => $booking->created_at,
+                ]);
+            }
+
+            $resolvedTripId = (int) $trip->id;
         }
 
-        $payment = DB::transaction(function () use ($validated, $user) {
+        if (! $resolvedTripId) {
+            throw ValidationException::withMessages([
+                'trip_id' => 'Unable to resolve trip for this payment request.',
+            ]);
+        }
+
+        $payment = DB::transaction(function () use ($validated, $user, $resolvedTripId) {
             return Payment::create([
                 'user_id' => $user->id,
-                'type' => $validated['type'],
-                'trip_id' => $validated['trip_id'] ?? null,
+                'type' => strtolower((string) $validated['type']),
+                'trip_id' => $resolvedTripId,
                 'booking_id' => $validated['booking_id'] ?? null,
                 'amount' => $validated['amount'],
                 'currency' => $validated['currency'] ?? 'RWF',
@@ -70,6 +105,10 @@ class PaymentController extends Controller
                 'metadata' => $validated['metadata'] ?? [],
             ]);
         });
+
+        Trip::query()->where('id', $resolvedTripId)->update([
+            'actual_fare' => (float) $validated['amount'],
+        ]);
 
         return response()->json([
             'success' => true,
@@ -204,6 +243,16 @@ class PaymentController extends Controller
                 'refunded_at' => $newStatus === 'REFUNDED' ? now() : $payment->refunded_at,
                 'metadata' => array_merge($payment->metadata ?? [], $validated['metadata'] ?? []),
             ]);
+
+            if ($payment->trip_id) {
+                $tripUpdates = ['actual_fare' => (float) $payment->amount];
+
+                if ($newStatus === 'COMPLETED') {
+                    $tripUpdates['completed_at'] = now();
+                }
+
+                Trip::query()->where('id', $payment->trip_id)->update($tripUpdates);
+            }
 
             if ($newStatus === 'COMPLETED') {
                 $alreadyPosted = LedgerEntry::query()

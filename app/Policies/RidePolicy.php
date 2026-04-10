@@ -1,0 +1,29 @@
+<?php
+
+namespace App\Policies;
+
+use App\Models\Ride;
+use App\Models\User;
+
+class RidePolicy
+{
+    public function create(User $user): bool
+    {
+        return in_array($user->role?->value ?? $user->role, ['SUPER_ADMIN', 'ADMIN'], true);
+    }
+
+    public function createAdminRide(User $user): bool
+    {
+        return $this->create($user);
+    }
+
+    public function update(User $user, Ride $ride): bool
+    {
+        return in_array($user->role?->value ?? $user->role, ['SUPER_ADMIN', 'ADMIN'], true);
+    }
+
+    public function delete(User $user, Ride $ride): bool
+    {
+        return in_array($user->role?->value ?? $user->role, ['SUPER_ADMIN', 'ADMIN'], true);
+    }
+}

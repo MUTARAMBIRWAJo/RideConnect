@@ -10,11 +10,11 @@ class Booking extends Model
     use HasFactory;
 
     private const STATUS_MAP = [
-        'pending' => 'pending',
-        'confirmed' => 'confirmed',
-        'cancelled' => 'cancelled',
-        'completed' => 'completed',
-        'no_show' => 'no_show',
+        'pending' => 'PENDING',
+        'confirmed' => 'CONFIRMED',
+        'cancelled' => 'CANCELLED',
+        'completed' => 'COMPLETED',
+        'no_show' => 'NO_SHOW',
     ];
 
     protected $fillable = [
@@ -77,6 +77,6 @@ class Booking extends Model
 
         $normalized = strtolower(trim((string) $value));
 
-        $this->attributes['status'] = self::STATUS_MAP[$normalized] ?? $normalized;
+        $this->attributes['status'] = self::STATUS_MAP[$normalized] ?? strtoupper((string) $value);
     }
 }

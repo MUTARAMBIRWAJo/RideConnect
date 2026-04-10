@@ -157,10 +157,10 @@ class PassengerController extends Controller
                 'hours_to_departure' => $booking->ride?->departure_time
                     ? round(now()->diffInMinutes($booking->ride->departure_time, false) / 60, 2)
                     : null,
-                'travel_type' => ($booking->ride?->departure_time && now()->diffInHours($booking->ride->departure_time, false) <= self::TICKET_THRESHOLD_HOURS)
+                'travel_type' => ($booking->ride?->departure_time && now()->diffInHours($booking->ride->departure_time, false) <= (int) config('ride.booking_to_trip_threshold_hours', self::TICKET_THRESHOLD_HOURS))
                     ? 'TRIP'
                     : 'BOOKING',
-                'ticket_status' => ($booking->ride?->departure_time && now()->diffInHours($booking->ride->departure_time, false) <= self::TICKET_THRESHOLD_HOURS)
+                'ticket_status' => ($booking->ride?->departure_time && now()->diffInHours($booking->ride->departure_time, false) <= (int) config('ride.booking_to_trip_threshold_hours', self::TICKET_THRESHOLD_HOURS))
                     ? match (strtolower((string) $booking->status)) {
                         'cancelled' => 'CANCELLED',
                         'completed' => 'USED',

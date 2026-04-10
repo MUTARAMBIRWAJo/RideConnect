@@ -140,6 +140,7 @@ Route::prefix('v1')->group(function () {
             Route::get('/trips', [TripController::class, 'myTrips']);
             Route::get('/trips/{id}', [TripController::class, 'show'])->whereNumber('id');
             Route::put('/trips/{id}/cancel', [TripController::class, 'cancel'])->whereNumber('id');
+            Route::post('/trips/create-from-booking', [TripController::class, 'createFromBooking']);
             
             // Payments
             Route::post('/payments', [PaymentController::class, 'createPayment']);
@@ -292,6 +293,7 @@ Route::prefix('v1')->group(function () {
             // Ride Monitoring
             Route::get('/rides', [RideController::class, 'adminRides']);
             Route::get('/rides/{id}', [RideController::class, 'adminRideDetail']);
+            Route::post('/rides/corridor', [RideController::class, 'createRideWithCorridor']);
             
             // Rider Approval
             Route::get('/riders/pending', [UserApprovalController::class, 'pendingRiders']);

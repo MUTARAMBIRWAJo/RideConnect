@@ -1,8 +1,20 @@
+<?php
 
+namespace App\Http\Controllers\Api;
+
+use App\Http\Controllers\Controller;
+use App\Models\Booking;
+use App\Models\Ride;
+use App\Services\MobileNotificationService;
+use App\Services\RideCategoryTransitionService;
+use App\Services\RuraTariffService;
+use App\Services\RuraZoneService;
+use Illuminate\Http\JsonResponse;
+use Illuminate\Http\Request;
 
 class BookingController extends Controller
 {
-    private const TICKET_THRESHOLD_HOURS = 6;
+    private const DEFAULT_TICKET_THRESHOLD_HOURS = 6;
 
     public function __construct(
         private readonly RideCategoryTransitionService $rideCategoryTransitionService,
@@ -187,7 +199,7 @@ class BookingController extends Controller
         $ride = Ride::findOrFail($validated['ride_id']);
         
         // Check if ride is available
-        if (! in_array(strtolower((string) $ride->status), ['active', 'available', 'scheduled'], true)) {
+        if (! in_array(strtoupper((string) $ride->status), ['PUBLISHED'], true)) {
             return response()->json([
                 'success' => false,
                 'message' => 'This ride is not available for booking',
@@ -254,7 +266,7 @@ class BookingController extends Controller
             'seats_booked' => $validated['seats_booked'],
             'total_price' => $totalPrice,
             'currency' => $ride->currency,
-            'status' => 'pending',
+            'status' => 'PENDING',
             'pickup_address' => $validated['pickup_address'],
             'pickup_lat' => $validated['pickup_lat'],
             'pickup_lng' => $validated['pickup_lng'],
@@ -298,7 +310,7 @@ class BookingController extends Controller
         }
         
         // Cannot update if already confirmed or cancelled
-        if (in_array($booking->status, ['CONFIRMED', 'COMPLETED', 'CANCELLED'])) {
+        if (in_array(strtoupper((string) $booking->status), ['CONFIRMED', 'COMPLETED', 'CANCELLED'], true)) {
             return response()->json([
                 'success' => false,
                 'message' => 'Cannot update booking that is already confirmed, completed, or cancelled',
@@ -356,7 +368,7 @@ class BookingController extends Controller
         }
         
         // Cannot cancel if already cancelled or completed
-        if (in_array($booking->status, ['CANCELLED', 'COMPLETED'])) {
+        if (in_array(strtoupper((string) $booking->status), ['CANCELLED', 'COMPLETED'], true)) {
             return response()->json([
                 'success' => false,
                 'message' => 'Booking is already cancelled or completed',
@@ -368,7 +380,7 @@ class BookingController extends Controller
         ]);
         
         $booking->update([
-            'status' => 'cancelled',
+            'status' => 'CANCELLED',
             'cancelled_at' => now(),
             'cancellation_reason' => $request->cancellation_reason,
         ]);
@@ -456,7 +468,7 @@ class BookingController extends Controller
             ], 403);
         }
         
-        if ($booking->status !== 'PENDING') {
+        if (strtoupper((string) $booking->status) !== 'PENDING') {
             return response()->json([
                 'success' => false,
                 'message' => 'Booking is not pending',
@@ -498,7 +510,9 @@ class BookingController extends Controller
             return 'BOOKING';
         }
 
-        return $hoursToDeparture <= self::TICKET_THRESHOLD_HOURS ? 'TRIP' : 'BOOKING';
+        return $hoursToDeparture <= (int) config('ride.booking_to_trip_threshold_hours', self::DEFAULT_TICKET_THRESHOLD_HOURS)
+            ? 'TRIP'
+            : 'BOOKING';
     }
 
     private function resolveTicketStatus(Booking $booking): ?string

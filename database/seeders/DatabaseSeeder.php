@@ -83,10 +83,9 @@ class DatabaseSeeder extends Seeder
             DriverEarningSeeder::class,
             TicketSeeder::class,
             ActivityLogSeeder::class,
+            RuraTariffSeeder::class,
+            ZoneCorridorSeeder::class,
         ]);
-        
-            // Register RuraTariffSeeder for easy seeding
-            $this->call(\Database\Seeders\RuraTariffSeeder::class);
 
         // Fintech architecture seeders (depend on drivers, rides, payments, users)
         $fintechSeeders = [

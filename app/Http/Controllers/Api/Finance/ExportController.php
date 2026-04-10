@@ -182,7 +182,7 @@ class ExportController extends Controller
         }
 
         $normalizedType = strtolower(trim($bookingType));
-        $threshold = now()->copy()->addHours(self::TICKET_THRESHOLD_HOURS);
+        $threshold = now()->copy()->addHours((int) config('ride.booking_to_trip_threshold_hours', self::TICKET_THRESHOLD_HOURS));
 
         if ($normalizedType === 'ticket') {
             $query->whereHas('booking.ride', fn ($rideQuery) => $rideQuery->where('departure_time', '<=', $threshold));
@@ -203,7 +203,7 @@ class ExportController extends Controller
 
         $hoursToDeparture = now()->diffInMinutes($departure, false) / 60;
 
-        return $hoursToDeparture <= self::TICKET_THRESHOLD_HOURS ? 'TICKET' : 'BOOKING';
+        return $hoursToDeparture <= (int) config('ride.booking_to_trip_threshold_hours', self::TICKET_THRESHOLD_HOURS) ? 'TICKET' : 'BOOKING';
     }
 
     /**
@@ -219,7 +219,7 @@ class ExportController extends Controller
         // Apply booking window filtering only when trip-booking linkage exists.
         if ($bookingType && Schema::hasColumn('trips', 'booking_id')) {
             $normalizedType = strtolower(trim($bookingType));
-            $threshold = now()->copy()->addHours(self::TICKET_THRESHOLD_HOURS);
+            $threshold = now()->copy()->addHours((int) config('ride.booking_to_trip_threshold_hours', self::TICKET_THRESHOLD_HOURS));
 
             if ($normalizedType === 'ticket') {
                 $tripQuery->whereExists(function ($query) use ($threshold) {

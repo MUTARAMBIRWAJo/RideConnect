@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
+use App\Models\Booking;
 use App\Models\MobileUser;
 use App\Models\Trip;
 use App\Services\AITrainingDataLogger;
@@ -54,6 +55,8 @@ class TripController extends Controller
             'success' => true,
             'data' => $trips->map(fn($trip) => [
                 'id' => $trip->id,
+                'booking_id' => $trip->booking_id,
+                'ride_id' => $trip->ride_id,
                 'passenger' => [
                     'id' => $trip->passenger?->id,
                     'name' => $trip->passenger?->name,
@@ -98,6 +101,8 @@ class TripController extends Controller
             'success' => true,
             'data' => [
                 'id' => $trip->id,
+                'booking_id' => $trip->booking_id,
+                'ride_id' => $trip->ride_id,
                 'passenger' => [
                     'id' => $trip->passenger?->id,
                     'name' => $trip->passenger?->name,
@@ -168,6 +173,79 @@ class TripController extends Controller
             'message' => 'Trip request created successfully',
             'data' => [
                 'id' => $trip->id,
+                'booking_id' => $trip->booking_id,
+                'ride_id' => $trip->ride_id,
+                'status' => $trip->status,
+            ],
+        ], 201);
+    }
+
+    /**
+     * Create a trip from an existing booking without deleting the booking.
+     */
+    public function createFromBooking(Request $request): JsonResponse
+    {
+        $user = $request->user();
+
+        if (! $user->role->isSuperAdmin() && ! $user->role->isManager()) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Only Admin/Managers can create trip from booking',
+            ], 403);
+        }
+
+        $validated = $request->validate([
+            'booking_id' => 'required|exists:bookings,id',
+        ]);
+
+        $booking = Booking::query()->with(['ride', 'user'])->findOrFail((int) $validated['booking_id']);
+
+        $existing = Trip::query()->where('booking_id', $booking->id)->first();
+        if ($existing) {
+            return response()->json([
+                'success' => true,
+                'message' => 'Trip already exists for booking',
+                'data' => [
+                    'id' => $existing->id,
+                    'booking_id' => $existing->booking_id,
+                    'ride_id' => $existing->ride_id,
+                    'status' => $existing->status,
+                ],
+            ]);
+        }
+
+        $passengerMobileUserId = $booking->user?->mobile_user_id
+            ? (int) $booking->user->mobile_user_id
+            : (int) $booking->user_id;
+
+        $trip = Trip::create([
+            'booking_id' => $booking->id,
+            'ride_id' => $booking->ride_id,
+            'passenger_id' => $passengerMobileUserId,
+            'driver_id' => $booking->ride?->driver_id,
+            'pickup_location' => $booking->pickup_address ?: $booking->ride?->origin_address,
+            'pickup_lat' => $booking->pickup_lat ?: $booking->ride?->origin_lat,
+            'pickup_lng' => $booking->pickup_lng ?: $booking->ride?->origin_lng,
+            'dropoff_location' => $booking->dropoff_address ?: $booking->ride?->destination_address,
+            'dropoff_lat' => $booking->dropoff_lat ?: $booking->ride?->destination_lat,
+            'dropoff_lng' => $booking->dropoff_lng ?: $booking->ride?->destination_lng,
+            'fare' => $booking->total_price,
+            'status' => strtoupper((string) (strtoupper((string) $booking->status) === 'COMPLETED' ? 'COMPLETED' : 'PENDING')),
+            'requested_at' => $booking->created_at,
+        ]);
+
+        $booking->update([
+            'status' => strtoupper((string) $booking->status) === 'COMPLETED' ? 'COMPLETED' : 'CONFIRMED',
+            'confirmed_at' => $booking->confirmed_at ?: now(),
+        ]);
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Trip created from booking successfully',
+            'data' => [
+                'id' => $trip->id,
+                'booking_id' => $trip->booking_id,
+                'ride_id' => $trip->ride_id,
                 'status' => $trip->status,
             ],
         ], 201);

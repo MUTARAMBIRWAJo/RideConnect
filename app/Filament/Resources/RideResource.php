@@ -218,17 +218,23 @@ class RideResource extends Resource
 
     public static function canCreate(): bool
     {
-        return auth()->user()?->can('manage rides') ?? false;
+        $role = auth()->user()?->role?->value ?? auth()->user()?->role;
+
+        return in_array($role, ['SUPER_ADMIN', 'ADMIN'], true);
     }
 
     public static function canEdit(Model $record): bool
     {
-        return auth()->user()?->can('manage rides') ?? false;
+        $role = auth()->user()?->role?->value ?? auth()->user()?->role;
+
+        return in_array($role, ['SUPER_ADMIN', 'ADMIN'], true);
     }
 
     public static function canDelete(Model $record): bool
     {
-        return auth()->user()?->can('manage rides') ?? false;
+        $role = auth()->user()?->role?->value ?? auth()->user()?->role;
+
+        return in_array($role, ['SUPER_ADMIN', 'ADMIN'], true);
     }
 
     public static function getEloquentQuery(): Builder

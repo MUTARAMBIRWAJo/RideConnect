@@ -74,7 +74,7 @@ class DashboardController extends Controller
         $bookingsQuery = Booking::whereBetween('created_at', [$startDate, $endDate])->whereHas('ride');
 
         if (! empty($validated['type'])) {
-            $threshold = now()->copy()->addHours(self::TICKET_THRESHOLD_HOURS);
+            $threshold = now()->copy()->addHours((int) config('ride.booking_to_trip_threshold_hours', self::TICKET_THRESHOLD_HOURS));
 
             if ($validated['type'] === 'ticket') {
                 $bookingsQuery->whereHas('ride', fn ($rideQuery) => $rideQuery->where('departure_time', '<=', $threshold));

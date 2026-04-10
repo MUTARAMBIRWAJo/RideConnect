@@ -10,7 +10,7 @@ use Illuminate\Support\Facades\DB;
 
 class RideCategoryTransitionService
 {
-    public const TRIP_THRESHOLD_HOURS = 6;
+    private const DEFAULT_TRIP_THRESHOLD_HOURS = 6;
 
     /**
      * A ride in <= 6 hours is treated as a Trip.
@@ -23,7 +23,7 @@ class RideCategoryTransitionService
 
         $hoursToDeparture = now()->diffInMinutes($ride->departure_time, false) / 60;
 
-        return $hoursToDeparture <= self::TRIP_THRESHOLD_HOURS;
+        return $hoursToDeparture <= $this->thresholdHours();
     }
 
     /**
@@ -31,12 +31,12 @@ class RideCategoryTransitionService
      */
     public function promoteEligibleBookingsToTrips(?Ride $ride = null): int
     {
-        $threshold = now()->copy()->addHours(self::TRIP_THRESHOLD_HOURS);
+        $threshold = now()->copy()->addHours($this->thresholdHours());
 
         $query = Booking::query()
             ->with(['ride', 'user'])
             ->whereHas('ride', fn ($rideQuery) => $rideQuery->where('departure_time', '<=', $threshold))
-            ->whereNotIn('status', ['CANCELLED', 'cancelled', 'COMPLETED', 'completed', 'NO_SHOW', 'no_show']);
+            ->whereNotIn('status', ['CANCELLED', 'COMPLETED', 'NO_SHOW', 'cancelled', 'completed', 'no_show']);
 
         if ($ride) {
             $query->where('ride_id', $ride->id);
@@ -61,6 +61,7 @@ class RideCategoryTransitionService
         $passengerId = $this->resolvePassengerMobileUserId($user);
 
         return Trip::create([
+            'booking_id' => null,
             'ride_id' => $ride->id,
             'passenger_id' => $passengerId,
             'driver_id' => $ride->driver_id,
@@ -111,9 +112,18 @@ class RideCategoryTransitionService
                 return null;
             }
 
+            $existingTrip = Trip::query()
+                ->where('booking_id', $lockedBooking->id)
+                ->first();
+
+            if ($existingTrip) {
+                return $existingTrip;
+            }
+
             $passengerId = $this->resolvePassengerMobileUserId($lockedBooking->user);
 
             $trip = Trip::create([
+                'booking_id' => $lockedBooking->id,
                 'ride_id' => $lockedBooking->ride->id,
                 'passenger_id' => $passengerId,
                 'driver_id' => $lockedBooking->ride->driver_id,
@@ -130,7 +140,10 @@ class RideCategoryTransitionService
                 'completed_at' => $status === 'completed' ? ($lockedBooking->updated_at ?: now()) : null,
             ]);
 
-            $lockedBooking->delete();
+            $lockedBooking->update([
+                'status' => in_array($status, ['completed'], true) ? 'COMPLETED' : 'CONFIRMED',
+                'confirmed_at' => $status === 'confirmed' ? ($lockedBooking->confirmed_at ?: now()) : $lockedBooking->confirmed_at,
+            ]);
 
             return $trip;
         });
@@ -141,7 +154,7 @@ class RideCategoryTransitionService
      */
     public function demoteEligibleTripsToBookings(?Ride $ride = null): int
     {
-        $threshold = now()->copy()->addHours(self::TRIP_THRESHOLD_HOURS);
+        $threshold = now()->copy()->addHours($this->thresholdHours());
 
         $query = Trip::query()
             ->with('ride')
@@ -209,6 +222,21 @@ class RideCategoryTransitionService
                 return null;
             }
 
+            if ($lockedTrip->booking_id) {
+                $linkedBooking = Booking::query()->find($lockedTrip->booking_id);
+
+                if ($linkedBooking) {
+                    $linkedBooking->update([
+                        'status' => 'PENDING',
+                    ]);
+
+                    $lockedTrip->update(['booking_id' => null]);
+                    $lockedTrip->delete();
+
+                    return $linkedBooking;
+                }
+            }
+
             $userId = $this->resolveWebUserIdFromPassengerId((int) $lockedTrip->passenger_id);
             if (! $userId) {
                 return null;
@@ -217,7 +245,7 @@ class RideCategoryTransitionService
             $existingBooking = Booking::query()
                 ->where('ride_id', $lockedTrip->ride->id)
                 ->where('user_id', $userId)
-                ->whereIn('status', ['pending', 'confirmed'])
+                ->whereIn('status', ['PENDING', 'CONFIRMED', 'pending', 'confirmed'])
                 ->first();
 
             if ($existingBooking) {
@@ -297,10 +325,15 @@ class RideCategoryTransitionService
     private function mapTripStatusToBookingStatus(string $tripStatus): string
     {
         return match (strtolower($tripStatus)) {
-            'accepted' => 'confirmed',
-            'completed' => 'completed',
-            'cancelled' => 'cancelled',
-            default => 'pending',
+            'accepted' => 'CONFIRMED',
+            'completed' => 'COMPLETED',
+            'cancelled' => 'CANCELLED',
+            default => 'PENDING',
         };
+    }
+
+    private function thresholdHours(): int
+    {
+        return (int) config('ride.booking_to_trip_threshold_hours', self::DEFAULT_TRIP_THRESHOLD_HOURS);
     }
 }

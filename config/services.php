@@ -94,6 +94,12 @@ return [
         'timeout' => env('ML_SERVICE_TIMEOUT', 10),
     ],
 
+    'ocr_space' => [
+        'endpoint' => env('OCR_SPACE_ENDPOINT', 'https://api.ocr.space/parse/image'),
+        'api_key' => env('OCR_SPACE_API_KEY', 'helloworld'),
+        'timeout' => env('OCR_SPACE_TIMEOUT', 60),
+    ],
+
     'push' => [
         // FCM legacy server key (or use your own gateway if preferred).
         'fcm_server_key' => env('FCM_SERVER_KEY'),

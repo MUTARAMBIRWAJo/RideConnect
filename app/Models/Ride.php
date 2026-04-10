@@ -10,17 +10,22 @@ class Ride extends Model
     use HasFactory;
 
     private const STATUS_MAP = [
-        'scheduled' => 'scheduled',
-        'active' => 'available',
-        'available' => 'available',
-        'in_progress' => 'in_progress',
-        'started' => 'in_progress',
-        'completed' => 'completed',
-        'cancelled' => 'cancelled',
+        'scheduled' => 'PUBLISHED',
+        'active' => 'PUBLISHED',
+        'available' => 'PUBLISHED',
+        'draft' => 'DRAFT',
+        'published' => 'PUBLISHED',
+        'in_progress' => 'IN_PROGRESS',
+        'started' => 'IN_PROGRESS',
+        'completed' => 'COMPLETED',
+        'cancelled' => 'CANCELLED',
     ];
 
     protected $fillable = [
         'driver_id',
+        'zone_id',
+        'corridor_id',
+        'created_by',
         'vehicle_id',
         'origin_address',
         'origin_lat',
@@ -68,6 +73,21 @@ class Ride extends Model
         return $this->belongsTo(Vehicle::class);
     }
 
+    public function zone()
+    {
+        return $this->belongsTo(Zone::class);
+    }
+
+    public function corridor()
+    {
+        return $this->belongsTo(Corridor::class);
+    }
+
+    public function creator()
+    {
+        return $this->belongsTo(User::class, 'created_by');
+    }
+
     public function bookings()
     {
         return $this->hasMany(Booking::class);
@@ -88,6 +108,6 @@ class Ride extends Model
 
         $normalized = strtolower(trim((string) $value));
 
-        $this->attributes['status'] = self::STATUS_MAP[$normalized] ?? $normalized;
+        $this->attributes['status'] = self::STATUS_MAP[$normalized] ?? strtoupper((string) $value);
     }
 }

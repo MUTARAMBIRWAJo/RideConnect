@@ -4,11 +4,13 @@ namespace App\Filament\Resources;
 
 use App\Filament\Resources\BookingResource\Pages;
 use App\Models\Booking;
+use App\Models\Ride;
 use Filament\Forms;
 use Filament\Forms\Form;
 use Filament\Resources\Resource;
 use Filament\Tables;
 use Filament\Tables\Table;
+use Illuminate\Database\Eloquent\Builder as EloquentBuilder;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\SoftDeletingScope;
@@ -33,9 +35,26 @@ class BookingResource extends Resource
             ->schema([
                 Forms\Components\Select::make('user_id')
                     ->relationship('user', 'name')
+                    ->searchable()
+                    ->preload()
                     ->required(),
                 Forms\Components\Select::make('ride_id')
-                    ->relationship('ride', 'id')
+                    ->relationship(
+                        name: 'ride',
+                        titleAttribute: 'id',
+                        modifyQueryUsing: fn (EloquentBuilder $query): EloquentBuilder => $query->orderByDesc('id')
+                    )
+                    ->getOptionLabelFromRecordUsing(fn (Ride $record): string => sprintf(
+                        '#%d | %s -> %s | %s %s',
+                        $record->id,
+                        $record->origin_address ?? 'Unknown',
+                        $record->destination_address ?? 'Unknown',
+                        number_format((float) $record->price_per_seat, 0),
+                        $record->currency ?? 'RWF'
+                    ))
+                    ->searchable()
+                    ->preload()
+                    ->live()
                     ->required(),
                 Forms\Components\TextInput::make('seats_booked')
                     ->required()
@@ -57,8 +76,9 @@ class BookingResource extends Resource
                         $tariffService = app(\App\Services\RuraTariffService::class);
                         $originZone = $zoneService->getZoneForCoordinates($origin['lat'], $origin['lng']);
                         $destinationZone = $zoneService->getZoneForCoordinates($destination['lat'], $destination['lng']);
-                        $legalFare = $tariffService->lookupTariff($originZone, $destinationZone, $ride->vehicle_type, $ride->ride_type);
-                        if ($legalFare) {
+                        $tariffRow = $tariffService->lookupTariff(null, $originZone, $destinationZone, null);
+                        $legalFare = is_array($tariffRow) ? (float) ($tariffRow['fare_rwf'] ?? 0) : 0;
+                        if ($legalFare > 0) {
                             $totalLegal = $legalFare * $seats;
                             return 'RURA Legal Fare: RWF ' . number_format($totalLegal, 2);
                         }
@@ -81,10 +101,11 @@ class BookingResource extends Resource
                         $tariffService = app(\App\Services\RuraTariffService::class);
                         $originZone = $zoneService->getZoneForCoordinates($origin['lat'], $origin['lng']);
                         $destinationZone = $zoneService->getZoneForCoordinates($destination['lat'], $destination['lng']);
-                        $legalFare = $tariffService->lookupTariff($originZone, $destinationZone, $ride->vehicle_type, $ride->ride_type);
-                        if ($legalFare) {
+                        $tariffRow = $tariffService->lookupTariff(null, $originZone, $destinationZone, null);
+                        $legalFare = is_array($tariffRow) ? (float) ($tariffRow['fare_rwf'] ?? 0) : 0;
+                        if ($legalFare > 0) {
                             $totalLegal = $legalFare * $seats;
-                            return $entered == $totalLegal ? null : 'rura_compliance';
+                            return abs(((float) $entered) - $totalLegal) < 0.01 ? null : 'rura_compliance';
                         }
                         return null;
                     }),
@@ -94,25 +115,83 @@ class BookingResource extends Resource
                     ->default('RWF'),
                 Forms\Components\Select::make('status')
                     ->options([
-                        'pending' => 'Pending',
-                        'confirmed' => 'Confirmed',
-                        'cancelled' => 'Cancelled',
-                        'completed' => 'Completed',
+                        'PENDING' => 'Pending',
+                        'CONFIRMED' => 'Confirmed',
+                        'CANCELLED' => 'Cancelled',
+                        'COMPLETED' => 'Completed',
                     ])
-                    ->default('pending')
+                    ->default('PENDING')
                     ->required(),
+                Forms\Components\Select::make('pickup_map_point')
+                    ->label('Pickup Map Point')
+                    ->options(fn (): array => collect(config('ride.map_points', []))
+                        ->mapWithKeys(fn (array $point, string $key): array => [$key => $point['label'] ?? $key])
+                        ->all())
+                    ->searchable()
+                    ->live()
+                    ->dehydrated(false)
+                    ->afterStateUpdated(function ($state, callable $set): void {
+                        $point = config('ride.map_points.' . (string) $state);
+
+                        if (! is_array($point)) {
+                            return;
+                        }
+
+                        $set('pickup_address', $point['label'] ?? null);
+                        $set('pickup_lat', $point['lat'] ?? null);
+                        $set('pickup_lng', $point['lng'] ?? null);
+                    }),
+                Forms\Components\View::make('filament.forms.components.location-map-picker')
+                    ->viewData([
+                        'label' => 'Pickup Location Map',
+                        'latField' => 'pickup_lat',
+                        'lngField' => 'pickup_lng',
+                        'addressField' => 'pickup_address',
+                    ])
+                    ->columnSpanFull(),
                 Forms\Components\TextInput::make('pickup_address')
                     ->maxLength(255),
                 Forms\Components\TextInput::make('pickup_lat')
-                    ->numeric(),
+                    ->numeric()
+                    ->readOnly(),
                 Forms\Components\TextInput::make('pickup_lng')
-                    ->numeric(),
+                    ->numeric()
+                    ->readOnly(),
+                Forms\Components\Select::make('dropoff_map_point')
+                    ->label('Dropoff Map Point')
+                    ->options(fn (): array => collect(config('ride.map_points', []))
+                        ->mapWithKeys(fn (array $point, string $key): array => [$key => $point['label'] ?? $key])
+                        ->all())
+                    ->searchable()
+                    ->live()
+                    ->dehydrated(false)
+                    ->afterStateUpdated(function ($state, callable $set): void {
+                        $point = config('ride.map_points.' . (string) $state);
+
+                        if (! is_array($point)) {
+                            return;
+                        }
+
+                        $set('dropoff_address', $point['label'] ?? null);
+                        $set('dropoff_lat', $point['lat'] ?? null);
+                        $set('dropoff_lng', $point['lng'] ?? null);
+                    }),
+                Forms\Components\View::make('filament.forms.components.location-map-picker')
+                    ->viewData([
+                        'label' => 'Dropoff Location Map',
+                        'latField' => 'dropoff_lat',
+                        'lngField' => 'dropoff_lng',
+                        'addressField' => 'dropoff_address',
+                    ])
+                    ->columnSpanFull(),
                 Forms\Components\TextInput::make('dropoff_address')
                     ->maxLength(255),
                 Forms\Components\TextInput::make('dropoff_lat')
-                    ->numeric(),
+                    ->numeric()
+                    ->readOnly(),
                 Forms\Components\TextInput::make('dropoff_lng')
-                    ->numeric(),
+                    ->numeric()
+                    ->readOnly(),
                 Forms\Components\Textarea::make('special_requests'),
                 Forms\Components\DateTimePicker::make('confirmed_at'),
                 Forms\Components\DateTimePicker::make('cancelled_at'),
@@ -143,10 +222,11 @@ class BookingResource extends Resource
                 Tables\Columns\TextColumn::make('status')
                     ->badge()
                     ->color(fn (string $state): string => match ($state) {
-                        'confirmed' => 'success',
-                        'pending' => 'warning',
-                        'cancelled' => 'danger',
-                        'completed' => 'info',
+                        'CONFIRMED' => 'success',
+                        'PENDING' => 'warning',
+                        'CANCELLED' => 'danger',
+                        'COMPLETED' => 'info',
+                        default => 'gray',
                     }),
                 Tables\Columns\TextColumn::make('created_at')
                     ->dateTime()
@@ -156,10 +236,10 @@ class BookingResource extends Resource
             ->filters([
                 Tables\Filters\SelectFilter::make('status')
                     ->options([
-                        'pending' => 'Pending',
-                        'confirmed' => 'Confirmed',
-                        'cancelled' => 'Cancelled',
-                        'completed' => 'Completed',
+                        'PENDING' => 'Pending',
+                        'CONFIRMED' => 'Confirmed',
+                        'CANCELLED' => 'Cancelled',
+                        'COMPLETED' => 'Completed',
                     ]),
             ])
             ->actions([
@@ -245,12 +325,16 @@ class BookingResource extends Resource
 
     public static function canCreate(): bool
     {
-        return auth()->user()?->can('manage rides') ?? false;
+        $role = auth()->user()?->role?->value ?? auth()->user()?->role;
+
+        return in_array($role, ['SUPER_ADMIN', 'ADMIN', 'OFFICER'], true);
     }
 
     public static function canEdit(Model $record): bool
     {
-        return auth()->user()?->can('manage rides') ?? false;
+        $role = auth()->user()?->role?->value ?? auth()->user()?->role;
+
+        return in_array($role, ['SUPER_ADMIN', 'ADMIN', 'OFFICER'], true);
     }
 
     public static function canDelete(Model $record): bool

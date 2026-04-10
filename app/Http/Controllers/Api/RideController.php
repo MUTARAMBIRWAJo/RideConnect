@@ -1,8 +1,22 @@
+<?php
 
+namespace App\Http\Controllers\Api;
+
+use App\Http\Controllers\Controller;
+use App\Models\Corridor;
+use App\Models\Ride;
+use App\Services\AiPredictionService;
+use App\Services\MobileNotificationService;
+use App\Services\RideCategoryTransitionService;
+use App\Services\RuraTariffService;
+use App\Services\RuraZoneService;
+use Illuminate\Http\JsonResponse;
+use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Gate;
 
 class RideController extends Controller
 {
-    private const TICKET_THRESHOLD_HOURS = 6;
+    private const DEFAULT_TICKET_THRESHOLD_HOURS = 6;
 
     public function __construct(
         private readonly RideCategoryTransitionService $rideCategoryTransitionService,
@@ -43,7 +57,7 @@ class RideController extends Controller
         // Filter available rides
         if ($request->has('available_only') && $request->available_only) {
             $query->where('available_seats', '>', 0)
-                  ->where('status', 'ACTIVE')
+                  ->where('status', 'PUBLISHED')
                   ->where('departure_time', '>', now());
         }
         
@@ -144,109 +158,68 @@ class RideController extends Controller
     }
 
     /**
-     * Create a new ride (Driver only).
+     * Create a new ride (Admin / Super Admin only).
      */
     public function store(Request $request): JsonResponse
     {
         $user = $request->user();
-        
-        // Only drivers can create rides
-        if (!$user->isDriver()) {
+
+        if (! $user || Gate::forUser($user)->denies('create', Ride::class)) {
             return response()->json([
                 'success' => false,
-                'message' => 'Only drivers can create rides',
+                'message' => 'Only Admin or Super Admin can create rides',
             ], 403);
         }
-        
-        // Check if user is approved
-        if (!$user->is_approved) {
-            return response()->json([
-                'success' => false,
-                'message' => 'Your account must be approved to create rides',
-            ], 403);
-        }
-        
+
         $validated = $request->validate([
+            'driver_id' => 'required|exists:drivers,id',
             'vehicle_id' => 'required|exists:vehicles,id',
-            'origin_address' => 'required|string',
+            'zone_id' => 'required|exists:zones,id',
+            'corridor_id' => 'required|exists:corridors,id',
             'origin_lat' => 'required|numeric|between:-90,90',
             'origin_lng' => 'required|numeric|between:-180,180',
-            'destination_address' => 'required|string',
             'destination_lat' => 'required|numeric|between:-90,90',
             'destination_lng' => 'required|numeric|between:-180,180',
+            'distance_km' => 'nullable|numeric|min:0',
             'departure_time' => 'required|date|after:now',
             'arrival_time_estimated' => 'nullable|date|after:departure_time',
             'available_seats' => 'required|integer|min:1|max:8',
-            'price_per_seat' => 'required|numeric|min:0',
             'currency' => 'sometimes|string|size:3',
             'description' => 'nullable|string',
-            'ride_type' => 'sometimes|string|in:REGULAR,EXPRESS,SHUTTLE',
+            'ride_type' => 'sometimes|string',
             'luggage_allowed' => 'sometimes|boolean',
             'pets_allowed' => 'sometimes|boolean',
             'smoking_allowed' => 'sometimes|boolean',
+            'status' => 'nullable|in:DRAFT,PUBLISHED',
         ]);
-        
-        // Get driver profile
-        $driver = $user->driver;
-        if (!$driver) {
-            return response()->json([
-                'success' => false,
-                'message' => 'Driver profile not found',
-            ], 404);
-        }
-        
-        // Verify vehicle belongs to driver
-        if ($driver->id !== $request->vehicle_id) {
-            // Check if vehicle belongs to driver
-            $vehicle = \App\Models\Vehicle::where('id', $request->vehicle_id)
-                ->where('driver_id', $driver->id)
-                ->first();
-            
-            if (!$vehicle) {
-                return response()->json([
-                    'success' => false,
-                    'message' => 'Vehicle not found or does not belong to you',
-                ], 403);
-            }
-        }
-        
-        // Predict ETA using AI service
-        $aiEtaPayload = [
-            'origin' => [
-                'lat' => $validated['origin_lat'],
-                'lng' => $validated['origin_lng'],
-                'address' => $validated['origin_address'],
-            ],
-            'destination' => [
-                'lat' => $validated['destination_lat'],
-                'lng' => $validated['destination_lng'],
-                'address' => $validated['destination_address'],
-            ],
-            'departure_time' => $validated['departure_time'],
-        ];
-        $aiEtaResult = $this->aiPredictionService->predictEta($aiEtaPayload);
-        $estimatedArrival = $aiEtaResult['eta'] ?? $validated['arrival_time_estimated'] ?? null;
 
-        // Predict surge pricing using AI service
-        $aiSurgePayload = [
-            'origin' => $aiEtaPayload['origin'],
-            'destination' => $aiEtaPayload['destination'],
-            'time' => $validated['departure_time'],
-        ];
-        $aiSurgeResult = $this->aiPredictionService->predictSurge($aiSurgePayload);
-        $surgeMultiplier = $aiSurgeResult['surge_multiplier'] ?? 1.0;
+        $corridor = Corridor::with(['startZone', 'endZone'])->findOrFail((int) $validated['corridor_id']);
+        $distanceKm = (float) ($validated['distance_km'] ?? 1);
+        $pricePerSeat = round(((float) $corridor->base_fare) + ($distanceKm * (float) $corridor->price_per_km), 2);
 
         $ride = Ride::create([
-            ...$validated,
-            'driver_id' => $driver->id,
-            'status' => 'ACTIVE',
+            'driver_id' => (int) $validated['driver_id'],
+            'vehicle_id' => (int) $validated['vehicle_id'],
+            'zone_id' => (int) $validated['zone_id'],
+            'corridor_id' => (int) $validated['corridor_id'],
+            'created_by' => (int) $user->id,
+            'origin_address' => $corridor->startZone?->name ?? 'Start Zone',
+            'origin_lat' => $validated['origin_lat'],
+            'origin_lng' => $validated['origin_lng'],
+            'destination_address' => $corridor->endZone?->name ?? 'End Zone',
+            'destination_lat' => $validated['destination_lat'],
+            'destination_lng' => $validated['destination_lng'],
+            'departure_time' => $validated['departure_time'],
+            'arrival_time_estimated' => $validated['arrival_time_estimated'] ?? null,
+            'available_seats' => (int) $validated['available_seats'],
+            'price_per_seat' => $pricePerSeat,
             'currency' => $validated['currency'] ?? 'RWF',
-            'ride_type' => $validated['ride_type'] ?? 'REGULAR',
-            'luggage_allowed' => $validated['luggage_allowed'] ?? true,
-            'pets_allowed' => $validated['pets_allowed'] ?? false,
-            'smoking_allowed' => $validated['smoking_allowed'] ?? false,
-            'arrival_time_estimated' => $estimatedArrival,
-            'surge_multiplier' => $surgeMultiplier,
+            'description' => $validated['description'] ?? null,
+            'status' => $validated['status'] ?? 'PUBLISHED',
+            'ride_type' => $validated['ride_type'] ?? 'local',
+            'luggage_allowed' => (bool) ($validated['luggage_allowed'] ?? true),
+            'pets_allowed' => (bool) ($validated['pets_allowed'] ?? false),
+            'smoking_allowed' => (bool) ($validated['smoking_allowed'] ?? false),
         ]);
 
         return response()->json([
@@ -255,10 +228,19 @@ class RideController extends Controller
             'data' => [
                 'id' => $ride->id,
                 'status' => $ride->status,
-                'arrival_time_estimated' => $ride->arrival_time_estimated,
-                'surge_multiplier' => $ride->surge_multiplier,
+                'zone_id' => $ride->zone_id,
+                'corridor_id' => $ride->corridor_id,
+                'price_per_seat' => $ride->price_per_seat,
             ],
         ], 201);
+    }
+
+    /**
+     * Explicit admin endpoint for corridor-driven ride creation.
+     */
+    public function createRideWithCorridor(Request $request): JsonResponse
+    {
+        return $this->store($request);
     }
 
     /**
@@ -269,17 +251,16 @@ class RideController extends Controller
         $ride = Ride::findOrFail($id);
         $user = $request->user();
         $originalDepartureTime = $ride->departure_time;
-        
-        // Only the driver who created the ride can update it
-        if ($ride->driver?->user_id !== $user->id && !$user->role->isSuperAdmin()) {
+
+        if (! $user || Gate::forUser($user)->denies('update', $ride)) {
             return response()->json([
                 'success' => false,
-                'message' => 'Unauthorized to update this ride',
+                'message' => 'Only Admin or Super Admin can update rides',
             ], 403);
         }
         
         // Cannot update if ride has already started
-        if (in_array(strtolower((string) $ride->status), ['started', 'in_progress', 'completed', 'cancelled'], true)) {
+        if (in_array(strtoupper((string) $ride->status), ['IN_PROGRESS', 'COMPLETED', 'CANCELLED'], true)) {
             return response()->json([
                 'success' => false,
                 'message' => 'Cannot update ride that has already started, completed, or cancelled',
@@ -298,11 +279,11 @@ class RideController extends Controller
             'available_seats' => 'sometimes|integer|min:1|max:8',
             'price_per_seat' => 'sometimes|numeric|min:0',
             'description' => 'nullable|string',
-            'status' => 'sometimes|in:available,scheduled,in_progress,completed,cancelled,ACTIVE,SCHEDULED,IN_PROGRESS,COMPLETED,CANCELLED,STARTED',
+            'status' => 'sometimes|in:DRAFT,PUBLISHED,IN_PROGRESS,COMPLETED,CANCELLED',
         ]);
         
         // If cancelling, add cancellation reason
-        if (isset($validated['status']) && strtolower((string) $validated['status']) === 'cancelled') {
+        if (isset($validated['status']) && strtoupper((string) $validated['status']) === 'CANCELLED') {
             $validated['cancelled_at'] = now();
             $validated['cancellation_reason'] = $request->cancellation_reason;
         }
@@ -331,12 +312,11 @@ class RideController extends Controller
     {
         $ride = Ride::findOrFail($id);
         $user = $request->user();
-        
-        // Only the driver who created the ride or SuperAdmin can delete
-        if ($ride->driver?->user_id !== $user->id && !$user->role->isSuperAdmin()) {
+
+        if (! $user || Gate::forUser($user)->denies('delete', $ride)) {
             return response()->json([
                 'success' => false,
-                'message' => 'Unauthorized to delete this ride',
+                'message' => 'Only Admin or Super Admin can delete rides',
             ], 403);
         }
         
@@ -427,7 +407,7 @@ class RideController extends Controller
         $ride = Ride::findOrFail($validated['ride_id']);
 
         // Check if ride is available
-        if (! in_array(strtolower((string) $ride->status), ['active', 'available', 'scheduled'], true)) {
+        if (! in_array(strtoupper((string) $ride->status), ['PUBLISHED'], true)) {
             return response()->json([
                 'success' => false,
                 'message' => 'This ride is not available',
@@ -512,7 +492,7 @@ class RideController extends Controller
             'total_price' => $totalPrice,
             'pickup_address' => $validated['pickup_address'],
             'dropoff_address' => $validated['dropoff_address'],
-            'status' => 'pending',
+            'status' => 'PENDING',
         ]);
 
         $this->mobileNotificationService->sendBookingRequestToDriver($booking->loadMissing('ride.driver'));
@@ -527,7 +507,9 @@ class RideController extends Controller
                 'total_price' => $booking->total_price,
                 'status' => $booking->status,
                 'hours_to_departure' => round(now()->diffInMinutes($ride->departure_time, false) / 60, 2),
-                'travel_type' => now()->diffInHours($ride->departure_time, false) <= self::TICKET_THRESHOLD_HOURS ? 'TRIP' : 'BOOKING',
+                'travel_type' => now()->diffInHours($ride->departure_time, false) <= (int) config('ride.booking_to_trip_threshold_hours', self::DEFAULT_TICKET_THRESHOLD_HOURS)
+                    ? 'TRIP'
+                    : 'BOOKING',
             ],
         ], 201);
     }
@@ -587,14 +569,14 @@ class RideController extends Controller
             ->where('ride_id', $id)
             ->firstOrFail();
 
-        if ($booking->status === 'CANCELLED') {
+        if (strtoupper((string) $booking->status) === 'CANCELLED') {
             return response()->json([
                 'success' => false,
                 'message' => 'Booking is already cancelled',
             ], 400);
         }
 
-        if ($booking->status === 'CONFIRMED') {
+        if (strtoupper((string) $booking->status) === 'CONFIRMED') {
             return response()->json([
                 'success' => false,
                 'message' => 'Cannot cancel a confirmed booking',
@@ -606,7 +588,7 @@ class RideController extends Controller
         ]);
 
         $booking->update([
-            'status' => 'cancelled',
+            'status' => 'CANCELLED',
             'cancellation_reason' => $validated['reason'] ?? null,
             'cancelled_at' => now(),
         ]);
