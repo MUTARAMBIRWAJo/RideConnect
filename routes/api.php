@@ -358,6 +358,22 @@ Route::prefix('v1')->group(function () {
             // Validation
             Route::put('/{id}/validate', [TicketController::class, 'validate']);
         });
+
+        // Officer Booking & Trip Management
+        Route::prefix('officer')->name('officer.')->group(function () {
+            // Passenger management
+            Route::get('/passengers', [\App\Http\Controllers\Api\OfficerBookingTripController::class, 'getPassengers'])->name('passengers');
+            Route::post('/passengers', [\App\Http\Controllers\Api\OfficerBookingTripController::class, 'createPassenger'])->name('passengers.create');
+
+            // Location & Corridor search
+            Route::get('/corridors', [\App\Http\Controllers\Api\OfficerBookingTripController::class, 'getCorridors'])->name('corridors');
+            Route::get('/locations/search', [\App\Http\Controllers\Api\OfficerBookingTripController::class, 'searchLocations'])->name('locations.search');
+            Route::get('/rides/available', [\App\Http\Controllers\Api\OfficerBookingTripController::class, 'getAvailableRides'])->name('rides.available');
+
+            // Booking & Trip creation
+            Route::post('/bookings', [\App\Http\Controllers\Api\OfficerBookingTripController::class, 'createBooking'])->name('bookings');
+            Route::post('/trips', [\App\Http\Controllers\Api\OfficerBookingTripController::class, 'createTrip'])->name('trips');
+        });
     });
 
     /* ===========================

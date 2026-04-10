@@ -140,6 +140,7 @@ class AdminPanelProvider extends PanelProvider
                 \App\Filament\Pages\AdminDashboard::class,
                 \App\Filament\Pages\AccountantDashboard::class,
                 \App\Filament\Pages\OfficerDashboardV2::class,
+                \App\Filament\Pages\OfficerCreateBookingTrip::class,
                 \App\Filament\Pages\DriverDashboard::class,
                 \App\Filament\Pages\PassengerDashboard::class,
                 \App\Filament\Pages\BiDashboard::class,
