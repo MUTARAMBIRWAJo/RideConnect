@@ -35,6 +35,10 @@
           </td>
           <td class="px-3 py-3">
             <div class="text-sm text-gray-700 dark:text-gray-200">{{ $ride->pickup_checkpoint ?? '—' }} → {{ $ride->dropoff_checkpoint ?? '—' }}</div>
+            <div class="mt-1 flex items-center gap-1">
+              <span class="inline-flex items-center rounded px-2 py-0.5 text-[10px] font-semibold bg-sky-100 text-sky-800 dark:bg-sky-900/40 dark:text-sky-200">{{ strtoupper((string) $ride->transport_type) }}</span>
+              <span class="inline-flex items-center rounded px-2 py-0.5 text-[10px] font-semibold bg-amber-100 text-amber-800 dark:bg-amber-900/40 dark:text-amber-200">{{ strtoupper((string) $ride->travel_mode) }}</span>
+            </div>
           </td>
           <td class="px-3 py-3">
             @php $status = strtolower($ride->status ?? 'scheduled'); @endphp
@@ -42,8 +46,16 @@
           </td>
           <td class="px-3 py-3 text-xs text-gray-500">{{ optional($ride->created_at)->diffForHumans() ?? '—' }}</td>
           <td class="px-3 py-3">
-            <div class="relative inline-block text-left">
-              <button class="px-2 py-1 rounded-md border border-green-200 dark:border-green-800 text-gray-800 dark:text-gray-200 transition-all duration-200 hover:bg-green-50 dark:hover:bg-green-900/30 hover:border-green-300 dark:hover:border-green-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-green-300 focus-visible:ring-offset-2 dark:focus-visible:ring-green-700 dark:focus-visible:ring-offset-gray-900">•••</button>
+            <div class="flex items-center gap-2">
+              @if(($ride->travel_mode ?? null) === 'SCHEDULED')
+                <a href="#" class="px-3 py-1 rounded-md bg-blue-600 text-white text-xs">Book Ride</a>
+              @else
+                <a href="#" class="px-3 py-1 rounded-md bg-green-600 text-white text-xs">Request Ride</a>
+              @endif
+
+              <div class="relative inline-block text-left">
+                <button class="px-2 py-1 rounded-md border border-green-200 dark:border-green-800 text-gray-800 dark:text-gray-200 transition-all duration-200 hover:bg-green-50 dark:hover:bg-green-900/30 hover:border-green-300 dark:hover:border-green-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-green-300 focus-visible:ring-offset-2 dark:focus-visible:ring-green-700 dark:focus-visible:ring-offset-gray-900">•••</button>
+              </div>
             </div>
           </td>
         </tr>

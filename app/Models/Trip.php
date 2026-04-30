@@ -100,4 +100,19 @@ class Trip extends Model
 
         $this->attributes['status'] = self::STATUS_MAP[$normalized] ?? strtoupper((string) $value);
     }
+
+    /**
+     * Validate that trip has required fields for execution
+     * Trip MUST always represent actual ride execution
+     */
+    public function validateForExecution(): void
+    {
+        if (!$this->pickup_location || !$this->dropoff_location) {
+            throw new \InvalidArgumentException("Trip must have valid pickup and dropoff locations");
+        }
+
+        if (!$this->passenger_id) {
+            throw new \InvalidArgumentException("Trip must have a passenger");
+        }
+    }
 }

@@ -87,6 +87,20 @@ class AuthController extends Controller
         
         $user = Auth::user();
         
+        // Record login activity
+        $user->update([
+            'last_login_ip' => $request->ip(),
+            'last_login_user_agent' => $request->userAgent(),
+            'last_login_at' => now(),
+        ]);
+        
+        // Check if MFA is enabled and confirmed
+        if ($user->hasMfaEnabled() && $user->hasMfaConfirmed()) {
+            Auth::logout();
+            session(['pending_auth_user_id' => $user->id]);
+            return redirect()->route('auth.two-factor-challenge');
+        }
+        
         // Debug: Log user role
         \Log::info('User logged in:', [
             'id' => $user->id,

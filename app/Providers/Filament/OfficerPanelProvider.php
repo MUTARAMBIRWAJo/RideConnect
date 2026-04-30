@@ -5,9 +5,10 @@ namespace App\Providers\Filament;
 use App\Filament\Resources\BookingResource;
 use App\Filament\Resources\TripResource;
 use App\Filament\Pages\Auth\RedirectToUnifiedLogin;
+use App\Filament\Pages\MfaSettingsPage;
 use Filament\Http\Middleware\Authenticate;
-use Filament\Http\Middleware\DisableBladeIconComponents;
 use Filament\Http\Middleware\DispatchServingFilamentEvent;
+use Filament\Http\Middleware\DisableBladeIconComponents;
 use Filament\Panel;
 use Filament\PanelProvider;
 use Filament\Support\Colors\Color;
@@ -67,6 +68,7 @@ class OfficerPanelProvider extends PanelProvider
                 NavigationGroup::make('Support & Complaints')->collapsible(true),
                 NavigationGroup::make('Maps & Tracking')->collapsible(true),
                 NavigationGroup::make('Information Hub')->collapsible(true),
+                NavigationGroup::make('Settings')->collapsible(true),
             ])
             ->resources([
                 BookingResource::class,
@@ -82,6 +84,7 @@ class OfficerPanelProvider extends PanelProvider
                 \App\Filament\Pages\Officer\AIInsightsPage::class,
                 \App\Filament\Pages\AdvancedGoogleMaps::class,
                 \App\Filament\Pages\SystemNewsAndUpdates::class,
+                MfaSettingsPage::class,
             ])
             ->middleware([
                 EncryptCookies::class,

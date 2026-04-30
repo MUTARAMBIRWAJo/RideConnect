@@ -40,6 +40,8 @@ class RideFactory extends Factory
             'smoking_allowed' => false,
             'cancelled_at' => null,
             'cancellation_reason' => null,
+            'transport_type' => Ride::TRANSPORT_CAR,
+            'travel_mode' => Ride::MODE_SCHEDULED,
         ];
     }
 

@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Services\TransportMappingService;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 
@@ -9,16 +10,34 @@ class Ride extends Model
 {
     use HasFactory;
 
+    protected static function boot()
+    {
+        parent::boot();
+
+        static::saving(function ($ride) {
+            $ride->validateTransportRules();
+        });
+    }
+
+    // Transport type constants
+    const TRANSPORT_BUS = 'BUS';
+    const TRANSPORT_CAR = 'CAR';
+    const TRANSPORT_MOTORCYCLE = 'MOTORCYCLE';
+
+    // Travel mode constants
+    const MODE_SCHEDULED = 'SCHEDULED';
+    const MODE_ON_DEMAND = 'ON_DEMAND';
+
     private const STATUS_MAP = [
-        'scheduled' => 'PUBLISHED',
-        'active' => 'PUBLISHED',
-        'available' => 'PUBLISHED',
-        'draft' => 'DRAFT',
-        'published' => 'PUBLISHED',
-        'in_progress' => 'IN_PROGRESS',
-        'started' => 'IN_PROGRESS',
-        'completed' => 'COMPLETED',
-        'cancelled' => 'CANCELLED',
+        'scheduled' => 'published',
+        'active' => 'published',
+        'available' => 'published',
+        'draft' => 'draft',
+        'published' => 'published',
+        'in_progress' => 'in_progress',
+        'started' => 'in_progress',
+        'completed' => 'completed',
+        'cancelled' => 'cancelled',
     ];
 
     protected $fillable = [
@@ -27,6 +46,8 @@ class Ride extends Model
         'corridor_id',
         'created_by',
         'vehicle_id',
+        'transport_type',
+        'travel_mode',
         'origin_address',
         'origin_lat',
         'origin_lng',
@@ -98,6 +119,61 @@ class Ride extends Model
         return $this->hasMany(Review::class);
     }
 
+    // Transport classification helper methods
+    public function isScheduled(): bool
+    {
+        return $this->travel_mode === self::MODE_SCHEDULED;
+    }
+
+    public function isOnDemand(): bool
+    {
+        return $this->travel_mode === self::MODE_ON_DEMAND;
+    }
+
+    public function isBus(): bool
+    {
+        return $this->transport_type === self::TRANSPORT_BUS;
+    }
+
+    public function isCar(): bool
+    {
+        return $this->transport_type === self::TRANSPORT_CAR;
+    }
+
+    public function isMotorcycle(): bool
+    {
+        return $this->transport_type === self::TRANSPORT_MOTORCYCLE;
+    }
+
+    /**
+     * Check if a vehicle type is compatible with this ride's transport type.
+     *
+     * @param string|null $vehicleType The vehicle type to check (e.g., 'sedan', 'van', 'motorbike')
+     * @return bool
+     */
+    public function isVehicleCompatible(?string $vehicleType): bool
+    {
+        return TransportMappingService::isCompatible($vehicleType, $this->transport_type);
+    }
+
+    /**
+     * Validate transport type and travel mode combinations
+     */
+    public function validateTransportRules(): void
+    {
+        // BUS must be SCHEDULED
+        if ($this->isBus() && ! $this->isScheduled()) {
+            throw new \InvalidArgumentException("Invalid transport configuration");
+        }
+
+        // MOTORCYCLE must be ON_DEMAND
+        if ($this->isMotorcycle() && ! $this->isOnDemand()) {
+            throw new \InvalidArgumentException("Invalid transport configuration");
+        }
+
+        // CAR can be either SCHEDULED or ON_DEMAND - nothing to do
+    }
+
     public function setStatusAttribute($value): void
     {
         if ($value === null) {
@@ -108,6 +184,15 @@ class Ride extends Model
 
         $normalized = strtolower(trim((string) $value));
 
-        $this->attributes['status'] = self::STATUS_MAP[$normalized] ?? strtoupper((string) $value);
+        $this->attributes['status'] = self::STATUS_MAP[$normalized] ?? $normalized;
+    }
+
+    public function getStatusAttribute($value): ?string
+    {
+        if ($value === null) {
+            return null;
+        }
+
+        return strtoupper((string) $value);
     }
 }

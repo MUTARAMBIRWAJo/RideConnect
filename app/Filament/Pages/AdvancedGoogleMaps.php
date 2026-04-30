@@ -131,15 +131,15 @@ class AdvancedGoogleMaps extends Page
         $peakZones = [];
 
         // Try to get zones from pickup locations
-        if (Schema::hasTable('rides') && Schema::hasColumn('rides', 'pickup_location')) {
+        if (Schema::hasTable('rides') && Schema::hasColumn('rides', 'origin_address')) {
             $zones = DB::table('rides')
                 ->where('created_at', '>=', now()->subHours(24))
                 ->where('status', 'completed')
-                ->select('pickup_location')
-                ->groupBy('pickup_location')
+                ->select('origin_address')
+                ->groupBy('origin_address')
                 ->orderByRaw('COUNT(*) DESC')
                 ->limit(3)
-                ->pluck('pickup_location')
+                ->pluck('origin_address')
                 ->toArray();
 
             if (!empty($zones)) {
@@ -235,7 +235,7 @@ class AdvancedGoogleMaps extends Page
         if (Schema::hasTable('rides')) {
             $uniqueZones = DB::table('rides')
                 ->where('created_at', '>=', now()->subHours(24))
-                ->distinct('pickup_location')
+                ->distinct('origin_address')
                 ->count();
 
             // Assume we service 50 zones total, return percentage
@@ -244,7 +244,7 @@ class AdvancedGoogleMaps extends Page
             }
         }
 
-        if (Schema::hasTable('driver_locations')) {
+        if (Schema::hasTable('driver_locations') && Schema::hasColumn('driver_locations', 'area')) {
             $uniqueAreas = DB::table('driver_locations')
                 ->where('updated_at', '>=', now()->subHours(24))
                 ->distinct('area')

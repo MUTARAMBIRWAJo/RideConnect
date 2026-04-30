@@ -2,22 +2,25 @@
 
 namespace App\Http\Controllers\Api;
 
+use App\Domain\Core\DomainGuard;
+use App\Domain\Ride\RidePolicy;
+use App\Events\Domain\BookingCreated;
+use App\Exceptions\DomainException;
 use App\Http\Controllers\Controller;
 use App\Models\Booking;
 use App\Models\Ride;
 use App\Services\MobileNotificationService;
-use App\Services\RideCategoryTransitionService;
 use App\Services\RuraTariffService;
 use App\Services\RuraZoneService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
 
 class BookingController extends Controller
 {
     private const DEFAULT_TICKET_THRESHOLD_HOURS = 6;
 
     public function __construct(
-        private readonly RideCategoryTransitionService $rideCategoryTransitionService,
         private readonly MobileNotificationService $mobileNotificationService,
         private readonly RuraZoneService $ruraZoneService,
         private readonly RuraTariffService $ruraTariffService,
@@ -30,8 +33,6 @@ class BookingController extends Controller
      */
     public function index(Request $request): JsonResponse
     {
-        $this->rideCategoryTransitionService->synchronizeTravelCategories();
-
         $user = $request->user();
         
         $query = Booking::with(['ride.driver.user', 'user', 'payment']);
@@ -96,8 +97,6 @@ class BookingController extends Controller
      */
     public function show(int $id): JsonResponse
     {
-        $this->rideCategoryTransitionService->synchronizeTravelCategories();
-
         $booking = Booking::with(['ride.driver.user', 'ride.vehicle', 'user', 'payment', 'review'])->findOrFail($id);
         
         return response()->json([
@@ -173,8 +172,10 @@ class BookingController extends Controller
      */
     public function store(Request $request): JsonResponse
     {
+        DomainGuard::assertUsingPolicy(__METHOD__);
+
         $user = $request->user();
-        
+
         // Check if user is approved
         if (!$user->is_approved) {
             return response()->json([
@@ -182,7 +183,7 @@ class BookingController extends Controller
                 'message' => 'Your account must be approved to book rides',
             ], 403);
         }
-        
+
         $validated = $request->validate([
             'ride_id' => 'required|exists:rides,id',
             'seats_booked' => 'required|integer|min:1|max:8',
@@ -194,32 +195,39 @@ class BookingController extends Controller
             'dropoff_lng' => 'required|numeric|between:-180,180',
             'special_requests' => 'nullable|string',
         ]);
-        
-        // Get the ride
-        $ride = Ride::findOrFail($validated['ride_id']);
-        
-        // Check if ride is available
-        if (! in_array(strtoupper((string) $ride->status), ['PUBLISHED'], true)) {
+
+        try {
+            // Atomic reservation with retry-safe transaction and row lock
+            $ride = DB::transaction(function () use ($validated) {
+                $ride = Ride::query()->whereKey($validated['ride_id'])->lockForUpdate()->firstOrFail();
+
+                RidePolicy::assertBookingAllowed($ride);
+
+                if (!in_array(strtoupper((string) $ride->status), ['PUBLISHED'], true)) {
+                    throw DomainException::make(
+                        'This ride is not available for booking',
+                        'RIDE_NOT_PUBLISHED'
+                    );
+                }
+
+                if ($ride->departure_time <= now()) {
+                    throw DomainException::make(
+                        'This ride has already departed',
+                        'RIDE_DEPARTED'
+                    );
+                }
+
+                RidePolicy::assertSeatsAvailable($ride, (int) $validated['seats_booked']);
+                $ride->decrement('available_seats', (int) $validated['seats_booked']);
+
+                return $ride->fresh();
+            }, 2);
+        } catch (DomainException $e) {
             return response()->json([
                 'success' => false,
-                'message' => 'This ride is not available for booking',
-            ], 400);
-        }
-        
-        // Check if ride has departed
-        if ($ride->departure_time <= now()) {
-            return response()->json([
-                'success' => false,
-                'message' => 'This ride has already departed',
-            ], 400);
-        }
-        
-        // Check available seats
-        if ($ride->available_seats < $validated['seats_booked']) {
-            return response()->json([
-                'success' => false,
-                'message' => 'Not enough available seats',
-            ], 400);
+                'message' => $e->getMessage(),
+                'error_code' => $e->getErrorCode(),
+            ], 422);
         }
         
 
@@ -240,26 +248,8 @@ class BookingController extends Controller
             // Fallback: use ride price
             $totalPrice = $ride->price_per_seat * $validated['seats_booked'];
         }
-
-        if ($this->rideCategoryTransitionService->isTripCategory($ride)) {
-            $trip = $this->rideCategoryTransitionService->createTripFromRideSelection($user, $ride, [
-                ...$validated,
-                'total_price' => $totalPrice,
-            ]);
-
-            return response()->json([
-                'success' => true,
-                'message' => 'Trip request created successfully',
-                'data' => [
-                    'id' => $trip->id,
-                    'status' => $trip->status,
-                    'travel_type' => 'TRIP',
-                    'hours_to_departure' => round(now()->diffInMinutes($ride->departure_time, false) / 60, 2),
-                ],
-            ], 201);
-        }
         
-        // Create booking
+        // Create booking (only for scheduled rides)
         $booking = Booking::create([
             'user_id' => $user->id,
             'ride_id' => $ride->id,
@@ -275,6 +265,8 @@ class BookingController extends Controller
             'dropoff_lng' => $validated['dropoff_lng'],
             'special_requests' => $validated['special_requests'] ?? null,
         ]);
+
+        event(new BookingCreated((int) $booking->id, (int) $booking->ride_id, (int) $booking->user_id));
 
         $this->mobileNotificationService->sendBookingRequestToDriver($booking->loadMissing('ride.driver'));
         
@@ -407,8 +399,6 @@ class BookingController extends Controller
      */
     public function myBookings(Request $request): JsonResponse
     {
-        $this->rideCategoryTransitionService->synchronizeTravelCategories();
-
         $user = $request->user();
         
         $query = Booking::with(['ride.driver.user', 'payment'])

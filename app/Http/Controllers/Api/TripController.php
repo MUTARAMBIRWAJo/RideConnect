@@ -2,11 +2,21 @@
 
 namespace App\Http\Controllers\Api;
 
+use App\Domain\Core\DomainGuard;
 use App\Http\Controllers\Controller;
 use App\Models\Booking;
 use App\Models\MobileUser;
 use App\Models\Trip;
+use App\Models\Ride;
+use App\Domain\Ride\RidePolicy;
+use App\Domain\Driver\DriverPolicy;
+use App\Domain\Trip\TripStateMachine;
+use App\Events\Domain\TripMatched;
+use App\Events\Domain\TripStarted;
+use App\Events\Domain\TripCompleted;
+use App\Exceptions\DomainException;
 use App\Services\AITrainingDataLogger;
+use App\Services\Location\TripLocationService;
 use App\Services\MobileNotificationService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
@@ -16,6 +26,7 @@ class TripController extends Controller
 {
     public function __construct(
         private readonly MobileNotificationService $mobileNotificationService,
+        private readonly TripLocationService $tripLocationService,
     ) {
     }
 
@@ -69,6 +80,9 @@ class TripController extends Controller
                 'dropoff_location' => $trip->dropoff_location,
                 'fare' => $trip->fare,
                 'status' => $trip->status,
+                'trip_state' => $trip->status,
+                'driver_location' => $this->tripLocationService->getCurrentLocation($trip),
+                'eta' => 12,
                 'requested_at' => $trip->requested_at?->toIso8601String(),
                 'started_at' => $trip->started_at?->toIso8601String(),
                 'completed_at' => $trip->completed_at?->toIso8601String(),
@@ -123,6 +137,9 @@ class TripController extends Controller
                 'dropoff_lng' => $trip->dropoff_lng,
                 'fare' => $trip->fare,
                 'status' => $trip->status,
+                'trip_state' => $trip->status,
+                'driver_location' => $this->tripLocationService->getCurrentLocation($trip),
+                'eta' => 12,
                 'requested_at' => $trip->requested_at?->toIso8601String(),
                 'started_at' => $trip->started_at?->toIso8601String(),
                 'completed_at' => $trip->completed_at?->toIso8601String(),
@@ -136,6 +153,8 @@ class TripController extends Controller
      */
     public function store(Request $request): JsonResponse
     {
+        DomainGuard::assertUsingPolicy(__METHOD__);
+
         $user = $request->user();
         
         // Check if user is approved
@@ -147,6 +166,8 @@ class TripController extends Controller
         }
         
         $validated = $request->validate([
+            'ride_id' => 'nullable|exists:rides,id',
+            'booking_id' => 'nullable|exists:bookings,id',
             'pickup_location' => 'required|string',
             'pickup_lat' => 'required|numeric|between:-90,90',
             'pickup_lng' => 'required|numeric|between:-180,180',
@@ -158,13 +179,28 @@ class TripController extends Controller
         
         $passengerMobileUserId = $this->resolvePassengerMobileUserId($user);
 
-        $trip = Trip::create([
+        if (!empty($validated['ride_id'])) {
+            $ride = Ride::query()->findOrFail((int) $validated['ride_id']);
+            try {
+                RidePolicy::assertTripAllowed($ride);
+            } catch (DomainException $e) {
+                return response()->json([
+                    'success' => false,
+                    'message' => $e->getMessage(),
+                    'error_code' => $e->getErrorCode(),
+                ], 422);
+            }
+        }
+
+        $trip = new Trip([
             ...$validated,
             'passenger_id' => $passengerMobileUserId,
             'driver_id' => null,
             'status' => 'PENDING',
             'requested_at' => now(),
         ]);
+        $trip->validateForExecution();
+        $trip->save();
 
         app(AITrainingDataLogger::class)->logRideRequest($trip);
         
@@ -176,6 +212,9 @@ class TripController extends Controller
                 'booking_id' => $trip->booking_id,
                 'ride_id' => $trip->ride_id,
                 'status' => $trip->status,
+                'trip_state' => $trip->status,
+                'driver_location' => $this->tripLocationService->getCurrentLocation($trip),
+                'eta' => 12,
             ],
         ], 201);
     }
@@ -187,7 +226,8 @@ class TripController extends Controller
     {
         $user = $request->user();
 
-        if (! $user->role->isSuperAdmin() && $user->role->value !== 'ADMIN') {
+        $isAdmin = $user->role->isSuperAdmin() || $user->role->value === 'ADMIN';
+        if (! $isAdmin) {
             return response()->json([
                 'success' => false,
                 'message' => 'Only Admin or Super Admin can create trip from booking',
@@ -199,6 +239,23 @@ class TripController extends Controller
         ]);
 
         $booking = Booking::query()->with(['ride', 'user'])->findOrFail((int) $validated['booking_id']);
+
+        if (! in_array(strtoupper((string) $booking->status), ['PENDING', 'CONFIRMED', 'COMPLETED'], true)) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Booking is not in a valid status for trip conversion',
+            ], 422);
+        }
+
+        try {
+            RidePolicy::assertBookingAllowed($booking->ride);
+        } catch (DomainException $e) {
+            return response()->json([
+                'success' => false,
+                'message' => $e->getMessage(),
+                'error_code' => $e->getErrorCode(),
+            ], 422);
+        }
 
         $existing = Trip::query()->where('booking_id', $booking->id)->first();
         if ($existing) {
@@ -218,7 +275,7 @@ class TripController extends Controller
             ? (int) $booking->user->mobile_user_id
             : (int) $booking->user_id;
 
-        $trip = Trip::create([
+        $trip = new Trip([
             'booking_id' => $booking->id,
             'ride_id' => $booking->ride_id,
             'passenger_id' => $passengerMobileUserId,
@@ -233,6 +290,8 @@ class TripController extends Controller
             'status' => strtoupper((string) (strtoupper((string) $booking->status) === 'COMPLETED' ? 'COMPLETED' : 'PENDING')),
             'requested_at' => $booking->created_at,
         ]);
+        $trip->validateForExecution();
+        $trip->save();
 
         $booking->update([
             'status' => strtoupper((string) $booking->status) === 'COMPLETED' ? 'COMPLETED' : 'CONFIRMED',
@@ -256,6 +315,8 @@ class TripController extends Controller
      */
     public function accept(Request $request, int $id): JsonResponse
     {
+        DomainGuard::assertUsingPolicy(__METHOD__);
+
         $trip = Trip::findOrFail($id);
         $user = $request->user();
         
@@ -267,12 +328,14 @@ class TripController extends Controller
             ], 403);
         }
         
-        // Check if trip is pending
-        if ($trip->status !== 'PENDING') {
+        try {
+            TripStateMachine::assertTransitionForTrip($trip, TripStateMachine::ACCEPTED);
+        } catch (DomainException $e) {
             return response()->json([
                 'success' => false,
-                'message' => 'This trip is not pending',
-            ], 400);
+                'message' => $e->getMessage(),
+                'error_code' => $e->getErrorCode(),
+            ], 422);
         }
         
         // Get driver profile
@@ -283,12 +346,24 @@ class TripController extends Controller
                 'message' => 'Driver profile not found',
             ], 404);
         }
+
+        try {
+            DriverPolicy::assertCanAcceptTrip($driver, $trip);
+        } catch (DomainException $e) {
+            return response()->json([
+                'success' => false,
+                'message' => $e->getMessage(),
+                'error_code' => $e->getErrorCode(),
+            ], 422);
+        }
         
         $trip->update([
             'driver_id' => $driver->id,
             'status' => 'ACCEPTED',
             'accepted_at' => now(),
         ]);
+
+        event(new TripMatched((int) $trip->id, (int) $driver->id));
 
         $this->mobileNotificationService->sendRideAcceptedToPassenger($trip->fresh(), $driver);
 
@@ -303,6 +378,9 @@ class TripController extends Controller
             'data' => [
                 'id' => $trip->id,
                 'status' => $trip->status,
+                'trip_state' => $trip->status,
+                'driver_location' => $this->tripLocationService->getCurrentLocation($trip),
+                'eta' => 12,
             ],
         ]);
     }
@@ -323,18 +401,22 @@ class TripController extends Controller
             ], 403);
         }
         
-        // Check if trip is accepted
-        if ($trip->status !== 'ACCEPTED') {
+        try {
+            TripStateMachine::assertTransitionForTrip($trip, TripStateMachine::STARTED);
+        } catch (DomainException $e) {
             return response()->json([
                 'success' => false,
-                'message' => 'Trip must be accepted before starting',
-            ], 400);
+                'message' => $e->getMessage(),
+                'error_code' => $e->getErrorCode(),
+            ], 422);
         }
         
         $trip->update([
             'status' => 'STARTED',
             'started_at' => now(),
         ]);
+
+        event(new TripStarted((int) $trip->id));
 
         $this->mobileNotificationService->sendTripStartedToPassenger($trip->fresh());
 
@@ -347,6 +429,9 @@ class TripController extends Controller
             'data' => [
                 'id' => $trip->id,
                 'status' => $trip->status,
+                'trip_state' => $trip->status,
+                'driver_location' => $this->tripLocationService->getCurrentLocation($trip),
+                'eta' => 12,
                 'started_at' => $trip->started_at->toIso8601String(),
             ],
         ]);
@@ -368,18 +453,22 @@ class TripController extends Controller
             ], 403);
         }
         
-        // Check if trip is started
-        if ($trip->status !== 'STARTED') {
+        try {
+            TripStateMachine::assertTransitionForTrip($trip, TripStateMachine::COMPLETED);
+        } catch (DomainException $e) {
             return response()->json([
                 'success' => false,
-                'message' => 'Trip must be started before completing',
-            ], 400);
+                'message' => $e->getMessage(),
+                'error_code' => $e->getErrorCode(),
+            ], 422);
         }
         
         $trip->update([
             'status' => 'COMPLETED',
             'completed_at' => now(),
         ]);
+
+        event(new TripCompleted((int) $trip->id));
 
         $this->mobileNotificationService->sendTripCompletedToPassenger($trip->fresh());
 
@@ -392,6 +481,9 @@ class TripController extends Controller
             'data' => [
                 'id' => $trip->id,
                 'status' => $trip->status,
+                'trip_state' => $trip->status,
+                'driver_location' => $this->tripLocationService->getCurrentLocation($trip),
+                'eta' => 12,
                 'completed_at' => $trip->completed_at->toIso8601String(),
             ],
         ]);
@@ -425,12 +517,14 @@ class TripController extends Controller
             ], 403);
         }
         
-        // Cannot cancel if already completed
-        if ($trip->status === 'COMPLETED') {
+        try {
+            TripStateMachine::assertTransitionForTrip($trip, TripStateMachine::CANCELLED);
+        } catch (DomainException $e) {
             return response()->json([
                 'success' => false,
-                'message' => 'Cannot cancel a completed trip',
-            ], 400);
+                'message' => $e->getMessage(),
+                'error_code' => $e->getErrorCode(),
+            ], 422);
         }
         
         $trip->update([
@@ -522,6 +616,9 @@ class TripController extends Controller
                 'dropoff_location' => $trip->dropoff_location,
                 'fare' => $trip->fare,
                 'status' => $trip->status,
+                'trip_state' => $trip->status,
+                'driver_location' => $this->tripLocationService->getCurrentLocation($trip),
+                'eta' => 12,
                 'requested_at' => $trip->requested_at?->toIso8601String(),
                 'started_at' => $trip->started_at?->toIso8601String(),
                 'completed_at' => $trip->completed_at?->toIso8601String(),

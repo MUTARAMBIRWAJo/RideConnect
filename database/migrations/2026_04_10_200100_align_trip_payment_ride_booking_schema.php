@@ -96,7 +96,7 @@ return new class extends Migration
         }
 
         if (Schema::hasTable('payments') && Schema::hasTable('trips') && Schema::hasColumn('payments', 'trip_id') && Schema::hasColumn('payments', 'booking_id') && Schema::hasColumn('trips', 'booking_id')) {
-            DB::statement('UPDATE payments p JOIN trips t ON p.booking_id = t.booking_id SET p.trip_id = t.id WHERE p.trip_id IS NULL');
+            DB::statement('UPDATE payments SET trip_id = (SELECT id FROM trips WHERE trips.booking_id = payments.booking_id LIMIT 1) WHERE trip_id IS NULL AND booking_id IS NOT NULL');
         }
     }
 

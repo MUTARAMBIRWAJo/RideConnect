@@ -50,6 +50,26 @@ Route::middleware('guest')->group(function () {
 // Note: Filament handles admin authentication at /admin
 // All login routes are unified through /auth/login
 
+// Google OAuth routes
+Route::get('/auth/google', [\App\Http\Controllers\GoogleOAuthController::class, 'redirect'])->name('auth.google');
+Route::get('/auth/google/callback', [\App\Http\Controllers\GoogleOAuthController::class, 'callback'])->name('auth.google.callback');
+
+// Two-Factor Authentication routes (middleware: auth.partial)
+Route::middleware('auth.partial')->group(function () {
+    Route::get('/auth/two-factor-challenge', [\App\Http\Controllers\TwoFactorController::class, 'show'])->name('auth.two-factor-challenge');
+    Route::post('/auth/two-factor-challenge', [\App\Http\Controllers\TwoFactorController::class, 'verify'])->name('auth.two-factor-verify');
+    Route::post('/auth/two-factor-backup', [\App\Http\Controllers\TwoFactorController::class, 'verifyBackupCode'])->name('auth.two-factor-backup');
+});
+
+// MFA Setup routes (middleware: auth, verified)
+Route::middleware(['auth', 'verified'])->prefix('/auth/mfa')->group(function () {
+    Route::get('/settings', [\App\Http\Controllers\MfaSetupController::class, 'settings'])->name('mfa.settings');
+    Route::get('/setup', [\App\Http\Controllers\MfaSetupController::class, 'show'])->name('mfa.setup');
+    Route::post('/store', [\App\Http\Controllers\MfaSetupController::class, 'store'])->name('mfa.store');
+    Route::post('/disable', [\App\Http\Controllers\MfaSetupController::class, 'disable'])->name('mfa.disable');
+    Route::get('/backup-codes', [\App\Http\Controllers\MfaSetupController::class, 'backupCodes'])->name('mfa.backup-codes');
+});
+
 // Protected routes - All authenticated users
 Route::middleware(['auth'])->group(function () {
     // User dashboard (for drivers, passengers)
@@ -59,9 +79,9 @@ Route::middleware(['auth'])->group(function () {
     Route::post('/logout', [AuthController::class, 'logout'])->name('logout');
 });
 
-// Admin logout compatibility route
+// Admin logout compatibility route - POST only for security
 Route::post('/admin/logout', [AuthController::class, 'logout'])->name('admin.logout');
-Route::match(['GET', 'POST'], '/admin/filament-logout', [AuthController::class, 'logout'])
+Route::post('/admin/filament-logout', [AuthController::class, 'logout'])
     ->name('filament.admin.auth.logout');
 
 // Compatibility aliases for legacy admin view links.

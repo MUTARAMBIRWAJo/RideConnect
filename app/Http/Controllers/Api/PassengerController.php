@@ -282,13 +282,16 @@ class PassengerController extends Controller
 
         $passengerMobileUserId = $this->resolvePassengerMobileUserId($user);
 
-        $trip = Trip::create([
-            ...$validated,
+        $attributes = array_merge($validated, [
             'passenger_id' => $passengerMobileUserId,
             'driver_id' => $driver->id,
             'status' => 'PENDING',
             'requested_at' => now(),
         ]);
+
+        $trip = new Trip($attributes);
+        $trip->validateForExecution();
+        $trip->save();
 
         $this->mobileNotificationService->sendRideRequestToDriver($trip, $driver);
 

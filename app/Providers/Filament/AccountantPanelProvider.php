@@ -2,6 +2,7 @@
 
 namespace App\Providers\Filament;
 
+use App\Filament\Pages\MfaSettingsPage;
 use App\Filament\Pages\Auth\RedirectToUnifiedLogin;
 use Filament\Http\Middleware\Authenticate;
 use Filament\Http\Middleware\DisableBladeIconComponents;
@@ -52,6 +53,7 @@ class AccountantPanelProvider extends PanelProvider
                 NavigationGroup::make('Reporting & Analytics')->collapsible(true),
                 NavigationGroup::make('Compliance')->collapsible(true),
                 NavigationGroup::make('Information Hub')->collapsible(true),
+                NavigationGroup::make('Settings')->collapsible(true),
             ])
             ->discoverPages(app_path('Filament/Pages/Accountant'), 'App\\Filament\\Pages\\Accountant')
             ->pages([
@@ -63,6 +65,7 @@ class AccountantPanelProvider extends PanelProvider
                 \App\Filament\Pages\Accountant\RefundManagementPage::class,
                 \App\Filament\Pages\SystemNewsAndUpdates::class,
                 \App\Filament\Pages\PlatformMetricsAndHealth::class,
+                MfaSettingsPage::class,
             ])
             ->middleware([
                 EncryptCookies::class,

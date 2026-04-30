@@ -5,6 +5,15 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 
+/**
+ * IMPORTANT: SUPPORT TICKETS MODEL
+ *
+ * This model represents SUPPORT TICKETS (complaints/issues)
+ * It is NOT a transport ticket (seat ticket).
+ *
+ * Do NOT use for pricing or seat allocation.
+ * This is for customer support tracking only.
+ */
 class Ticket extends Model
 {
     use HasFactory;

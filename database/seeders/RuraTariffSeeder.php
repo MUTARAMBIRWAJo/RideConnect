@@ -3,6 +3,7 @@
 namespace Database\Seeders;
 
 use Illuminate\Database\Seeder;
+use Illuminate\Support\Facades\DB;
 use App\Models\RuraTariff;
 
 class RuraTariffSeeder extends Seeder
@@ -33,12 +34,24 @@ class RuraTariffSeeder extends Seeder
             ["route_code" => "121", "corridor" => "B", "origin_stop" => "REMERA BUS PARK", "destination_stop" => "MASORO (AUCA) BUS TERMINAL", "fare_rwf" => 291],
             ["route_code" => "122", "corridor" => "B", "origin_stop" => "REMERA BUS PARK", "destination_stop" => "GASOGI BUS TERMINAL", "fare_rwf" => 439],
         ];
-        foreach ($tariffs as $row) {
-            RuraTariff::updateOrCreate([
-                'route_code' => $row['route_code'],
-                'origin_stop' => $row['origin_stop'],
-                'destination_stop' => $row['destination_stop'],
-            ], $row);
+
+        if (! DB::getSchemaBuilder()->hasTable('rura_tariffs')) {
+            return;
         }
+
+        $this->seedTariffs($tariffs);
+    }
+
+    private function seedTariffs(array $tariffs): void
+    {
+        $routeCodes = array_unique(array_column($tariffs, 'route_code'));
+
+        DB::transaction(function () use ($tariffs, $routeCodes) {
+            DB::table('rura_tariffs')
+                ->whereIn('route_code', $routeCodes)
+                ->delete();
+
+            DB::table('rura_tariffs')->insert($tariffs);
+        });
     }
 }

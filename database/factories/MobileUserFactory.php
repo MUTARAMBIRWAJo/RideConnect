@@ -19,13 +19,14 @@ class MobileUserFactory extends Factory
     public function definition(): array
     {
         return [
-            'name' => $this->faker->name(),
+            'first_name' => $this->faker->firstName(),
+            'last_name' => $this->faker->lastName(),
             'email' => $this->faker->unique()->safeEmail(),
-            'phone_number' => $this->faker->phoneNumber(),
+            'phone' => $this->faker->phoneNumber(),
             'password' => static::$password ??= Hash::make('password'),
+            'role' => $this->faker->randomElement(['DRIVER', 'PASSENGER']),
+            'profile_photo' => null,
             'is_verified' => true,
-            'profile_photo_path' => null,
-            'remember_token' => Str::random(10),
         ];
     }
 

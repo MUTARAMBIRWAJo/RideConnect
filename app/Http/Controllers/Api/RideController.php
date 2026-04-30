@@ -2,6 +2,8 @@
 
 namespace App\Http\Controllers\Api;
 
+use App\Domain\Ride\RidePolicy;
+use App\Events\Domain\RideCreated;
 use App\Http\Controllers\Controller;
 use App\Models\Corridor;
 use App\Models\Ride;
@@ -38,6 +40,16 @@ class RideController extends Controller
         // Filter by status
         if ($request->has('status')) {
             $query->where('status', $request->status);
+        }
+
+        // Filter by transport_type
+        if ($request->has('transport_type')) {
+            $query->where('transport_type', $request->transport_type);
+        }
+
+        // Filter by travel_mode
+        if ($request->has('travel_mode')) {
+            $query->where('travel_mode', $request->travel_mode);
         }
         
         // Filter by origin/destination (search)
@@ -93,6 +105,8 @@ class RideController extends Controller
                 'available_seats' => $ride->available_seats,
                 'price_per_seat' => $ride->price_per_seat,
                 'currency' => $ride->currency,
+                'transport_type' => $ride->transport_type,
+                'travel_mode' => $ride->travel_mode,
                 'status' => $ride->status,
                 'ride_type' => $ride->ride_type,
                 'luggage_allowed' => $ride->luggage_allowed,
@@ -100,6 +114,7 @@ class RideController extends Controller
                 'smoking_allowed' => $ride->smoking_allowed,
                 'description' => $ride->description,
                 'created_at' => $ride->created_at->toIso8601String(),
+                'ride_rules' => RidePolicy::toApiRules($ride),
             ]),
         ]);
     }
@@ -153,6 +168,7 @@ class RideController extends Controller
                 'reviews_count' => $ride->reviews->count(),
                 'average_rating' => $ride->reviews->avg('rating'),
                 'created_at' => $ride->created_at->toIso8601String(),
+                'ride_rules' => RidePolicy::toApiRules($ride),
             ],
         ]);
     }
@@ -221,6 +237,8 @@ class RideController extends Controller
             'pets_allowed' => (bool) ($validated['pets_allowed'] ?? false),
             'smoking_allowed' => (bool) ($validated['smoking_allowed'] ?? false),
         ]);
+
+        event(new RideCreated((int) $ride->id, (int) $ride->driver_id));
 
         return response()->json([
             'success' => true,
@@ -552,7 +570,10 @@ class RideController extends Controller
                 'departure_time' => $ride->departure_time->toIso8601String(),
                 'available_seats' => $ride->available_seats,
                 'price_per_seat' => $ride->price_per_seat,
+                'transport_type' => $ride->transport_type,
+                'travel_mode' => $ride->travel_mode,
                 'status' => $ride->status,
+                'ride_rules' => RidePolicy::toApiRules($ride),
             ],
         ]);
     }

@@ -8,6 +8,8 @@ use App\Models\Ride;
 use App\Models\Trip;
 use App\Models\Payment;
 use App\Models\DriverDocument;
+use App\Domain\Driver\DriverPolicy;
+use App\Exceptions\DomainException;
 use App\Services\MobileNotificationService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
@@ -163,19 +165,16 @@ class RiderController extends Controller
             ], 403);
         }
 
-        if ($trip->status !== 'PENDING') {
+        // Use DriverPolicy to validate acceptance
+        try {
+            DriverPolicy::assertCanAcceptTrip($driver, $trip);
+            DriverPolicy::assertAvailable($driver);
+        } catch (DomainException $e) {
             return response()->json([
                 'success' => false,
-                'message' => 'This request is no longer available',
-            ], 400);
-        }
-
-        // Check if driver is available
-        if (($driver->availability_status ?? 'offline') !== 'online') {
-            return response()->json([
-                'success' => false,
-                'message' => 'You must be online to accept requests',
-            ], 400);
+                'message' => $e->getMessage(),
+                'error_code' => $e->getErrorCode(),
+            ], 422);
         }
 
         // Accept the trip

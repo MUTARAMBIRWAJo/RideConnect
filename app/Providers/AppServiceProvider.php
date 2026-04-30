@@ -18,10 +18,12 @@ use App\Policies\PermissionPolicy;
 use App\Policies\DriverPayoutPolicy;
 use App\Policies\FraudFlagPolicy;
 use App\Policies\LedgerPolicy;
+use App\Domain\Core\DomainEventRegistry;
 use App\Services\RoleAccessService;
 use Illuminate\Support\ServiceProvider;
 use Illuminate\Support\Facades\Gate;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Event;
 use Spatie\Permission\Models\Permission;
 use Spatie\Permission\Models\Role;
 use App\Models\DriverPayout;
@@ -92,6 +94,12 @@ class AppServiceProvider extends ServiceProvider
         Gate::policy(DriverPayout::class, DriverPayoutPolicy::class);
         Gate::policy(FraudFlag::class, FraudFlagPolicy::class);
         Gate::policy(LedgerEntry::class, LedgerPolicy::class);
+
+        foreach (DomainEventRegistry::listeners() as $eventClass => $listeners) {
+            foreach ($listeners as $listener) {
+                Event::listen($eventClass, $listener);
+            }
+        }
 
         // Register a safe eloquent user provider that returns null
         // when the database is unreachable, preventing 500 errors

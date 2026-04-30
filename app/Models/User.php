@@ -34,6 +34,16 @@ class User extends Authenticatable
         'is_approved',
         'approved_by',
         'approved_at',
+        'google_id',
+        'two_factor_enabled',
+        'two_factor_secret',
+        'two_factor_confirmed_at',
+        'two_factor_backup_codes',
+        'mfa_attempts',
+        'mfa_locked_until',
+        'last_login_ip',
+        'last_login_user_agent',
+        'last_login_at',
     ];
 
     /**
@@ -60,6 +70,11 @@ class User extends Authenticatable
             'is_verified' => 'boolean',
             'is_approved' => 'boolean',
             'approved_at' => 'datetime',
+            'two_factor_enabled' => 'boolean',
+            'two_factor_confirmed_at' => 'datetime',
+            'two_factor_backup_codes' => 'array',
+            'last_login_at' => 'datetime',
+            'mfa_locked_until' => 'datetime',
         ];
     }
 
@@ -190,5 +205,58 @@ class User extends Authenticatable
     public function mobileDeviceTokens()
     {
         return $this->hasMany(MobileDeviceToken::class);
+    }
+
+    /**
+     * Check if user has MFA enabled
+     */
+    public function hasMfaEnabled(): bool
+    {
+        return (bool) $this->two_factor_enabled;
+    }
+
+    /**
+     * Check if MFA is confirmed
+     */
+    public function hasMfaConfirmed(): bool
+    {
+        return (bool) $this->two_factor_confirmed_at;
+    }
+
+    /**
+     * Check if account is locked due to MFA brute force
+     */
+    public function isMfaLocked(): bool
+    {
+        if (!$this->mfa_locked_until) {
+            return false;
+        }
+        return now()->lessThan($this->mfa_locked_until);
+    }
+
+    /**
+     * Increment MFA attempts
+     */
+    public function incrementMfaAttempts(): void
+    {
+        $this->increment('mfa_attempts');
+        
+        if ($this->mfa_attempts >= 5) {
+            $this->update([
+                'mfa_locked_until' => now()->addMinutes(10),
+                'mfa_attempts' => 5,
+            ]);
+        }
+    }
+
+    /**
+     * Reset MFA attempts
+     */
+    public function resetMfaAttempts(): void
+    {
+        $this->update([
+            'mfa_attempts' => 0,
+            'mfa_locked_until' => null,
+        ]);
     }
 }

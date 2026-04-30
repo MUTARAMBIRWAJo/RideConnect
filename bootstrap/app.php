@@ -4,6 +4,7 @@ use Illuminate\Http\Request;
 use Illuminate\Foundation\Application;
 use Illuminate\Foundation\Configuration\Exceptions;
 use Illuminate\Foundation\Configuration\Middleware;
+use App\Exceptions\Handlers\DomainExceptionHandler;
 
 return Application::configure(basePath: dirname(__DIR__))
     ->withRouting(
@@ -20,15 +21,20 @@ return Application::configure(basePath: dirname(__DIR__))
         // Register the role middleware
         $middleware->alias([
             'role' => \App\Http\Middleware\RoleMiddleware::class,
+            'auth.partial' => \App\Http\Middleware\PartialAuth::class,
+        ]);
+
+        $middleware->api(prepend: [
+            \App\Http\Middleware\EnforceDomainPolicies::class,
+            \Illuminate\Cookie\Middleware\AddQueuedCookiesToResponse::class,
+        ]);
+
+        $middleware->web(prepend: [
+            \App\Http\Middleware\EnforceDomainPolicies::class,
         ]);
 
         // Force unauthenticated web redirects to the unified login page
         $middleware->redirectGuestsTo(fn () => route('auth.login'));
-        
-        // Configure API middleware
-        $middleware->api(prepend: [
-            \Illuminate\Cookie\Middleware\AddQueuedCookiesToResponse::class,
-        ]);
 
         // Allow session-authenticated first-party requests to pass auth:sanctum.
         $middleware->statefulApi();
@@ -43,5 +49,5 @@ return Application::configure(basePath: dirname(__DIR__))
         );
     })
     ->withExceptions(function (Exceptions $exceptions): void {
-        //
+        DomainExceptionHandler::register($exceptions);
     })->create();

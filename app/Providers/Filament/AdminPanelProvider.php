@@ -2,6 +2,7 @@
 
 namespace App\Providers\Filament;
 
+use App\Filament\Pages\MfaSettingsPage;
 use App\Filament\Pages\Auth\RedirectToUnifiedLogin;
 use App\Filament\Pages\Dashboard;
 use App\Filament\Resources\BookingResource;
@@ -118,6 +119,7 @@ class AdminPanelProvider extends PanelProvider
                 NavigationGroup::make('AI & Analytics')->collapsible(true),
                 NavigationGroup::make('System')->collapsible(true),
                 NavigationGroup::make('Information Hub')->collapsible(true),
+                NavigationGroup::make('Settings')->collapsible(true),
             ])
             ->widgets([
                 \App\Filament\Widgets\RideStatsOverview::class,
@@ -149,6 +151,7 @@ class AdminPanelProvider extends PanelProvider
                 \App\Filament\Pages\SystemNewsAndUpdates::class,
                 \App\Filament\Pages\AdvancedGoogleMaps::class,
                 \App\Filament\Pages\PlatformMetricsAndHealth::class,
+                MfaSettingsPage::class,
             ])
             ->discoverWidgets(app_path('Filament/Widgets'), 'App\\Filament\\Widgets')
             ->middleware([
