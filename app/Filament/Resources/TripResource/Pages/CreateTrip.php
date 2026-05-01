@@ -6,11 +6,27 @@ use App\Filament\Resources\TripResource;
 use App\Models\Booking;
 use App\Models\Ride;
 use App\Services\RuraTariffService;
+use Filament\Pages\Actions\CreateAction;
 use Filament\Resources\Pages\CreateRecord;
 
 class CreateTrip extends CreateRecord
 {
     protected static string $resource = TripResource::class;
+
+    protected function getActions(): array
+    {
+        return [
+            CreateAction::make()
+                ->disabled(fn ($get): bool =>
+                    !$get('pickup_lat') ||
+                    !$get('pickup_lng') ||
+                    !$get('dropoff_lat') ||
+                    !$get('dropoff_lng') ||
+                    !$get('pickup_location') ||
+                    !$get('dropoff_location')
+                ),
+        ];
+    }
 
     protected function mutateFormDataBeforeCreate(array $data): array
     {

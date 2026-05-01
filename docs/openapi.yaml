@@ -335,7 +335,11 @@ paths:
               ride_id: 1
               seats: 2
               pickup_address: "123 Main St, City"
+              pickup_lat: -1.9441
+              pickup_lng: 30.0619
               dropoff_address: "456 Oak Ave, City"
+              dropoff_lat: -1.9411
+              dropoff_lng: 30.1098
       responses:
         "201":
           description: Ride booked successfully
@@ -1558,7 +1562,11 @@ components:
         - ride_id
         - seats
         - pickup_address
+        - pickup_lat
+        - pickup_lng
         - dropoff_address
+        - dropoff_lat
+        - dropoff_lng
       properties:
         ride_id:
           type: integer
@@ -1568,8 +1576,20 @@ components:
           maximum: 8
         pickup_address:
           type: string
+        pickup_lat:
+          type: number
+          format: double
+        pickup_lng:
+          type: number
+          format: double
         dropoff_address:
           type: string
+        dropoff_lat:
+          type: number
+          format: double
+        dropoff_lng:
+          type: number
+          format: double
 
     PassengerRideRequest:
       type: object

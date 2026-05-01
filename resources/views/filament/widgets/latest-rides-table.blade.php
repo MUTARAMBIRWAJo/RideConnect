@@ -1,3 +1,7 @@
+@php
+    use App\Domain\Ride\RidePolicy;
+@endphp
+
 <div class="fi-section p-6 rounded-2xl">
   <div class="flex items-center justify-between mb-5">
     <div>
@@ -35,9 +39,12 @@
           </td>
           <td class="px-3 py-3">
             <div class="text-sm text-gray-700 dark:text-gray-200">{{ $ride->pickup_checkpoint ?? '—' }} → {{ $ride->dropoff_checkpoint ?? '—' }}</div>
-            <div class="mt-1 flex items-center gap-1">
+            <div class="mt-1 flex flex-wrap items-center gap-1">
               <span class="inline-flex items-center rounded px-2 py-0.5 text-[10px] font-semibold bg-sky-100 text-sky-800 dark:bg-sky-900/40 dark:text-sky-200">{{ strtoupper((string) $ride->transport_type) }}</span>
               <span class="inline-flex items-center rounded px-2 py-0.5 text-[10px] font-semibold bg-amber-100 text-amber-800 dark:bg-amber-900/40 dark:text-amber-200">{{ strtoupper((string) $ride->travel_mode) }}</span>
+              <span class="inline-flex items-center rounded px-2 py-0.5 text-[10px] font-semibold {{ RidePolicy::canBook($ride) ? 'bg-indigo-100 text-indigo-800 dark:bg-indigo-900/40 dark:text-indigo-200' : (RidePolicy::canRequestTrip($ride) ? 'bg-emerald-100 text-emerald-800 dark:bg-emerald-900/40 dark:text-emerald-200' : 'bg-slate-100 text-slate-700 dark:bg-slate-700 dark:text-slate-200') }}">
+                {{ ucfirst(strtolower(str_replace('_', ' ', RidePolicy::getAllowedFlow($ride)))) }}
+              </span>
             </div>
           </td>
           <td class="px-3 py-3">
@@ -46,11 +53,13 @@
           </td>
           <td class="px-3 py-3 text-xs text-gray-500">{{ optional($ride->created_at)->diffForHumans() ?? '—' }}</td>
           <td class="px-3 py-3">
-            <div class="flex items-center gap-2">
-              @if(($ride->travel_mode ?? null) === 'SCHEDULED')
+            <div class="flex flex-wrap items-center gap-2">
+              @if (RidePolicy::canBook($ride))
                 <a href="#" class="px-3 py-1 rounded-md bg-blue-600 text-white text-xs">Book Ride</a>
+              @elseif (RidePolicy::canRequestTrip($ride))
+                <a href="#" class="px-3 py-1 rounded-md bg-green-600 text-white text-xs">Request Trip</a>
               @else
-                <a href="#" class="px-3 py-1 rounded-md bg-green-600 text-white text-xs">Request Ride</a>
+                <span class="px-3 py-1 rounded-md bg-slate-100 text-slate-600 text-xs dark:bg-slate-800 dark:text-slate-300">Action Not Allowed</span>
               @endif
 
               <div class="relative inline-block text-left">

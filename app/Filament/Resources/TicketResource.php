@@ -2,6 +2,7 @@
 
 namespace App\Filament\Resources;
 
+use App\Domain\Ride\RidePolicy;
 use App\Filament\Resources\TicketResource\Pages;
 use App\Models\Ticket;
 use App\Services\TicketInvoiceDeliveryService;
@@ -80,6 +81,24 @@ class TicketResource extends Resource
                     ->label('Trip ID')
                     ->sortable()
                     ->searchable(),
+                Tables\Columns\BadgeColumn::make('trip.ride.transport_type')
+                    ->label('Ride Transport')
+                    ->getStateUsing(fn (Ticket $record): ?string => $record->trip?->ride?->transport_type)
+                    ->colors([
+                        'BUS' => 'success',
+                        'CAR' => 'primary',
+                        'MOTORCYCLE' => 'warning',
+                        'default' => 'gray',
+                    ]),
+                Tables\Columns\BadgeColumn::make('trip.ride.allowed_flow')
+                    ->label('Ride Flow')
+                    ->getStateUsing(fn (Ticket $record): string => $record->trip && $record->trip->ride ? RidePolicy::getAllowedFlow($record->trip->ride) : RidePolicy::FLOW_NONE)
+                    ->colors([
+                        RidePolicy::FLOW_BOOKING_ONLY => 'primary',
+                        RidePolicy::FLOW_TRIP_ONLY => 'success',
+                        RidePolicy::FLOW_BOTH => 'warning',
+                        RidePolicy::FLOW_NONE => 'danger',
+                    ]),
                 Tables\Columns\TextColumn::make('issuer.name')
                     ->label('Issued By')
                     ->searchable()

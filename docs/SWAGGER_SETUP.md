@@ -200,7 +200,11 @@ Authorization: Bearer {{token}}
   "ride_id": 1,
   "seats": 2,
   "pickup_address": "123 Main St, City",
-  "dropoff_address": "456 Oak Ave, City"
+  "pickup_lat": -1.9441,
+  "pickup_lng": 30.0619,
+  "dropoff_address": "456 Oak Ave, City",
+  "dropoff_lat": -1.9411,
+  "dropoff_lng": 30.1098
 }
 ```
 

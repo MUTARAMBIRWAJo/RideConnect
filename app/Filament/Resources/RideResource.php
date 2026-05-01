@@ -2,7 +2,9 @@
 
 namespace App\Filament\Resources;
 
+use App\Domain\Ride\RidePolicy;
 use App\Filament\Resources\RideResource\Pages;
+use App\Models\Driver;
 use App\Models\Ride;
 use Filament\Forms;
 use Filament\Forms\Form;
@@ -32,28 +34,106 @@ class RideResource extends Resource
         return $form
             ->schema([
                 Forms\Components\Select::make('driver_id')
-                    ->relationship('driver', 'id')
+                    ->label('Driver')
+                    ->searchable()
+                    ->getSearchResultsUsing(function (string $search): array {
+                        return Driver::query()
+                            ->whereHas('user', function (Builder $query) use ($search): void {
+                                $query->where('name', 'ilike', "%{$search}%")
+                                    ->orWhere('phone', 'ilike', "%{$search}%");
+                            })
+                            ->with('user')
+                            ->limit(10)
+                            ->get()
+                            ->mapWithKeys(function (Driver $driver): array {
+                                $label = trim(($driver->user?->name ?? 'Driver #' . $driver->id) . ' - ' . ($driver->license_plate ?? 'No plate'));
+
+                                return [$driver->id => $label];
+                            })
+                            ->all();
+                    })
+                    ->getOptionLabelUsing(function ($value): ?string {
+                        $driver = Driver::with('user')->find($value);
+                        if (! $driver) {
+                            return null;
+                        }
+
+                        return trim(($driver->user?->name ?? 'Driver #' . $driver->id) . ' - ' . ($driver->license_plate ?? 'No plate'));
+                    })
                     ->required(),
                 Forms\Components\Select::make('vehicle_id')
                     ->relationship('vehicle', 'id'),
+                Forms\Components\Select::make('transport_type')
+                    ->label('Transport Type')
+                    ->options([
+                        Ride::TRANSPORT_BUS => 'Bus',
+                        Ride::TRANSPORT_CAR => 'Car',
+                        Ride::TRANSPORT_MOTORCYCLE => 'Motorcycle',
+                    ])
+                    ->required()
+                    ->reactive()
+                    ->afterStateUpdated(function (?string $state, callable $set): void {
+                        if ($state === Ride::TRANSPORT_BUS) {
+                            $set('travel_mode', Ride::MODE_SCHEDULED);
+                        }
+
+                        if ($state === Ride::TRANSPORT_MOTORCYCLE) {
+                            $set('travel_mode', Ride::MODE_ON_DEMAND);
+                        }
+                    })
+                    ->helperText('BUS must be SCHEDULED, MOTORCYCLE must be ON_DEMAND, CAR can be either.'),
+                Forms\Components\Select::make('travel_mode')
+                    ->label('Travel Mode')
+                    ->options([
+                        Ride::MODE_SCHEDULED => 'Scheduled',
+                        Ride::MODE_ON_DEMAND => 'On Demand',
+                    ])
+                    ->required()
+                    ->reactive()
+                    ->disabled(fn (?string $transportType): bool => in_array($transportType, [Ride::TRANSPORT_BUS, Ride::TRANSPORT_MOTORCYCLE], true))
+                    ->helperText(function ($get): string {
+                        $transportType = $get('transport_type');
+
+                        if ($transportType === Ride::TRANSPORT_BUS) {
+                            return 'Bus rides must be SCHEDULED.';
+                        }
+
+                        if ($transportType === Ride::TRANSPORT_MOTORCYCLE) {
+                            return 'Motorcycle rides must be ON_DEMAND.';
+                        }
+
+                        return 'Car rides can be scheduled or on-demand.';
+                    }),
+                Forms\Components\View::make('filament.forms.components.address-autocomplete')
+                    ->viewData([
+                        'addressField' => 'origin_address',
+                        'latField' => 'origin_lat',
+                        'lngField' => 'origin_lng',
+                        'label' => 'Origin Location',
+                        'placeholder' => 'Enter origin address...',
+                    ])
+                    ->columnSpanFull(),
                 Forms\Components\TextInput::make('origin_address')
-                    ->required()
-                    ->maxLength(255),
+                    ->hidden(),
                 Forms\Components\TextInput::make('origin_lat')
-                    ->required()
-                    ->numeric(),
+                    ->hidden(),
                 Forms\Components\TextInput::make('origin_lng')
-                    ->required()
-                    ->numeric(),
+                    ->hidden(),
+                Forms\Components\View::make('filament.forms.components.address-autocomplete')
+                    ->viewData([
+                        'addressField' => 'destination_address',
+                        'latField' => 'destination_lat',
+                        'lngField' => 'destination_lng',
+                        'label' => 'Destination Location',
+                        'placeholder' => 'Enter destination address...',
+                    ])
+                    ->columnSpanFull(),
                 Forms\Components\TextInput::make('destination_address')
-                    ->required()
-                    ->maxLength(255),
+                    ->hidden(),
                 Forms\Components\TextInput::make('destination_lat')
-                    ->required()
-                    ->numeric(),
+                    ->hidden(),
                 Forms\Components\TextInput::make('destination_lng')
-                    ->required()
-                    ->numeric(),
+                    ->hidden(),
                 Forms\Components\DateTimePicker::make('departure_time')
                     ->required(),
                 Forms\Components\DateTimePicker::make('arrival_time_estimated'),
@@ -142,12 +222,38 @@ class RideResource extends Resource
                 Tables\Columns\TextColumn::make('driver.user.name')
                     ->searchable()
                     ->sortable(),
+                Tables\Columns\BadgeColumn::make('transport_type')
+                    ->label('Transport')
+                    ->colors([
+                        'BUS' => 'success',
+                        'CAR' => 'primary',
+                        'MOTORCYCLE' => 'warning',
+                        'default' => 'gray',
+                    ])
+                    ->sortable(),
+                Tables\Columns\BadgeColumn::make('travel_mode')
+                    ->label('Mode')
+                    ->colors([
+                        'SCHEDULED' => 'primary',
+                        'ON_DEMAND' => 'success',
+                        'default' => 'gray',
+                    ])
+                    ->sortable(),
                 Tables\Columns\TextColumn::make('origin_address')
                     ->searchable()
                     ->limit(30),
                 Tables\Columns\TextColumn::make('destination_address')
                     ->searchable()
                     ->limit(30),
+                Tables\Columns\BadgeColumn::make('allowed_flow')
+                    ->label('Passenger Flow')
+                    ->getStateUsing(fn (Ride $record): string => RidePolicy::getAllowedFlow($record))
+                    ->colors([
+                        RidePolicy::FLOW_BOOKING_ONLY => 'primary',
+                        RidePolicy::FLOW_TRIP_ONLY => 'success',
+                        RidePolicy::FLOW_BOTH => 'warning',
+                        RidePolicy::FLOW_NONE => 'danger',
+                    ]),
                 Tables\Columns\TextColumn::make('departure_time')
                     ->dateTime()
                     ->sortable(),
@@ -181,6 +287,19 @@ class RideResource extends Resource
                         'started' => 'Started',
                         'completed' => 'Completed',
                         'cancelled' => 'Cancelled',
+                    ]),
+                Tables\Filters\SelectFilter::make('transport_type')
+                    ->label('Transport')
+                    ->options([
+                        'BUS' => 'Bus',
+                        'CAR' => 'Car',
+                        'MOTORCYCLE' => 'Motorcycle',
+                    ]),
+                Tables\Filters\SelectFilter::make('travel_mode')
+                    ->label('Mode')
+                    ->options([
+                        'SCHEDULED' => 'Scheduled',
+                        'ON_DEMAND' => 'On Demand',
                     ]),
                 Tables\Filters\SelectFilter::make('ride_type')
                     ->options([

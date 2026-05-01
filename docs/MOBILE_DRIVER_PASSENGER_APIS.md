@@ -135,7 +135,7 @@ Unless noted otherwise, protected endpoints require `Authorization: Bearer <toke
 | `/api/v1/passenger/rides/{id}` | `GET` | Yes | Ride id in path | Ride details |
 | `/api/v1/passenger/rides` | `GET` | Yes | Ride history/list | Passenger rides list |
 | `/api/v1/passenger/rides/history` | `GET` | Yes | Alias of passenger rides list | Passenger ride history |
-| `/api/v1/passenger/rides` | `POST` | Yes | `ride_id`, `seats`, `pickup_address`, `dropoff_address` | Ride booking created |
+| `/api/v1/passenger/rides` | `POST` | Yes | `ride_id`, `seats`, `pickup_address`, `pickup_lat`, `pickup_lng`, `dropoff_address`, `dropoff_lat`, `dropoff_lng` | Ride booking created |
 | `/api/v1/passenger/rides/{id}/cancel` | `PUT` | Yes | Optional `reason` | Ride booking cancelled |
 | `/api/v1/passenger/bookings` | `GET` | Yes | No payload | Booking list |
 | `/api/v1/passenger/bookings/my` | `GET` | Yes | No payload | Passenger bookings |
@@ -264,7 +264,11 @@ Unless noted otherwise, protected endpoints require `Authorization: Bearer <toke
 	"ride_id": 21,
 	"seats": 2,
 	"pickup_address": "Kigali Convention Centre",
-	"dropoff_address": "Kimironko"
+	"pickup_lat": -1.9441,
+	"pickup_lng": 30.0619,
+	"dropoff_address": "Kimironko",
+	"dropoff_lat": -1.9411,
+	"dropoff_lng": 30.1098
 }
 ```
 

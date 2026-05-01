@@ -20,7 +20,7 @@ use App\Services\Location\TripLocationService;
 use App\Services\MobileNotificationService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
-use Illuminate\Validation\ValidationException;
+use Illuminate\Support\Facades\Validator;
 
 class TripController extends Controller
 {
@@ -165,7 +165,7 @@ class TripController extends Controller
             ], 403);
         }
         
-        $validated = $request->validate([
+$validator = Validator::make($request->all(), [
             'ride_id' => 'nullable|exists:rides,id',
             'booking_id' => 'nullable|exists:bookings,id',
             'pickup_location' => 'required|string',
@@ -176,11 +176,21 @@ class TripController extends Controller
             'dropoff_lng' => 'required|numeric|between:-180,180',
             'fare' => 'required|numeric|min:0',
         ]);
-        
+
+        if ($validator->fails()) {
+            return response()->json([
+                'status' => 'error',
+                'message' => 'Pickup and dropoff locations are required',
+                'errors' => $validator->errors(),
+            ], 422);
+        }
+
+        $validated = $validator->validated();
         $passengerMobileUserId = $this->resolvePassengerMobileUserId($user);
 
         if (!empty($validated['ride_id'])) {
-            $ride = Ride::query()->findOrFail((int) $validated['ride_id']);
+            $ride = Ride::query()->with('driver.vehicles')->findOrFail((int) $validated['ride_id']);
+
             try {
                 RidePolicy::assertTripAllowed($ride);
             } catch (DomainException $e) {
@@ -190,12 +200,43 @@ class TripController extends Controller
                     'error_code' => $e->getErrorCode(),
                 ], 422);
             }
+
+            if (! $ride->driver) {
+                return response()->json([
+                    'status' => 'error',
+                    'message' => 'No active driver available for this ride',
+                ], 422);
+            }
+
+            if (strtolower((string) $ride->driver->status) !== 'active') {
+                return response()->json([
+                    'status' => 'error',
+                    'message' => 'Assigned ride driver is not active',
+                ], 422);
+            }
+
+            $activeVehicle = $ride->driver->vehicles->first(fn ($vehicle) => $vehicle->is_active);
+            if (! $activeVehicle) {
+                return response()->json([
+                    'status' => 'error',
+                    'message' => 'No active vehicle is available for the selected ride',
+                ], 422);
+            }
+
+            $validated['driver_id'] = $ride->driver_id;
+        }
+
+        if (! empty($validated['ride_id']) && empty($validated['driver_id'])) {
+            return response()->json([
+                'status' => 'error',
+                'message' => 'Driver not assigned for selected ride',
+            ], 422);
         }
 
         $trip = new Trip([
             ...$validated,
             'passenger_id' => $passengerMobileUserId,
-            'driver_id' => null,
+            'driver_id' => $validated['driver_id'] ?? null,
             'status' => 'PENDING',
             'requested_at' => now(),
         ]);

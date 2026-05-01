@@ -2,6 +2,7 @@
 
 namespace App\Filament\Resources;
 
+use App\Domain\Ride\RidePolicy;
 use App\Enums\UserRole;
 use App\Filament\Resources\BookingResource\Pages;
 use App\Models\Booking;
@@ -108,9 +109,49 @@ class BookingResource extends Resource
                         $record->currency ?? 'RWF'
                     ))
                     ->searchable()
-                    ->preload()
                     ->live()
-                    ->required(),
+                    ->required()
+                    ->helperText('Only rides with SCHEDULED travel mode can be booked.')
+                    ->rule(function ($get) {
+                        $rideId = $get('ride_id');
+
+                        if (! $rideId) {
+                            return null;
+                        }
+
+                        $ride = Ride::find($rideId);
+
+                        if (! $ride) {
+                            return null;
+                        }
+
+                        return RidePolicy::canBook($ride)
+                            ? null
+                            : 'Selected ride cannot be booked. Choose a scheduled ride.';
+                    }),
+                Forms\Components\Placeholder::make('ride_booking_rule')
+                    ->label('Ride Rule')
+                    ->content(function ($get) {
+                        $rideId = $get('ride_id');
+
+                        if (! $rideId) {
+                            return 'Select a ride to see booking eligibility.';
+                        }
+
+                        $ride = Ride::find($rideId);
+
+                        if (! $ride) {
+                            return 'Selected ride not found.';
+                        }
+
+                        return sprintf(
+                            'Ride %s (%s) is %s for booking.',
+                            $ride->id,
+                            $ride->transport_type,
+                            RidePolicy::canBook($ride) ? 'eligible' : 'not eligible'
+                        );
+                    })
+                    ->columnSpanFull(),
                 Forms\Components\TextInput::make('seats_booked')
                     ->required()
                     ->numeric(),
@@ -196,22 +237,21 @@ class BookingResource extends Resource
                         $set('pickup_lat', $point['lat'] ?? null);
                         $set('pickup_lng', $point['lng'] ?? null);
                     }),
-                Forms\Components\View::make('filament.forms.components.location-map-picker')
+                Forms\Components\View::make('filament.forms.components.address-autocomplete')
                     ->viewData([
-                        'label' => 'Pickup Location Map',
+                        'addressField' => 'pickup_address',
                         'latField' => 'pickup_lat',
                         'lngField' => 'pickup_lng',
-                        'addressField' => 'pickup_address',
+                        'label' => 'Pickup Location',
+                        'placeholder' => 'Enter pickup address...',
                     ])
                     ->columnSpanFull(),
                 Forms\Components\TextInput::make('pickup_address')
-                    ->maxLength(255),
+                    ->hidden(),
                 Forms\Components\TextInput::make('pickup_lat')
-                    ->numeric()
-                    ->readOnly(),
+                    ->hidden(),
                 Forms\Components\TextInput::make('pickup_lng')
-                    ->numeric()
-                    ->readOnly(),
+                    ->hidden(),
                 Forms\Components\Select::make('dropoff_map_point')
                     ->label('Dropoff Map Point')
                     ->options(fn (): array => collect(config('ride.map_points', []))
@@ -231,22 +271,21 @@ class BookingResource extends Resource
                         $set('dropoff_lat', $point['lat'] ?? null);
                         $set('dropoff_lng', $point['lng'] ?? null);
                     }),
-                Forms\Components\View::make('filament.forms.components.location-map-picker')
+                Forms\Components\View::make('filament.forms.components.address-autocomplete')
                     ->viewData([
-                        'label' => 'Dropoff Location Map',
+                        'addressField' => 'dropoff_address',
                         'latField' => 'dropoff_lat',
                         'lngField' => 'dropoff_lng',
-                        'addressField' => 'dropoff_address',
+                        'label' => 'Dropoff Location',
+                        'placeholder' => 'Enter dropoff address...',
                     ])
                     ->columnSpanFull(),
                 Forms\Components\TextInput::make('dropoff_address')
-                    ->maxLength(255),
+                    ->hidden(),
                 Forms\Components\TextInput::make('dropoff_lat')
-                    ->numeric()
-                    ->readOnly(),
+                    ->hidden(),
                 Forms\Components\TextInput::make('dropoff_lng')
-                    ->numeric()
-                    ->readOnly(),
+                    ->hidden(),
                 Forms\Components\Textarea::make('special_requests'),
                 Forms\Components\DateTimePicker::make('confirmed_at'),
                 Forms\Components\DateTimePicker::make('cancelled_at'),
@@ -269,6 +308,32 @@ class BookingResource extends Resource
                 Tables\Columns\TextColumn::make('ride.destination_address')
                     ->searchable()
                     ->limit(20),
+                Tables\Columns\BadgeColumn::make('ride.transport_type')
+                    ->label('Transport')
+                    ->getStateUsing(fn (Booking $record): ?string => $record->ride?->transport_type)
+                    ->colors([
+                        'BUS' => 'success',
+                        'CAR' => 'primary',
+                        'MOTORCYCLE' => 'warning',
+                        'default' => 'gray',
+                    ]),
+                Tables\Columns\BadgeColumn::make('ride.travel_mode')
+                    ->label('Mode')
+                    ->getStateUsing(fn (Booking $record): ?string => $record->ride?->travel_mode)
+                    ->colors([
+                        'SCHEDULED' => 'primary',
+                        'ON_DEMAND' => 'success',
+                        'default' => 'gray',
+                    ]),
+                Tables\Columns\BadgeColumn::make('ride.allowed_flow')
+                    ->label('Passenger Flow')
+                    ->getStateUsing(fn (Booking $record): string => $record->ride ? RidePolicy::getAllowedFlow($record->ride) : 'NONE')
+                    ->colors([
+                        RidePolicy::FLOW_BOOKING_ONLY => 'primary',
+                        RidePolicy::FLOW_TRIP_ONLY => 'success',
+                        RidePolicy::FLOW_BOTH => 'warning',
+                        RidePolicy::FLOW_NONE => 'danger',
+                    ]),
                 Tables\Columns\TextColumn::make('seats_booked')
                     ->sortable(),
                 Tables\Columns\TextColumn::make('total_price')

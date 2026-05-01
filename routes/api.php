@@ -12,6 +12,7 @@ use App\Http\Controllers\Api\PaymentController;
 use App\Http\Controllers\Api\TicketController;
 use App\Http\Controllers\Api\MobileNotificationController;
 use App\Http\Controllers\Api\DeviceTokenController;
+use App\Http\Controllers\Api\PricingController;
 use App\Http\Controllers\API\DriverLocationController;
 use App\Http\Controllers\Api\Admin\UserApprovalController as UserApprovalController;
 use App\Http\Controllers\Api\Admin\UserManagementController;
@@ -86,7 +87,8 @@ Route::prefix('v1')->group(function () {
         // Flutter/mobile login (email or phone)
         Route::post('/mobile/login', [ApiAuthController::class, 'mobileLogin']);
     });
-
+    // Shared pricing calculator for UI auto pricing
+    Route::post('/pricing/calculate', [PricingController::class, 'calculate']);
     /* ===========================
        MOBILE APP - SANCTUM AUTHENTICATED
        =========================== */

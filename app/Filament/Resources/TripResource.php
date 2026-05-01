@@ -2,9 +2,11 @@
 
 namespace App\Filament\Resources;
 
+use App\Domain\Ride\RidePolicy;
 use App\Enums\UserRole;
 use App\Filament\Resources\TripResource\Pages;
 use App\Models\Booking;
+use App\Models\Driver;
 use App\Models\Ride;
 use App\Models\MobileUser;
 use App\Models\User;
@@ -45,7 +47,7 @@ class TripResource extends Resource
                             ->relationship(
                                 name: 'ride',
                                 titleAttribute: 'id',
-                                modifyQueryUsing: fn (EloquentBuilder $query): EloquentBuilder => $query->orderByDesc('id')
+                                modifyQueryUsing: fn (EloquentBuilder $query): EloquentBuilder => $query->orderBy('origin_address')->orderBy('destination_address')
                             )
                             ->getOptionLabelFromRecordUsing(fn (Ride $record): string => sprintf(
                                 '#%d | %s -> %s',
@@ -54,14 +56,31 @@ class TripResource extends Resource
                                 $record->destination_address ?? 'Unknown'
                             ))
                             ->searchable()
-                            ->preload()
-                            ->live()
-                            ->afterStateUpdated(function ($state, callable $set): void {
+                            ->required()
+                            ->helperText('Search and select a ride to check eligibility. Rides are sorted alphabetically by origin and destination.')
+                            ->rule(function ($get) {
+                                $rideId = $get('ride_id');
+
+                                if (! $rideId) {
+                                    return null;
+                                }
+
+                                $ride = Ride::find($rideId);
+
+                                if (! $ride) {
+                                    return null;
+                                }
+
+                                return RidePolicy::canRequestTrip($ride)
+                                    ? null
+                                    : 'Selected ride cannot be used for trip requests. Choose an on-demand ride.';
+                            })
+                            ->afterStateUpdated(function ($state, callable $set, callable $get): void {
                                 if (! $state) {
                                     return;
                                 }
 
-                                $ride = Ride::query()->find((int) $state);
+                                $ride = Ride::query()->with('driver.vehicles')->find((int) $state);
 
                                 if (! $ride) {
                                     return;
@@ -75,7 +94,46 @@ class TripResource extends Resource
                                 );
 
                                 $set('fare', (float) ($fare['fare_rwf'] ?? $ride->price_per_seat ?? 0));
+
+                                if ($ride->driver?->id) {
+                                    $set('driver_id', $ride->driver_id);
+                                }
+
+                                if (! $get('pickup_location')) {
+                                    $set('pickup_location', $ride->origin_address);
+                                    $set('pickup_lat', $ride->origin_lat);
+                                    $set('pickup_lng', $ride->origin_lng);
+                                }
+
+                                if (! $get('dropoff_location')) {
+                                    $set('dropoff_location', $ride->destination_address);
+                                    $set('dropoff_lat', $ride->destination_lat);
+                                    $set('dropoff_lng', $ride->destination_lng);
+                                }
                             }),
+                        Forms\Components\Placeholder::make('ride_trip_rule')
+                            ->label('Ride Rule')
+                            ->content(function ($get) {
+                                $rideId = $get('ride_id');
+
+                                if (! $rideId) {
+                                    return 'Select a ride to see trip eligibility.';
+                                }
+
+                                $ride = Ride::find($rideId);
+
+                                if (! $ride) {
+                                    return 'Selected ride not found.';
+                                }
+
+                                return sprintf(
+                                    'Ride %s (%s) is %s for trip requests.',
+                                    $ride->id,
+                                    $ride->transport_type,
+                                    RidePolicy::canRequestTrip($ride) ? 'eligible' : 'not eligible'
+                                );
+                            })
+                            ->columnSpanFull(),
                         Forms\Components\Select::make('booking_id')
                             ->relationship(
                                 name: 'booking',
@@ -90,7 +148,6 @@ class TripResource extends Resource
                                 $record->status ?? 'PENDING'
                             ))
                             ->searchable()
-                            ->preload()
                             ->live()
                             ->afterStateUpdated(function ($state, callable $set): void {
                                 if (! $state) {
@@ -169,9 +226,60 @@ class TripResource extends Resource
                             })
                             ->required(),
                         Forms\Components\Select::make('driver_id')
-                            ->relationship('driver', 'id')
+                            ->label('Assigned Driver')
                             ->searchable()
-                            ->preload(),
+                            ->reactive()
+                            ->required()
+                            ->disabled(fn ($get): bool => (bool) $get('ride_id'))
+                            ->helperText(fn ($get): string => $get('ride_id')
+                                ? 'Driver is auto-assigned from the selected ride. Remove the ride to choose a different driver.'
+                                : 'Select a driver manually if no ride is selected.')
+                            ->getSearchResultsUsing(function (string $search): array {
+                                return Driver::query()
+                                    ->whereHas('user', function (Builder $query) use ($search): void {
+                                        $query->where('name', 'ilike', "%{$search}%")
+                                            ->orWhere('phone', 'ilike', "%{$search}%");
+                                    })
+                                    ->with('user')
+                                    ->limit(10)
+                                    ->get()
+                                    ->mapWithKeys(function (Driver $driver): array {
+                                        $label = trim(($driver->user?->name ?? 'Driver #' . $driver->id) . ' - ' . ($driver->license_plate ?? 'No plate'));
+                                        return [$driver->id => $label];
+                                    })
+                                    ->all();
+                            })
+                            ->getOptionLabelUsing(function ($value): ?string {
+                                $driver = Driver::with('user')->find($value);
+                                if (! $driver) {
+                                    return null;
+                                }
+                                return trim(($driver->user?->name ?? 'Driver #' . $driver->id) . ' - ' . ($driver->license_plate ?? 'No plate'));
+                            }),
+                        Forms\Components\Placeholder::make('driver_summary')
+                            ->label('Driver Information')
+                            ->content(function ($get) {
+                                $rideId = $get('ride_id');
+                                if (! $rideId) {
+                                    return 'Select a ride to auto-assign a driver, or choose one manually.';
+                                }
+
+                                $ride = Ride::with('driver.user')->find($rideId);
+                                if (! $ride) {
+                                    return 'Selected ride not found.';
+                                }
+
+                                if (! $ride->driver) {
+                                    return 'No driver is assigned to the selected ride.';
+                                }
+
+                                return sprintf(
+                                    'Auto-assigned driver: %s • Plate: %s',
+                                    $ride->driver->user?->name ?? 'Driver #' . $ride->driver->id,
+                                    $ride->driver->license_plate ?? 'Unknown'
+                                );
+                            })
+                            ->columnSpanFull(),
                         Forms\Components\TextInput::make('fare')
                             ->label('Fare')
                             ->numeric()
@@ -199,22 +307,24 @@ class TripResource extends Resource
                                 $set('pickup_lat', $point['lat'] ?? null);
                                 $set('pickup_lng', $point['lng'] ?? null);
                             }),
-                        Forms\Components\View::make('filament.forms.components.location-map-picker')
+                        Forms\Components\View::make('filament.forms.components.address-autocomplete')
                             ->viewData([
-                                'label' => 'Pickup Location Map',
+                                'addressField' => 'pickup_location',
                                 'latField' => 'pickup_lat',
                                 'lngField' => 'pickup_lng',
-                                'addressField' => 'pickup_location',
+                                'label' => 'Pickup Location',
+                                'placeholder' => 'Enter pickup address...',
                             ])
                             ->columnSpanFull(),
                         Forms\Components\TextInput::make('pickup_location')
-                            ->maxLength(255),
+                            ->hidden()
+                            ->required(),
                         Forms\Components\TextInput::make('pickup_lat')
-                            ->numeric()
-                            ->readOnly(),
+                            ->hidden()
+                            ->required(),
                         Forms\Components\TextInput::make('pickup_lng')
-                            ->numeric()
-                            ->readOnly(),
+                            ->hidden()
+                            ->required(),
                         Forms\Components\Select::make('dropoff_map_point')
                             ->label('Dropoff Map Point')
                             ->options(fn (): array => collect(config('ride.map_points', []))
@@ -234,22 +344,24 @@ class TripResource extends Resource
                                 $set('dropoff_lat', $point['lat'] ?? null);
                                 $set('dropoff_lng', $point['lng'] ?? null);
                             }),
-                        Forms\Components\View::make('filament.forms.components.location-map-picker')
+                        Forms\Components\View::make('filament.forms.components.address-autocomplete')
                             ->viewData([
-                                'label' => 'Dropoff Location Map',
+                                'addressField' => 'dropoff_location',
                                 'latField' => 'dropoff_lat',
                                 'lngField' => 'dropoff_lng',
-                                'addressField' => 'dropoff_location',
+                                'label' => 'Dropoff Location',
+                                'placeholder' => 'Enter dropoff address...',
                             ])
                             ->columnSpanFull(),
                         Forms\Components\TextInput::make('dropoff_location')
-                            ->maxLength(255),
+                            ->hidden()
+                            ->required(),
                         Forms\Components\TextInput::make('dropoff_lat')
-                            ->numeric()
-                            ->readOnly(),
+                            ->hidden()
+                            ->required(),
                         Forms\Components\TextInput::make('dropoff_lng')
-                            ->numeric()
-                            ->readOnly(),
+                            ->hidden()
+                            ->required(),
                         Forms\Components\Select::make('status')
                             ->options([
                                 'PENDING' => 'Pending',
@@ -283,6 +395,32 @@ class TripResource extends Resource
                 Tables\Columns\TextColumn::make('driver_id')
                     ->label('Driver ID')
                     ->sortable(),
+                Tables\Columns\BadgeColumn::make('ride.transport_type')
+                    ->label('Transport')
+                    ->getStateUsing(fn (Trip $record): ?string => $record->ride?->transport_type)
+                    ->colors([
+                        'BUS' => 'success',
+                        'CAR' => 'primary',
+                        'MOTORCYCLE' => 'warning',
+                        'default' => 'gray',
+                    ]),
+                Tables\Columns\BadgeColumn::make('ride.travel_mode')
+                    ->label('Mode')
+                    ->getStateUsing(fn (Trip $record): ?string => $record->ride?->travel_mode)
+                    ->colors([
+                        'SCHEDULED' => 'primary',
+                        'ON_DEMAND' => 'success',
+                        'default' => 'gray',
+                    ]),
+                Tables\Columns\BadgeColumn::make('ride.allowed_flow')
+                    ->label('Passenger Flow')
+                    ->getStateUsing(fn (Trip $record): string => $record->ride ? RidePolicy::getAllowedFlow($record->ride) : RidePolicy::FLOW_NONE)
+                    ->colors([
+                        RidePolicy::FLOW_BOOKING_ONLY => 'primary',
+                        RidePolicy::FLOW_TRIP_ONLY => 'success',
+                        RidePolicy::FLOW_BOTH => 'warning',
+                        RidePolicy::FLOW_NONE => 'danger',
+                    ]),
                 Tables\Columns\TextColumn::make('pickup_location')
                     ->label('Pickup Location')
                     ->limit(30),
