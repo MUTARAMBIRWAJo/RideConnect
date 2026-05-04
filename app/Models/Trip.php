@@ -101,6 +101,15 @@ class Trip extends Model
         $this->attributes['status'] = self::STATUS_MAP[$normalized] ?? strtoupper((string) $value);
     }
 
+    protected static function booting(): void
+    {
+        static::creating(function (Trip $trip) {
+            if (!$trip->pickup_location || !$trip->dropoff_location) {
+                throw new \InvalidArgumentException('Pickup and dropoff locations are required for all trips');
+            }
+        });
+    }
+
     /**
      * Validate that trip has required fields for execution
      * Trip MUST always represent actual ride execution

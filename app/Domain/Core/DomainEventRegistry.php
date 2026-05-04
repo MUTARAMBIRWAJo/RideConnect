@@ -9,9 +9,7 @@ use App\Events\Domain\TripMatched;
 use App\Events\Domain\TripStarted;
 use App\Listeners\Domain\BookingCreatedListener;
 use App\Listeners\Domain\RideCreatedListener;
-use App\Listeners\Domain\TripCompletedListener;
-use App\Listeners\Domain\TripMatchedListener;
-use App\Listeners\Domain\TripStartedListener;
+use App\Listeners\BroadcastTripEvents;
 
 class DomainEventRegistry
 {
@@ -20,9 +18,9 @@ class DomainEventRegistry
         return [
             RideCreated::class => [RideCreatedListener::class],
             BookingCreated::class => [BookingCreatedListener::class],
-            TripMatched::class => [TripMatchedListener::class],
-            TripStarted::class => [TripStartedListener::class],
-            TripCompleted::class => [TripCompletedListener::class],
+            TripMatched::class => [BroadcastTripEvents::class],
+            TripStarted::class => [BroadcastTripEvents::class],
+            TripCompleted::class => [BroadcastTripEvents::class],
         ];
     }
 }

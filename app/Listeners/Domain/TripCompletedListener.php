@@ -16,29 +16,6 @@ class TripCompletedListener
 
     public function handle(TripCompleted $event): void
     {
-        try {
-            $trip = Trip::query()->find($event->tripId);
-
-            $this->realtimeGateway->broadcastTripUpdate($event->tripId, [
-                'type' => 'trip_completed',
-                'trip_id' => $event->tripId,
-            ]);
-
-            if ($trip?->passenger_id) {
-                $this->realtimeGateway->notifyPassenger((int) $trip->passenger_id, [
-                    'type' => 'trip_completed',
-                    'trip_id' => $event->tripId,
-                ]);
-            }
-
-            Log::info('Trip completed event received', [
-                'trip_id' => $event->tripId,
-            ]);
-        } catch (Throwable $throwable) {
-            Log::error('TripCompletedListener failed', [
-                'trip_id' => $event->tripId,
-                'error' => $throwable->getMessage(),
-            ]);
-        }
+        // Legacy listener no-op: Supabase broadcasting is handled by BroadcastTripEvents.
     }
 }

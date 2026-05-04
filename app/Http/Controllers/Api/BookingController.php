@@ -201,6 +201,8 @@ class BookingController extends Controller
             $ride = DB::transaction(function () use ($validated) {
                 $ride = Ride::query()->whereKey($validated['ride_id'])->lockForUpdate()->firstOrFail();
 
+                // Enforce transport rules first
+                RidePolicy::assertTransportRules($ride);
                 RidePolicy::assertBookingAllowed($ride);
 
                 if (!in_array(strtoupper((string) $ride->status), ['PUBLISHED'], true)) {

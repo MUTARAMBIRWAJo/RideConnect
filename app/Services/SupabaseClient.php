@@ -235,6 +235,25 @@ class SupabaseClient
     }
 
     /**
+     * Broadcast a realtime message through Supabase.
+     */
+    public function broadcast(string $channel, string $event, array $payload): Response
+    {
+        $url = "{$this->url}/realtime/v1/broadcast";
+
+        return Http::withHeaders([
+            'Authorization' => 'Bearer ' . ($this->serviceRoleKey ?? $this->key),
+            'apikey' => $this->key,
+            'Content-Type' => 'application/json',
+        ])->post($url, [
+            'type' => 'broadcast',
+            'channel' => $channel,
+            'event' => $event,
+            'payload' => $payload,
+        ]);
+    }
+
+    /**
      * Storage: Delete a file
      */
     public function deleteFile(string $bucket, string $path): Response

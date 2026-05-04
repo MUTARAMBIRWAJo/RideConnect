@@ -13,6 +13,8 @@ use App\Http\Controllers\Api\TicketController;
 use App\Http\Controllers\Api\MobileNotificationController;
 use App\Http\Controllers\Api\DeviceTokenController;
 use App\Http\Controllers\Api\PricingController;
+use App\Http\Controllers\Api\MobilePassengerController;
+use App\Http\Controllers\Api\MobileDriverController;
 use App\Http\Controllers\API\DriverLocationController;
 use App\Http\Controllers\Api\Admin\UserApprovalController as UserApprovalController;
 use App\Http\Controllers\Api\Admin\UserManagementController;
@@ -143,8 +145,9 @@ Route::prefix('v1')->group(function () {
             // Trips
             Route::get('/trips', [TripController::class, 'myTrips']);
             Route::get('/trips/{id}', [TripController::class, 'show'])->whereNumber('id');
+            Route::post('/trips', [TripController::class, 'store']); // ON_DEMAND only
+            Route::post('/trips/create-from-booking', [TripController::class, 'createFromBooking']); // SCHEDULED only
             Route::put('/trips/{id}/cancel', [TripController::class, 'cancel'])->whereNumber('id');
-            Route::post('/trips/create-from-booking', [TripController::class, 'createFromBooking']);
             
             // Payments
             Route::post('/payments', [PaymentController::class, 'createPayment']);
@@ -175,7 +178,9 @@ Route::prefix('v1')->group(function () {
             Route::put('/trip-requests/{id}/accept', [RiderController::class, 'acceptRequest']);
             Route::put('/trip-requests/{id}/reject', [RiderController::class, 'rejectRequest']);
             Route::put('/trip-requests/{id}/complete', [RiderController::class, 'completeRequest']);
-            Route::put('/trips/{id}/start', [TripController::class, 'start']);
+            Route::put('/trips/{id}/accept', [TripController::class, 'accept']); // Driver accepts trip
+            Route::put('/trips/{id}/start', [TripController::class, 'start']); // Driver starts trip
+            Route::put('/trips/{id}/complete', [TripController::class, 'complete']); // Driver completes trip
             Route::put('/trips/{id}/cancel', [TripController::class, 'cancel']);
             Route::put('/status', [RiderController::class, 'updateStatus']);
             Route::get('/requests', [RiderController::class, 'rideRequests']);
@@ -231,6 +236,31 @@ Route::prefix('v1')->group(function () {
         // Mobile push token registration (FCM/APNs)
         Route::post('/devices/push-token', [DeviceTokenController::class, 'store']);
         Route::delete('/devices/push-token/{token}', [DeviceTokenController::class, 'destroy']);
+
+        /* ===========================
+           MOBILE APP APIs - Flutter Optimized
+           =========================== */
+        Route::prefix('mobile')->group(function () {
+            // Passenger Mobile APIs
+            Route::get('/rides', [MobilePassengerController::class, 'getRides']);
+            Route::post('/bookings', [MobilePassengerController::class, 'createBooking']);
+            Route::post('/trips/request', [MobilePassengerController::class, 'requestTrip']);
+            Route::get('/trips/current', [MobilePassengerController::class, 'getCurrentTrip']);
+            Route::get('/trips/{id}/track', [MobilePassengerController::class, 'trackTrip'])->whereNumber('id');
+            Route::put('/trips/{id}/cancel', [MobilePassengerController::class, 'cancelTrip'])->whereNumber('id');
+            Route::put('/trips/{id}/complete', [MobilePassengerController::class, 'completeTrip'])->whereNumber('id');
+
+            // Driver Mobile APIs
+            Route::prefix('drivers')->group(function () {
+                Route::post('/status', [MobileDriverController::class, 'updateStatus']);
+                Route::get('/trips', [MobileDriverController::class, 'getAvailableTrips']);
+                Route::post('/trips/{id}/accept', [MobileDriverController::class, 'acceptTrip'])->whereNumber('id');
+                Route::post('/location', [MobileDriverController::class, 'updateLocation']);
+                Route::put('/trips/{id}/start', [MobileDriverController::class, 'startTrip'])->whereNumber('id');
+                Route::put('/trips/{id}/complete', [MobileDriverController::class, 'completeTrip'])->whereNumber('id');
+                Route::put('/trips/{id}/cancel', [MobileDriverController::class, 'cancelTrip'])->whereNumber('id');
+            });
+        });
 
         // Internal AI integration endpoints
         Route::prefix('ai')->group(function () {

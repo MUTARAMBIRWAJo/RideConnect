@@ -301,7 +301,7 @@ class MLTrainingVolumeSeeder extends Seeder
                 'currency' => 'RWF',
                 'description' => $status === 'completed' ? 'Historical ride with complete telemetry.' : 'Scheduled route with variable demand pattern.',
                 'status' => $status,
-                'ride_type' => random_int(1, 100) <= 82 ? 'one-way' : 'round-trip',
+                'ride_type' => random_int(1, 100) <= 82 ? 'INTERCITY' : 'LOCAL',
                 'luggage_allowed' => random_int(1, 100) <= 80,
                 'pets_allowed' => random_int(1, 100) <= 20,
                 'smoking_allowed' => random_int(1, 100) <= 5,

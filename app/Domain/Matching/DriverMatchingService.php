@@ -3,12 +3,18 @@
 namespace App\Domain\Matching;
 
 use App\Models\Ride;
+use App\Models\Trip;
+use App\Services\Realtime\RealtimeGateway;
 use App\Services\TransportMappingService;
 use Illuminate\Support\Collection;
 
 class DriverMatchingService implements DriverMatchingStrategy
 {
-    public function findBestDriver(Ride $ride, Collection $drivers): ?array
+    public function __construct(private readonly RealtimeGateway $realtimeGateway)
+    {
+    }
+
+    public function findBestDriver(Ride $ride, Collection $drivers, ?Trip $trip = null): ?array
     {
         $eligible = $drivers
             ->filter(function ($driver) use ($ride) {
@@ -67,6 +73,17 @@ class DriverMatchingService implements DriverMatchingStrategy
 
         if (!$best) {
             return null;
+        }
+
+        if ($trip !== null) {
+            $this->realtimeGateway->broadcast(
+                "driver:{$best['driver']->id}",
+                'trip.request',
+                [
+                    'trip_id' => $trip->id,
+                    'pickup' => $trip->pickup_location ?? '',
+                ]
+            );
         }
 
         return [

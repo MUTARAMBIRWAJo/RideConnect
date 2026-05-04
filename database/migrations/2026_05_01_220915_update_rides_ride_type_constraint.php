@@ -10,6 +10,13 @@ return new class extends Migration
      */
     public function up(): void
     {
+        $driver = DB::connection()->getDriverName();
+
+        if ($driver === 'sqlite') {
+            // SQLite doesn't support constraint syntax, skip
+            return;
+        }
+
         // Drop the old check constraint if it exists
         DB::statement('ALTER TABLE rides DROP CONSTRAINT IF EXISTS rides_ride_type_check');
 

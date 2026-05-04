@@ -55,9 +55,24 @@ class RideCategoryTransitionService
 
     /**
      * Create a trip directly from passenger booking request when the ride is <= 6h away.
+     * This is for ON_DEMAND CAR and MOTORCYCLE rides only.
+     * BUS rides must use booking flow.
      */
     public function createTripFromRideSelection(User $user, Ride $ride, array $payload): Trip
     {
+        // ❌ Enforce: BUS rides must use booking flow, not direct trip creation
+        if ($ride->isBus()) {
+            throw new \InvalidArgumentException('BUS rides must use booking flow, not direct trip creation');
+        }
+
+        // Ensure required locations are provided
+        $pickupLocation = $payload['pickup_address'] ?? $ride->origin_address;
+        $dropoffLocation = $payload['dropoff_address'] ?? $ride->destination_address;
+        
+        if (!$pickupLocation || !$dropoffLocation) {
+            throw new \InvalidArgumentException('Pickup and dropoff locations are required for trip creation');
+        }
+
         $passengerId = $this->resolvePassengerMobileUserId($user);
 
         return Trip::create([
@@ -65,10 +80,10 @@ class RideCategoryTransitionService
             'ride_id' => $ride->id,
             'passenger_id' => $passengerId,
             'driver_id' => $ride->driver_id,
-            'pickup_location' => $payload['pickup_address'] ?? $ride->origin_address,
+            'pickup_location' => $pickupLocation,
             'pickup_lat' => $payload['pickup_lat'] ?? $ride->origin_lat,
             'pickup_lng' => $payload['pickup_lng'] ?? $ride->origin_lng,
-            'dropoff_location' => $payload['dropoff_address'] ?? $ride->destination_address,
+            'dropoff_location' => $dropoffLocation,
             'dropoff_lat' => $payload['dropoff_lat'] ?? $ride->destination_lat,
             'dropoff_lng' => $payload['dropoff_lng'] ?? $ride->destination_lng,
             'fare' => $payload['total_price'] ?? ($ride->price_per_seat * (int) ($payload['seats_booked'] ?? $payload['seats'] ?? 1)),

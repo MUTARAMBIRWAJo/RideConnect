@@ -251,6 +251,55 @@ class RidePolicy
     }
 
     /**
+     * Enforce strict transport type and travel mode combinations.
+     *
+     * RULES:
+     * - BUS must be SCHEDULED only
+     * - MOTORCYCLE must be ON_DEMAND only
+     * - CAR can be either SCHEDULED or ON_DEMAND
+     *
+     * @param Ride $ride
+     * @return void
+     * @throws DomainException
+     */
+    public static function assertTransportRules(Ride $ride): void
+    {
+        // BUS must be SCHEDULED
+        if ($ride->isBus() && !$ride->isScheduled()) {
+            throw DomainException::make(
+                'BUS rides must use SCHEDULED travel mode',
+                'BUS_MUST_BE_SCHEDULED'
+            );
+        }
+
+        // MOTORCYCLE must be ON_DEMAND
+        if ($ride->isMotorcycle() && !$ride->isOnDemand()) {
+            throw DomainException::make(
+                'MOTORCYCLE rides must use ON_DEMAND travel mode',
+                'MOTORCYCLE_MUST_BE_ON_DEMAND'
+            );
+        }
+
+        // Validate supported transport types
+        $validTransports = [Ride::TRANSPORT_BUS, Ride::TRANSPORT_CAR, Ride::TRANSPORT_MOTORCYCLE];
+        if (!in_array($ride->transport_type, $validTransports, true)) {
+            throw DomainException::make(
+                'Invalid transport type: ' . $ride->transport_type,
+                'INVALID_TRANSPORT_TYPE'
+            );
+        }
+
+        // Validate supported travel modes
+        $validModes = [Ride::MODE_SCHEDULED, Ride::MODE_ON_DEMAND];
+        if (!in_array($ride->travel_mode, $validModes, true)) {
+            throw DomainException::make(
+                'Invalid travel mode: ' . $ride->travel_mode,
+                'INVALID_TRAVEL_MODE'
+            );
+        }
+    }
+
+    /**
      * Get ride rules as an array for API responses.
      *
      * This is the contract that Flutter consumes to determine allowed actions.

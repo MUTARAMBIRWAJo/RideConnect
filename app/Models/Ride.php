@@ -185,7 +185,7 @@ class Ride extends Model
 
         // BUS must be SCHEDULED
         if ($this->isBus() && ! $this->isScheduled()) {
-            throw new \InvalidArgumentException("Invalid transport configuration");
+            throw new \InvalidArgumentException("BUS must be SCHEDULED");
         }
 
         if ($this->isBus()) {
@@ -198,7 +198,7 @@ class Ride extends Model
 
         // MOTORCYCLE must be ON_DEMAND
         if ($this->isMotorcycle() && ! $this->isOnDemand()) {
-            throw new \InvalidArgumentException("Invalid transport configuration");
+            throw new \InvalidArgumentException("MOTORCYCLE must be ON_DEMAND");
         }
 
         // CAR can be either SCHEDULED or ON_DEMAND - nothing to do

@@ -7,5 +7,5 @@ use Illuminate\Support\Collection;
 
 interface DriverMatchingStrategy
 {
-    public function findBestDriver(Ride $ride, Collection $drivers): ?array;
+    public function findBestDriver(Ride $ride, Collection $drivers, ?\App\Models\Trip $trip = null): ?array;
 }
