@@ -191,6 +191,13 @@ $validator = Validator::make($request->all(), [
         if (!empty($validated['ride_id'])) {
             $ride = Ride::query()->with('driver.vehicles')->findOrFail((int) $validated['ride_id']);
 
+            if ($ride->isBus()) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'BUS trips must be created from a booking',
+                ], 422);
+            }
+
             try {
                 RidePolicy::assertTripAllowed($ride);
             } catch (DomainException $e) {

@@ -117,6 +117,8 @@ Route::prefix('v1')->group(function () {
             Route::get('/profile', [PassengerController::class, 'profile']);
             Route::put('/profile', [PassengerController::class, 'updateProfile']);
             Route::get('/stats', [PassengerController::class, 'stats']);
+            Route::get('/public-transport/corridors', [PassengerController::class, 'corridors']);
+            Route::get('/public-transport/routes', [PassengerController::class, 'routes']);
             
             // Rides - Discovery + Booking
             Route::get('/rides/available', [RideController::class, 'index']);

@@ -3,9 +3,11 @@
 namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
+use App\Models\Corridor;
 use App\Models\Driver;
 use App\Models\MobileUser;
 use App\Models\Trip;
+use App\Models\TransportRoute;
 use App\Models\User;
 use App\Services\MobileNotificationService;
 use Illuminate\Http\JsonResponse;
@@ -228,6 +230,62 @@ class PassengerController extends Controller
                 'current_longitude' => $driver->current_longitude,
                 'last_online_at' => $driver->last_online_at?->toIso8601String(),
             ]),
+        ]);
+    }
+
+    /**
+     * List active corridors for BUS booking flow.
+     */
+    public function corridors(): JsonResponse
+    {
+        $corridors = Corridor::query()
+            ->orderBy('code')
+            ->get()
+            ->map(fn (Corridor $corridor): array => [
+                'id' => $corridor->id,
+                'code' => $corridor->code,
+                'name' => $corridor->name,
+                'kinyarwanda_name' => $corridor->kinyarwanda_name,
+            ]);
+
+        return response()->json([
+            'success' => true,
+            'data' => $corridors,
+        ]);
+    }
+
+    /**
+     * List active routes filtered by corridor.
+     */
+    public function routes(Request $request): JsonResponse
+    {
+        $validated = $request->validate([
+            'corridor_id' => 'required|integer|exists:corridors,id',
+        ]);
+
+        $routes = TransportRoute::query()
+            ->with('corridor')
+            ->where('corridor_id', (int) $validated['corridor_id'])
+            ->where('is_active', true)
+            ->orderBy('route_code')
+            ->get()
+            ->map(fn (TransportRoute $route): array => [
+                'id' => $route->id,
+                'code' => $route->route_code,
+                'name' => $route->name,
+                'via' => $route->via,
+                'origin' => $route->origin,
+                'destination' => $route->destination,
+                'corridor' => [
+                    'id' => $route->corridor?->id,
+                    'code' => $route->corridor?->code,
+                    'name' => $route->corridor?->name,
+                ],
+            ]);
+
+        return response()->json([
+            'success' => true,
+            'data' => $routes,
         ]);
     }
 

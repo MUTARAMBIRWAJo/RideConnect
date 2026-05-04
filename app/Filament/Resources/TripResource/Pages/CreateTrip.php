@@ -17,13 +17,13 @@ class CreateTrip extends CreateRecord
     {
         return [
             CreateAction::make()
-                ->disabled(fn ($get): bool =>
-                    !$get('pickup_lat') ||
-                    !$get('pickup_lng') ||
-                    !$get('dropoff_lat') ||
-                    !$get('dropoff_lng') ||
-                    !$get('pickup_location') ||
-                    !$get('dropoff_location')
+                ->disabled(fn (): bool =>
+                    ! data_get($this->form->getRawState(), 'pickup_lat') ||
+                    ! data_get($this->form->getRawState(), 'pickup_lng') ||
+                    ! data_get($this->form->getRawState(), 'dropoff_lat') ||
+                    ! data_get($this->form->getRawState(), 'dropoff_lng') ||
+                    ! data_get($this->form->getRawState(), 'pickup_location') ||
+                    ! data_get($this->form->getRawState(), 'dropoff_location')
                 ),
         ];
     }

@@ -4,8 +4,10 @@ namespace App\Filament\Resources;
 
 use App\Domain\Ride\RidePolicy;
 use App\Filament\Resources\RideResource\Pages;
+use App\Models\Corridor;
 use App\Models\Driver;
 use App\Models\Ride;
+use App\Models\TransportRoute;
 use Filament\Forms;
 use Filament\Forms\Form;
 use Filament\Resources\Resource;
@@ -82,6 +84,57 @@ class RideResource extends Resource
                         }
                     })
                     ->helperText('BUS must be SCHEDULED, MOTORCYCLE must be ON_DEMAND, CAR can be either.'),
+                Forms\Components\Select::make('corridor_id')
+                    ->label('Corridor')
+                    ->options(fn (): array => Corridor::query()
+                        ->orderBy('code')
+                        ->get()
+                        ->mapWithKeys(fn (Corridor $corridor): array => [
+                            $corridor->id => trim('Corridor ' . ($corridor->code ?? $corridor->id) . ' - ' . $corridor->name),
+                        ])
+                        ->all())
+                    ->searchable()
+                    ->visible(fn ($get): bool => $get('transport_type') === Ride::TRANSPORT_BUS)
+                    ->required(fn ($get): bool => $get('transport_type') === Ride::TRANSPORT_BUS)
+                    ->reactive()
+                    ->afterStateUpdated(fn (callable $set) => $set('route_id', null))
+                    ->helperText('Select the government corridor for BUS rides.'),
+                Forms\Components\Select::make('route_id')
+                    ->label('Route')
+                    ->options(function (callable $get): array {
+                        $corridorId = $get('corridor_id');
+
+                        return TransportRoute::query()
+                            ->when($corridorId, fn ($query, $value) => $query->where('corridor_id', $value))
+                            ->where('is_active', true)
+                            ->orderBy('route_code')
+                            ->get()
+                            ->mapWithKeys(fn (TransportRoute $route): array => [
+                                $route->id => sprintf('%s - %s', $route->route_code, $route->name),
+                            ])
+                            ->all();
+                    })
+                    ->searchable()
+                    ->visible(fn ($get): bool => $get('transport_type') === Ride::TRANSPORT_BUS)
+                    ->required(fn ($get): bool => $get('transport_type') === Ride::TRANSPORT_BUS)
+                    ->reactive()
+                    ->afterStateUpdated(function ($state, callable $set): void {
+                        if (! $state) {
+                            return;
+                        }
+
+                        $route = TransportRoute::query()->with('corridor')->find((int) $state);
+
+                        if (! $route) {
+                            return;
+                        }
+
+                        $set('corridor_id', $route->corridor_id);
+                        $set('origin_address', $route->origin);
+                        $set('destination_address', $route->destination);
+                        $set('bus_number', $route->route_code);
+                    })
+                    ->helperText('Filtered by corridor. BUS rides must be tied to a route.'),
                 Forms\Components\Select::make('travel_mode')
                     ->label('Travel Mode')
                     ->options([
@@ -112,6 +165,7 @@ class RideResource extends Resource
                         'label' => 'Origin Location',
                         'placeholder' => 'Enter origin address...',
                     ])
+                    ->visible(fn ($get): bool => $get('transport_type') !== Ride::TRANSPORT_BUS)
                     ->columnSpanFull(),
                 Forms\Components\TextInput::make('origin_address')
                     ->hidden(),
@@ -127,6 +181,7 @@ class RideResource extends Resource
                         'label' => 'Destination Location',
                         'placeholder' => 'Enter destination address...',
                     ])
+                    ->visible(fn ($get): bool => $get('transport_type') !== Ride::TRANSPORT_BUS)
                     ->columnSpanFull(),
                 Forms\Components\TextInput::make('destination_address')
                     ->hidden(),
@@ -134,6 +189,11 @@ class RideResource extends Resource
                     ->hidden(),
                 Forms\Components\TextInput::make('destination_lng')
                     ->hidden(),
+                Forms\Components\TextInput::make('bus_number')
+                    ->label('Bus Number')
+                    ->visible(fn ($get): bool => $get('transport_type') === Ride::TRANSPORT_BUS)
+                    ->required(fn ($get): bool => $get('transport_type') === Ride::TRANSPORT_BUS)
+                    ->helperText('Auto-filled from the selected route, but can be reviewed here.'),
                 Forms\Components\DateTimePicker::make('departure_time')
                     ->required(),
                 Forms\Components\DateTimePicker::make('arrival_time_estimated'),
@@ -203,10 +263,13 @@ class RideResource extends Resource
                     ->default('available')
                     ->required(),
                 Forms\Components\Select::make('ride_type')
+                    ->label('Ride Type')
                     ->options([
-                        'intercity' => 'Intercity',
-                        'local' => 'Local',
-                    ]),
+                        Ride::TYPE_INTERCITY => '🌍 Intercity (Long distance)',
+                        Ride::TYPE_LOCAL => '📍 Local (Within city)',
+                    ])
+                    ->required()
+                    ->default(Ride::TYPE_LOCAL),
                 Forms\Components\Checkbox::make('luggage_allowed'),
                 Forms\Components\Checkbox::make('pets_allowed'),
                 Forms\Components\Checkbox::make('smoking_allowed'),
@@ -231,11 +294,34 @@ class RideResource extends Resource
                         'default' => 'gray',
                     ])
                     ->sortable(),
+                Tables\Columns\BadgeColumn::make('corridor.code')
+                    ->label('Corridor')
+                    ->getStateUsing(fn (Ride $record): ?string => $record->corridor?->code ? 'Corridor ' . $record->corridor->code : null)
+                    ->colors([
+                        'default' => 'gray',
+                    ]),
+                Tables\Columns\TextColumn::make('route.name')
+                    ->label('Route')
+                    ->getStateUsing(fn (Ride $record): ?string => $record->route?->name)
+                    ->limit(35),
+                Tables\Columns\TextColumn::make('bus_number')
+                    ->label('Bus #')
+                    ->badge()
+                    ->color('gray')
+                    ->toggleable(),
                 Tables\Columns\BadgeColumn::make('travel_mode')
                     ->label('Mode')
                     ->colors([
                         'SCHEDULED' => 'primary',
                         'ON_DEMAND' => 'success',
+                        'default' => 'gray',
+                    ])
+                    ->sortable(),
+                Tables\Columns\BadgeColumn::make('ride_type')
+                    ->label('Type')
+                    ->colors([
+                        Ride::TYPE_INTERCITY => 'info',
+                        Ride::TYPE_LOCAL => 'success',
                         'default' => 'gray',
                     ])
                     ->sortable(),

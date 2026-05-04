@@ -7,6 +7,7 @@ use App\Events\Domain\RideCreated;
 use App\Http\Controllers\Controller;
 use App\Models\Corridor;
 use App\Models\Ride;
+use App\Models\TransportRoute;
 use App\Services\AiPredictionService;
 use App\Services\MobileNotificationService;
 use App\Services\RideCategoryTransitionService;
@@ -15,6 +16,7 @@ use App\Services\RuraZoneService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Gate;
+use Illuminate\Validation\Rule;
 
 class RideController extends Controller
 {
@@ -35,7 +37,7 @@ class RideController extends Controller
      */
     public function index(Request $request): JsonResponse
     {
-        $query = Ride::with(['driver.user', 'vehicle']);
+        $query = Ride::with(['driver.user', 'vehicle', 'corridor', 'route.corridor']);
         
         // Filter by status
         if ($request->has('status')) {
@@ -73,49 +75,15 @@ class RideController extends Controller
                   ->where('departure_time', '>', now());
         }
         
-        $rides = $query->orderBy('departure_time', 'asc')->get();
+        $rides = $query
+            ->orderBy('origin_address', 'asc')
+            ->orderBy('destination_address', 'asc')
+            ->orderBy('departure_time', 'asc')
+            ->get();
         
         return response()->json([
             'success' => true,
-            'data' => $rides->map(fn($ride) => [
-                'id' => $ride->id,
-                'driver' => [
-                    'id' => $ride->driver?->user?->id,
-                    'name' => $ride->driver?->user?->name,
-                ],
-                'vehicle' => [
-                    'id' => $ride->vehicle?->id,
-                    'make' => $ride->vehicle?->make,
-                    'model' => $ride->vehicle?->model,
-                    'color' => $ride->vehicle?->color,
-                    'license_plate' => $ride->vehicle?->license_plate,
-                ],
-                'origin' => [
-                    'address' => $ride->origin_address,
-                    'lat' => $ride->origin_lat,
-                    'lng' => $ride->origin_lng,
-                ],
-                'destination' => [
-                    'address' => $ride->destination_address,
-                    'lat' => $ride->destination_lat,
-                    'lng' => $ride->destination_lng,
-                ],
-                'departure_time' => $ride->departure_time->toIso8601String(),
-                'arrival_time_estimated' => $ride->arrival_time_estimated?->toIso8601String(),
-                'available_seats' => $ride->available_seats,
-                'price_per_seat' => $ride->price_per_seat,
-                'currency' => $ride->currency,
-                'transport_type' => $ride->transport_type,
-                'travel_mode' => $ride->travel_mode,
-                'status' => $ride->status,
-                'ride_type' => $ride->ride_type,
-                'luggage_allowed' => $ride->luggage_allowed,
-                'pets_allowed' => $ride->pets_allowed,
-                'smoking_allowed' => $ride->smoking_allowed,
-                'description' => $ride->description,
-                'created_at' => $ride->created_at->toIso8601String(),
-                'ride_rules' => RidePolicy::toApiRules($ride),
-            ]),
+            'data' => $rides->map(fn (Ride $ride) => $this->ridePayload($ride)),
         ]);
     }
 
@@ -124,52 +92,18 @@ class RideController extends Controller
      */
     public function show(int $id): JsonResponse
     {
-        $ride = Ride::with(['driver.user', 'vehicle', 'bookings', 'reviews'])->findOrFail($id);
+        $ride = Ride::with(['driver.user', 'vehicle', 'bookings', 'reviews', 'corridor', 'route.corridor'])->findOrFail($id);
         
         return response()->json([
             'success' => true,
-            'data' => [
-                'id' => $ride->id,
-                'driver' => [
-                    'id' => $ride->driver?->user?->id,
-                    'name' => $ride->driver?->user?->name,
-                    'phone' => $ride->driver?->user?->phone,
-                    'rating' => $ride->driver?->rating,
-                ],
-                'vehicle' => [
-                    'id' => $ride->vehicle?->id,
-                    'make' => $ride->vehicle?->make,
-                    'model' => $ride->vehicle?->model,
-                    'color' => $ride->vehicle?->color,
-                    'license_plate' => $ride->vehicle?->license_plate,
-                ],
-                'origin' => [
-                    'address' => $ride->origin_address,
-                    'lat' => $ride->origin_lat,
-                    'lng' => $ride->origin_lng,
-                ],
-                'destination' => [
-                    'address' => $ride->destination_address,
-                    'lat' => $ride->destination_lat,
-                    'lng' => $ride->destination_lng,
-                ],
-                'departure_time' => $ride->departure_time->toIso8601String(),
-                'arrival_time_estimated' => $ride->arrival_time_estimated?->toIso8601String(),
-                'available_seats' => $ride->available_seats,
-                'price_per_seat' => $ride->price_per_seat,
-                'currency' => $ride->currency,
-                'status' => $ride->status,
-                'ride_type' => $ride->ride_type,
-                'luggage_allowed' => $ride->luggage_allowed,
-                'pets_allowed' => $ride->pets_allowed,
-                'smoking_allowed' => $ride->smoking_allowed,
-                'description' => $ride->description,
-                'bookings_count' => $ride->bookings->count(),
-                'reviews_count' => $ride->reviews->count(),
-                'average_rating' => $ride->reviews->avg('rating'),
-                'created_at' => $ride->created_at->toIso8601String(),
-                'ride_rules' => RidePolicy::toApiRules($ride),
-            ],
+            'data' => array_merge(
+                $this->ridePayload($ride),
+                [
+                    'bookings_count' => $ride->bookings->count(),
+                    'reviews_count' => $ride->reviews->count(),
+                    'average_rating' => $ride->reviews->avg('rating'),
+                ]
+            ),
         ]);
     }
 
@@ -202,7 +136,7 @@ class RideController extends Controller
             'available_seats' => 'required|integer|min:1|max:8',
             'currency' => 'sometimes|string|size:3',
             'description' => 'nullable|string',
-            'ride_type' => 'sometimes|string',
+            'ride_type' => ['sometimes', 'string', Rule::in([Ride::TYPE_INTERCITY, Ride::TYPE_LOCAL])],
             'luggage_allowed' => 'sometimes|boolean',
             'pets_allowed' => 'sometimes|boolean',
             'smoking_allowed' => 'sometimes|boolean',
@@ -478,7 +412,7 @@ class RideController extends Controller
             $corridor = null;
         }
 
-        if ($this->rideCategoryTransitionService->isTripCategory($ride)) {
+        if (! $ride->isBus() && $this->rideCategoryTransitionService->isTripCategory($ride)) {
             $trip = $this->rideCategoryTransitionService->createTripFromRideSelection($user, $ride, [
                 'pickup_address' => $validated['pickup_address'],
                 'dropoff_address' => $validated['dropoff_address'],
@@ -525,9 +459,11 @@ class RideController extends Controller
                 'total_price' => $booking->total_price,
                 'status' => $booking->status,
                 'hours_to_departure' => round(now()->diffInMinutes($ride->departure_time, false) / 60, 2),
-                'travel_type' => now()->diffInHours($ride->departure_time, false) <= (int) config('ride.booking_to_trip_threshold_hours', self::DEFAULT_TICKET_THRESHOLD_HOURS)
-                    ? 'TRIP'
-                    : 'BOOKING',
+                'travel_type' => $ride->isBus()
+                    ? 'BOOKING'
+                    : (now()->diffInHours($ride->departure_time, false) <= (int) config('ride.booking_to_trip_threshold_hours', self::DEFAULT_TICKET_THRESHOLD_HOURS)
+                        ? 'TRIP'
+                        : 'BOOKING'),
             ],
         ], 201);
     }
@@ -538,43 +474,11 @@ class RideController extends Controller
      */
     public function showRide(int $id): JsonResponse
     {
-        $ride = Ride::with(['driver.user', 'vehicle'])->findOrFail($id);
+        $ride = Ride::with(['driver.user', 'vehicle', 'corridor', 'route.corridor'])->findOrFail($id);
 
         return response()->json([
             'success' => true,
-            'data' => [
-                'id' => $ride->id,
-                'driver' => [
-                    'id' => $ride->driver?->user?->id,
-                    'name' => $ride->driver?->user?->name,
-                    'phone' => $ride->driver?->user?->phone,
-                    'rating' => $ride->driver?->rating,
-                ],
-                'vehicle' => [
-                    'id' => $ride->vehicle?->id,
-                    'make' => $ride->vehicle?->make,
-                    'model' => $ride->vehicle?->model,
-                    'color' => $ride->vehicle?->color,
-                    'license_plate' => $ride->vehicle?->license_plate,
-                ],
-                'origin' => [
-                    'address' => $ride->origin_address,
-                    'lat' => $ride->origin_lat,
-                    'lng' => $ride->origin_lng,
-                ],
-                'destination' => [
-                    'address' => $ride->destination_address,
-                    'lat' => $ride->destination_lat,
-                    'lng' => $ride->destination_lng,
-                ],
-                'departure_time' => $ride->departure_time->toIso8601String(),
-                'available_seats' => $ride->available_seats,
-                'price_per_seat' => $ride->price_per_seat,
-                'transport_type' => $ride->transport_type,
-                'travel_mode' => $ride->travel_mode,
-                'status' => $ride->status,
-                'ride_rules' => RidePolicy::toApiRules($ride),
-            ],
+            'data' => $this->ridePayload($ride),
         ]);
     }
 
@@ -630,7 +534,7 @@ class RideController extends Controller
      */
     public function adminRides(Request $request): JsonResponse
     {
-        $query = Ride::with(['driver.user', 'vehicle']);
+        $query = Ride::with(['driver.user', 'vehicle', 'corridor', 'route.corridor']);
 
         // Filter by status
         if ($request->has('status')) {
@@ -646,19 +550,7 @@ class RideController extends Controller
 
         return response()->json([
             'success' => true,
-            'data' => $rides->map(fn($ride) => [
-                'id' => $ride->id,
-                'driver' => [
-                    'id' => $ride->driver?->user?->id,
-                    'name' => $ride->driver?->user?->name,
-                ],
-                'origin' => $ride->origin_address,
-                'destination' => $ride->destination_address,
-                'departure_time' => $ride->departure_time->toIso8601String(),
-                'available_seats' => $ride->available_seats,
-                'price_per_seat' => $ride->price_per_seat,
-                'status' => $ride->status,
-            ]),
+            'data' => $rides->map(fn (Ride $ride) => $this->ridePayload($ride)),
             'pagination' => [
                 'current_page' => $rides->currentPage(),
                 'per_page' => $rides->perPage(),
@@ -673,41 +565,95 @@ class RideController extends Controller
      */
     public function adminRideDetail(int $id): JsonResponse
     {
-        $ride = Ride::with(['driver.user', 'vehicle', 'bookings.user', 'reviews'])->findOrFail($id);
+        $ride = Ride::with(['driver.user', 'vehicle', 'bookings.user', 'reviews', 'corridor', 'route.corridor'])->findOrFail($id);
 
         return response()->json([
             'success' => true,
-            'data' => [
-                'id' => $ride->id,
-                'driver' => [
-                    'id' => $ride->driver?->user?->id,
-                    'name' => $ride->driver?->user?->name,
-                    'phone' => $ride->driver?->user?->phone,
-                    'rating' => $ride->driver?->rating,
-                ],
-                'vehicle' => [
-                    'id' => $ride->vehicle?->id,
-                    'make' => $ride->vehicle?->make,
-                    'model' => $ride->vehicle?->model,
-                    'license_plate' => $ride->vehicle?->license_plate,
-                ],
-                'origin' => [
-                    'address' => $ride->origin_address,
-                    'lat' => $ride->origin_lat,
-                    'lng' => $ride->origin_lng,
-                ],
-                'destination' => [
-                    'address' => $ride->destination_address,
-                    'lat' => $ride->destination_lat,
-                    'lng' => $ride->destination_lng,
-                ],
-                'departure_time' => $ride->departure_time->toIso8601String(),
-                'available_seats' => $ride->available_seats,
-                'price_per_seat' => $ride->price_per_seat,
-                'status' => $ride->status,
-                'bookings_count' => $ride->bookings->count(),
-                'reviews_count' => $ride->reviews->count(),
-            ],
+            'data' => array_merge(
+                $this->ridePayload($ride),
+                [
+                    'bookings_count' => $ride->bookings->count(),
+                    'reviews_count' => $ride->reviews->count(),
+                ]
+            ),
         ]);
+    }
+
+    private function ridePayload(Ride $ride): array
+    {
+        return [
+            'id' => $ride->id,
+            'driver' => [
+                'id' => $ride->driver?->user?->id,
+                'name' => $ride->driver?->user?->name,
+                'phone' => $ride->driver?->user?->phone,
+                'rating' => $ride->driver?->rating,
+            ],
+            'vehicle' => [
+                'id' => $ride->vehicle?->id,
+                'make' => $ride->vehicle?->make,
+                'model' => $ride->vehicle?->model,
+                'color' => $ride->vehicle?->color,
+                'license_plate' => $ride->vehicle?->license_plate,
+            ],
+            'corridor' => $this->corridorPayload($ride->corridor),
+            'route' => $this->routePayload($ride->route),
+            'bus_number' => $ride->bus_number,
+            'origin' => [
+                'address' => $ride->origin_address,
+                'lat' => $ride->origin_lat,
+                'lng' => $ride->origin_lng,
+            ],
+            'destination' => [
+                'address' => $ride->destination_address,
+                'lat' => $ride->destination_lat,
+                'lng' => $ride->destination_lng,
+            ],
+            'departure_time' => $ride->departure_time?->toIso8601String(),
+            'arrival_time_estimated' => $ride->arrival_time_estimated?->toIso8601String(),
+            'available_seats' => $ride->available_seats,
+            'price_per_seat' => $ride->price_per_seat,
+            'currency' => $ride->currency,
+            'transport_type' => $ride->transport_type,
+            'travel_mode' => $ride->travel_mode,
+            'status' => $ride->status,
+            'ride_type' => $ride->ride_type,
+            'luggage_allowed' => $ride->luggage_allowed,
+            'pets_allowed' => $ride->pets_allowed,
+            'smoking_allowed' => $ride->smoking_allowed,
+            'description' => $ride->description,
+            'created_at' => $ride->created_at?->toIso8601String(),
+            'ride_rules' => RidePolicy::toApiRules($ride),
+        ];
+    }
+
+    private function corridorPayload(?Corridor $corridor): ?array
+    {
+        if (! $corridor) {
+            return null;
+        }
+
+        return [
+            'id' => $corridor->id,
+            'code' => $corridor->code,
+            'name' => $corridor->name,
+            'kinyarwanda_name' => $corridor->kinyarwanda_name,
+        ];
+    }
+
+    private function routePayload(?TransportRoute $route): ?array
+    {
+        if (! $route) {
+            return null;
+        }
+
+        return [
+            'id' => $route->id,
+            'code' => $route->route_code,
+            'name' => $route->name,
+            'via' => $route->via,
+            'origin' => $route->origin,
+            'destination' => $route->destination,
+        ];
     }
 }

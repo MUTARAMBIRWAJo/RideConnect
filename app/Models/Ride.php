@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Domain\Ride\RidePolicy;
 use App\Services\TransportMappingService;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
@@ -13,6 +14,12 @@ class Ride extends Model
     protected static function boot()
     {
         parent::boot();
+
+        static::creating(function ($ride) {
+            if (!$ride->ride_type) {
+                $ride->ride_type = self::TYPE_LOCAL;
+            }
+        });
 
         static::saving(function ($ride) {
             $ride->validateTransportRules();
@@ -27,6 +34,10 @@ class Ride extends Model
     // Travel mode constants
     const MODE_SCHEDULED = 'SCHEDULED';
     const MODE_ON_DEMAND = 'ON_DEMAND';
+
+    // Ride type constants
+    const TYPE_INTERCITY = 'INTERCITY';
+    const TYPE_LOCAL = 'LOCAL';
 
     private const STATUS_MAP = [
         'scheduled' => 'published',
@@ -44,25 +55,15 @@ class Ride extends Model
         'driver_id',
         'zone_id',
         'corridor_id',
+        'route_id',
         'created_by',
         'vehicle_id',
         'transport_type',
         'travel_mode',
-        'origin_address',
-        'origin_lat',
-        'origin_lng',
-        'destination_address',
-        'destination_lat',
-        'destination_lng',
-        'departure_time',
-        'arrival_time_estimated',
-        'available_seats',
-        'price_per_seat',
-        'currency',
-        'description',
-        'status',
         'ride_type',
-        'luggage_allowed',
+        'origin_address',
+        'destination_address',
+        'bus_number',
         'pets_allowed',
         'smoking_allowed',
         'cancelled_at',
@@ -102,6 +103,11 @@ class Ride extends Model
     public function corridor()
     {
         return $this->belongsTo(Corridor::class);
+    }
+
+    public function route()
+    {
+        return $this->belongsTo(TransportRoute::class, 'route_id');
     }
 
     public function creator()
@@ -156,14 +162,38 @@ class Ride extends Model
         return TransportMappingService::isCompatible($vehicleType, $this->transport_type);
     }
 
+    // Ride type classification helpers
+    public function isIntercity(): bool
+    {
+        return $this->ride_type === self::TYPE_INTERCITY;
+    }
+
+    public function isLocal(): bool
+    {
+        return $this->ride_type === self::TYPE_LOCAL;
+    }
+
     /**
      * Validate transport type and travel mode combinations
      */
     public function validateTransportRules(): void
     {
+        // Validate ride_type is valid
+        if (!in_array($this->ride_type, [self::TYPE_INTERCITY, self::TYPE_LOCAL], true)) {
+            throw new \InvalidArgumentException("Invalid ride type: {$this->ride_type}");
+        }
+
         // BUS must be SCHEDULED
         if ($this->isBus() && ! $this->isScheduled()) {
             throw new \InvalidArgumentException("Invalid transport configuration");
+        }
+
+        if ($this->isBus()) {
+            try {
+                RidePolicy::assertBusRules($this);
+            } catch (\Throwable $e) {
+                throw new \InvalidArgumentException($e->getMessage(), 0, $e);
+            }
         }
 
         // MOTORCYCLE must be ON_DEMAND
@@ -194,5 +224,14 @@ class Ride extends Model
         }
 
         return strtoupper((string) $value);
+    }
+
+    public function setRideTypeAttribute($value): void
+    {
+        if ($value === null || !in_array($value, [self::TYPE_INTERCITY, self::TYPE_LOCAL], true)) {
+            $this->attributes['ride_type'] = self::TYPE_LOCAL;
+        } else {
+            $this->attributes['ride_type'] = $value;
+        }
     }
 }

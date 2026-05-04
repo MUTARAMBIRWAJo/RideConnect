@@ -34,7 +34,7 @@ class RideFactory extends Factory
             'currency' => 'RWF',
             'description' => $this->faker->sentence(),
             'status' => 'scheduled',
-            'ride_type' => 'shared',
+            'ride_type' => $this->faker->randomElement([Ride::TYPE_INTERCITY, Ride::TYPE_LOCAL]),
             'luggage_allowed' => $this->faker->boolean(),
             'pets_allowed' => $this->faker->boolean(25),
             'smoking_allowed' => false,

@@ -10,7 +10,9 @@ class Corridor extends Model
     use HasFactory;
 
     protected $fillable = [
+        'code',
         'name',
+        'kinyarwanda_name',
         'start_zone_id',
         'end_zone_id',
         'base_fare',
@@ -35,5 +37,10 @@ class Corridor extends Model
     public function rides()
     {
         return $this->hasMany(Ride::class);
+    }
+
+    public function routes()
+    {
+        return $this->hasMany(TransportRoute::class);
     }
 }

@@ -94,23 +94,42 @@ class BookingResource extends Resource
                     })
                     ->searchable()
                     ->required(),
+                Forms\Components\Select::make('transport_type')
+                    ->label('Transport Type')
+                    ->options([
+                        'BUS' => '🚌 Bus (Public Transport)',
+                        'CAR' => '🚗 Private Car',
+                        'MOTORCYCLE' => '🏍 Motorcycle',
+                    ])
+                    ->reactive()
+                    ->afterStateUpdated(fn (callable $set) => $set('ride_id', null))
+                    ->helperText('Filter rides by transport type to find eligible options.'),
                 Forms\Components\Select::make('ride_id')
-                    ->relationship(
-                        name: 'ride',
-                        titleAttribute: 'id',
-                        modifyQueryUsing: fn (EloquentBuilder $query): EloquentBuilder => $query->orderByDesc('id')
-                    )
-                    ->getOptionLabelFromRecordUsing(fn (Ride $record): string => sprintf(
-                        '#%d | %s -> %s | %s %s',
-                        $record->id,
-                        $record->origin_address ?? 'Unknown',
-                        $record->destination_address ?? 'Unknown',
-                        number_format((float) $record->price_per_seat, 0),
-                        $record->currency ?? 'RWF'
-                    ))
+                    ->label('Select Ride')
                     ->searchable()
                     ->live()
                     ->required()
+                    ->options(function (callable $get): array {
+                        $transportType = $get('transport_type');
+                        
+                        return Ride::query()
+                            ->when($transportType, function (EloquentBuilder $query, $type): EloquentBuilder {
+                                return $query->where('transport_type', $type);
+                            })
+                            ->orderBy('origin_address', 'asc')
+                            ->orderBy('destination_address', 'asc')
+                            ->get()
+                            ->mapWithKeys(fn (Ride $ride): array => [
+                                $ride->id => sprintf(
+                                    '%s → %s | %s (%s)',
+                                    $ride->origin_address ?? 'Unknown',
+                                    $ride->destination_address ?? 'Unknown',
+                                    $ride->transport_type,
+                                    number_format((float) $ride->price_per_seat, 0) . ' ' . ($ride->currency ?? 'RWF')
+                                ),
+                            ])
+                            ->all();
+                    })
                     ->helperText('Only rides with SCHEDULED travel mode can be booked.')
                     ->rule(function ($get) {
                         $rideId = $get('ride_id');

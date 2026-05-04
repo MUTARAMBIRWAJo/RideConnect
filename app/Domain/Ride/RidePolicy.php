@@ -45,6 +45,10 @@ class RidePolicy
      */
     public static function canBook(Ride $ride): bool
     {
+        if ($ride->isBus()) {
+            return $ride->isScheduled() && (int) $ride->route_id > 0;
+        }
+
         return $ride->isScheduled();
     }
 
@@ -79,13 +83,14 @@ class RidePolicy
             return self::FLOW_NONE;
         }
 
+        if ($ride->isBus()) {
+            return $ride->isScheduled() && (int) $ride->route_id > 0
+                ? self::FLOW_BOOKING_ONLY
+                : self::FLOW_NONE;
+        }
+
         // SCHEDULED rides allow booking
         if ($ride->isScheduled()) {
-            // BUS can only be booked
-            if ($ride->isBus()) {
-                return self::FLOW_BOOKING_ONLY;
-            }
-
             // CAR can be booked (CAR is flexible)
             if ($ride->isCar()) {
                 return self::FLOW_BOOKING_ONLY;
@@ -173,6 +178,37 @@ class RidePolicy
     }
 
     /**
+     * Assert that a BUS ride follows the public transport policy.
+     *
+     * BUS rides must always be SCHEDULED and bound to a route.
+     *
+     * @param Ride $ride
+     * @return void
+     *
+     * @throws DomainException
+     */
+    public static function assertBusRules(Ride $ride): void
+    {
+        if (! $ride->isBus()) {
+            return;
+        }
+
+        if (! $ride->isScheduled()) {
+            throw DomainException::make(
+                'BUS rides must use SCHEDULED travel mode',
+                'BUS_TRAVEL_MODE_REQUIRED'
+            );
+        }
+
+        if (! $ride->route_id) {
+            throw DomainException::make(
+                'BUS rides must be linked to a route',
+                'BUS_ROUTE_REQUIRED'
+            );
+        }
+    }
+
+    /**
      * Assert that sufficient seats are available for reservation.
      *
      * Throws DomainException if not enough seats.
@@ -231,6 +267,24 @@ class RidePolicy
             'can_request_trip' => self::canRequestTrip($ride),
             'allowed_flow' => $flow,
         ];
+    }
+
+    /**
+     * Validate that ride_type is valid.
+     *
+     * @param Ride $ride
+     * @return void
+     *
+     * @throws DomainException
+     */
+    public static function assertValidRideType(Ride $ride): void
+    {
+        if (!in_array($ride->ride_type, [Ride::TYPE_INTERCITY, Ride::TYPE_LOCAL], true)) {
+            throw DomainException::make(
+                'Invalid ride type: ' . $ride->ride_type,
+                'INVALID_RIDE_TYPE'
+            );
+        }
     }
 
     /**

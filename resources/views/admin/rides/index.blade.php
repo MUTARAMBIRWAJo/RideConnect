@@ -130,7 +130,7 @@
                                         <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Ride ID</th>
                                         <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Driver</th>
                                         <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Vehicle</th>
-                                        <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Corridor</th>
+                                        <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Corridor / Route</th>
                                         <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
                                         <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Location</th>
                                         <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
@@ -142,7 +142,13 @@
                                         <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">#RIDE001</td>
                                         <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">John Smith</td>
                                         <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">Toyota Camry - ABC123</td>
-                                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">REMERA -> NYABUGOGO</td>
+                                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                                            <div class="flex flex-col">
+                                                <span class="inline-flex w-fit px-2 py-1 rounded-full bg-blue-100 text-blue-800 text-xs font-semibold">Corridor A</span>
+                                                <span class="mt-1 font-medium text-gray-700">102 - KABUGA → NYABUGOGO via SONATUBE</span>
+                                                <span class="text-xs text-gray-500">Bus #102</span>
+                                            </div>
+                                        </td>
                                         <td class="px-6 py-4 whitespace-nowrap">
                                             <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-green-100 text-green-800">
                                                 PUBLISHED
@@ -159,7 +165,13 @@
                                         <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">#RIDE002</td>
                                         <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">Sarah Johnson</td>
                                         <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">Honda Accord - XYZ789</td>
-                                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">KIMIRONKO -> KACYIRU</td>
+                                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                                            <div class="flex flex-col">
+                                                <span class="inline-flex w-fit px-2 py-1 rounded-full bg-blue-100 text-blue-800 text-xs font-semibold">Corridor B</span>
+                                                <span class="mt-1 font-medium text-gray-700">217 - REMERA → KACYIRU via KICUKIRO</span>
+                                                <span class="text-xs text-gray-500">Bus #217</span>
+                                            </div>
+                                        </td>
                                         <td class="px-6 py-4 whitespace-nowrap">
                                             <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-yellow-100 text-yellow-800">
                                                 IN_PROGRESS
