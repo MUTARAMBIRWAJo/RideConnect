@@ -13,7 +13,12 @@ class DriverLocation extends Model
         'driver_id',
         'latitude',
         'longitude',
+        'speed_kmh',
+        'heading',
+        'accuracy',
         'updated_at',
+        'last_activity_at',
+        'is_online',
     ];
 
     public $timestamps = false;
@@ -21,7 +26,12 @@ class DriverLocation extends Model
     protected $casts = [
         'latitude' => 'decimal:7',
         'longitude' => 'decimal:7',
+        'speed_kmh' => 'decimal:2',
+        'heading' => 'decimal:1',
+        'accuracy' => 'decimal:2',
         'updated_at' => 'datetime',
+        'last_activity_at' => 'datetime',
+        'is_online' => 'boolean',
     ];
 
     public function driver()

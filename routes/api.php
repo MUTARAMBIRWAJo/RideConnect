@@ -16,6 +16,7 @@ use App\Http\Controllers\Api\PricingController;
 use App\Http\Controllers\Api\MobilePassengerController;
 use App\Http\Controllers\Api\MobileDriverController;
 use App\Http\Controllers\API\DriverLocationController;
+use App\Http\Controllers\Api\DriverTrackingController;
 use App\Http\Controllers\Api\Admin\UserApprovalController as UserApprovalController;
 use App\Http\Controllers\Api\Admin\UserManagementController;
 use App\Http\Controllers\Api\Admin\DashboardController as AdminDashboardController;
@@ -61,6 +62,12 @@ Route::prefix('webhooks')->group(function () {
 
 Route::middleware(['auth:sanctum'])->group(function () {
     Route::post('/driver/location', [DriverLocationController::class, 'update']);
+    Route::get('/driver/{driverId}/location', [DriverLocationController::class, 'getLocation']);
+    Route::get('/drivers/nearby', [DriverLocationController::class, 'getNearbyDrivers']);
+
+    // Deprecated: Use /mobile/tracking/* endpoints instead
+    Route::get('/driver-tracking/{driverId}', [DriverTrackingController::class, 'getDriverLocation']);
+    Route::get('/driver-tracking/trip/{tripId}', [DriverTrackingController::class, 'getTripDriverLocation']);
 });
 
 Route::middleware(['auth:sanctum', 'role:super_admin,admin'])->prefix('admin')->group(function () {
@@ -256,9 +263,17 @@ Route::prefix('v1')->group(function () {
                 Route::get('/trips', [MobileDriverController::class, 'getAvailableTrips']);
                 Route::post('/trips/{id}/accept', [MobileDriverController::class, 'acceptTrip'])->whereNumber('id');
                 Route::post('/location', [MobileDriverController::class, 'updateLocation']);
+                Route::post('/live-location', [MobileDriverController::class, 'updateLiveLocation']);
                 Route::put('/trips/{id}/start', [MobileDriverController::class, 'startTrip'])->whereNumber('id');
                 Route::put('/trips/{id}/complete', [MobileDriverController::class, 'completeTrip'])->whereNumber('id');
                 Route::put('/trips/{id}/cancel', [MobileDriverController::class, 'cancelTrip'])->whereNumber('id');
+            });
+
+            // Real-time Driver Tracking APIs (for passengers)
+            Route::prefix('tracking')->group(function () {
+                Route::get('/driver/{driverId}', [DriverTrackingController::class, 'getDriverLocation']);
+                Route::get('/trip/{tripId}', [DriverTrackingController::class, 'getTripDriverLocation']);
+                Route::get('/nearby', [DriverTrackingController::class, 'getNearbyDrivers']);
             });
         });
 

@@ -3,6 +3,7 @@
 use App\Jobs\ProcessDailySettlementJob;
 use App\Jobs\ProcessOutboxJob;
 use App\Jobs\NightlyWarehouseEtlJob;
+use App\Jobs\CleanupStaleDriverLocations;
 use Carbon\Carbon;
 use Illuminate\Foundation\Inspiring;
 use Illuminate\Support\Facades\Artisan;
@@ -50,6 +51,11 @@ Schedule::command('ai:retrain-models')
     ->withoutOverlapping()
     ->onOneServer()
     ->name('ai-retrain-models');
+
+// Clean up stale driver locations every 5 minutes
+Schedule::job(new CleanupStaleDriverLocations())
+    ->everyFiveMinutes()
+    ->name('cleanup-stale-driver-locations');
 
 // Continuously enforce ride category transitions in both directions.
 Schedule::command('rides:promote-bookings-to-trips')

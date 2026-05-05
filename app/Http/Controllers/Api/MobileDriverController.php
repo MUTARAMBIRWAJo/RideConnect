@@ -10,6 +10,7 @@ use App\Events\Domain\TripCompleted;
 use App\Exceptions\DomainException;
 use App\Models\Driver;
 use App\Models\Trip;
+use App\Services\Location\DriverLocationService;
 use App\Services\Location\TripLocationService;
 use App\Services\TransportMappingService;
 use Illuminate\Http\JsonResponse;
@@ -26,6 +27,7 @@ class MobileDriverController extends Controller
 {
     public function __construct(
         private readonly TripLocationService $tripLocationService,
+        private readonly DriverLocationService $driverLocationService,
         private readonly TransportMappingService $transportMappingService,
     ) {}
 
@@ -281,6 +283,69 @@ class MobileDriverController extends Controller
             'data' => [
                 'trip_id' => $trip->id,
                 'location_updated' => true,
+            ],
+        ]);
+    }
+
+    /**
+     * POST /api/mobile/driver/live-location
+     * Update driver live location for real-time tracking when online.
+     */
+    public function updateLiveLocation(Request $request): JsonResponse
+    {
+        $user = $request->user();
+        $driver = $user->driver;
+
+        if (!$driver) {
+            return response()->json([
+                'status' => 'error',
+                'type' => 'DOMAIN_ERROR',
+                'message' => 'Driver profile not found',
+                'code' => 404,
+            ], 404);
+        }
+
+        $validator = Validator::make($request->all(), [
+            'lat' => 'required|numeric|between:-90,90',
+            'lng' => 'required|numeric|between:-180,180',
+            'speed_kmh' => 'nullable|numeric|min:0|max:200',
+            'heading' => 'nullable|numeric|between:0,360',
+            'accuracy' => 'nullable|numeric|min:0|max:1000',
+            'is_online' => 'nullable|boolean',
+        ]);
+
+        if ($validator->fails()) {
+            return response()->json([
+                'status' => 'error',
+                'message' => 'Validation failed',
+                'errors' => $validator->errors(),
+            ], 422);
+        }
+
+        $validated = $validator->validated();
+
+        // Update driver location for real-time tracking
+        $location = $this->driverLocationService->updateLocation(
+            driverId: $driver->id,
+            latitude: (float) $validated['lat'],
+            longitude: (float) $validated['lng'],
+            speedKmh: isset($validated['speed_kmh']) ? (float) $validated['speed_kmh'] : null,
+            heading: isset($validated['heading']) ? (float) $validated['heading'] : null,
+            accuracy: isset($validated['accuracy']) ? (float) $validated['accuracy'] : null,
+            isOnline: $validated['is_online'] ?? true,
+        );
+
+        return response()->json([
+            'status' => 'success',
+            'data' => [
+                'driver_id' => $driver->id,
+                'latitude' => (float) $location->latitude,
+                'longitude' => (float) $location->longitude,
+                'speed_kmh' => (float) $location->speed_kmh,
+                'heading' => (float) $location->heading,
+                'accuracy' => (float) $location->accuracy,
+                'is_online' => (bool) $location->is_online,
+                'updated_at' => $location->updated_at?->toIso8601String(),
             ],
         ]);
     }
