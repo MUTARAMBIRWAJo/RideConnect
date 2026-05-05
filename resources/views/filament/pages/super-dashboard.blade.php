@@ -1,17 +1,21 @@
 <x-filament-panels::page>
 	<div class="space-y-6" wire:poll.60s>
-		<x-filament::section class="overflow-hidden border-0 bg-gradient-to-r from-teal-600 to-cyan-600 text-white shadow-lg">
+		<x-filament::section class="overflow-hidden border-0 bg-gradient-to-r from-slate-700 via-gray-700 to-zinc-700 text-white shadow-xl">
 			<div class="flex flex-col gap-4 md:flex-row md:items-end md:justify-between">
 				<div>
-					<p class="text-xs font-semibold uppercase tracking-wider text-cyan-100">RideConnect Control Center</p>
-					<h1 class="mt-1 text-2xl font-semibold sm:text-3xl">Super Admin Dashboard</h1>
-					<p class="mt-2 max-w-2xl text-sm text-cyan-100 sm:text-base">
+					<p class="text-xs font-semibold uppercase tracking-wider text-slate-200 flex items-center gap-2">
+						<x-heroicon-o-shield-check class="w-4 h-4" />
+						RideConnect Control Center
+					</p>
+					<h1 class="mt-1 text-2xl font-bold sm:text-3xl">Super Admin Dashboard</h1>
+					<p class="mt-2 max-w-2xl text-sm text-slate-200 sm:text-base">
 						Monitor platform health, ride activity, and revenue from a resilient, cached dashboard designed for production.
 					</p>
 				</div>
 
-				<div class="inline-flex items-center rounded-lg bg-white/15 px-3 py-2 text-xs font-medium text-white ring-1 ring-white/30 backdrop-blur">
-					Live metrics are cache-backed and auto-refresh in safe intervals.
+				<div class="inline-flex items-center rounded-lg bg-white/20 px-4 py-2 text-sm font-medium text-white ring-1 ring-white/30 backdrop-blur-sm">
+					<x-heroicon-o-arrow-path class="w-4 h-4 mr-2" />
+					Live metrics are cache-backed and auto-refresh in safe intervals
 				</div>
 			</div>
 		</x-filament::section>
@@ -20,29 +24,49 @@
 			<x-slot name="heading">Operations Snapshot</x-slot>
 			<x-slot name="description">Real-time queue, approval, and payment pressure indicators for immediate decisions.</x-slot>
 
-			<div class="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
-				<div class="rounded-xl border border-amber-200 bg-amber-50 p-4 text-sm text-amber-900 shadow-sm">
-					<p class="text-xs uppercase tracking-wide text-amber-700">Pending Drivers</p>
-					<p class="mt-1 text-2xl font-semibold">{{ number_format($operationsSnapshot['pending_drivers'] ?? 0) }}</p>
-					<p class="mt-1 text-xs text-amber-700">Awaiting onboarding approval.</p>
+			<div class="grid gap-4 sm:grid-cols-1 md:grid-cols-2 xl:grid-cols-4">
+				<div class="group rounded-xl border border-amber-200 bg-gradient-to-br from-amber-50 to-yellow-50 p-4 sm:p-5 text-sm text-amber-900 shadow-sm transition-all duration-200 hover:shadow-lg hover:scale-105 dark:border-amber-800 dark:bg-gradient-to-br dark:from-amber-900 dark:to-yellow-900 dark:text-amber-100">
+					<div class="flex items-center justify-between mb-3">
+						<p class="text-xs uppercase tracking-wide text-amber-700 dark:text-amber-300 font-semibold">Pending Drivers</p>
+						<div class="p-2 rounded-lg bg-amber-100 dark:bg-amber-800">
+							<x-heroicon-o-user-group class="w-4 h-4 text-amber-600 dark:text-amber-400" />
+						</div>
+					</div>
+					<p class="text-3xl font-bold">{{ number_format($operationsSnapshot['pending_drivers'] ?? 0) }}</p>
+					<p class="mt-2 text-xs text-amber-700 dark:text-amber-300">Awaiting onboarding approval.</p>
 				</div>
 
-				<div class="rounded-xl border border-blue-200 bg-blue-50 p-4 text-sm text-blue-900 shadow-sm">
-					<p class="text-xs uppercase tracking-wide text-blue-700">Pending Users</p>
-					<p class="mt-1 text-2xl font-semibold">{{ number_format($operationsSnapshot['pending_users'] ?? 0) }}</p>
-					<p class="mt-1 text-xs text-blue-700">Accounts blocked by approval gate.</p>
+				<div class="group rounded-xl border border-blue-200 bg-gradient-to-br from-blue-50 to-indigo-50 p-4 sm:p-5 text-sm text-blue-900 shadow-sm transition-all duration-200 hover:shadow-lg hover:scale-105 dark:border-blue-800 dark:bg-gradient-to-br dark:from-blue-900 dark:to-indigo-900 dark:text-blue-100">
+					<div class="flex items-center justify-between mb-3">
+						<p class="text-xs uppercase tracking-wide text-blue-700 dark:text-blue-300 font-semibold">Pending Users</p>
+						<div class="p-2 rounded-lg bg-blue-100 dark:bg-blue-800">
+							<x-heroicon-o-users class="w-4 h-4 text-blue-600 dark:text-blue-400" />
+						</div>
+					</div>
+					<p class="text-3xl font-bold">{{ number_format($operationsSnapshot['pending_users'] ?? 0) }}</p>
+					<p class="mt-2 text-xs text-blue-700 dark:text-blue-300">Accounts blocked by approval gate.</p>
 				</div>
 
-				<div class="rounded-xl border border-rose-200 bg-rose-50 p-4 text-sm text-rose-900 shadow-sm">
-					<p class="text-xs uppercase tracking-wide text-rose-700">Failed Payments (24h)</p>
-					<p class="mt-1 text-2xl font-semibold">{{ number_format($operationsSnapshot['failed_payments_24h'] ?? 0) }}</p>
-					<p class="mt-1 text-xs text-rose-700">Needs retry, alerting, or follow-up.</p>
+				<div class="group rounded-xl border border-red-200 bg-gradient-to-br from-red-50 to-pink-50 p-4 sm:p-5 text-sm text-red-900 shadow-sm transition-all duration-200 hover:shadow-lg hover:scale-105 dark:border-red-800 dark:bg-gradient-to-br dark:from-red-900 dark:to-pink-900 dark:text-red-100">
+					<div class="flex items-center justify-between mb-3">
+						<p class="text-xs uppercase tracking-wide text-red-700 dark:text-red-300 font-semibold">Failed Payments (24h)</p>
+						<div class="p-2 rounded-lg bg-red-100 dark:bg-red-800">
+							<x-heroicon-o-exclamation-triangle class="w-4 h-4 text-red-600 dark:text-red-400" />
+						</div>
+					</div>
+					<p class="text-3xl font-bold">{{ number_format($operationsSnapshot['failed_payments_24h'] ?? 0) }}</p>
+					<p class="mt-2 text-xs text-red-700 dark:text-red-300">Needs retry, alerting, or follow-up.</p>
 				</div>
 
-				<div class="rounded-xl border border-violet-200 bg-violet-50 p-4 text-sm text-violet-900 shadow-sm">
-					<p class="text-xs uppercase tracking-wide text-violet-700">Event Outbox Pending</p>
-					<p class="mt-1 text-2xl font-semibold">{{ number_format($operationsSnapshot['pending_outbox'] ?? 0) }}</p>
-					<p class="mt-1 text-xs text-violet-700">Domain events waiting publication.</p>
+				<div class="group rounded-xl border border-purple-200 bg-gradient-to-br from-purple-50 to-violet-50 p-4 sm:p-5 text-sm text-purple-900 shadow-sm transition-all duration-200 hover:shadow-lg hover:scale-105 dark:border-purple-800 dark:bg-gradient-to-br dark:from-purple-900 dark:to-violet-900 dark:text-purple-100">
+					<div class="flex items-center justify-between mb-3">
+						<p class="text-xs uppercase tracking-wide text-purple-700 dark:text-purple-300 font-semibold">Event Outbox Pending</p>
+						<div class="p-2 rounded-lg bg-purple-100 dark:bg-purple-800">
+							<x-heroicon-o-inbox class="w-4 h-4 text-purple-600 dark:text-purple-400" />
+						</div>
+					</div>
+					<p class="text-3xl font-bold">{{ number_format($operationsSnapshot['pending_outbox'] ?? 0) }}</p>
+					<p class="mt-2 text-xs text-purple-700 dark:text-purple-300">Domain events waiting publication.</p>
 				</div>
 			</div>
 		</x-filament::section>
@@ -51,7 +75,7 @@
 			<x-slot name="heading">Super Admin Actions</x-slot>
 			<x-slot name="description">High-impact controls to reduce response time during operations.</x-slot>
 
-			<div class="grid gap-3 md:grid-cols-2 xl:grid-cols-4">
+			<div class="grid gap-3 sm:grid-cols-1 md:grid-cols-2 xl:grid-cols-4">
 				<x-filament::modal width="md">
 					<x-slot name="trigger">
 						<button type="button" class="w-full rounded-xl border border-slate-200 bg-white px-4 py-3 text-left text-sm font-medium text-slate-800 shadow-sm transition hover:bg-slate-50">

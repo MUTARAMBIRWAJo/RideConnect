@@ -35,23 +35,83 @@ class OfficerPanelProvider extends PanelProvider
             ->font('Inter')
             ->colors([
                 'primary' => [
+                    50 => '255, 251, 235',
+                    100 => '254, 243, 199',
+                    200 => '253, 230, 138',
+                    300 => '252, 211, 77',
+                    400 => '251, 191, 36',
+                    500 => '245, 158, 11',
+                    600 => '217, 119, 6',
+                    700 => '180, 83, 9',
+                    800 => '146, 64, 14',
+                    900 => '120, 53, 15',
+                    950 => '69, 26, 3',
+                ],
+                'success' => [
                     50 => '240, 253, 244',
                     100 => '220, 252, 231',
                     200 => '187, 247, 208',
                     300 => '134, 239, 172',
                     400 => '74, 222, 128',
-                    500 => '22, 101, 52',
-                    600 => '20, 83, 45',
-                    700 => '15, 64, 35',
-                    800 => '11, 45, 25',
-                    900 => '7, 29, 16',
-                    950 => '4, 17, 9',
+                    500 => '21, 128, 61',
+                    600 => '22, 101, 52',
+                    700 => '20, 83, 45',
+                    800 => '15, 64, 35',
+                    900 => '11, 45, 25',
+                    950 => '5, 46, 22',
                 ],
-                'success' => Color::Green,
-                'warning' => Color::Amber,
-                'danger' => Color::Red,
-                'info' => Color::Blue,
-                'gray' => Color::Slate,
+                'warning' => [
+                    50 => '254, 242, 242',
+                    100 => '254, 226, 226',
+                    200 => '254, 202, 202',
+                    300 => '252, 165, 165',
+                    400 => '248, 113, 113',
+                    500 => '239, 68, 68',
+                    600 => '220, 38, 38',
+                    700 => '185, 28, 28',
+                    800 => '153, 27, 27',
+                    900 => '127, 29, 29',
+                    950 => '69, 10, 10',
+                ],
+                'danger' => [
+                    50 => '254, 242, 242',
+                    100 => '254, 226, 226',
+                    200 => '254, 202, 202',
+                    300 => '252, 165, 165',
+                    400 => '248, 113, 113',
+                    500 => '239, 68, 68',
+                    600 => '220, 38, 38',
+                    700 => '185, 28, 28',
+                    800 => '153, 27, 27',
+                    900 => '127, 29, 29',
+                    950 => '69, 10, 10',
+                ],
+                'info' => [
+                    50 => '248, 250, 252',
+                    100 => '241, 245, 249',
+                    200 => '226, 232, 240',
+                    300 => '203, 213, 225',
+                    400 => '148, 163, 184',
+                    500 => '100, 116, 139',
+                    600 => '71, 85, 105',
+                    700 => '51, 65, 85',
+                    800 => '30, 41, 59',
+                    900 => '15, 23, 42',
+                    950 => '2, 6, 23',
+                ],
+                'gray' => [
+                    50 => '248, 250, 252',
+                    100 => '241, 245, 249',
+                    200 => '226, 232, 240',
+                    300 => '203, 213, 225',
+                    400 => '148, 163, 184',
+                    500 => '100, 116, 139',
+                    600 => '71, 85, 105',
+                    700 => '51, 65, 85',
+                    800 => '30, 41, 59',
+                    900 => '15, 23, 42',
+                    950 => '2, 6, 23',
+                ],
             ])
             ->brandName('RideConnect Ops')
             ->brandLogo(asset('images/logo.svg'))
@@ -62,13 +122,33 @@ class OfficerPanelProvider extends PanelProvider
                 fn (): string => Blade::render("@vite(['resources/js/app.js'])"),
             )
             ->navigationGroups([
-                NavigationGroup::make('Dashboard')->collapsible(false),
-                NavigationGroup::make('Live Operations')->collapsible(false),
-                NavigationGroup::make('Fleet Management')->collapsible(true),
-                NavigationGroup::make('Support & Complaints')->collapsible(true),
-                NavigationGroup::make('Maps & Tracking')->collapsible(true),
-                NavigationGroup::make('Information Hub')->collapsible(true),
-                NavigationGroup::make('Settings')->collapsible(true),
+                NavigationGroup::make('📊 Dashboard')
+                    ->label('Dashboard')
+                    ->collapsible(false),
+
+                NavigationGroup::make('⚡ Live Operations')
+                    ->label('Live Operations')
+                    ->collapsible(false),
+
+                NavigationGroup::make('🚗 Fleet Management')
+                    ->label('Fleet Management')
+                    ->collapsible(true),
+
+                NavigationGroup::make('🎧 Support & Complaints')
+                    ->label('Support & Complaints')
+                    ->collapsible(true),
+
+                NavigationGroup::make('🗺️ Maps & Tracking')
+                    ->label('Maps & Tracking')
+                    ->collapsible(true),
+
+                NavigationGroup::make('📚 Information Hub')
+                    ->label('Information Hub')
+                    ->collapsible(true),
+
+                NavigationGroup::make('⚙️ Settings')
+                    ->label('Settings')
+                    ->collapsible(true),
             ])
             ->resources([
                 BookingResource::class,

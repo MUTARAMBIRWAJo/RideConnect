@@ -69,7 +69,19 @@ class AdminPanelProvider extends PanelProvider
                     900 => '11, 45, 25',
                     950 => '5, 46, 22',
                 ],
-                'warning' => Color::Amber,
+                'warning' => [
+                    50 => '255, 251, 235',
+                    100 => '254, 243, 199',
+                    200 => '253, 230, 138',
+                    300 => '252, 211, 77',
+                    400 => '251, 191, 36',
+                    500 => '245, 158, 11',
+                    600 => '217, 119, 6',
+                    700 => '180, 83, 9',
+                    800 => '146, 64, 14',
+                    900 => '120, 53, 15',
+                    950 => '69, 26, 3',
+                ],
                 'danger' => [
                     50 => '254, 242, 242',
                     100 => '254, 226, 226',
@@ -96,7 +108,19 @@ class AdminPanelProvider extends PanelProvider
                     900 => '15, 23, 42',
                     950 => '2, 6, 23',
                 ],
-                'gray' => Color::Slate,
+                'gray' => [
+                    50 => '248, 250, 252',
+                    100 => '241, 245, 249',
+                    200 => '226, 232, 240',
+                    300 => '203, 213, 225',
+                    400 => '148, 163, 184',
+                    500 => '100, 116, 139',
+                    600 => '71, 85, 105',
+                    700 => '51, 65, 85',
+                    800 => '30, 41, 59',
+                    900 => '15, 23, 42',
+                    950 => '2, 6, 23',
+                ],
             ])
             ->viteTheme('resources/css/filament/admin/theme.css')
             ->brandName('RideConnect')
@@ -112,14 +136,37 @@ class AdminPanelProvider extends PanelProvider
                 fn (): string => Blade::render("@vite(['resources/js/app.js'])"),
             )
             ->navigationGroups([
-                NavigationGroup::make('Dashboard')->collapsible(false),
-                NavigationGroup::make('Live Operations')->collapsible(false),
-                NavigationGroup::make('Fleet & Drivers')->collapsible(true),
-                NavigationGroup::make('Passengers')->collapsible(true),
-                NavigationGroup::make('AI & Analytics')->collapsible(true),
-                NavigationGroup::make('System')->collapsible(true),
-                NavigationGroup::make('Information Hub')->collapsible(true),
-                NavigationGroup::make('Settings')->collapsible(true),
+                NavigationGroup::make('📊 Dashboard')
+                    ->label('Dashboard')
+                    ->collapsible(false),
+
+                NavigationGroup::make('⚡ Live Operations')
+                    ->label('Live Operations')
+                    ->collapsible(false),
+
+                NavigationGroup::make('🚗 Fleet & Drivers')
+                    ->label('Fleet & Drivers')
+                    ->collapsible(true),
+
+                NavigationGroup::make('👥 Passengers')
+                    ->label('Passengers')
+                    ->collapsible(true),
+
+                NavigationGroup::make('🤖 AI & Analytics')
+                    ->label('AI & Analytics')
+                    ->collapsible(true),
+
+                NavigationGroup::make('🔧 System Management')
+                    ->label('System Management')
+                    ->collapsible(true),
+
+                NavigationGroup::make('📚 Information Hub')
+                    ->label('Information Hub')
+                    ->collapsible(true),
+
+                NavigationGroup::make('⚙️ Settings')
+                    ->label('Settings')
+                    ->collapsible(true),
             ])
             ->widgets([
                 \App\Filament\Widgets\RideStatsOverview::class,
