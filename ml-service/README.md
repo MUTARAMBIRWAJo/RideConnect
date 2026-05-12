@@ -438,7 +438,7 @@ kubectl apply -f k8s/deployment.yaml
 # Production
 DEBUG=false
 LOG_LEVEL=WARN
-ML_SERVICE_WORKERS=4
+ML_SERVICE_WORKERS=1
 ENABLE_CACHING=true
 CACHE_TTL=7200
 ```
@@ -467,7 +467,7 @@ Error: ML service request timeout
 Error: Cannot allocate memory
 ```
 
-**Solution**: Reduce `--workers` in Dockerfile CMD or increase container memory limits
+**Solution**: Use `ML_SERVICE_WORKERS=1` or reduce `--workers` in the Dockerfile CMD, or increase container memory limits
 
 ### Invalid Predictions
 
