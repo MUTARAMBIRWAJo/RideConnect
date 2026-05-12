@@ -59,7 +59,7 @@ class MlService
 
     private function client(): PendingRequest
     {
-        $baseUrl = rtrim((string) config('services.ml_service.url'), '/');
+        $baseUrl = rtrim($this->resolveBaseUrl(), '/');
         $apiKey = (string) config('services.ml_service.api_key', '');
         $timeout = (int) config('services.ml_service.timeout', 10);
 
@@ -75,6 +75,17 @@ class MlService
         }
 
         return $client;
+    }
+
+    private function resolveBaseUrl(): string
+    {
+        $configuredUrl = (string) config('services.ml_service.url', '');
+
+        if ($configuredUrl === '' || ! str_contains($configuredUrl, 'ml-service-j72g.onrender.com')) {
+            return 'https://ml-service-j72g.onrender.com';
+        }
+
+        return $configuredUrl;
     }
 
     private function normalize(Response $response): array

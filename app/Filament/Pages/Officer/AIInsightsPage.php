@@ -3,8 +3,12 @@
 namespace App\Filament\Pages\Officer;
 
 use App\Enums\UserRole;
+use App\Services\DemandPredictionService;
+use App\Services\MlService;
 use Filament\Pages\Page;
 use Illuminate\Contracts\Support\Htmlable;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Log;
 
 class AIInsightsPage extends Page
 {
@@ -22,6 +26,17 @@ class AIInsightsPage extends Page
     public float $avgWaitTime = 0;
 
     public float $acceptanceRate = 0;
+
+    // ML Service demand prediction
+    public array $mlDemandPrediction = [];
+
+    public string $demandPredictionStatus = 'loading';
+
+    public string $mlServiceUrl = '';
+
+    public array $mlDemandInputSequence = [];
+
+    public array $mlServiceHealth = [];
 
     public static function getNavigationLabel(): string
     {
@@ -58,6 +73,11 @@ class AIInsightsPage extends Page
 
     private function loadAnalytics(): void
     {
+        $this->mlServiceUrl = $this->resolveMlServiceUrl();
+
+        // Load real ML service demand predictions
+        $this->loadMLServiceDemandPredictions();
+
         // Load demand by area from database or cache
         $this->demandByArea = [
             ['area' => 'Downtown', 'demand' => 450, 'available_drivers' => 23],
@@ -88,5 +108,107 @@ class AIInsightsPage extends Page
 
         $this->avgWaitTime = 3.45;
         $this->acceptanceRate = 92.5;
+    }
+
+    /**
+     * Load demand predictions from the ML service
+     */
+    private function loadMLServiceDemandPredictions(): void
+    {
+        try {
+            $mlService = app(MlService::class);
+            $this->mlServiceHealth = $mlService->health();
+            $this->mlDemandInputSequence = $this->buildDemandInputSequence();
+
+            Log::info('Fetching demand prediction from ML service', [
+                'base_url' => $this->mlServiceUrl,
+                'features' => $this->mlDemandInputSequence,
+            ]);
+
+            $response = $mlService->predictDemand($this->mlDemandInputSequence);
+            $predictedDemand = $response['data']['predicted_demand'] ?? [];
+            $forecastValue = is_array($predictedDemand)
+                ? (float) ($predictedDemand[0] ?? 0)
+                : (float) $predictedDemand;
+
+            if ($response && !empty($predictedDemand)) {
+                $this->mlDemandPrediction = [
+                    'source' => 'ml-service',
+                    'predicted_demand' => $forecastValue,
+                    'predicted_demand_raw' => $predictedDemand,
+                    'input_sequence' => $this->mlDemandInputSequence,
+                    'timestamp' => now()->toIso8601String(),
+                ];
+                $this->demandPredictionStatus = 'success';
+                
+                Log::info('Demand prediction loaded successfully', $this->mlDemandPrediction);
+            } else {
+                Log::warning('Invalid demand prediction response', $response);
+
+                $fallback = app(DemandPredictionService::class)->predict();
+                $fallbackIntensity = (float) ($fallback->max('intensity') ?? 0.45);
+
+                $this->mlDemandPrediction = [
+                    'source' => 'local-fallback',
+                    'predicted_demand' => $fallbackIntensity,
+                    'predicted_demand_raw' => $fallback->values()->all(),
+                    'input_sequence' => $this->mlDemandInputSequence,
+                    'remote_error' => $response['error'] ?? 'Unknown error',
+                    'timestamp' => now()->toIso8601String(),
+                ];
+                $this->demandPredictionStatus = 'fallback';
+            }
+        } catch (\Exception $e) {
+            Log::error('Failed to load demand prediction', [
+                'error' => $e->getMessage(),
+                'trace' => $e->getTraceAsString(),
+            ]);
+
+            $fallback = app(DemandPredictionService::class)->predict();
+            $fallbackIntensity = (float) ($fallback->max('intensity') ?? 0.45);
+
+            $this->demandPredictionStatus = 'fallback';
+            $this->mlDemandPrediction = [
+                'source' => 'local-fallback',
+                'predicted_demand' => $fallbackIntensity,
+                'predicted_demand_raw' => $fallback->values()->all(),
+                'input_sequence' => $this->mlDemandInputSequence,
+                'error' => $e->getMessage(),
+                'timestamp' => now()->toIso8601String(),
+            ];
+        }
+    }
+
+    private function buildDemandInputSequence(): array
+    {
+        $currentHour = now('Africa/Kigali')->hour;
+        $windowStart = now('Africa/Kigali')->subHours(8)->startOfHour();
+
+        $countsByHour = DB::table('trips')
+            ->selectRaw("date_trunc('hour', created_at) as hour_bucket, count(*) as trip_count")
+            ->where('created_at', '>=', $windowStart)
+            ->groupByRaw("date_trunc('hour', created_at)")
+            ->pluck('trip_count', 'hour_bucket');
+
+        $sequence = [];
+        for ($offset = 7; $offset >= 0; $offset--) {
+            $bucket = now('Africa/Kigali')->copy()->subHours($offset)->startOfHour()->toDateTimeString();
+            $sequence[] = (float) ($countsByHour[$bucket] ?? 0);
+        }
+
+        $maxValue = max(1.0, max($sequence));
+
+        return array_map(static fn (float $value): float => round($value / $maxValue, 4), $sequence);
+    }
+
+    private function resolveMlServiceUrl(): string
+    {
+        $configuredUrl = config('services.ml_service.url') ?: config('services.ai_service.url', 'https://ml-service-j72g.onrender.com');
+
+        if (empty($configuredUrl) || ! str_contains($configuredUrl, 'ml-service-j72g.onrender.com')) {
+            return 'https://ml-service-j72g.onrender.com';
+        }
+
+        return $configuredUrl;
     }
 }

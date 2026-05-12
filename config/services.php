@@ -15,7 +15,7 @@ return [
     */
 
     'ai_service' => [
-        'url' => env('RIDE_AI_BASE_URL', 'https://rideconnect-ai.onrender.com'),
+        'url' => env('RIDE_AI_BASE_URL', 'https://ml-service-j72g.onrender.com'),
         'key' => env('RIDE_AI_API_KEY'),
         'timeout' => env('RIDE_AI_TIMEOUT', 10),
     ],
@@ -83,13 +83,13 @@ return [
     ],
 
     'ride_ai' => [
-        'base_url' => env('RIDE_AI_BASE_URL', 'http://ai-service:8001'),
+        'base_url' => env('RIDE_AI_BASE_URL', 'https://ml-service-j72g.onrender.com'),
         'api_key' => env('RIDE_AI_API_KEY'),
         'timeout' => env('RIDE_AI_TIMEOUT', 5),
     ],
 
     'ml_service' => [
-        'url' => env('ML_SERVICE_URL', env('RIDE_AI_BASE_URL', 'http://ai-service:8001')),
+        'url' => env('ML_SERVICE_URL', env('RIDE_AI_BASE_URL', 'https://ml-service-j72g.onrender.com')),
         'api_key' => env('ML_SERVICE_API_KEY', env('RIDE_AI_API_KEY')),
         'timeout' => env('ML_SERVICE_TIMEOUT', 10),
     ],

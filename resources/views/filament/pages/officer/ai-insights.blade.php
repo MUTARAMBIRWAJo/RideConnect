@@ -15,6 +15,98 @@
             <x-dashboard-card title="Acceptance Rate" :value="$acceptanceRate . '%'" subtitle="Driver acceptance" tone="green" />
         </section>
 
+        <!-- ML Service Demand Prediction (Real-time from ML Microservice) -->
+        <section class="rounded-xl border-2 border-purple-200 bg-gradient-to-br from-purple-50 to-purple-100 p-6 shadow-md">
+            <div class="flex items-center justify-between mb-4">
+                <div>
+                    <h2 class="text-lg font-semibold text-purple-900">🤖 ML Service Demand Prediction</h2>
+                    <p class="mt-1 text-xs text-purple-700">Real-time forecast from the deployed ML service</p>
+                        <p class="mt-1 text-[11px] text-purple-600">
+                            Backend: <span class="font-semibold">{{ $mlServiceUrl }}</span> · Endpoint: <span class="font-semibold">/ml/predict-demand</span>
+                        </p>
+                        <p class="mt-1 text-[11px] text-purple-500">
+                            Health: <span class="font-semibold">{{ data_get($mlServiceHealth, 'success') ? 'healthy' : 'degraded' }}</span>
+                            · Source: <span class="font-semibold">{{ ucfirst(str_replace('-', ' ', $mlDemandPrediction['source'] ?? 'unknown')) }}</span>
+                        </p>
+                </div>
+                <div class="px-3 py-1 rounded-full text-xs font-medium @if ($demandPredictionStatus === 'success') bg-green-200 text-green-800 @elseif ($demandPredictionStatus === 'fallback') bg-yellow-200 text-yellow-800 @else bg-red-200 text-red-800 @endif">
+                    @if ($demandPredictionStatus === 'success')
+                        ✓ Live
+                    @elseif ($demandPredictionStatus === 'fallback')
+                        ↺ Fallback
+                    @else
+                        ✗ Error
+                    @endif
+                </div>
+            </div>
+
+            @if (!empty($mlDemandPrediction))
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                    <!-- Forecast Score -->
+                    <div class="bg-white rounded-lg p-4 shadow-sm">
+                        <p class="text-xs uppercase tracking-wide text-slate-500 font-semibold">Forecast Score</p>
+                        <div class="mt-2 flex items-baseline gap-2">
+                            <span class="text-3xl font-bold text-purple-600">{{ number_format(($mlDemandPrediction['predicted_demand'] ?? 0) * 100, 1) }}%</span>
+                        </div>
+                        <div class="mt-3 w-full bg-slate-200 rounded-full h-2">
+                            <div class="bg-gradient-to-r from-purple-400 to-purple-600 h-2 rounded-full" style="width: {{ ($mlDemandPrediction['predicted_demand'] ?? 0) * 100 }}%"></div>
+                        </div>
+                        <p class="mt-2 text-xs text-slate-600">
+                            @if (($mlDemandPrediction['predicted_demand'] ?? 0) > 0.75)
+                                Very High forecast
+                            @elseif (($mlDemandPrediction['predicted_demand'] ?? 0) > 0.5)
+                                High forecast
+                            @elseif (($mlDemandPrediction['predicted_demand'] ?? 0) > 0.25)
+                                Moderate forecast
+                            @else
+                                Low forecast
+                            @endif
+                        </p>
+                    </div>
+
+                    <!-- Input Window -->
+                    <div class="bg-white rounded-lg p-4 shadow-sm">
+                        <p class="text-xs uppercase tracking-wide text-slate-500 font-semibold">Input Window</p>
+                        <div class="mt-2 flex items-baseline gap-2">
+                            <span class="text-3xl font-bold text-blue-600">{{ count($mlDemandPrediction['input_sequence'] ?? []) }}</span>
+                            <span class="text-lg text-slate-600">steps</span>
+                        </div>
+                        <p class="mt-3 text-xs text-slate-600">
+                            8-step historical demand sequence used for the forecast
+                        </p>
+                    </div>
+
+                    <!-- Peak Input -->
+                    <div class="bg-white rounded-lg p-4 shadow-sm">
+                        <p class="text-xs uppercase tracking-wide text-slate-500 font-semibold">Peak Input</p>
+                        <div class="mt-2 flex items-baseline gap-2">
+                            <span class="text-3xl font-bold text-green-600">{{ number_format((max($mlDemandPrediction['input_sequence'] ?? [0])) * 100, 0) }}%</span>
+                        </div>
+                        <div class="mt-3 w-full bg-slate-200 rounded-full h-2">
+                            <div class="bg-gradient-to-r from-green-400 to-green-600 h-2 rounded-full" style="width: {{ (max($mlDemandPrediction['input_sequence'] ?? [0])) * 100 }}%"></div>
+                        </div>
+                        <p class="mt-2 text-xs text-slate-600">Highest normalized demand observed in the 8-step window</p>
+                    </div>
+                </div>
+
+                <div class="mt-4 pt-4 border-t border-purple-200">
+                    <p class="text-xs text-purple-700">
+                        <strong>Last updated:</strong> {{ \Carbon\Carbon::parse($mlDemandPrediction['timestamp'])->diffForHumans() }}
+                        <br>
+                        <strong>Input:</strong> Recent hourly trip counts normalized for an 8-step sequence
+                        @if (!empty($mlDemandPrediction['remote_error']))
+                            <br>
+                            <strong>ML service note:</strong> {{ $mlDemandPrediction['remote_error'] }}
+                        @endif
+                    </p>
+                </div>
+            @else
+                <div class="bg-yellow-50 border border-yellow-200 rounded-lg p-4">
+                    <p class="text-sm text-yellow-800">Loading demand prediction from ML service at {{ $mlServiceUrl }}...</p>
+                </div>
+            @endif
+        </section>
+
         <!-- Demand by Area -->
         <section class="rounded-xl border border-slate-200 bg-white p-5 shadow-sm">
             <h2 class="text-base font-semibold text-slate-900">📍 Demand Heatmap</h2>
