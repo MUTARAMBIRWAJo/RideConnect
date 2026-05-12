@@ -48,8 +48,16 @@ def get_logger(name: str) -> logging.Logger:
         formatter = JSONFormatter()
         handler.setFormatter(formatter)
         logger.addHandler(handler)
-    
-    logger.setLevel(getattr(logging, settings.LOG_LEVEL))
+
+    log_level = settings.LOG_LEVEL
+    if log_level.isdigit():
+        logger.setLevel(int(log_level))
+    else:
+        level = getattr(logging, log_level, None)
+        if not isinstance(level, int):
+            raise ValueError(f"Invalid LOG_LEVEL value: {log_level}")
+        logger.setLevel(level)
+
     logger.propagate = False
     
     return logger

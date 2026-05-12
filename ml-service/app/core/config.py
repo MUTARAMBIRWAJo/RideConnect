@@ -33,6 +33,17 @@ def _build_database_url() -> str:
     return "postgresql://postgres:postgres@db:5432/rideconnect"
 
 
+def _normalize_log_level(value: str | None, default: str = "INFO") -> str:
+    if value is None:
+        return default
+
+    normalized = value.strip()
+    if normalized.isdigit():
+        return normalized
+
+    return normalized.upper()
+
+
 _default_model_path = Path(__file__).resolve().parents[2] / "models" / "trained" / "rideconnect_v2_best.keras"
 
 
@@ -65,7 +76,7 @@ class Settings:
     SUPABASE_SERVICE_ROLE_KEY = os.getenv("SUPABASE_SERVICE_ROLE_KEY", "")
     SUPABASE_JWT_SECRET = os.getenv("SUPABASE_JWT_SECRET", "")
 
-    LOG_LEVEL = os.getenv("LOG_LEVEL", "INFO")
+    LOG_LEVEL = _normalize_log_level(os.getenv("LOG_LEVEL", "INFO"))
     ENABLE_CACHING = _as_bool(os.getenv("ENABLE_CACHING"), True)
     CACHE_TTL = int(os.getenv("CACHE_TTL", "3600"))
 
