@@ -6,26 +6,26 @@ APP_DIR="${APP_DIR:-$(CDPATH= cd -- "${SCRIPT_DIR}/.." && pwd)}"
 
 cd "${APP_DIR}"
 
-# Protect production runtime from stale cache files copied from local dev environments.
+echo "[entrypoint] Starting entrypoint"
 rm -f bootstrap/cache/*.php
 
 /bin/sh "${SCRIPT_DIR}/bootstrap-laravel.sh"
 
-# Optional DB readiness gate for commands that require a live database.
 if [ "${WAIT_FOR_DB:-false}" = "true" ]; then
+  echo "[entrypoint] Waiting for database connection"
   /bin/sh "${SCRIPT_DIR}/wait-for-db.sh"
 fi
 
-# Production-safe cache warmup. If a cache command fails, clear stale cache and continue.
 if [ "${RUN_CONFIG_CACHE:-true}" = "true" ]; then
+  echo "[entrypoint] Caching config, routes, and views"
   php artisan config:clear --no-interaction || true
   php artisan route:clear --no-interaction || true
   php artisan view:clear --no-interaction || true
   php artisan config:cache --no-interaction || true
 fi
 
-# Migrations are opt-in to avoid blocking HTTP startup on student/free-tier environments.
 if [ "${RUN_MIGRATIONS:-false}" = "true" ]; then
+  echo "[entrypoint] Running safe migrations"
   /bin/sh "${SCRIPT_DIR}/wait-for-db.sh"
   php artisan migrate --force --no-interaction
 fi

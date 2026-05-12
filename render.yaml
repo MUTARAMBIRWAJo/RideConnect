@@ -37,9 +37,11 @@ services:
       - key: DB_MIGRATE_ON_BOOT
         value: true
       - key: DB_ENSURE_SEEDED_ON_BOOT
+        value: false
+      - key: DB_FORCE_SEED_ON_BOOT
+        value: false
+      - key: WAIT_FOR_DB
         value: true
-      - key: DB_SEED_MARKER
-        value: rideconnect-production
       - key: DB_SEED_SKIP_RESET
         value: true
       - key: DB_SEED_ADOPT_EXISTING
