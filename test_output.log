@@ -1,0 +1,65 @@
+
+   WARN  Metadata found in doc-comment for method Tests\Feature\AiMatchingSchemaTest::it_exposes_the_ai_matching_columns(). Metadata in doc-comments is deprecated and will no longer be supported in PHPUnit 12. Update your test code to use attributes instead.
+
+   WARN  Metadata found in doc-comment for method Tests\Feature\AiMatchingSchemaTest::it_preserves_historical_snapshots_across_multiple_trips(). Metadata in doc-comments is deprecated and will no longer be supported in PHPUnit 12. Update your test code to use attributes instead.
+
+   WARN  Metadata found in doc-comment for method Tests\Feature\AiMatchingSchemaTest::it_keeps_the_relationship_bridge_between_mobile_users_and_users(). Metadata in doc-comments is deprecated and will no longer be supported in PHPUnit 12. Update your test code to use attributes instead.
+
+   FAIL  Tests\Feature\AiMatchingSchemaTest
+  ⨯ it exposes the ai matching columns
+  ⨯ it preserves historical snapshots across multiple trips
+  ⨯ it keeps the relationship bridge between mobile users and users
+  ────────────────────────────────────────────────────────────────────────────  
+   FAILED  Tests\Feature\AiMatchingSchemaTest > it exposes t…  QueryException   
+  SQLSTATE[42701]: Duplicate column: 7 ERROR:  column "zone_id" of relation "rides" already exists (Connection: pgsql, Host: aws-1-us-east-1.pooler.supabase.com, Port: 5432, Database: postgres, SQL: alter table "rides" add column "zone_id" bigint null)
+
+  at vendor/laravel/framework/src/Illuminate/Database/Connection.php:838
+    834▕             $exceptionType = $this->isUniqueConstraintError($e)
+    835▕                 ? UniqueConstraintViolationException::class
+    836▕                 : QueryException::class;
+    837▕ 
+  ➜ 838▕             throw new $exceptionType(
+    839▕                 $this->getNameWithReadWriteType(),
+    840▕                 $query,
+    841▕                 $this->prepareBindings($bindings),
+    842▕                 $e,
+
+      [2m+10 vendor frames [22m
+  11  database/migrations/2026_04_10_200300_add_zone_corridor_creator_to_rides.php:15
+
+  ────────────────────────────────────────────────────────────────────────────  
+   FAILED  Tests\Feature\AiMatchingSchemaTest > it preserves h…  PDOException   
+  SQLSTATE[HY000]: General error: 7 no connection to the server
+
+  at vendor/laravel/framework/src/Illuminate/Database/Concerns/ManagesTransactions.php:300
+    296▕         if ($toLevel == 0) {
+    297▕             $pdo = $this->getPdo();
+    298▕ 
+    299▕             if ($pdo->inTransaction()) {
+  ➜ 300▕                 $pdo->rollBack();
+    301▕             }
+    302▕         } elseif ($this->queryGrammar->supportsSavepoints()) {
+    303▕             $this->getPdo()->exec(
+    304▕                 $this->queryGrammar->compileSavepointRollBack('trans'.($toLevel + 1))
+
+
+  ────────────────────────────────────────────────────────────────────────────  
+   FAILED  Tests\Feature\AiMatchingSchemaTest > it keeps the…  QueryException   
+  SQLSTATE[08006] [7] could not translate host name "aws-1-us-east-1.pooler.supabase.com" to address: Temporary failure in name resolution (Connection: pgsql, Host: aws-1-us-east-1.pooler.supabase.com, Port: 5432, Database: postgres, SQL: select exists (select 1 from pg_class c, pg_namespace n where n.nspname = current_schema() and c.relname = 'migrations' and c.relkind in ('r', 'p') and n.oid = c.relnamespace))
+
+  at vendor/laravel/framework/src/Illuminate/Database/Connection.php:838
+    834▕             $exceptionType = $this->isUniqueConstraintError($e)
+    835▕                 ? UniqueConstraintViolationException::class
+    836▕                 : QueryException::class;
+    837▕ 
+  ➜ 838▕             throw new $exceptionType(
+    839▕                 $this->getNameWithReadWriteType(),
+    840▕                 $query,
+    841▕                 $this->prepareBindings($bindings),
+    842▕                 $e,
+
+
+
+  Tests:    3 failed (0 assertions)
+  Duration: 8697.94s
+
