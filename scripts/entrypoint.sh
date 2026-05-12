@@ -1,5 +1,5 @@
 #!/usr/bin/env sh
-set -eu
+set -eux
 
 SCRIPT_DIR="$(CDPATH= cd -- "$(dirname -- "$0")" && pwd)"
 APP_DIR="${APP_DIR:-$(CDPATH= cd -- "${SCRIPT_DIR}/.." && pwd)}"

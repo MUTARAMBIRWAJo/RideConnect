@@ -2,11 +2,16 @@ FROM php:8.4-fpm-alpine
 
 WORKDIR /var/www
 
-RUN apk add --no-cache --virtual .build-deps \
+RUN set -eux; \
+    apk add --no-cache --virtual .build-deps \
+        autoconf \
+        build-base \
         icu-dev \
         libzip-dev \
+        linux-headers \
+        pkgconf \
         postgresql-dev \
-        build-base \
+        re2c \
     && apk add --no-cache \
         git \
         unzip \
@@ -23,12 +28,12 @@ RUN apk add --no-cache --virtual .build-deps \
     && pecl install redis \
     && docker-php-ext-enable redis \
     && apk del .build-deps \
-    && rm -rf /var/cache/apk/*
+    && rm -rf /var/cache/apk/* /tmp/*
 
 COPY --from=composer:2 /usr/bin/composer /usr/bin/composer
 
 COPY composer.json composer.lock ./
-RUN composer install \
+RUN set -eux; composer install \
     --no-dev \
     --no-interaction \
     --prefer-dist \
@@ -38,12 +43,13 @@ RUN composer install \
     --no-progress
 
 COPY package*.json ./
-RUN npm install
+RUN set -eux; npm install
 
 COPY . .
 
-RUN composer dump-autoload --optimize --classmap-authoritative --no-dev --no-interaction --no-scripts \
+RUN set -eux; composer dump-autoload --optimize --classmap-authoritative --no-dev --no-interaction --no-scripts \
     && npm run build \
+    && apk del git unzip nodejs npm \
     && rm -f bootstrap/cache/*.php \
     && if [ ! -f .env ] && [ -f .env.example ]; then cp .env.example .env; fi \
     && php artisan key:generate --force --no-interaction || true \
@@ -53,7 +59,8 @@ RUN composer dump-autoload --optimize --classmap-authoritative --no-dev --no-int
     && mkdir -p storage/framework/views storage/framework/cache storage/framework/sessions storage/logs bootstrap/cache \
     && test -f public/build/manifest.json \
     && test -d public/build/assets \
-    && chmod +x /var/www/scripts/*.sh
+    && chmod +x /var/www/scripts/*.sh \
+    && rm -rf /var/cache/apk/* /tmp/*
 
 ENV APP_ENV=production
 ENV APP_DEBUG=false
