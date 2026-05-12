@@ -2,7 +2,7 @@ import json
 import logging
 import os
 import time
-from datetime import datetime, timezone
+from datetime import datetime, timedelta, timezone
 from pathlib import Path
 from typing import Any
 
@@ -11,7 +11,7 @@ import numpy as np
 import psycopg2
 import tensorflow as tf
 from dotenv import load_dotenv
-from fastapi import FastAPI, HTTPException, Request
+from fastapi import BackgroundTasks, FastAPI, HTTPException, Request
 from fastapi.exceptions import RequestValidationError
 from fastapi.responses import JSONResponse
 from pydantic import BaseModel, Field, field_validator
@@ -41,7 +41,10 @@ LOGGER = logging.getLogger("rideconnect-ml")
 # -----------------------------------------------------------------------------
 MODELS_DIR = BASE_DIR / "models"
 SKLEARN_MODEL_PATH = MODELS_DIR / "RideConnect_Model.pkl"
-LSTM_MODEL_PATH = MODELS_DIR / "demand_lstm.h5"
+LSTM_MODEL_PATH_V2 = MODELS_DIR / "rideconnect_v2_best.keras"
+FEAT_SCALER_PATH = MODELS_DIR / "feat_scaler.pkl"
+TARGET_SCALER_PATH = MODELS_DIR / "target_scaler.pkl"
+ZONE_MAP_PATH = MODELS_DIR / "zone_map.json"
 METRICS_PATH = MODELS_DIR / "metrics.json"
 
 MODEL_VERSION = os.getenv("MODEL_VERSION", "v1")
@@ -80,6 +83,11 @@ async def validation_exception_handler(request: Request, exc: RequestValidationE
 fare_estimator: Any = None
 driver_ranker: Any = None
 demand_model: Any = None
+
+# V2 LSTM scaler and zone mapping.
+feat_scaler: Any = None
+target_scaler: Any = None
+zone_map: dict[str, int] = {}
 
 # Global Postgres pool reference. Safe writes are done with retries.
 db_pool: pool.SimpleConnectionPool | None = None
@@ -120,19 +128,27 @@ class RankDriversRequest(BaseModel):
 
 
 class PredictDemandRequest(BaseModel):
-	# LSTM endpoint accepts a single-feature sequence with exactly 8 timesteps.
-	features: list[float] = Field(
+	# V2 LSTM endpoint: zone_id + 16 timesteps of 17 temporal features each.
+	zone_id: str = Field(..., description="Zone ID e.g., Z01, Z02, ..., Z15")
+	history: list[list[float]] = Field(
 		...,
-		min_length=DEMAND_CONTRACT_SEQUENCE_LENGTH,
-		max_length=DEMAND_CONTRACT_SEQUENCE_LENGTH,
+		min_length=16,
+		max_length=16,
+		description="16 timesteps of 17 temporal features in exact order",
 	)
 
-	@field_validator("features")
+	@field_validator("history")
 	@classmethod
-	def validate_features(cls, value: list[float]) -> list[float]:
-		if len(value) != DEMAND_CONTRACT_SEQUENCE_LENGTH:
-			raise ValueError(
-				f"features must contain exactly {DEMAND_CONTRACT_SEQUENCE_LENGTH} values for demand prediction"
+	def validate_history(cls, value: list[list[float]]) -> list[list[float]]:
+		if len(value) != 16:
+			raise ValueError("history must contain exactly 16 timesteps")
+		for i, timestep in enumerate(value):
+			if len(timestep) != 17:
+				raise ValueError(
+					f"timestep {i} has {len(timestep)} features, expected 17 "
+					"(hour_sin, hour_cos, dow_sin, dow_cos, is_weekend, is_holiday, "
+					"is_market_day, is_event_day, temperature_c, lag_1, lag_4, lag_96, "
+					"rolling_1h, wx_cloudy, wx_heavy_rain, wx_light_rain, wx_sunny)"
 			)
 		return value
 
@@ -276,12 +292,15 @@ def _build_log_insert(
 
 
 def _load_models() -> None:
-	"""Load sklearn and LSTM artifacts into global references."""
-	global fare_estimator, driver_ranker, demand_model
+	"""Load sklearn and V2 LSTM artifacts into global references."""
+	global fare_estimator, driver_ranker, demand_model, feat_scaler, target_scaler, zone_map
 
 	fare_estimator = None
 	driver_ranker = None
 	demand_model = None
+	feat_scaler = None
+	target_scaler = None
+	zone_map = {}
 
 	# Shared sklearn pickle can contain dict models or a single estimator.
 	try:
@@ -296,11 +315,76 @@ def _load_models() -> None:
 	except Exception:
 		LOGGER.exception("Failed to load sklearn model artifact.")
 
+	# Load V2 LSTM demand model with dual inputs.
 	try:
-		demand_model = tf.keras.models.load_model(LSTM_MODEL_PATH, compile=False)
-		LOGGER.info("LSTM demand model loaded from %s", LSTM_MODEL_PATH)
+		demand_model = tf.keras.models.load_model(LSTM_MODEL_PATH_V2, compile=False)
+		# Validate dual-input signature: (None, 16, 17) and (None, 1).
+		if not isinstance(demand_model.input, list) or len(demand_model.input) != 2:
+			LOGGER.error(
+				"Loaded model does not have exactly 2 inputs. "
+				"Expected dual-input architecture for V2 LSTM."
+			)
+			demand_model = None
+			return
+
+		temporal_input = demand_model.input[0]
+		zone_input = demand_model.input[1]
+		temporal_shape = getattr(temporal_input, "shape", None)
+		zone_shape = getattr(zone_input, "shape", None)
+
+		if (
+			not (
+				getattr(temporal_shape, "as_list", None) == [None, 16, 17]
+				or (len(temporal_shape) == 3 and temporal_shape[1] == 16 and temporal_shape[2] == 17)
+			)
+		):
+			LOGGER.error(
+				f"Temporal input shape is {temporal_shape}, expected (None, 16, 17). "
+				"Model is incompatible with V2 LSTM contract."
+			)
+			demand_model = None
+			return
+
+		if not (
+			getattr(zone_shape, "as_list", None) == [None, 1]
+			or (len(zone_shape) == 2 and zone_shape[1] == 1)
+		):
+			LOGGER.error(
+				f"Zone input shape is {zone_shape}, expected (None, 1). "
+				"Model is incompatible with V2 LSTM contract."
+			)
+			demand_model = None
+			return
+
+		LOGGER.info("V2 LSTM demand model loaded and validated from %s", LSTM_MODEL_PATH_V2)
 	except Exception:
-		LOGGER.exception("Failed to load LSTM model artifact.")
+		LOGGER.exception("Failed to load V2 LSTM demand model artifact.")
+		demand_model = None
+
+	# Load feature scaler.
+	try:
+		feat_scaler = joblib.load(FEAT_SCALER_PATH)
+		LOGGER.info("Feature scaler loaded from %s", FEAT_SCALER_PATH)
+	except Exception:
+		LOGGER.exception("Failed to load feature scaler.")
+		feat_scaler = None
+
+	# Load target scaler.
+	try:
+		target_scaler = joblib.load(TARGET_SCALER_PATH)
+		LOGGER.info("Target scaler loaded from %s", TARGET_SCALER_PATH)
+	except Exception:
+		LOGGER.exception("Failed to load target scaler.")
+		target_scaler = None
+
+	# Load zone map.
+	try:
+		with open(ZONE_MAP_PATH, "r", encoding="utf-8") as f:
+			zone_map = json.load(f)
+		LOGGER.info("Zone map loaded from %s with %d zones", ZONE_MAP_PATH, len(zone_map))
+	except Exception:
+		LOGGER.exception("Failed to load zone map.")
+		zone_map = {}
 
 
 def _predict_with_retries(model: Any, features: np.ndarray) -> np.ndarray:
@@ -429,11 +513,12 @@ def _model_compatibility() -> dict[str, dict[str, Any]]:
 			"endpoint_expected_features": DRIVER_CONTRACT_FEATURES,
 			"model_expected_features": driver_expected,
 		},
-		"demand_lstm": {
+		"demand_lstm_v2": {
 			"loaded": demand_model is not None,
-			"compatible": demand_compatible,
-			"endpoint_expected_timesteps": DEMAND_CONTRACT_SEQUENCE_LENGTH,
-			"endpoint_expected_features": 1,
+			"scaler_loaded": feat_scaler is not None and target_scaler is not None,
+			"zone_map_loaded": len(zone_map) > 0,
+			"endpoint_expected_temporal": "(None, 16, 17)",
+			"endpoint_expected_zone": "(None, 1)",
 			"model_expected_timesteps": demand_timesteps,
 			"model_expected_features": demand_expected_features,
 		},
@@ -466,19 +551,45 @@ def on_shutdown() -> None:
 def health() -> dict[str, Any]:
 	"""
 	Service health endpoint used by Docker/K8s and Laravel checks.
-	Includes model loaded flags and model version metadata.
+	Always returns 200 with status: ok (all models + DB loaded) or degraded (missing components).
+	Never crashes or returns 503.
 	"""
-	return {
-		"status": "ok",
-		"models_loaded": {
-			"fare_estimator": fare_estimator is not None,
-			"driver_ranker": driver_ranker is not None,
-			"demand_lstm": demand_model is not None,
-		},
-		"model_compatibility": _model_compatibility(),
-		"db_logging_enabled": db_pool is not None,
-		"model_versions": _model_versions(),
-	}
+	try:
+		# Determine health status.
+		fare_ok = fare_estimator is not None
+		driver_ok = driver_ranker is not None
+		demand_ok = (
+			demand_model is not None
+			and feat_scaler is not None
+			and target_scaler is not None
+			and len(zone_map) > 0
+		)
+		db_ok = db_pool is not None
+
+		# Status is "ok" if all critical components loaded, "degraded" otherwise.
+		status = "ok" if (fare_ok and driver_ok and demand_ok and db_ok) else "degraded"
+
+		return {
+			"status": status,
+			"model_loaded": demand_ok,
+			"database_connected": db_ok,
+			"models_loaded": {
+				"fare_estimator": fare_ok,
+				"driver_ranker": driver_ok,
+				"demand_lstm_v2": demand_ok,
+			},
+			"model_compatibility": _model_compatibility(),
+			"db_logging_enabled": db_ok,
+			"model_versions": _model_versions(),
+		}
+	except Exception as exc:
+		LOGGER.exception("Unexpected error in health endpoint: %s", exc)
+		return {
+			"status": "degraded",
+			"model_loaded": False,
+			"database_connected": False,
+			"error": "Unexpected exception in health check",
+		}
 
 
 @app.post("/ml/reload-models")
@@ -510,8 +621,9 @@ def examples() -> dict[str, Any]:
 		"rank_drivers": {
 			"features": [0.1] * DRIVER_CONTRACT_FEATURES,
 		},
-		"predict_demand": {
-			"features": [0.1] * DEMAND_CONTRACT_SEQUENCE_LENGTH,
+		"predict_demand_v2": {
+			"zone_id": "Z01",
+			"history": [[0.1] * 17 for _ in range(16)],
 		},
 	}
 
@@ -544,14 +656,48 @@ def rank_drivers_help() -> dict[str, Any]:
 
 @app.get("/ml/predict-demand")
 def predict_demand_help() -> dict[str, Any]:
-	"""Browser-friendly help for the demand prediction endpoint."""
+	"""Browser-friendly help for the V2 LSTM demand prediction endpoint."""
 	return {
 		"detail": "Use POST for this endpoint.",
 		"expected_method": "POST",
-		"example_payload": {
-			"features": [0.1] * DEMAND_CONTRACT_SEQUENCE_LENGTH,
+		"contract": {
+			"input": {
+				"zone_id": "str (e.g., Z01, Z02, ..., Z15)",
+				"history": "16 timesteps of 17 features each (float)",
+				"features_in_order": [
+					"hour_sin",
+					"hour_cos",
+					"dow_sin",
+					"dow_cos",
+					"is_weekend",
+					"is_holiday",
+					"is_market_day",
+					"is_event_day",
+					"temperature_c",
+					"lag_1",
+					"lag_4",
+					"lag_96",
+					"rolling_1h",
+					"wx_cloudy",
+					"wx_heavy_rain",
+					"wx_light_rain",
+					"wx_sunny",
+				],
+			},
+			"output": {
+				"forecast_steps": "8 steps (2 hours ahead at 15-min resolution)",
+				"each_step": {
+					"step": "1-8",
+					"timestamp": "UTC ISO string",
+					"predicted_demand": "float (request count)",
+				},
+			},
 		},
-		"example_curl": "curl -X POST http://localhost:8080/ml/predict-demand -H 'Content-Type: application/json' -d '{\"features\":[0.1,0.1,...]}'",
+		"example_payload": {
+			"zone_id": "Z01",
+			"history": [[0.1] * 17 for _ in range(16)],
+		},
+		"example_curl": "curl -X POST http://localhost:8080/ml/predict-demand -H 'Content-Type: application/json' -d '{\"zone_id\":\"Z01\",\"history\":[[0.1]*17]*16}'".
 	}
 
 
@@ -622,50 +768,89 @@ def rank_drivers(payload: RankDriversRequest) -> dict[str, Any]:
 
 
 @app.post("/ml/predict-demand")
-def predict_demand(payload: PredictDemandRequest) -> dict[str, Any]:
-	"""Predict demand using a strict single-feature sequence of length 8."""
+def predict_demand(
+	payload: PredictDemandRequest,
+	background_tasks: BackgroundTasks,
+) -> dict[str, Any]:
+	"""Predict demand using V2 LSTM dual-input model with 16x17 temporal history and zone.
+
+	Returns 8 forecast steps (2 hours ahead at 15-min resolution) with timestamps.
+	"""
+
+	# Check all required components are loaded.
 	if demand_model is None:
 		raise HTTPException(status_code=503, detail="demand model is not loaded")
+	if feat_scaler is None:
+		raise HTTPException(status_code=503, detail="feature scaler is not loaded")
+	if target_scaler is None:
+		raise HTTPException(status_code=503, detail="target scaler is not loaded")
+	if len(zone_map) == 0:
+		raise HTTPException(status_code=503, detail="zone map is not loaded")
 
-	sequence = np.array(payload.features, dtype=np.float32)
-	model_input_shape = getattr(demand_model, "input_shape", None)
-	model_timesteps = None
-	model_feature_count = 1
-
-	if isinstance(model_input_shape, tuple) and len(model_input_shape) >= 3:
-		model_timesteps = _safe_int(model_input_shape[1])
-		model_feature_count = _safe_int(model_input_shape[2]) or 1
-
-	if model_timesteps is not None and model_timesteps != DEMAND_CONTRACT_SEQUENCE_LENGTH:
+	# Look up zone_id in zone_map.
+	if payload.zone_id not in zone_map:
 		raise HTTPException(
-			status_code=500,
-			detail=(
-				f"demand model expects sequence length {model_timesteps}, "
-				f"but API contract is {DEMAND_CONTRACT_SEQUENCE_LENGTH}"
-			),
-		)
+			status_code=404,
+			detail=f"Unknown zone_id: {payload.zone_id}. Available zones: {list(zone_map.keys())}",
+	)
 
-	if model_feature_count != 1:
-		raise HTTPException(
-			status_code=500,
-			detail=(
-				f"demand model expects {model_feature_count} features per timestep, "
-				"but API contract provides 1"
-			),
-		)
-
-	features = sequence.reshape(1, DEMAND_CONTRACT_SEQUENCE_LENGTH, 1)
+	zone_idx = zone_map[payload.zone_id]
 
 	try:
-		prediction = _predict_with_retries(demand_model, features)
-		predicted = np.array(prediction).reshape(-1).tolist()
-	except Exception as exc:
-		LOGGER.exception("Demand prediction failed.")
-		raise HTTPException(status_code=500, detail=f"demand prediction failed: {exc}") from exc
+		# Build temporal tensor: (1, 16, 17) float32.
+		temporal = np.array(payload.history, dtype=np.float32).reshape(1, 16, 17)
 
-	response = {"predicted_demand": predicted}
-	_log_prediction("demand_lstm", payload.model_dump(), response)
-	return response
+		# Build zone tensor: (1, 1) int32.
+		zone_tensor = np.array([[zone_idx]], dtype=np.int32)
+
+		# Call model with dual inputs.
+		predictions = demand_model.predict([temporal, zone_tensor], verbose=0)
+		predictions = np.array(predictions, dtype=np.float32).reshape(-1)
+
+		# Inverse-transform from [0, 1] back to request counts.
+		inverse_predictions = target_scaler.inverse_transform(predictions.reshape(-1, 1)).flatten()
+
+		# Clip to non-negative (defensive).
+		inverse_predictions = np.maximum(inverse_predictions, 0.0)
+
+		# Compute reference_time as now rounded down to nearest 15-min slot.
+		now = datetime.now(timezone.utc)
+		minutes_offset = (now.minute // 15) * 15
+		reference_time = now.replace(minute=minutes_offset, second=0, microsecond=0)
+
+		# Build 8 forecast steps, each 15 minutes apart.
+		forecast_steps = []
+		for step_idx, predicted_count in enumerate(inverse_predictions[:8], start=1):
+			step_time = reference_time + timedelta(minutes=15 * step_idx)
+			forecast_steps.append(
+				{
+					"step": step_idx,
+					"timestamp": step_time.isoformat(),
+					"predicted_demand": round(float(predicted_count), 3),
+				}
+			)
+
+		response = {
+			"zone_id": payload.zone_id,
+			"reference_time": reference_time.isoformat(),
+			"forecast_steps": forecast_steps,
+		}
+
+		# Move prediction logging to background to keep hot path fast.
+		background_tasks.add_task(
+			_log_prediction,
+			"demand_lstm_v2",
+			payload.model_dump(),
+			response,
+		)
+
+		return response
+
+	except HTTPException:
+		raise
+	except Exception as exc:
+		LOGGER.exception("V2 LSTM demand prediction failed for zone %s: %s", payload.zone_id, exc)
+		raise HTTPException(status_code=500, detail="demand prediction failed") from exc
 
 
 # -----------------------------------------------------------------------------

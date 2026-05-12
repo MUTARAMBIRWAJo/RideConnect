@@ -87,45 +87,17 @@ class ETAPredictionResponse(BaseModel):
 
 @router.post(
     "/demand",
-    response_model=DemandPredictionResponse,
-    summary="Predict Demand",
-    description="Predict ride demand for a location"
+    deprecated=True,
+    summary="Predict Demand (Deprecated)",
+    description="DEPRECATED: Use POST /ml/predict-demand instead"
 )
-async def predict_demand(request: DemandPredictionRequest) -> DemandPredictionResponse:
-    """
-    Predict ride demand for a location
-    
-    Args:
-        request: DemandPredictionRequest
-    
-    Returns:
-        DemandPredictionResponse with predicted demand
-    """
-    try:
-        logger.info(
-            f"Predicting demand for location ({request.latitude}, {request.longitude})"
-        )
-
-        zone = f"{request.latitude:.4f}:{request.longitude:.4f}"
-        timestamp = f"{request.hour:02d}:00/{request.day_of_week}"
-        prediction = await _demand_model.predict(zone, timestamp)
-
-        predicted_demand = float(prediction.get("predicted_demand", 0.0))
-        surge_probability = float(prediction.get("surge_probability", 0.0))
-        expected_wait_time = max(1, int(round(15 + (predicted_demand * 10) + (surge_probability * 20))))
-
-        return DemandPredictionResponse(
-            demand_level=predicted_demand,
-            expected_wait_time_minutes=expected_wait_time,
-            confidence=max(0.5, min(1.0, 1.0 - surge_probability / 2.0)),
-        )
-
-    except Exception as e:
-        logger.error(f"Demand prediction error: {str(e)}")
-        raise HTTPException(
-            status_code=500,
-            detail="Prediction service error"
-        )
+async def predict_demand(request: DemandPredictionRequest) -> dict[str, str]:
+    """DEPRECATED: Replaced by POST /ml/predict-demand on root ML service."""
+    logger.warning("Deprecated /predict/demand endpoint called. Please migrate to /ml/predict-demand.")
+    raise HTTPException(
+        status_code=410,
+        detail="This endpoint is deprecated. Use POST /ml/predict-demand instead."
+    )
 
 
 @router.post(

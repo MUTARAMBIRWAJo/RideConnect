@@ -16,6 +16,7 @@ use App\Services\TransportMappingService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Validator;
+use Illuminate\Support\Facades\DB;
 use App\Http\Controllers\Controller;
 
 /**
@@ -169,7 +170,7 @@ class MobileDriverController extends Controller
 
     /**
      * POST /api/mobile/driver/trips/{id}/accept
-     * Accept a trip request.
+     * Accept a trip request with proper error handling and race condition prevention.
      */
     public function acceptTrip(int $id): JsonResponse
     {
@@ -179,44 +180,173 @@ class MobileDriverController extends Controller
         if (!$driver) {
             return response()->json([
                 'status' => 'error',
-                'type' => 'DOMAIN_ERROR',
-                'message' => 'Driver profile not found',
-                'code' => 404,
+                'type' => 'DRIVER_NOT_FOUND',
+                'message' => 'Driver profile not found. Please complete driver registration.',
+                'code' => 'DRIVER_NOT_FOUND',
+                'http_code' => 404,
             ], 404);
         }
 
+        // Step 1: Check if trip exists
         $trip = Trip::query()
             ->with(['ride', 'passenger'])
             ->where('id', $id)
-            ->where('status', 'PENDING')
-            ->whereNull('driver_id')
-            ->firstOrFail();
+            ->first();
 
+        if (!$trip) {
+            return response()->json([
+                'status' => 'error',
+                'type' => 'TRIP_NOT_FOUND',
+                'message' => "Trip #{$id} does not exist.",
+                'code' => 'TRIP_NOT_FOUND',
+                'http_code' => 404,
+            ], 404);
+        }
+
+        // Step 2: Check if trip is in correct status to accept
+        if ($trip->status !== 'PENDING') {
+            return response()->json([
+                'status' => 'error',
+                'type' => 'TRIP_NOT_AVAILABLE',
+                'message' => "This trip is no longer available. Current status: {$trip->status}. " .
+                            ($trip->driver_id ? "Already assigned to another driver (ID: {$trip->driver_id})." : ""),
+                'code' => 'TRIP_STATUS_NOT_PENDING',
+                'current_status' => $trip->status,
+                'assigned_driver_id' => $trip->driver_id,
+                'http_code' => 409,
+            ], 409);
+        }
+
+        // Step 3: Check if trip already has a driver (race condition)
+        if ($trip->driver_id !== null) {
+            return response()->json([
+                'status' => 'error',
+                'type' => 'TRIP_ALREADY_ASSIGNED',
+                'message' => "Another driver already accepted this trip (Driver ID: {$trip->driver_id}).",
+                'code' => 'TRIP_ALREADY_ASSIGNED',
+                'assigned_driver_id' => $trip->driver_id,
+                'http_code' => 409,
+            ], 409);
+        }
+
+        // Step 4: Validate driver can accept this trip
         try {
             DriverPolicy::assertCanAcceptTrip($driver, $trip);
-
-            // Assign driver and transition state
             TripStateMachine::assertTransitionForTrip($trip, TripStateMachine::ACCEPTED);
+        } catch (DomainException $e) {
+            return response()->json([
+                'status' => 'error',
+                'type' => 'POLICY_VIOLATION',
+                'message' => $e->getMessage(),
+                'code' => 'TRIP_ACCEPTANCE_POLICY_VIOLATION',
+                'http_code' => 422,
+            ], 422);
+        }
+
+        // Step 5: Atomically assign driver and transition state
+        // Use database transaction to prevent race conditions
+        try {
+            $trip = Trip::query()
+                ->where('id', $id)
+                ->where('status', 'PENDING')
+                ->whereNull('driver_id')
+                ->lockForUpdate()  // Lock row for atomic update
+                ->firstOrFail();
+
             $trip->driver_id = $driver->id;
             $trip->status = TripStateMachine::ACCEPTED;
+            $trip->accepted_at = now();
             $trip->save();
 
             event(new DriverAccepted($trip->id, $driver->id));
 
-        } catch (DomainException $e) {
+            return response()->json([
+                'status' => 'success',
+                'data' => [
+                    'trip_id' => $trip->id,
+                    'trip_state' => $trip->status,
+                    'driver_id' => $driver->id,
+                    'accepted_at' => $trip->accepted_at->toIso8601String(),
+                ],
+            ]);
+
+        } catch (\Illuminate\Database\Eloquent\ModelNotFoundException $e) {
+            // Trip was already accepted by another driver between our checks
+            $currentTrip = Trip::find($id);
             return response()->json([
                 'status' => 'error',
-                'type' => 'DOMAIN_ERROR',
-                'message' => $e->getMessage(),
-                'code' => 422,
-            ], 422);
+                'type' => 'TRIP_RACE_CONDITION',
+                'message' => 'This trip was just accepted by another driver. Please try another trip.',
+                'code' => 'TRIP_ACCEPTED_BY_OTHER_DRIVER',
+                'assigned_driver_id' => $currentTrip?->driver_id,
+                'http_code' => 409,
+            ], 409);
         }
+    }
+
+    /**
+     * POST /api/mobile/driver/trips/{id}/reject
+     * Reject a trip request (new endpoint to match UI).
+     */
+    public function rejectTrip(int $id): JsonResponse
+    {
+        $user = request()->user();
+        $driver = $user->driver;
+
+        if (!$driver) {
+            return response()->json([
+                'status' => 'error',
+                'type' => 'DRIVER_NOT_FOUND',
+                'message' => 'Driver profile not found. Please complete driver registration.',
+                'code' => 'DRIVER_NOT_FOUND',
+                'http_code' => 404,
+            ], 404);
+        }
+
+        // Check if trip exists and is still pending
+        $trip = Trip::query()->where('id', $id)->first();
+
+        if (!$trip) {
+            return response()->json([
+                'status' => 'error',
+                'type' => 'TRIP_NOT_FOUND',
+                'message' => "Trip #{$id} does not exist.",
+                'code' => 'TRIP_NOT_FOUND',
+                'http_code' => 404,
+            ], 404);
+        }
+
+        // Can only reject pending trips without driver
+        if ($trip->status !== 'PENDING' || $trip->driver_id !== null) {
+            return response()->json([
+                'status' => 'error',
+                'type' => 'TRIP_NOT_AVAILABLE',
+                'message' => "This trip cannot be rejected. Current status: {$trip->status}.",
+                'code' => 'TRIP_CANNOT_BE_REJECTED',
+                'http_code' => 409,
+            ], 409);
+        }
+
+        // Log the rejection (for analytics/matching algorithms)
+        // Could track which drivers reject which trip patterns
+        $trip->rejected_drivers_count = ($trip->rejected_drivers_count ?? 0) + 1;
+        $trip->save();
+
+        // Optional: Create a record of this rejection for matching optimization
+        DB::table('trip_rejections')->insert([
+            'trip_id' => $trip->id,
+            'driver_id' => $driver->id,
+            'reason' => 'Driver declined',
+            'created_at' => now(),
+            'updated_at' => now(),
+        ]);
 
         return response()->json([
             'status' => 'success',
+            'message' => 'Trip rejected successfully.',
             'data' => [
                 'trip_id' => $trip->id,
-                'trip_state' => $trip->status,
+                'total_rejections' => $trip->rejected_drivers_count,
             ],
         ]);
     }

@@ -262,6 +262,7 @@ Route::prefix('v1')->group(function () {
                 Route::post('/status', [MobileDriverController::class, 'updateStatus']);
                 Route::get('/trips', [MobileDriverController::class, 'getAvailableTrips']);
                 Route::post('/trips/{id}/accept', [MobileDriverController::class, 'acceptTrip'])->whereNumber('id');
+                Route::post('/trips/{id}/reject', [MobileDriverController::class, 'rejectTrip'])->whereNumber('id');
                 Route::post('/location', [MobileDriverController::class, 'updateLocation']);
                 Route::post('/live-location', [MobileDriverController::class, 'updateLiveLocation']);
                 Route::put('/trips/{id}/start', [MobileDriverController::class, 'startTrip'])->whereNumber('id');
