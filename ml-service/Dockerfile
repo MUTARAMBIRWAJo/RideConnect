@@ -3,13 +3,6 @@ FROM python:3.11-slim as builder
 
 WORKDIR /build
 
-# Install build dependencies
-RUN apt-get update && apt-get install -y --no-install-recommends \
-    gcc \
-    g++ \
-    python3-dev \
-    && rm -rf /var/lib/apt/lists/*
-
 # Copy requirements
 COPY requirements.txt .
 
@@ -23,19 +16,12 @@ FROM python:3.11-slim
 
 WORKDIR /app
 
-# Install runtime dependencies
-RUN apt-get update && apt-get install -y --no-install-recommends \
-    libgomp1 \
-    && rm -rf /var/lib/apt/lists/*
-
 # Copy virtual environment from builder
 COPY --from=builder /opt/venv /opt/venv
 
 # Copy application code
 COPY ./app ./app
 COPY ./models ./models
-COPY ./scripts ./scripts
-COPY ./scripts ./scripts
 COPY ./scripts ./scripts
 
 # Set environment variables
@@ -59,7 +45,7 @@ USER appuser
 
 # Health check
 HEALTHCHECK --interval=30s --timeout=10s --start-period=5s --retries=3 \
-    CMD python -c "import urllib.request; urllib.request.urlopen('http://localhost:8000/health', timeout=5).read()" || exit 1
+    CMD python -c "import urllib.request; urllib.request.urlopen('http://localhost:8000/ml/health', timeout=5).read()" || exit 1
 
 # Expose port
 EXPOSE 8000

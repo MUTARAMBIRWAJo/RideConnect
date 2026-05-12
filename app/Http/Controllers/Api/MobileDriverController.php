@@ -180,10 +180,7 @@ class MobileDriverController extends Controller
         if (!$driver) {
             return response()->json([
                 'status' => 'error',
-                'type' => 'DRIVER_NOT_FOUND',
                 'message' => 'Driver profile not found. Please complete driver registration.',
-                'code' => 'DRIVER_NOT_FOUND',
-                'http_code' => 404,
             ], 404);
         }
 
@@ -196,24 +193,21 @@ class MobileDriverController extends Controller
         if (!$trip) {
             return response()->json([
                 'status' => 'error',
-                'type' => 'TRIP_NOT_FOUND',
-                'message' => "Trip #{$id} does not exist.",
-                'code' => 'TRIP_NOT_FOUND',
-                'http_code' => 404,
+                'message' => 'This trip request is no longer available.',
             ], 404);
         }
 
         // Step 2: Check if trip is in correct status to accept
         if ($trip->status !== 'PENDING') {
+            $message = match($trip->status) {
+                'ACCEPTED', 'STARTED', 'COMPLETED' => 'This trip has already been accepted by another driver.',
+                'CANCELLED' => 'This trip request has been cancelled.',
+                default => 'This trip is no longer available.'
+            };
+
             return response()->json([
                 'status' => 'error',
-                'type' => 'TRIP_NOT_AVAILABLE',
-                'message' => "This trip is no longer available. Current status: {$trip->status}. " .
-                            ($trip->driver_id ? "Already assigned to another driver (ID: {$trip->driver_id})." : ""),
-                'code' => 'TRIP_STATUS_NOT_PENDING',
-                'current_status' => $trip->status,
-                'assigned_driver_id' => $trip->driver_id,
-                'http_code' => 409,
+                'message' => $message,
             ], 409);
         }
 
@@ -221,11 +215,7 @@ class MobileDriverController extends Controller
         if ($trip->driver_id !== null) {
             return response()->json([
                 'status' => 'error',
-                'type' => 'TRIP_ALREADY_ASSIGNED',
-                'message' => "Another driver already accepted this trip (Driver ID: {$trip->driver_id}).",
-                'code' => 'TRIP_ALREADY_ASSIGNED',
-                'assigned_driver_id' => $trip->driver_id,
-                'http_code' => 409,
+                'message' => 'This trip has already been accepted by another driver.',
             ], 409);
         }
 
@@ -236,10 +226,7 @@ class MobileDriverController extends Controller
         } catch (DomainException $e) {
             return response()->json([
                 'status' => 'error',
-                'type' => 'POLICY_VIOLATION',
-                'message' => $e->getMessage(),
-                'code' => 'TRIP_ACCEPTANCE_POLICY_VIOLATION',
-                'http_code' => 422,
+                'message' => 'You are not eligible to accept this trip.',
             ], 422);
         }
 
@@ -253,33 +240,27 @@ class MobileDriverController extends Controller
                 ->lockForUpdate()  // Lock row for atomic update
                 ->firstOrFail();
 
-            $trip->driver_id = $driver->id;
+            $trip->driver_id = $user->mobile_user_id;
             $trip->status = TripStateMachine::ACCEPTED;
             $trip->accepted_at = now();
             $trip->save();
 
-            event(new DriverAccepted($trip->id, $driver->id));
+            event(new DriverAccepted($trip->id, $user->mobile_user_id));
 
             return response()->json([
                 'status' => 'success',
+                'message' => 'Trip accepted successfully. Please proceed to pickup location.',
                 'data' => [
                     'trip_id' => $trip->id,
-                    'trip_state' => $trip->status,
-                    'driver_id' => $driver->id,
                     'accepted_at' => $trip->accepted_at->toIso8601String(),
                 ],
             ]);
 
         } catch (\Illuminate\Database\Eloquent\ModelNotFoundException $e) {
             // Trip was already accepted by another driver between our checks
-            $currentTrip = Trip::find($id);
             return response()->json([
                 'status' => 'error',
-                'type' => 'TRIP_RACE_CONDITION',
-                'message' => 'This trip was just accepted by another driver. Please try another trip.',
-                'code' => 'TRIP_ACCEPTED_BY_OTHER_DRIVER',
-                'assigned_driver_id' => $currentTrip?->driver_id,
-                'http_code' => 409,
+                'message' => 'This trip has already been accepted by another driver.',
             ], 409);
         }
     }
@@ -296,10 +277,7 @@ class MobileDriverController extends Controller
         if (!$driver) {
             return response()->json([
                 'status' => 'error',
-                'type' => 'DRIVER_NOT_FOUND',
                 'message' => 'Driver profile not found. Please complete driver registration.',
-                'code' => 'DRIVER_NOT_FOUND',
-                'http_code' => 404,
             ], 404);
         }
 
@@ -309,10 +287,7 @@ class MobileDriverController extends Controller
         if (!$trip) {
             return response()->json([
                 'status' => 'error',
-                'type' => 'TRIP_NOT_FOUND',
-                'message' => "Trip #{$id} does not exist.",
-                'code' => 'TRIP_NOT_FOUND',
-                'http_code' => 404,
+                'message' => 'This trip request is no longer available.',
             ], 404);
         }
 
@@ -320,10 +295,7 @@ class MobileDriverController extends Controller
         if ($trip->status !== 'PENDING' || $trip->driver_id !== null) {
             return response()->json([
                 'status' => 'error',
-                'type' => 'TRIP_NOT_AVAILABLE',
-                'message' => "This trip cannot be rejected. Current status: {$trip->status}.",
-                'code' => 'TRIP_CANNOT_BE_REJECTED',
-                'http_code' => 409,
+                'message' => 'This trip cannot be rejected as it has already been accepted.',
             ], 409);
         }
 
@@ -335,7 +307,7 @@ class MobileDriverController extends Controller
         // Optional: Create a record of this rejection for matching optimization
         DB::table('trip_rejections')->insert([
             'trip_id' => $trip->id,
-            'driver_id' => $driver->id,
+            'driver_id' => $user->mobile_user_id,
             'reason' => 'Driver declined',
             'created_at' => now(),
             'updated_at' => now(),
@@ -343,11 +315,7 @@ class MobileDriverController extends Controller
 
         return response()->json([
             'status' => 'success',
-            'message' => 'Trip rejected successfully.',
-            'data' => [
-                'trip_id' => $trip->id,
-                'total_rejections' => $trip->rejected_drivers_count,
-            ],
+            'message' => 'Trip request declined.',
         ]);
     }
 

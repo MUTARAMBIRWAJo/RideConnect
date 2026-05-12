@@ -2,7 +2,8 @@ FROM php:8.4-fpm
 
 WORKDIR /var/www
 
-RUN apt-get update \
+RUN sed -i 's|http://deb.debian.org|https://deb.debian.org|g' /etc/apt/sources.list.d/debian.sources \
+    && apt-get update \
     && apt-get install -y --no-install-recommends \
         git \
         unzip \

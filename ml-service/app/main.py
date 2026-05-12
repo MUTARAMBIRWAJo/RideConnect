@@ -35,9 +35,9 @@ def create_app() -> FastAPI:
     )
     app.add_middleware(RequestContextMiddleware)
 
-    app.include_router(health.router)
-    app.include_router(matching.router)
-    app.include_router(prediction.router)
+    app.include_router(health.router, prefix="/ml")
+    app.include_router(matching.router, prefix="/ml")
+    app.include_router(prediction.router, prefix="/ml")
     app.include_router(admin_router, prefix="/api/admin")
 
     @app.get("/", tags=["info"])
