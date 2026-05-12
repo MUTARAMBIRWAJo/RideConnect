@@ -28,7 +28,7 @@ php artisan config:cache --no-interaction || true
 php artisan route:cache --no-interaction || true
 php artisan view:cache --no-interaction || true
 
-mkdir -p /var/www/storage/logs /var/www/storage/logs/startup /etc/nginx/conf.d
+mkdir -p /var/www/storage/logs /var/www/storage/logs/startup /etc/nginx/http.d
 
 if [ "${DB_MIGRATE_ON_BOOT}" = "true" ]; then
   echo "[startup] Waiting for database connection"
@@ -66,7 +66,14 @@ if [ "${DASHBOARD_WARM_ON_BOOT:-true}" = "true" ]; then
 fi
 
 export PORT="${PORT_VALUE}"
-envsubst '${PORT}' < /etc/nginx/templates/default.conf.template > /etc/nginx/conf.d/default.conf
+mkdir -p /etc/nginx/http.d
+envsubst '${PORT}' < /etc/nginx/templates/default.conf.template > /etc/nginx/http.d/default.conf
+
+# Validate nginx configuration
+if ! nginx -t; then
+  echo "[startup] ERROR: Nginx configuration is invalid" >&2
+  exit 1
+fi
 
 echo "[startup] Starting supervisord"
 exec /usr/bin/supervisord -c /etc/supervisor/conf.d/supervisord.conf

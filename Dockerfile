@@ -71,4 +71,8 @@ EXPOSE 10000
 COPY docker/nginx/default.conf /etc/nginx/templates/default.conf.template
 COPY docker/supervisor.conf /etc/supervisor/conf.d/supervisord.conf
 
+RUN mkdir -p /etc/nginx/templates /etc/nginx/http.d /var/log/nginx /var/cache/nginx \
+    && chown -R nginx:nginx /var/log/nginx /var/cache/nginx \
+    && chmod +x /var/www/scripts/*.sh
+
 CMD ["/bin/sh", "/var/www/scripts/start.sh"]
