@@ -4,7 +4,7 @@ namespace App\Http\Controllers\Api;
 
 use App\Domain\Driver\DriverPolicy;
 use App\Domain\Trip\TripStateMachine;
-use App\Events\Domain\DriverAccepted;
+use App\Events\Domain\TripMatched;
 use App\Events\Domain\TripStarted;
 use App\Events\Domain\TripCompleted;
 use App\Exceptions\DomainException;
@@ -12,6 +12,7 @@ use App\Models\Driver;
 use App\Models\Trip;
 use App\Services\Location\DriverLocationService;
 use App\Services\Location\TripLocationService;
+use App\Services\MobileNotificationService;
 use App\Services\TransportMappingService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
@@ -26,11 +27,13 @@ use App\Http\Controllers\Controller;
  */
 class MobileDriverController extends Controller
 {
-    public function __construct(
+public function __construct(
         private readonly TripLocationService $tripLocationService,
         private readonly DriverLocationService $driverLocationService,
         private readonly TransportMappingService $transportMappingService,
-    ) {}
+        private readonly MobileNotificationService $mobileNotificationService,
+    ) {
+    }
 
     /**
      * POST /api/mobile/driver/status
@@ -230,7 +233,7 @@ class MobileDriverController extends Controller
             ], 422);
         }
 
-        // Step 5: Atomically assign driver and transition state
+// Step 5: Atomically assign driver and transition state
         // Use database transaction to prevent race conditions
         try {
             $trip = Trip::query()
@@ -240,14 +243,16 @@ class MobileDriverController extends Controller
                 ->lockForUpdate()  // Lock row for atomic update
                 ->firstOrFail();
 
-            $trip->driver_id = $user->mobile_user_id;
-            $trip->status = TripStateMachine::ACCEPTED;
-            $trip->accepted_at = now();
-            $trip->save();
+             $trip->driver_id = $driver->id;
+             $trip->status = TripStateMachine::ACCEPTED;
+             $trip->accepted_at = now();
+             $trip->save();
 
-            event(new DriverAccepted($trip->id, $user->mobile_user_id));
+             event(new TripMatched((int) $trip->id, (int) $driver->id));
 
-            return response()->json([
+             $this->mobileNotificationService->sendRideAcceptedToPassenger($trip->fresh(), $driver);
+
+             return response()->json([
                 'status' => 'success',
                 'message' => 'Trip accepted successfully. Please proceed to pickup location.',
                 'data' => [
@@ -307,7 +312,7 @@ class MobileDriverController extends Controller
         // Optional: Create a record of this rejection for matching optimization
         DB::table('trip_rejections')->insert([
             'trip_id' => $trip->id,
-            'driver_id' => $user->mobile_user_id,
+            'driver_id' => $driver->id,
             'reason' => 'Driver declined',
             'created_at' => now(),
             'updated_at' => now(),
