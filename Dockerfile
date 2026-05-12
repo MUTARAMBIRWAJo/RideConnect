@@ -1,10 +1,13 @@
-FROM php:8.4-fpm
+FROM php:8.4-fpm-alpine
 
 WORKDIR /var/www
 
-RUN sed -i 's|http://deb.debian.org|https://deb.debian.org|g' /etc/apt/sources.list.d/debian.sources \
-    && apt-get update \
-    && apt-get install -y --no-install-recommends \
+RUN apk add --no-cache --virtual .build-deps \
+        icu-dev \
+        libzip-dev \
+        postgresql-dev \
+        build-base \
+    && apk add --no-cache \
         git \
         unzip \
         nodejs \
@@ -12,14 +15,15 @@ RUN sed -i 's|http://deb.debian.org|https://deb.debian.org|g' /etc/apt/sources.l
         procps \
         nginx \
         supervisor \
-        gettext-base \
-        libpq-dev \
-        libicu-dev \
-        libzip-dev \
+        gettext \
+        icu-libs \
+        libpq \
+        libzip \
     && docker-php-ext-install -j"$(nproc)" pdo pdo_pgsql intl zip pcntl \
     && pecl install redis \
     && docker-php-ext-enable redis \
-    && rm -rf /var/lib/apt/lists/*
+    && apk del .build-deps \
+    && rm -rf /var/cache/apk/*
 
 COPY --from=composer:2 /usr/bin/composer /usr/bin/composer
 
