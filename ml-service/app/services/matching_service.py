@@ -101,6 +101,20 @@ class MatchingService:
         
         # Stack features into batch
         feature_batch = np.vstack(driver_features_list).astype(np.float32)
+
+        # If model is dual-input, matching flow must be updated to provide temporal+zone inputs.
+        try:
+            is_dual = model_loader._is_dual_input()
+        except Exception:
+            # Fallback to inspecting model inputs
+            is_dual = hasattr(model_loader.model, 'inputs') and len(model_loader.model.inputs) == 2
+
+        if is_dual:
+            raise RuntimeError(
+                "Dual-input V2 LSTM detected; MatchingService currently supports single-input models only. "
+                "Update the service to provide temporal and zone inputs for the model."
+            )
+
         if feature_batch.shape[1] != EXPECTED_FEATURE_COUNT:
             raise ValueError(
                 f"Feature batch mismatch: expected {EXPECTED_FEATURE_COUNT}, got {feature_batch.shape[1]}"
