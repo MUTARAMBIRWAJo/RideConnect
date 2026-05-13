@@ -17,13 +17,13 @@ class PreprocessingService:
     
     def __init__(self):
         """Initialize preprocessing service"""
-        self.distance_max = settings.DISTANCE_MAX_KM
-        self.rating_min = settings.RATING_MIN
-        self.rating_max = settings.RATING_MAX
-        self.acceptance_rate_max = settings.ACCEPTANCE_RATE_MAX
-        self.cancellation_rate_max = settings.CANCELLATION_RATE_MAX
-        self.behavior_score_max = settings.BEHAVIOR_SCORE_MAX
-        self.traffic_level_max = settings.TRAFFIC_LEVEL_MAX
+        self.distance_max = getattr(settings, "DISTANCE_MAX_KM", 10.0)
+        self.rating_min = getattr(settings, "RATING_MIN", 1.0)
+        self.rating_max = getattr(settings, "RATING_MAX", 5.0)
+        self.acceptance_rate_max = getattr(settings, "ACCEPTANCE_RATE_MAX", 1.0)
+        self.cancellation_rate_max = getattr(settings, "CANCELLATION_RATE_MAX", 1.0)
+        self.behavior_score_max = getattr(settings, "BEHAVIOR_SCORE_MAX", 1.0)
+        self.traffic_level_max = getattr(settings, "TRAFFIC_LEVEL_MAX", 1.0)
     
     def preprocess_driver_features(
         self, driver: CandidateDriver

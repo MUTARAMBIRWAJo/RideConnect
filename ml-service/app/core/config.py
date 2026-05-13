@@ -82,5 +82,14 @@ class Settings:
 
     SECRET_KEY = os.getenv("SECRET_KEY", os.getenv("APP_KEY", "change-me"))
 
+    # Distance and normalization settings
+    DISTANCE_MAX_KM = float(os.getenv("DISTANCE_MAX_KM", "10.0"))
+    RATING_MIN = float(os.getenv("RATING_MIN", "1.0"))
+    RATING_MAX = float(os.getenv("RATING_MAX", "5.0"))
+    ACCEPTANCE_RATE_MAX = float(os.getenv("ACCEPTANCE_RATE_MAX", "1.0"))
+    CANCELLATION_RATE_MAX = float(os.getenv("CANCELLATION_RATE_MAX", "1.0"))
+    BEHAVIOR_SCORE_MAX = float(os.getenv("BEHAVIOR_SCORE_MAX", "1.0"))
+    TRAFFIC_LEVEL_MAX = float(os.getenv("TRAFFIC_LEVEL_MAX", "1.0"))
+
 
 settings = Settings()
