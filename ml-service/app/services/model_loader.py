@@ -184,6 +184,28 @@ class ModelLoader:
         
         logger.info("Model shape validation passed")
     
+    def _is_dual_input(self) -> bool:
+        """
+        Check if model is dual-input V2 LSTM architecture.
+        
+        Returns:
+            True if model has exactly 2 inputs with V2 LSTM shapes, False otherwise
+        """
+        if self.model is None:
+            return False
+        
+        num_inputs = len(self.model.inputs) if hasattr(self.model, 'inputs') else 1
+        
+        if num_inputs != 2:
+            return False
+        
+        # Check if shapes match V2 LSTM pattern
+        input_shapes = [inp.shape for inp in self.model.inputs]
+        temporal_shape = input_shapes[0]
+        zone_shape = input_shapes[1]
+        
+        return temporal_shape == (None, 16, 17) and zone_shape == (None, 1)
+    
     def _log_model_info(self) -> None:
         """Log detailed model information."""
         if self.model is None:
@@ -217,6 +239,7 @@ class ModelLoader:
         Perform model warmup with dummy batch to initialize TensorFlow graph.
         
         This reduces first-request latency by ~100-200ms.
+        Handles both single-input and dual-input V2 LSTM models.
         """
         if self.model is None:
             return
@@ -224,15 +247,20 @@ class ModelLoader:
         try:
             logger.info("Performing model warmup...")
             
-            # Create dummy batch with correct shape
-            batch_size = 1
-            dummy_batch = np.zeros(
-                (batch_size, EXPECTED_FEATURE_COUNT),
-                dtype=np.float32
-            )
-            
-            # Run prediction
-            _ = self.model.predict(dummy_batch, verbose=0)
+            if self._is_dual_input():
+                # V2 LSTM: temporal_input (1, 16, 17) + zone_input (1, 1)
+                logger.info("Warmup with dual-input V2 LSTM")
+                temporal_dummy = np.zeros((1, 16, 17), dtype=np.float32)
+                zone_dummy = np.zeros((1, 1), dtype=np.int32)
+                _ = self.model.predict([temporal_dummy, zone_dummy], verbose=0)
+            else:
+                # Legacy single-input
+                logger.info("Warmup with single-input legacy model")
+                dummy_batch = np.zeros(
+                    (1, EXPECTED_FEATURE_COUNT),
+                    dtype=np.float32
+                )
+                _ = self.model.predict(dummy_batch, verbose=0)
             
             logger.info("Model warmup completed successfully")
             
@@ -245,18 +273,27 @@ class ModelLoader:
         """
         Run inference on features.
         
-        Args:
-            features: Input features (shape: (batch_size, EXPECTED_FEATURE_COUNT))
+        For single-input models:
+            Args: features with shape (batch_size, EXPECTED_FEATURE_COUNT)
+        
+        For dual-input V2 LSTM models:
+            NOT SUPPORTED via this interface. Use predict_dual_input() instead.
             
         Returns:
             Model predictions (shape: (batch_size,) or (batch_size, 1))
             
         Raises:
-            RuntimeError: If model not loaded
+            RuntimeError: If model not loaded or is dual-input
             ValueError: If input shape invalid
         """
         if self.model is None:
             raise RuntimeError("Model not loaded")
+        
+        if self._is_dual_input():
+            raise RuntimeError(
+                "V2 LSTM dual-input model detected. "
+                "Use predict_dual_input(temporal, zone) instead of predict(features)."
+            )
         
         # Validate input shape
         if features.ndim != 2:
@@ -272,6 +309,65 @@ class ModelLoader:
         
         # Run prediction with verbose=0 to minimize logging
         predictions = self.model.predict(features, verbose=0)
+        
+        return predictions
+    
+    def predict_dual_input(self, temporal_features: np.ndarray, zone_features: np.ndarray) -> np.ndarray:
+        """
+        Run inference on dual-input V2 LSTM model.
+        
+        Args:
+            temporal_features: Temporal input (batch_size, 16, 17) float32
+            zone_features: Zone input (batch_size, 1) int32 or float32
+            
+        Returns:
+            Model predictions (shape: (batch_size, 8))
+            
+        Raises:
+            RuntimeError: If model not loaded or not dual-input
+            ValueError: If input shapes invalid
+        """
+        if self.model is None:
+            raise RuntimeError("Model not loaded")
+        
+        if not self._is_dual_input():
+            raise RuntimeError(
+                "Single-input model detected. Use predict(features) instead."
+            )
+        
+        # Validate temporal input
+        if temporal_features.ndim != 3:
+            raise ValueError(
+                f"Expected 3D temporal features (batch, 16, 17), "
+                f"got shape {temporal_features.shape}"
+            )
+        
+        if temporal_features.shape[1:] != (16, 17):
+            raise ValueError(
+                f"Temporal input shape mismatch: expected (batch, 16, 17), "
+                f"got {temporal_features.shape}"
+            )
+        
+        # Validate zone input
+        if zone_features.ndim != 2:
+            raise ValueError(
+                f"Expected 2D zone features (batch, 1), got shape {zone_features.shape}"
+            )
+        
+        if zone_features.shape[1] != 1:
+            raise ValueError(
+                f"Zone input shape mismatch: expected (batch, 1), got {zone_features.shape}"
+            )
+        
+        # Ensure batch sizes match
+        if temporal_features.shape[0] != zone_features.shape[0]:
+            raise ValueError(
+                f"Batch size mismatch: temporal {temporal_features.shape[0]} "
+                f"!= zone {zone_features.shape[0]}"
+            )
+        
+        # Run prediction
+        predictions = self.model.predict([temporal_features, zone_features], verbose=0)
         
         return predictions
     
@@ -315,11 +411,17 @@ class ModelLoader:
                 "uptime_seconds": uptime_seconds,
             }
 
+        # Handle both single-input and dual-input models
+        if self._is_dual_input():
+            input_shapes = [tuple(inp.shape) for inp in self.model.inputs]
+        else:
+            input_shapes = list(self.model.input_shape) if self.model.input_shape else None
+        
         return {
             "loaded": True,
             "path": self.model_path,
             "version": self.model_version,
-            "input_shape": list(self.model.input_shape),
+            "input_shape": input_shapes,
             "output_shape": list(self.model.output_shape),
             "parameters": self.model.count_params(),
             "tensorflow_version": tf.__version__,
