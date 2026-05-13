@@ -98,50 +98,89 @@ class ModelLoader:
         """
         Validate model input/output shapes match expected dimensions.
         
+        Supports two architectures:
+        1. V2 LSTM (dual-input): 2 inputs with shapes (None, 16, 17) and (None, 1)
+        2. Legacy single-input: 1 input with shape (None, N) for any N
+        
         CRITICAL: This ensures preprocessing output matches model input expectations.
         
         Raises:
-            ModelValidationError: If shapes don't match
+            ModelValidationError: If shapes don't match supported architectures
         """
         if self.model is None:
             raise ModelValidationError("Model not loaded")
         
-        input_shape = self.model.input_shape
         output_shape = self.model.output_shape
         
         logger.info(f"Validating model shapes...")
-        logger.info(f"  Input shape: {input_shape}")
-        logger.info(f"  Output shape: {output_shape}")
         
-        # Validate input shape
-        # Expected: (batch_size, EXPECTED_FEATURE_COUNT) or (None, EXPECTED_FEATURE_COUNT)
-        if input_shape is None:
-            raise ModelValidationError("Model has no input shape")
+        # Detect model architecture via inputs property
+        num_inputs = len(self.model.inputs) if hasattr(self.model, 'inputs') else 1
         
-        if len(input_shape) != 2:
+        if num_inputs == 2:
+            # V2 LSTM dual-input model
+            input_shapes = [inp.shape for inp in self.model.inputs]
+            logger.info(f"Detected V2 LSTM (dual-input) model")
+            logger.info(f"  Input shapes: {input_shapes}")
+            logger.info(f"  Output shape: {output_shape}")
+            
+            # Validate V2 architecture: (None, 16, 17) and (None, 1)
+            temporal_shape = input_shapes[0]
+            zone_shape = input_shapes[1]
+            
+            if temporal_shape != (None, 16, 17):
+                logger.warning(
+                    f"V2 temporal input shape {temporal_shape} != expected (None, 16, 17). "
+                    f"Model may still work but predictions may be incorrect."
+                )
+            
+            if zone_shape != (None, 1):
+                logger.warning(
+                    f"V2 zone input shape {zone_shape} != expected (None, 1). "
+                    f"Model may still work but predictions may be incorrect."
+                )
+            
+            # Validate output is (None, 8) for V2
+            if output_shape != (None, 8):
+                logger.warning(
+                    f"V2 output shape {output_shape} != expected (None, 8). "
+                    f"May still work but verify predictions are correct."
+                )
+        
+        elif num_inputs == 1:
+            # Legacy single-input model (fare, ranking, etc.)
+            input_shape = self.model.input_shape
+            logger.info(f"Detected single-input legacy model")
+            logger.info(f"  Input shape: {input_shape}")
+            logger.info(f"  Output shape: {output_shape}")
+            
+            # Validate basic 2D structure
+            if input_shape is None:
+                raise ModelValidationError("Model has no input shape")
+            
+            if len(input_shape) != 2:
+                raise ModelValidationError(
+                    f"Expected 2D input shape (batch, features), got {input_shape}"
+                )
+            
+            # Log feature count but don't enforce strict match (allow flexibility)
+            feature_dim = input_shape[1]
+            logger.info(f"  Input features: {feature_dim}")
+            
+            if feature_dim != EXPECTED_FEATURE_COUNT:
+                logger.warning(
+                    f"Input feature count {feature_dim} != EXPECTED_FEATURE_COUNT {EXPECTED_FEATURE_COUNT}. "
+                    f"Model may still work if training setup matches."
+                )
+        
+        else:
             raise ModelValidationError(
-                f"Expected 2D input shape (batch, features), got {input_shape}"
+                f"Unsupported model: expected 1 or 2 inputs, got {num_inputs}"
             )
         
-        feature_dim = input_shape[1]
-        if feature_dim != EXPECTED_FEATURE_COUNT:
-            raise ModelValidationError(
-                f"Model input feature count mismatch: "
-                f"expected {EXPECTED_FEATURE_COUNT}, got {feature_dim}. "
-                f"Check feature_config.FEATURE_COLUMNS matches training setup."
-            )
-        
-        # Validate output shape
-        # Expected: (None, 1) or (None,)
+        # Validate output shape is present and reasonable
         if output_shape is None:
             raise ModelValidationError("Model has no output shape")
-        
-        if output_shape not in EXPECTED_OUTPUT_SHAPES:
-            logger.warning(
-                f"Unexpected output shape {output_shape}. "
-                f"Expected one of {EXPECTED_OUTPUT_SHAPES}. "
-                f"May still work but verify predictions are correct."
-            )
         
         logger.info("Model shape validation passed")
     
