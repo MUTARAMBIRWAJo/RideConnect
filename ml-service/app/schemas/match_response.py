@@ -63,23 +63,25 @@ class MatchDriverResponse(BaseModel):
 
 class HealthResponse(BaseModel):
     """Schema for health check response"""
-    
+
     status: str = Field(..., description="Service status")
     version: str = Field(..., description="Service version")
     model_loaded: bool = Field(..., description="Whether model is loaded")
     model_input_shape: Optional[list] = Field(None, description="Model input shape")
     model_output_shape: Optional[list] = Field(None, description="Model output shape")
     scaler_loaded: bool = Field(..., description="Whether scaler is loaded")
+    behavior_model_loaded: bool = Field(False, description="Whether behavior detector is loaded")
     tensorflow_version: Optional[str] = Field(None, description="TensorFlow version")
     uptime_seconds: float = Field(0.0, description="Service uptime in seconds")
     available_devices: list[str] = Field(default_factory=list, description="Available TensorFlow devices")
-    
+
     class Config:
         json_schema_extra = {
             "example": {
                 "status": "healthy",
                 "version": "1.0.0",
                 "model_loaded": True,
+                "behavior_model_loaded": True,
             }
         }
 

@@ -67,6 +67,20 @@ class Settings:
     ALLOW_SCALER_FALLBACK = _as_bool(os.getenv("ALLOW_SCALER_FALLBACK"), False)
     INFERENCE_TIMEOUT = float(os.getenv("INFERENCE_TIMEOUT", "5.0"))
 
+    # Behavior anomaly detection model paths
+    BEHAVIOR_DETECTOR_PATH = os.getenv(
+        "BEHAVIOR_DETECTOR_PATH",
+        str(Path(MODEL_DIR) / "behavior_detector.pkl"),
+    )
+    BEHAVIOR_SCALER_PATH = os.getenv(
+        "BEHAVIOR_SCALER_PATH",
+        str(Path(MODEL_DIR) / "behavior_scaler.pkl"),
+    )
+    BEHAVIOR_CONFIG_PATH = os.getenv(
+        "BEHAVIOR_CONFIG_PATH",
+        str(Path(MODEL_DIR) / "behavior_feature_config.json"),
+    )
+
     DATABASE_URL = _build_database_url()
     SUPABASE_DB_URL = os.getenv("SUPABASE_DB_URL", DATABASE_URL)
     REDIS_URL = os.getenv("REDIS_URL", "redis://redis:6379/0")

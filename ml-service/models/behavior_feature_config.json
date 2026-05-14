@@ -1,0 +1,14 @@
+{
+  "feature_columns": [
+    "speed_kmh",
+    "acceleration_ms2",
+    "heading_change_degrees",
+    "route_deviation_meters",
+    "stop_duration_seconds"
+  ],
+  "n_features": 5,
+  "model_type": "IsolationForest",
+  "contamination": 0.05,
+  "n_estimators": 100,
+  "trained_on_samples": 4750
+}

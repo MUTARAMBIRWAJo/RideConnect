@@ -1,8 +1,11 @@
 """Additional prediction endpoints"""
-from fastapi import APIRouter, HTTPException
+from datetime import datetime, timezone
+
+from fastapi import APIRouter, BackgroundTasks, HTTPException
 from pydantic import BaseModel, Field
 
 from app.core.logging import get_logger
+from app.services.behavior_detector_loader import get_behavior_detector_loader
 from app.services.demand_model import DemandModel
 from app.services.eta_model import ETAModel
 
@@ -74,13 +77,47 @@ class ETAPredictionResponse(BaseModel):
     estimated_time_minutes: float = Field(..., ge=0.0, description="Estimated time in minutes")
     distance_km: float = Field(..., description="Distance in km")
     confidence: float = Field(..., ge=0.0, le=1.0, description="Confidence score")
-    
+
     class Config:
         json_schema_extra = {
             "example": {
                 "estimated_time_minutes": 12.5,
                 "distance_km": 2.5,
                 "confidence": 0.88,
+            }
+        }
+
+
+class GPSReading(BaseModel):
+    """GPS reading for anomaly detection"""
+    speed_kmh: float = Field(..., ge=0, le=300, description="Speed in km/h")
+    acceleration_ms2: float = Field(..., ge=-15, le=15, description="Acceleration in m/s²")
+    heading_change_degrees: float = Field(..., ge=0, le=360, description="Heading change in degrees")
+    route_deviation_meters: float = Field(..., ge=0, le=5000, description="Route deviation in meters")
+    stop_duration_seconds: float = Field(..., ge=0, le=7200, description="Stop duration in seconds")
+
+
+class AnomalyDetectionRequest(BaseModel):
+    """Request schema for driver behavior anomaly detection"""
+    gps_reading: GPSReading
+
+
+class AnomalyDetectionResponse(BaseModel):
+    """Response schema for driver behavior anomaly detection"""
+    is_anomaly: bool = Field(..., description="Whether the reading is anomalous")
+    anomaly_score: float = Field(..., description="Raw anomaly score (lower = more anomalous)")
+    severity: str = Field(..., description="Severity level: low, medium, or high")
+    model_version: str = Field(..., description="Model version identifier")
+    detected_at: str = Field(..., description="ISO 8601 UTC timestamp of detection")
+
+    class Config:
+        json_schema_extra = {
+            "example": {
+                "is_anomaly": True,
+                "anomaly_score": -0.25,
+                "severity": "high",
+                "model_version": "behavior_isolation_forest_v1",
+                "detected_at": "2026-05-15T10:30:45Z",
             }
         }
 
@@ -109,10 +146,10 @@ async def predict_demand(request: DemandPredictionRequest) -> dict[str, str]:
 async def predict_eta(request: ETAPredictionRequest) -> ETAPredictionResponse:
     """
     Predict estimated time of arrival
-    
+
     Args:
         request: ETAPredictionRequest
-    
+
     Returns:
         ETAPredictionResponse with predicted ETA
     """
@@ -138,3 +175,90 @@ async def predict_eta(request: ETAPredictionRequest) -> ETAPredictionResponse:
             status_code=500,
             detail="Prediction service error"
         )
+
+
+@router.post(
+    "/anomaly",
+    response_model=AnomalyDetectionResponse,
+    summary="Detect Driver Behavior Anomalies",
+    description="Detect anomalous driver behavior from GPS readings using Isolation Forest"
+)
+async def detect_anomaly(
+    request: AnomalyDetectionRequest,
+    background_tasks: BackgroundTasks,
+) -> AnomalyDetectionResponse:
+    """
+    Detect anomalous driver behavior from GPS readings.
+
+    Returns severity levels based on anomaly scores:
+    - high: score < -0.20
+    - medium: -0.20 <= score < -0.05
+    - low: score >= -0.05 (only when is_anomaly=true)
+    """
+    try:
+        loader = get_behavior_detector_loader()
+    except RuntimeError:
+        logger.error("Behavior detector not initialized")
+        raise HTTPException(
+            status_code=503,
+            detail="behavior detector is not loaded"
+        )
+
+    if not loader.is_loaded():
+        raise HTTPException(
+            status_code=503,
+            detail="behavior detector is not loaded"
+        )
+
+    try:
+        # Call behavior detector with feature dict
+        is_anomaly, anomaly_score = loader.predict(request.gps_reading.model_dump())
+
+        # Map score to severity
+        if is_anomaly:
+            if anomaly_score < -0.20:
+                severity = "high"
+            elif anomaly_score < -0.05:
+                severity = "medium"
+            else:
+                severity = "low"
+        else:
+            severity = "low"
+
+        # Build response
+        detected_at = datetime.now(timezone.utc).isoformat().replace("+00:00", "Z")
+        response = AnomalyDetectionResponse(
+            is_anomaly=is_anomaly,
+            anomaly_score=anomaly_score,
+            severity=severity,
+            model_version="behavior_isolation_forest_v1",
+            detected_at=detected_at,
+        )
+
+        # Log prediction in background
+        background_tasks.add_task(
+            _log_anomaly_prediction,
+            request.model_dump(),
+            response.model_dump(),
+        )
+
+        return response
+
+    except ValueError as e:
+        logger.error(f"Invalid request for anomaly detection: {str(e)}")
+        raise HTTPException(status_code=400, detail=str(e))
+    except Exception as e:
+        logger.error(f"Anomaly detection failed: {str(e)}", exc_info=True)
+        raise HTTPException(status_code=500, detail="anomaly detection failed")
+
+
+def _log_anomaly_prediction(input_payload: dict, output_payload: dict) -> None:
+    """Log anomaly prediction for monitoring."""
+    try:
+        logger.info(
+            f"Anomaly detection: is_anomaly={output_payload.get('is_anomaly')}, "
+            f"severity={output_payload.get('severity')}, "
+            f"score={output_payload.get('anomaly_score'):.4f}"
+        )
+    except Exception as e:
+        logger.warning(f"Failed to log anomaly prediction: {str(e)}")

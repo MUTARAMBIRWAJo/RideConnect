@@ -11,6 +11,7 @@ from app.core.logging import get_logger
 from app.core.monitoring import initialize_monitoring
 from app.core.scaler_manager import initialize_scaler, get_scaler_manager
 from app.core.startup_validator import StartupValidator
+from app.services.behavior_detector_loader import initialize_behavior_detector_loader
 from app.services.metrics import initialize_metrics_collector
 from app.services.model_loader import initialize_model_loader, get_model_loader
 
@@ -55,21 +56,31 @@ async def lifespan(app) -> AsyncGenerator[None, None]:
         # Initialize scaler manager if a real scaler artifact is available.
         # The current repository does not ship a valid scaler for the matching
         # model, so startup must continue when only the Keras model is present.
-        logger.info("Step 4/6: Initializing scaler manager...")
+        logger.info("Step 4/7: Initializing scaler manager...")
         try:
             initialize_scaler()
             logger.info("✓ Scaler manager initialized")
         except Exception as scaler_error:
             logger.warning(f"Scaler initialization skipped: {scaler_error}")
             app.state.scaler_initialization_error = str(scaler_error)
-        
+
+        # Initialize behavior detector (optional component, do not crash on failure)
+        logger.info("Step 5/7: Initializing behavior detector...")
+        try:
+            behavior_loader = initialize_behavior_detector_loader()
+            await behavior_loader.initialize()
+            logger.info("✓ Behavior detector loaded")
+        except Exception as behavior_error:
+            logger.warning(f"Behavior detector initialization skipped: {behavior_error}")
+            app.state.behavior_detector_initialization_error = str(behavior_error)
+
         # Run comprehensive startup validation
-        logger.info("Step 5/6: Running startup validation...")
+        logger.info("Step 6/7: Running startup validation...")
         validation_results = await StartupValidator.validate_all()
         logger.info("✓ Startup validation passed")
-        
+
         # Store results in app state for health checks
-        logger.info("Step 6/6: Storing startup results in app state...")
+        logger.info("Step 7/7: Storing startup results in app state...")
         app.state.startup_validation = validation_results
         app.state.startup_time = _get_startup_time()
         logger.info("✓ Startup state stored")
@@ -99,7 +110,7 @@ async def lifespan(app) -> AsyncGenerator[None, None]:
             model_loader = get_model_loader()
             model_loader.cleanup()
             logger.info("✓ Model cleaned up")
-            
+
             # Clean up scaler
             logger.info("Cleaning up scaler manager...")
             scaler_manager = get_scaler_manager()
