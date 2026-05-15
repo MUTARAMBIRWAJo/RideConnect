@@ -70,15 +70,15 @@ class Settings:
     # Behavior anomaly detection model paths
     BEHAVIOR_DETECTOR_PATH = os.getenv(
         "BEHAVIOR_DETECTOR_PATH",
-        str(Path(__file__).resolve().parents[2] / "models" / "behavior_detector.pkl"),
+        str(Path(__file__).resolve().parents[2] / "models" / "trained" / "behavior_detector.pkl"),
     )
     BEHAVIOR_SCALER_PATH = os.getenv(
         "BEHAVIOR_SCALER_PATH",
-        str(Path(__file__).resolve().parents[2] / "models" / "behavior_scaler.pkl"),
+        str(Path(__file__).resolve().parents[2] / "models" / "trained" / "behavior_scaler.pkl"),
     )
     BEHAVIOR_CONFIG_PATH = os.getenv(
         "BEHAVIOR_CONFIG_PATH",
-        str(Path(__file__).resolve().parents[2] / "models" / "behavior_feature_config.json"),
+        str(Path(__file__).resolve().parents[2] / "models" / "trained" / "behavior_feature_config.json"),
     )
 
     DATABASE_URL = _build_database_url()
