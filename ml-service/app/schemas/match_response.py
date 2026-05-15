@@ -67,6 +67,7 @@ class HealthResponse(BaseModel):
     status: str = Field(..., description="Service status")
     version: str = Field(..., description="Service version")
     model_loaded: bool = Field(..., description="Whether model is loaded")
+    model_name: Optional[str] = Field(None, description="Loaded model artifact name")
     model_input_shape: Optional[list] = Field(None, description="Model input shape")
     model_output_shape: Optional[list] = Field(None, description="Model output shape")
     scaler_loaded: bool = Field(..., description="Whether scaler is loaded")
@@ -81,6 +82,7 @@ class HealthResponse(BaseModel):
                 "status": "healthy",
                 "version": "1.0.0",
                 "model_loaded": True,
+                "model_name": "rideconnect_v2_best.keras",
                 "behavior_model_loaded": True,
             }
         }

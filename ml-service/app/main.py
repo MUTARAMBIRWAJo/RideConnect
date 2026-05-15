@@ -9,7 +9,7 @@ from app.api.admin_routes import router as admin_router
 from app.core.config import settings
 from app.core.logging import get_logger
 from app.core.startup import lifespan
-from app.middleware import RequestContextMiddleware
+from app.middleware import RequestContextMiddleware, get_request_id
 
 logger = get_logger(__name__)
 
@@ -62,18 +62,34 @@ def create_app() -> FastAPI:
     async def value_error_handler(request: Request, exc: ValueError):
         """Handle ValueError exceptions."""
         logger.error(f"ValueError: {exc}")
+        try:
+            request_id = get_request_id()
+        except Exception:
+            request_id = getattr(request.state, "request_id", None)
         return JSONResponse(
             status_code=400,
-            content={"detail": str(exc), "error_code": "VALIDATION_ERROR"},
+            content={
+                "detail": str(exc),
+                "error_code": "VALIDATION_ERROR",
+                "request_id": request_id,
+            },
         )
 
     @app.exception_handler(RuntimeError)
     async def runtime_error_handler(request: Request, exc: RuntimeError):
         """Handle RuntimeError exceptions."""
         logger.error(f"RuntimeError: {exc}")
+        try:
+            request_id = get_request_id()
+        except Exception:
+            request_id = getattr(request.state, "request_id", None)
         return JSONResponse(
             status_code=500,
-            content={"detail": str(exc), "error_code": "RUNTIME_ERROR"},
+            content={
+                "detail": str(exc),
+                "error_code": "RUNTIME_ERROR",
+                "request_id": request_id,
+            },
         )
 
     @app.on_event("startup")

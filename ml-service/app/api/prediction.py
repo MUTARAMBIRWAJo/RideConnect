@@ -124,16 +124,34 @@ class AnomalyDetectionResponse(BaseModel):
 
 @router.post(
     "/demand",
-    deprecated=True,
     summary="Predict Demand (Deprecated)",
-    description="DEPRECATED: Use POST /ml/predict-demand instead"
+    description="Predict demand using a deterministic compatibility fallback. Use POST /ml/predict-demand for V2 LSTM demand forecasts."
 )
-async def predict_demand(request: DemandPredictionRequest) -> dict[str, str]:
-    """DEPRECATED: Replaced by POST /ml/predict-demand on root ML service."""
-    logger.warning("Deprecated /predict/demand endpoint called. Please migrate to /ml/predict-demand.")
-    raise HTTPException(
-        status_code=410,
-        detail="This endpoint is deprecated. Use POST /ml/predict-demand instead."
+async def predict_demand(request: DemandPredictionRequest) -> DemandPredictionResponse:
+    """Compatibility demand endpoint for Laravel and mobile clients."""
+    logger.warning(
+        "Compatibility /predict/demand endpoint called. Prefer POST /ml/predict-demand for V2 LSTM forecasts."
+    )
+    commute_peak = request.hour in {7, 8, 9, 17, 18, 19}
+    weekend = request.day_of_week >= 5
+    kigali_core = -2.05 <= request.latitude <= -1.85 and 29.95 <= request.longitude <= 30.20
+
+    demand_level = 0.35
+    if kigali_core:
+        demand_level += 0.20
+    if commute_peak:
+        demand_level += 0.30
+    if weekend:
+        demand_level -= 0.10
+
+    demand_level = max(0.05, min(1.0, demand_level))
+    expected_wait = max(2, int(round(15 - demand_level * 10)))
+    confidence = 0.72 if kigali_core else 0.60
+
+    return DemandPredictionResponse(
+        demand_level=demand_level,
+        expected_wait_time_minutes=expected_wait,
+        confidence=confidence,
     )
 
 

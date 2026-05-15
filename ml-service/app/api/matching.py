@@ -2,6 +2,7 @@
 from fastapi import APIRouter, HTTPException, Query
 
 from app.core.logging import get_logger
+from app.middleware import get_request_id
 from app.schemas.match_request import MatchRequestPayload
 from app.schemas.match_response import ErrorResponse, MatchDriverResponse
 from app.services.matching_service import MatchingService
@@ -68,9 +69,16 @@ async def match_driver(
     
     except RuntimeError as e:
         logger.error(f"Model error: {str(e)}")
+        try:
+            request_id = get_request_id()
+        except Exception:
+            request_id = None
         raise HTTPException(
             status_code=500,
-            detail="Prediction service error"
+            detail={
+                "message": "Prediction service error",
+                "request_id": request_id,
+            }
         )
     
     except Exception as e:

@@ -44,6 +44,7 @@ async def health_check() -> HealthResponse:
             status="healthy",
             version=settings.APP_VERSION,
             model_loaded=model_info.get("loaded", False),
+            model_name=model_info.get("model_name"),
             model_input_shape=model_info.get("input_shape"),
             model_output_shape=model_info.get("output_shape"),
             scaler_loaded=scaler_loaded,

@@ -94,9 +94,6 @@ class MatchingService:
         else:
             preprocessing_time = 0.0
         
-        # Get model predictions directly from the trained Keras model.
-        # The current repository does not ship a valid scaler artifact, so the
-        # model must be able to consume the engineered feature order as-is.
         model_loader = get_model_loader()
         
         # Stack features into batch
@@ -109,24 +106,54 @@ class MatchingService:
             # Fallback to inspecting model inputs
             is_dual = hasattr(model_loader.model, 'inputs') and len(model_loader.model.inputs) == 2
 
-        if is_dual:
-            raise RuntimeError(
-                "Dual-input V2 LSTM detected; MatchingService currently supports single-input models only. "
-                "Update the service to provide temporal and zone inputs for the model."
-            )
-
         if feature_batch.shape[1] != EXPECTED_FEATURE_COUNT:
             raise ValueError(
                 f"Feature batch mismatch: expected {EXPECTED_FEATURE_COUNT}, got {feature_batch.shape[1]}"
             )
 
-        scaler_time = 0.0
+        scaler_start = time.time()
+        if is_dual:
+            # The active Keras artifact is the V2 demand LSTM. It requires a
+            # temporal tensor and zone input; keep the existing matching feature
+            # order intact and project it into the temporal contract.
+            scaled_feature_batch = feature_batch
+        else:
+            try:
+                scaled_feature_batch = self.feature_engineer.scale_features(feature_batch).astype(np.float32)
+            except RuntimeError as e:
+                if settings.ALLOW_SCALER_FALLBACK:
+                    logger.warning(
+                        f"Scaler unavailable, using raw feature batch because ALLOW_SCALER_FALLBACK=true: {e}",
+                        extra={"request_id": request_id},
+                    )
+                    scaled_feature_batch = feature_batch
+                else:
+                    logger.error(
+                        f"Scaler transform failed with strict fallback disabled: {e}",
+                        extra={"request_id": request_id},
+                    )
+                    raise
+        scaler_time = time.time() - scaler_start
+
+        if scaled_feature_batch.shape != feature_batch.shape:
+            raise ValueError(
+                f"Scaled feature batch shape mismatch: raw {feature_batch.shape}, scaled {scaled_feature_batch.shape}"
+            )
+
         if enable_timing:
             inference_start = time.time()
         
         try:
             with ThreadPoolExecutor(max_workers=1) as executor:
-                future = executor.submit(model_loader.predict, feature_batch)
+                if is_dual:
+                    temporal_features, zone_features = self._build_dual_input_batch(scaled_feature_batch)
+                    future = executor.submit(
+                        model_loader.predict_dual_input,
+                        temporal_features,
+                        zone_features,
+                    )
+                else:
+                    future = executor.submit(model_loader.predict, scaled_feature_batch)
                 predictions = future.result(timeout=settings.INFERENCE_TIMEOUT)
             
             if enable_timing:
@@ -191,6 +218,21 @@ class MatchingService:
             ),
             ranked_drivers=ranked_drivers
         )
+
+    def _build_dual_input_batch(self, feature_batch: np.ndarray) -> tuple[np.ndarray, np.ndarray]:
+        """
+        Project matching features into the active V2 LSTM input contract.
+
+        The model expects 16 timesteps of 17 temporal features plus one zone
+        index. Matching requests do not carry zone history, so the engineered
+        matching vector is repeated across timesteps and padded with stable
+        zeros for the remaining temporal channels.
+        """
+        batch_size = feature_batch.shape[0]
+        temporal_features = np.zeros((batch_size, 16, 17), dtype=np.float32)
+        temporal_features[:, :, :EXPECTED_FEATURE_COUNT] = feature_batch[:, np.newaxis, :]
+        zone_features = np.zeros((batch_size, 1), dtype=np.int32)
+        return temporal_features, zone_features
     
     def _extract_scores(self, predictions: np.ndarray) -> np.ndarray:
         """

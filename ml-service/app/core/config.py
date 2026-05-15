@@ -62,7 +62,7 @@ class Settings:
     ACTIVE_MODEL = os.getenv("ACTIVE_MODEL", MODEL_VERSION)
     SCALER_PATH = os.getenv(
         "SCALER_PATH",
-        str(Path(MODEL_DIR) / "matcher_v0.joblib"),
+        str(Path(MODEL_DIR) / "feature_scaler.pkl"),
     )
     ALLOW_SCALER_FALLBACK = _as_bool(os.getenv("ALLOW_SCALER_FALLBACK"), False)
     INFERENCE_TIMEOUT = float(os.getenv("INFERENCE_TIMEOUT", "5.0"))

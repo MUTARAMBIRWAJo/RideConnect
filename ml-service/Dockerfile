@@ -35,7 +35,7 @@ ENV PATH="/opt/venv/bin:$PATH" \
     TF_NUM_INTEROP_THREADS=1 \
     MODEL_PATH=/app/models/trained/rideconnect_v2_best.keras \
     MODEL_DIR=/app/models/trained \
-    SCALER_PATH=/app/models/trained/matcher_v0.joblib \
+    SCALER_PATH=/app/models/trained/feature_scaler.pkl \
     INFERENCE_TIMEOUT=5.0 \
     ACTIVE_MODEL=v1 \
     ML_SERVICE_WORKERS=1
@@ -46,7 +46,7 @@ USER appuser
 
 # Health check
 HEALTHCHECK --interval=30s --timeout=10s --start-period=5s --retries=3 \
-    CMD python -c "import urllib.request; urllib.request.urlopen('http://localhost:8000/ml/health', timeout=5).read()" || exit 1
+    CMD python -c "import urllib.request; urllib.request.urlopen('http://localhost:8000/health', timeout=5).read()" || exit 1
 
 # Expose port
 EXPOSE 8000

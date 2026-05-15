@@ -34,6 +34,8 @@ services:
       - ML_SERVICE_HOST=0.0.0.0
       - ML_SERVICE_PORT=8000
       - MODEL_PATH=/app/models/trained/rideconnect_v2_best.keras
+      - MODEL_DIR=/app/models/trained
+      - SCALER_PATH=/app/models/trained/feature_scaler.pkl
       - REDIS_URL=redis://redis:6379/0
       - SUPABASE_URL=${SUPABASE_URL}
       - SUPABASE_KEY=${SUPABASE_KEY}
@@ -45,7 +47,7 @@ services:
       - ./models:/app/models:ro
       - ./app:/app/app:ro
     healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:8000/ml/health"]
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:8000/health', timeout=5).read()"]
       interval: 10s
       timeout: 5s
       retries: 3

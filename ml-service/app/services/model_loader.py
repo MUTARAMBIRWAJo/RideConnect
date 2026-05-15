@@ -1,5 +1,6 @@
 """ML Model loading and management service"""
 import os
+from pathlib import Path
 from typing import Optional
 
 import numpy as np
@@ -420,6 +421,7 @@ class ModelLoader:
         return {
             "loaded": True,
             "path": self.model_path,
+            "model_name": Path(self.model_path).name,
             "version": self.model_version,
             "input_shape": input_shapes,
             "output_shape": list(self.model.output_shape),
