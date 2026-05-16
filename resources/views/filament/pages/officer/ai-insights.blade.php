@@ -64,28 +64,29 @@
                         </p>
                     </div>
 
-                    <!-- Input Window -->
+                    <!-- Input Payload -->
                     <div class="bg-white rounded-lg p-4 shadow-sm">
-                        <p class="text-xs uppercase tracking-wide text-slate-500 font-semibold">Input Window</p>
+                        <p class="text-xs uppercase tracking-wide text-slate-500 font-semibold">Forecast Hour</p>
                         <div class="mt-2 flex items-baseline gap-2">
-                            <span class="text-3xl font-bold text-blue-600">{{ count($mlDemandPrediction['input_sequence'] ?? []) }}</span>
-                            <span class="text-lg text-slate-600">steps</span>
+                            <span class="text-3xl font-bold text-blue-600">{{ $mlDemandPrediction['input_payload']['hour'] ?? now('Africa/Kigali')->hour }}</span>
+                            <span class="text-lg text-slate-600">h</span>
                         </div>
                         <p class="mt-3 text-xs text-slate-600">
-                            8-step historical demand sequence used for the forecast
+                            Live contract payload sent to the deployed demand endpoint
                         </p>
                     </div>
 
-                    <!-- Peak Input -->
+                    <!-- Wait Time -->
                     <div class="bg-white rounded-lg p-4 shadow-sm">
-                        <p class="text-xs uppercase tracking-wide text-slate-500 font-semibold">Peak Input</p>
+                        <p class="text-xs uppercase tracking-wide text-slate-500 font-semibold">Expected Wait</p>
                         <div class="mt-2 flex items-baseline gap-2">
-                            <span class="text-3xl font-bold text-green-600">{{ number_format((max($mlDemandPrediction['input_sequence'] ?? [0])) * 100, 0) }}%</span>
+                            <span class="text-3xl font-bold text-green-600">{{ $mlDemandPrediction['predicted_demand_raw']['expected_wait_time_minutes'] ?? '-' }}</span>
+                            <span class="text-lg text-slate-600">min</span>
                         </div>
                         <div class="mt-3 w-full bg-slate-200 rounded-full h-2">
-                            <div class="bg-gradient-to-r from-green-400 to-green-600 h-2 rounded-full" style="width: {{ (max($mlDemandPrediction['input_sequence'] ?? [0])) * 100 }}%"></div>
+                            <div class="bg-gradient-to-r from-green-400 to-green-600 h-2 rounded-full" style="width: {{ ($mlDemandPrediction['predicted_demand_raw']['confidence'] ?? 0) * 100 }}%"></div>
                         </div>
-                        <p class="mt-2 text-xs text-slate-600">Highest normalized demand observed in the 8-step window</p>
+                        <p class="mt-2 text-xs text-slate-600">Confidence {{ number_format(($mlDemandPrediction['predicted_demand_raw']['confidence'] ?? 0) * 100, 0) }}%</p>
                     </div>
                 </div>
 
@@ -93,7 +94,7 @@
                     <p class="text-xs text-purple-700">
                         <strong>Last updated:</strong> {{ \Carbon\Carbon::parse($mlDemandPrediction['timestamp'])->diffForHumans() }}
                         <br>
-                        <strong>Input:</strong> Recent hourly trip counts normalized for an 8-step sequence
+                        <strong>Input:</strong> latitude/longitude/hour/day_of_week
                         @if (!empty($mlDemandPrediction['remote_error']))
                             <br>
                             <strong>ML service note:</strong> {{ $mlDemandPrediction['remote_error'] }}

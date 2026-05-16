@@ -2,6 +2,8 @@
 
 namespace App\Services;
 
+use App\Services\Ml\DemandHeuristicModelV1;
+use App\Services\Ml\MlPredictionLogger;
 use Illuminate\Http\Client\Factory as HttpFactory;
 use Illuminate\Http\Client\PendingRequest;
 use Illuminate\Http\Client\Response;
@@ -13,8 +15,11 @@ use Throwable;
 
 class RideAIService
 {
-    public function __construct(private readonly HttpFactory $http)
-    {
+    public function __construct(
+        private readonly HttpFactory $http,
+        private readonly MlPredictionLogger $predictionLogger,
+        private readonly DemandHeuristicModelV1 $demandModel,
+    ) {
     }
 
     public function matchDriver(array $payload): array
@@ -55,18 +60,9 @@ class RideAIService
 
     public function predictDemand(array $payload): array
     {
-        $request = [
-            'latitude' => (float) ($payload['lat'] ?? $payload['latitude'] ?? -1.944),
-            'longitude' => (float) ($payload['lng'] ?? $payload['longitude'] ?? 30.061),
-            'hour' => isset($payload['time_of_day']) ? (int) $payload['time_of_day'] : null,
-            'day_of_week' => isset($payload['day_of_week']) ? (int) $payload['day_of_week'] : null,
-            'traffic_level' => $this->normalizeTrafficLevel($payload['traffic_level'] ?? null),
-            'historical_count' => (int) ($payload['historical_count'] ?? 20),
-            'weather' => (string) ($payload['weather'] ?? 'clear'),
-            'event_indicator' => (int) ($payload['event_indicator'] ?? 0),
-        ];
+        $request = $this->demandModel->payload($payload);
 
-        return $this->postJson('/predict-demand', $request, 'demand_prediction', $payload);
+        return $this->postJson(DemandHeuristicModelV1::ENDPOINT, $request, DemandHeuristicModelV1::MODEL_NAME);
     }
 
     public function calculateSurge(array $payload): array
@@ -203,7 +199,7 @@ class RideAIService
                 'data' => $response->json(),
             ];
 
-            $this->logPrediction($predictionType, $payload, $result['data'], true, $responseTimeMs);
+            $this->logPrediction($predictionType, $uri, $payload, $result['data'], true, $responseTimeMs);
 
             return $result;
         }
@@ -221,7 +217,7 @@ class RideAIService
             'error' => $response->json('detail') ?? $response->body(),
         ];
 
-        $this->logPrediction($predictionType, $payload, ['error' => $result['error']], false, $responseTimeMs);
+        $this->logPrediction($predictionType, $uri, $payload, ['error' => $result['error']], false, $responseTimeMs);
 
         return $result;
     }
@@ -281,11 +277,22 @@ class RideAIService
 
     private function logPrediction(
         string $predictionType,
+        string $uri,
         array $requestPayload,
         mixed $responsePayload,
         bool $success,
         int $responseTimeMs,
     ): void {
+        $this->predictionLogger->log(
+            modelName: $predictionType,
+            modelVersion: $predictionType === DemandHeuristicModelV1::MODEL_NAME ? DemandHeuristicModelV1::MODEL_VERSION : null,
+            endpoint: $uri,
+            inputPayload: $requestPayload,
+            outputPayload: $responsePayload,
+            latencyMs: $responseTimeMs,
+            tripId: isset($requestPayload['trip_id']) ? (int) $requestPayload['trip_id'] : null,
+        );
+
         if (!Schema::hasTable('ai_prediction_logs')) {
             return;
         }

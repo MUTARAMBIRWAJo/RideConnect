@@ -59,24 +59,47 @@ class MlProxyEndpointsTest extends TestCase
         });
     }
 
-    public function test_predict_demand_proxies_upstream_bad_request(): void
+    public function test_predict_demand_uses_live_contract(): void
     {
         Http::fake([
             'https://ml.test/ml/predict-demand' => Http::response([
-                'detail' => 'Invalid request payload',
-                'errors' => ['features: ensure this value has at least 8 items'],
-            ], 400),
+                'demand_level' => 0.85,
+                'expected_wait_time_minutes' => 6,
+                'confidence' => 0.72,
+            ], 200),
         ]);
 
+        Sanctum::actingAs($this->makeUser(), ['*']);
+
+        $payload = [
+            'latitude' => -1.9579,
+            'longitude' => 30.1127,
+            'hour' => 17,
+            'day_of_week' => 2,
+        ];
+
+        $response = $this->postJson('/api/v1/ml/predict-demand', $payload);
+
+        $response->assertStatus(200)
+            ->assertJsonPath('success', true)
+            ->assertJsonPath('data.demand_level', 0.85);
+
+        Http::assertSent(function ($request) use ($payload) {
+            return $request->url() === 'https://ml.test/ml/predict-demand'
+                && $request->data() === $payload;
+        });
+    }
+
+    public function test_predict_demand_rejects_old_features_payload(): void
+    {
         Sanctum::actingAs($this->makeUser(), ['*']);
 
         $response = $this->postJson('/api/v1/ml/predict-demand', [
             'features' => array_fill(0, 8, 1.1),
         ]);
 
-        $response->assertStatus(400)
-            ->assertJsonPath('success', false)
-            ->assertJsonPath('error', 'Invalid request payload');
+        $response->assertStatus(422)
+            ->assertJsonValidationErrors(['latitude', 'longitude', 'hour', 'day_of_week']);
     }
 
     public function test_health_proxies_successful_response(): void

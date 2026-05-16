@@ -4,6 +4,7 @@ namespace App\Services\Location;
 
 use App\Models\Driver;
 use App\Models\DriverLocation;
+use App\Services\Ml\MlAnomalyDetectionService;
 use App\Services\Realtime\RealtimeGateway;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Log;
@@ -13,8 +14,10 @@ class DriverLocationService
     private const ONLINE_TIMEOUT_MINUTES = 5;
     private const LOCATION_CACHE_TTL_MINUTES = 10;
 
-    public function __construct(private readonly RealtimeGateway $realtimeGateway)
-    {
+    public function __construct(
+        private readonly RealtimeGateway $realtimeGateway,
+        private readonly MlAnomalyDetectionService $anomalyDetectionService,
+    ) {
     }
 
     /**
@@ -27,8 +30,12 @@ class DriverLocationService
         ?float $speedKmh = null,
         ?float $heading = null,
         ?float $accuracy = null,
-        bool $isOnline = true
+        bool $isOnline = true,
+        ?float $routeDeviationMeters = null,
+        ?int $tripId = null,
     ): DriverLocation {
+        $previousLocation = DriverLocation::where('driver_id', $driverId)->first();
+
         $location = DriverLocation::updateOrCreate(
             ['driver_id' => $driverId],
             [
@@ -48,6 +55,14 @@ class DriverLocationService
 
         // Broadcast location update to passengers tracking this driver
         $this->broadcastLocationUpdate($driverId, $location);
+
+        $this->anomalyDetectionService->inspectLocationUpdate(
+            driverId: $driverId,
+            location: $location,
+            previousLocation: $previousLocation,
+            routeDeviationMeters: $routeDeviationMeters,
+            tripId: $tripId,
+        );
 
         return $location;
     }

@@ -50,4 +50,15 @@ return Application::configure(basePath: dirname(__DIR__))
     })
     ->withExceptions(function (Exceptions $exceptions): void {
         DomainExceptionHandler::register($exceptions);
+
+        $exceptions->render(function (\Illuminate\Session\TokenMismatchException $e) {
+            // If the request expects JSON, return JSON response
+            if ($e->isMethod('post') && $e->headers->get('Accept') == 'application/json') {
+                return response()->json(['message' => 'Page expired. Please log in again.'], 419);
+            }
+
+            // For web requests, redirect to login with a message
+            return redirect()->route('auth.login')
+                ->with('error', 'Your session has expired. Please log in again to continue.');
+        });
     })->create();

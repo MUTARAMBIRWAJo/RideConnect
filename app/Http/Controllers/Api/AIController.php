@@ -50,15 +50,10 @@ class AIController extends Controller
     public function predictDemand(Request $request): JsonResponse
     {
         $payload = $request->validate([
-            'lat' => 'nullable|numeric|between:-90,90',
-            'lng' => 'nullable|numeric|between:-180,180',
-            'zone' => 'nullable|string|max:120',
-            'time_of_day' => 'nullable|integer|min:0|max:23',
-            'day_of_week' => 'nullable|integer|min:0|max:6',
-            'traffic_level' => 'nullable|numeric|min:0|max:5',
-            'historical_count' => 'nullable|integer|min:0|max:10000',
-            'weather' => 'nullable|string|max:40',
-            'event_indicator' => 'nullable|integer|min:0|max:1',
+            'latitude' => 'required|numeric|between:-90,90',
+            'longitude' => 'required|numeric|between:-180,180',
+            'hour' => 'required|integer|min:0|max:23',
+            'day_of_week' => 'required|integer|min:0|max:6',
         ]);
 
         return $this->respond($this->rideAIService->predictDemand($payload));

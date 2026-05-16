@@ -17,36 +17,31 @@ class AiDashboardService
     public function getDemandZones(): array
     {
         return $this->remember('dashboard.ai.demand_zones', 90, function (): array {
-            $payload = [
-                'city' => 'Kigali',
-                'hour' => now()->hour,
-                'day_of_week' => now()->dayOfWeek,
-            ];
-
-            $response = $this->client()->post('/predict/demand', $payload);
-
-            if (! $response->successful()) {
-                return $this->fallbackDemandZones();
-            }
-
-            $zones = $response->json('zones');
-
-            if (! is_array($zones) || $zones === []) {
-                return $this->fallbackDemandZones();
-            }
-
-            return collect($zones)
-                ->filter(fn (mixed $zone): bool => is_array($zone))
+            return collect($this->majorDemandZones())
                 ->map(function (array $zone): array {
+                    $response = $this->mlClient()->post('/ml/predict-demand', [
+                        'latitude' => $zone['latitude'],
+                        'longitude' => $zone['longitude'],
+                        'hour' => now()->hour,
+                        'day_of_week' => now()->dayOfWeek,
+                    ]);
+
+                    if (! $response->successful()) {
+                        return null;
+                    }
+
+                    $score = (float) ($response->json('demand_level') ?? 0);
+
                     return [
-                        'zone' => (string) ($zone['zone'] ?? $zone['name'] ?? 'Unknown'),
-                        'level' => strtoupper((string) ($zone['level'] ?? 'MEDIUM')),
-                        'score' => (float) ($zone['score'] ?? 0),
+                        'zone' => $zone['name'],
+                        'level' => $this->demandLevelLabel($score),
+                        'score' => $score,
                     ];
                 })
+                ->filter()
                 ->take(8)
                 ->values()
-                ->all();
+                ->all() ?: $this->fallbackDemandZones();
         }, $this->fallbackDemandZones());
     }
 
@@ -130,6 +125,19 @@ class AiDashboardService
             );
     }
 
+    private function mlClient()
+    {
+        return $this->http
+            ->baseUrl(rtrim((string) config('services.ml_service.url', 'https://ml-service-j72g.onrender.com'), '/'))
+            ->acceptJson()
+            ->asJson()
+            ->timeout((int) config('services.ml_service.timeout', 8))
+            ->when(
+                filled(config('services.ml_service.api_key')),
+                fn ($client) => $client->withHeader('X-API-Key', (string) config('services.ml_service.api_key'))
+            );
+    }
+
     /**
      * @template T
      * @param T $fallback
@@ -156,6 +164,27 @@ class AiDashboardService
             ['zone' => 'Remera', 'level' => 'MEDIUM', 'score' => 0.58],
             ['zone' => 'Kimironko', 'level' => 'MEDIUM', 'score' => 0.54],
         ];
+    }
+
+    /**
+     * @return array<int, array{name: string, latitude: float, longitude: float}>
+     */
+    private function majorDemandZones(): array
+    {
+        return [
+            ['name' => 'Kigali CBD', 'latitude' => -1.9441, 'longitude' => 30.0619],
+            ['name' => 'Remera', 'latitude' => -1.9579, 'longitude' => 30.1127],
+            ['name' => 'Kimironko', 'latitude' => -1.9367, 'longitude' => 30.1304],
+        ];
+    }
+
+    private function demandLevelLabel(float $score): string
+    {
+        return match (true) {
+            $score >= 0.75 => 'HIGH',
+            $score >= 0.45 => 'MEDIUM',
+            default => 'LOW',
+        };
     }
 
     /**

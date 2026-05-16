@@ -4,6 +4,7 @@ use App\Jobs\ProcessDailySettlementJob;
 use App\Jobs\ProcessOutboxJob;
 use App\Jobs\NightlyWarehouseEtlJob;
 use App\Jobs\CleanupStaleDriverLocations;
+use App\Jobs\PollDemandPredictionsJob;
 use Carbon\Carbon;
 use Illuminate\Foundation\Inspiring;
 use Illuminate\Support\Facades\Artisan;
@@ -52,6 +53,13 @@ Schedule::command('ai:retrain-models')
     ->onOneServer()
     ->name('ai-retrain-models');
 
+// Poll production demand forecasts for key Kigali zones.
+Schedule::job(new PollDemandPredictionsJob())
+    ->everyFiveMinutes()
+    ->withoutOverlapping()
+    ->onOneServer()
+    ->name('poll-ml-demand-predictions');
+
 // Clean up stale driver locations every 5 minutes
 Schedule::job(new CleanupStaleDriverLocations())
     ->everyFiveMinutes()
@@ -63,4 +71,3 @@ Schedule::command('rides:promote-bookings-to-trips')
     ->withoutOverlapping()
     ->onOneServer()
     ->name('sync-travel-categories');
-

@@ -7,7 +7,6 @@ use App\Services\DemandPredictionService;
 use App\Services\MlService;
 use Filament\Pages\Page;
 use Illuminate\Contracts\Support\Htmlable;
-use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 
 class AIInsightsPage extends Page
@@ -34,7 +33,7 @@ class AIInsightsPage extends Page
 
     public string $mlServiceUrl = '';
 
-    public array $mlDemandInputSequence = [];
+    public array $mlDemandPayload = [];
 
     public array $mlServiceHealth = [];
 
@@ -118,25 +117,22 @@ class AIInsightsPage extends Page
         try {
             $mlService = app(MlService::class);
             $this->mlServiceHealth = $mlService->health();
-            $this->mlDemandInputSequence = $this->buildDemandInputSequence();
+            $this->mlDemandPayload = $this->buildDemandPayload();
 
             Log::info('Fetching demand prediction from ML service', [
                 'base_url' => $this->mlServiceUrl,
-                'features' => $this->mlDemandInputSequence,
+                'payload' => $this->mlDemandPayload,
             ]);
 
-            $response = $mlService->predictDemand($this->mlDemandInputSequence);
-            $predictedDemand = $response['data']['predicted_demand'] ?? [];
-            $forecastValue = is_array($predictedDemand)
-                ? (float) ($predictedDemand[0] ?? 0)
-                : (float) $predictedDemand;
+            $response = $mlService->predictDemand($this->mlDemandPayload);
+            $forecastValue = (float) ($response['data']['demand_level'] ?? 0);
 
-            if ($response && !empty($predictedDemand)) {
+            if (($response['success'] ?? false) && $forecastValue > 0) {
                 $this->mlDemandPrediction = [
                     'source' => 'ml-service',
                     'predicted_demand' => $forecastValue,
-                    'predicted_demand_raw' => $predictedDemand,
-                    'input_sequence' => $this->mlDemandInputSequence,
+                    'predicted_demand_raw' => $response['data'],
+                    'input_payload' => $this->mlDemandPayload,
                     'timestamp' => now()->toIso8601String(),
                 ];
                 $this->demandPredictionStatus = 'success';
@@ -152,7 +148,7 @@ class AIInsightsPage extends Page
                     'source' => 'local-fallback',
                     'predicted_demand' => $fallbackIntensity,
                     'predicted_demand_raw' => $fallback->values()->all(),
-                    'input_sequence' => $this->mlDemandInputSequence,
+                    'input_payload' => $this->mlDemandPayload,
                     'remote_error' => $response['error'] ?? 'Unknown error',
                     'timestamp' => now()->toIso8601String(),
                 ];
@@ -172,33 +168,23 @@ class AIInsightsPage extends Page
                 'source' => 'local-fallback',
                 'predicted_demand' => $fallbackIntensity,
                 'predicted_demand_raw' => $fallback->values()->all(),
-                'input_sequence' => $this->mlDemandInputSequence,
+                'input_payload' => $this->mlDemandPayload,
                 'error' => $e->getMessage(),
                 'timestamp' => now()->toIso8601String(),
             ];
         }
     }
 
-    private function buildDemandInputSequence(): array
+    private function buildDemandPayload(): array
     {
-        $currentHour = now('Africa/Kigali')->hour;
-        $windowStart = now('Africa/Kigali')->subHours(8)->startOfHour();
+        $now = now('Africa/Kigali');
 
-        $countsByHour = DB::table('trips')
-            ->selectRaw("date_trunc('hour', created_at) as hour_bucket, count(*) as trip_count")
-            ->where('created_at', '>=', $windowStart)
-            ->groupByRaw("date_trunc('hour', created_at)")
-            ->pluck('trip_count', 'hour_bucket');
-
-        $sequence = [];
-        for ($offset = 7; $offset >= 0; $offset--) {
-            $bucket = now('Africa/Kigali')->copy()->subHours($offset)->startOfHour()->toDateTimeString();
-            $sequence[] = (float) ($countsByHour[$bucket] ?? 0);
-        }
-
-        $maxValue = max(1.0, max($sequence));
-
-        return array_map(static fn (float $value): float => round($value / $maxValue, 4), $sequence);
+        return [
+            'latitude' => -1.9579,
+            'longitude' => 30.1127,
+            'hour' => $now->hour,
+            'day_of_week' => $now->dayOfWeek,
+        ];
     }
 
     private function resolveMlServiceUrl(): string

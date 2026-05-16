@@ -5,6 +5,7 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\SoftDeletes;
+use Illuminate\Support\Str;
 
 class Driver extends Model
 {
@@ -16,6 +17,7 @@ class Driver extends Model
         'license_plate',
         'status',
         'availability_status',
+        'is_test',
         'current_latitude',
         'current_longitude',
         'last_online_at',
@@ -35,6 +37,7 @@ class Driver extends Model
         'approved_at' => 'datetime',
         'total_rides' => 'integer',
         'rating_count' => 'integer',
+        'is_test' => 'boolean',
     ];
 
     public function user()
@@ -65,5 +68,14 @@ class Driver extends Model
     public function commissions()
     {
         return $this->hasMany(PlatformCommission::class);
+    }
+
+    protected static function booted(): void
+    {
+        static::saving(function (Driver $driver): void {
+            if (Str::startsWith((string) $driver->license_number, 'TEST_RANKER_')) {
+                $driver->is_test = true;
+            }
+        });
     }
 }

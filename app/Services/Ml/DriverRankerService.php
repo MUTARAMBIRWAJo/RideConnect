@@ -7,13 +7,16 @@ use App\Models\Ride;
 use App\Models\Trip;
 use Illuminate\Http\Client\Factory as HttpFactory;
 use Illuminate\Support\Collection;
+use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Log;
 use Throwable;
 
 class DriverRankerService
 {
-    public function __construct(private readonly HttpFactory $http)
-    {
+    public function __construct(
+        private readonly HttpFactory $http,
+        private readonly MlPredictionLogger $predictionLogger,
+    ) {
     }
 
     /**
@@ -37,13 +40,26 @@ class DriverRankerService
 
         try {
             $payload = $this->buildPayload($trip, $drivers);
+            $startedAt = microtime(true);
             $response = $this->client()->post('/ml/rank-drivers', $payload);
+            $latencyMs = $this->predictionLogger->latencyMs($startedAt);
 
             if (! $response->successful()) {
+                $responsePayload = $response->json() ?? ['body' => $response->body()];
+                $this->predictionLogger->log(
+                    modelName: 'DriverRanker',
+                    modelVersion: null,
+                    endpoint: '/ml/rank-drivers',
+                    inputPayload: $payload,
+                    outputPayload: $responsePayload,
+                    latencyMs: $latencyMs,
+                    tripId: $trip->id,
+                );
+
                 Log::warning('ML driver ranking unavailable; using fallback ranking', [
                     'trip_id' => $trip->id,
                     'status' => $response->status(),
-                    'response' => $response->json(),
+                    'response' => $responsePayload,
                 ]);
 
                 return $this->fallbackRank($drivers, 'ml_unavailable');
@@ -53,6 +69,16 @@ class DriverRankerService
             $bestDriverId = $data['best_driver']['driver_id'] ?? null;
             $score = $data['best_driver']['score'] ?? null;
             $version = $data['model_version'] ?? null;
+
+            $this->predictionLogger->log(
+                modelName: 'DriverRanker',
+                modelVersion: is_string($version) ? $version : null,
+                endpoint: '/ml/rank-drivers',
+                inputPayload: $payload,
+                outputPayload: $response->json(),
+                latencyMs: $latencyMs,
+                tripId: $trip->id,
+            );
 
             $driver = $drivers->first(fn (Driver $driver): bool => (string) $driver->id === (string) $bestDriverId);
             if (! $driver) {
@@ -79,6 +105,18 @@ class DriverRankerService
                 'source' => 'ml',
             ];
         } catch (Throwable $exception) {
+            if (isset($payload)) {
+                $this->predictionLogger->log(
+                    modelName: 'DriverRanker',
+                    modelVersion: null,
+                    endpoint: '/ml/rank-drivers',
+                    inputPayload: $payload,
+                    outputPayload: ['error' => $exception->getMessage()],
+                    latencyMs: isset($startedAt) ? $this->predictionLogger->latencyMs($startedAt) : null,
+                    tripId: $trip->id,
+                );
+            }
+
             Log::warning('ML driver ranking failed; using fallback ranking', [
                 'trip_id' => $trip->id,
                 'error' => $exception->getMessage(),
@@ -95,16 +133,14 @@ class DriverRankerService
     public function fallbackRank(Collection $drivers, string $source = 'fallback'): array
     {
         $driver = $drivers
-            ->sortBy([
-                fn (Driver $driver): float => (float) ($driver->distance_to_pickup_km ?? PHP_FLOAT_MAX),
-                fn (Driver $driver): float => -1 * (float) ($driver->rating ?? 0),
-            ])
+            ->reject(fn (Driver $driver): bool => (bool) ($driver->is_test ?? false))
+            ->sortBy(fn (Driver $driver): float => (float) ($driver->distance_to_pickup_km ?? PHP_FLOAT_MAX))
             ->first();
 
         return [
             'driver' => $driver,
             'score' => null,
-            'version' => 'fallback:v1',
+            'version' => 'fallback-distance',
             'source' => $source,
         ];
     }
@@ -124,13 +160,20 @@ class DriverRankerService
                 'day_of_week' => (int) $requestedAt->dayOfWeekIso - 1,
             ],
             'candidates' => $drivers->take(20)->map(function (Driver $driver): array {
+                $staticFeatures = Cache::remember(
+                    "ml:driver-ranker:features:{$driver->id}:{$driver->updated_at?->timestamp}",
+                    now()->addMinutes(10),
+                    fn (): array => [
+                        'driver_rating' => (float) ($driver->rating ?? 0),
+                        'acceptance_rate' => $this->acceptanceRate($driver),
+                        'vehicle_type' => $this->rankerVehicleType((string) ($driver->ranker_vehicle_type ?? 'sedan')),
+                    ],
+                );
+
                 return [
                     'driver_id' => (string) $driver->id,
                     'distance_to_pickup_km' => round((float) ($driver->distance_to_pickup_km ?? 999.0), 4),
-                    'driver_rating' => (float) ($driver->rating ?? 0),
-                    'acceptance_rate' => $this->acceptanceRate($driver),
-                    'vehicle_type' => $this->rankerVehicleType((string) ($driver->ranker_vehicle_type ?? 'sedan')),
-                ];
+                ] + $staticFeatures;
             })->values()->all(),
         ];
     }
@@ -166,8 +209,7 @@ class DriverRankerService
             ->baseUrl($baseUrl)
             ->acceptJson()
             ->asJson()
-            ->timeout((float) config('services.ml_service.timeout', 10))
-            ->retry(2, 200, throw: false);
+            ->timeout((float) config('services.ml_service.ranker_timeout', 0.7));
 
         if ($apiKey !== '') {
             $client = $client->withHeader('X-API-Key', $apiKey);

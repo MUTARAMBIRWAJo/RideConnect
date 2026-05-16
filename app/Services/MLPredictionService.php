@@ -1,4 +1,8 @@
-"""ML Prediction Service for Laravel integration"""
+<?php
+
+/**
+ * ML Prediction Service for Laravel integration.
+ */
 
 namespace App\Services;
 
@@ -22,7 +26,7 @@ class MLPredictionService
     const SERVICE_NAME = 'ml-service';
     const HEALTH_ENDPOINT = '/health';
     const MATCH_DRIVER_ENDPOINT = '/predict/match-driver';
-    const PREDICT_DEMAND_ENDPOINT = '/predict/demand';
+    const PREDICT_DEMAND_ENDPOINT = '/ml/predict-demand';
     const PREDICT_ETA_ENDPOINT = '/predict/eta';
 
     private string $baseUrl;

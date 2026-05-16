@@ -66,6 +66,8 @@ class DriverAssignmentService
             ->join('users', 'drivers.user_id', '=', 'users.id')
             ->leftJoin('driver_locations', 'users.mobile_user_id', '=', 'driver_locations.driver_id')
             ->where('drivers.status', 'approved')
+            ->where('drivers.license_number', 'not like', 'TEST_RANKER_%')
+            ->where('users.name', 'not like', 'TEST_RANKER_%')
             ->whereHas('vehicles', function ($q) use ($vehicleTypes) {
                 $q->where('is_active', true)
                   ->whereIn('vehicle_type', $vehicleTypes);
@@ -84,6 +86,10 @@ class DriverAssignmentService
                     ->whereIn('status', ['ACCEPTED', 'STARTED', 'COMPLETED']),
                 'trips_accepted_count'
             );
+
+        if (Schema::hasColumn('drivers', 'is_test')) {
+            $query->where('drivers.is_test', false);
+        }
 
         // Filter by proximity if coordinates are available
         if ($trip->pickup_lat && $trip->pickup_lng) {

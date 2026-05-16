@@ -82,7 +82,12 @@ class AiPredictionService
             'payload' => $payload,
         ]);
 
-        $response = $this->post('/predict/demand', $payload);
+        $response = $this->post('/ml/predict-demand', [
+            'latitude' => (float) ($payload['latitude'] ?? $payload['lat'] ?? -1.944),
+            'longitude' => (float) ($payload['longitude'] ?? $payload['lng'] ?? 30.061),
+            'hour' => (int) ($payload['hour'] ?? $payload['time_of_day'] ?? now()->hour),
+            'day_of_week' => (int) ($payload['day_of_week'] ?? now()->dayOfWeek),
+        ]);
         
         Log::debug('ML service demand prediction response', [
             'response' => $response,

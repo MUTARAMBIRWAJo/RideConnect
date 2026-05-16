@@ -27,6 +27,8 @@ class DriverLocationController extends Controller
             'heading' => 'nullable|numeric|between:0,360',
             'accuracy' => 'nullable|numeric|min:0|max:1000',
             'is_online' => 'nullable|boolean',
+            'route_deviation_meters' => 'nullable|numeric|min:0|max:10000',
+            'trip_id' => 'nullable|integer|exists:trips,id',
         ]);
 
         $location = $this->locationService->updateLocation(
@@ -37,6 +39,8 @@ class DriverLocationController extends Controller
             heading: isset($validated['heading']) ? (float) $validated['heading'] : null,
             accuracy: isset($validated['accuracy']) ? (float) $validated['accuracy'] : null,
             isOnline: $validated['is_online'] ?? true,
+            routeDeviationMeters: isset($validated['route_deviation_meters']) ? (float) $validated['route_deviation_meters'] : null,
+            tripId: isset($validated['trip_id']) ? (int) $validated['trip_id'] : null,
         );
 
         $this->trainingDataLogger->logDriverLocation(

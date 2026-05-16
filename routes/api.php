@@ -301,8 +301,10 @@ Route::prefix('v1')->group(function () {
             Route::post('/predict-fare', [MlController::class, 'predictFare']);
             Route::post('/rank-drivers', [MlController::class, 'rankDrivers']);
             Route::post('/predict-demand', [MlController::class, 'predictDemand']);
+            Route::post('/detect-anomaly', [MlController::class, 'detectAnomaly']);
             Route::get('/health', [MlController::class, 'health']);
             Route::post('/reload-models', [MlController::class, 'reloadModels']);
+            Route::post('/retrain', [MlController::class, 'retrain']);
         });
     });
 

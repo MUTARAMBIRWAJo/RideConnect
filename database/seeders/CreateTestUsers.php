@@ -66,7 +66,9 @@ class CreateTestUsers extends Seeder
                     'name' => $userData['name'],
                     'password' => $userData['password'],
                     'role' => $userData['role'],
+                    'is_approved' => true,
                     'is_verified' => true,
+                    'approved_at' => now(),
                     'created_at' => now(),
                     'updated_at' => now(),
                 ]);
@@ -76,6 +78,9 @@ class CreateTestUsers extends Seeder
                     'name' => $userData['name'],
                     'password' => $userData['password'],
                     'role' => $userData['role'],
+                    'is_approved' => true,
+                    'is_verified' => true,
+                    'approved_at' => now(),
                     'updated_at' => now(),
                 ]);
                 echo "✓ Updated user: {$email}\n";
