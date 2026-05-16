@@ -129,10 +129,20 @@ class DriverRankerService
                     'distance_to_pickup_km' => round((float) ($driver->distance_to_pickup_km ?? 999.0), 4),
                     'driver_rating' => (float) ($driver->rating ?? 0),
                     'acceptance_rate' => $this->acceptanceRate($driver),
-                    'vehicle_type' => (string) ($driver->ranker_vehicle_type ?? 'sedan'),
+                    'vehicle_type' => $this->rankerVehicleType((string) ($driver->ranker_vehicle_type ?? 'sedan')),
                 ];
             })->values()->all(),
         ];
+    }
+
+    private function rankerVehicleType(string $vehicleType): string
+    {
+        return match (strtolower(trim($vehicleType))) {
+            'suv' => 'suv',
+            'bus', 'coach', 'minibus', 'minivan', 'van' => 'minibus',
+            'boda', 'motorbike', 'motorcycle', 'moto', 'tricycle', 'tuk-tuk' => 'moto',
+            default => 'sedan',
+        };
     }
 
     private function acceptanceRate(Driver $driver): float
