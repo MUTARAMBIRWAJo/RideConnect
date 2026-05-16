@@ -95,6 +95,15 @@ class AnomalyDetectionRequest(BaseModel):
         return self
 
 
+class DemandPredictionRequest(BaseModel):
+    """Compatibility demand request for /ml/predict-demand."""
+
+    latitude: float
+    longitude: float
+    hour: int = Field(..., ge=0, le=23)
+    day_of_week: int = Field(..., ge=0, le=6)
+
+
 def _request_id(request: Request) -> str | None:
     try:
         return get_request_id()
@@ -221,6 +230,30 @@ async def rank_drivers(payload: DriverRankerRequest, request: Request) -> dict[s
             exc_info=True,
         )
         raise HTTPException(status_code=500, detail="driver ranking inference failed") from exc
+
+
+@router.post("/predict-demand")
+async def predict_demand(payload: DemandPredictionRequest) -> dict[str, float | int]:
+    """Compatibility demand forecast alias for Laravel and mobile clients."""
+    commute_peak = payload.hour in {7, 8, 9, 17, 18, 19}
+    weekend = payload.day_of_week >= 5
+    kigali_core = -2.05 <= payload.latitude <= -1.85 and 29.95 <= payload.longitude <= 30.20
+
+    demand_level = 0.35
+    if kigali_core:
+        demand_level += 0.20
+    if commute_peak:
+        demand_level += 0.30
+    if weekend:
+        demand_level -= 0.10
+
+    demand_level = max(0.05, min(1.0, demand_level))
+
+    return {
+        "demand_level": float(demand_level),
+        "expected_wait_time_minutes": int(max(2, round(15 - demand_level * 10))),
+        "confidence": 0.72 if kigali_core else 0.60,
+    }
 
 
 @router.post("/detect-anomaly")
