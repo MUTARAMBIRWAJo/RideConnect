@@ -39,6 +39,10 @@ class BehaviorDetectorLoader:
             BehaviorDetectorError: If loading fails
             Exception: If unexpected error occurs
         """
+        self.load()
+
+    def load(self) -> None:
+        """Load the behavior detector artifacts synchronously."""
         try:
             # Check if files exist
             for path, name in [

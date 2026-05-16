@@ -72,6 +72,8 @@ class HealthResponse(BaseModel):
     model_output_shape: Optional[list] = Field(None, description="Model output shape")
     scaler_loaded: bool = Field(..., description="Whether scaler is loaded")
     behavior_model_loaded: bool = Field(False, description="Whether behavior detector is loaded")
+    driver_ranker_loaded: bool = Field(False, description="Whether driver ranker is loaded")
+    driver_ranker: dict = Field(default_factory=dict, description="Driver ranker metadata")
     tensorflow_version: Optional[str] = Field(None, description="TensorFlow version")
     uptime_seconds: float = Field(0.0, description="Service uptime in seconds")
     available_devices: list[str] = Field(default_factory=list, description="Available TensorFlow devices")
