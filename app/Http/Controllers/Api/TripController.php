@@ -103,8 +103,8 @@ class TripController extends Controller
         $trips = $query->orderBy('created_at', 'desc')->get();
 
         return response()->json([
-            'success' => true,
-            'data' => $trips->map(fn ($trip) => [
+                'success' => true,
+                'data' => $trips->map(fn ($trip) => [
                 'id' => $trip->id,
                 'booking_id' => $trip->booking_id,
                 'ride_id' => $trip->ride_id,
@@ -117,7 +117,13 @@ class TripController extends Controller
                     'name' => $trip->driver?->name,
                 ],
                 'pickup_location' => $trip->pickup_location,
+                'pickup_place_name' => $trip->pickup_place_name,
+                'pickup_lat' => $trip->pickup_lat,
+                'pickup_lng' => $trip->pickup_lng,
                 'dropoff_location' => $trip->dropoff_location,
+                'dropoff_place_name' => $trip->dropoff_place_name,
+                'dropoff_lat' => $trip->dropoff_lat,
+                'dropoff_lng' => $trip->dropoff_lng,
                 'fare' => $trip->fare,
                 'status' => $trip->status,
                 'trip_state' => $trip->status,
@@ -170,9 +176,11 @@ class TripController extends Controller
                     'phone' => $trip->driver?->phone,
                 ],
                 'pickup_location' => $trip->pickup_location,
+                'pickup_place_name' => $trip->pickup_place_name,
                 'pickup_lat' => $trip->pickup_lat,
                 'pickup_lng' => $trip->pickup_lng,
                 'dropoff_location' => $trip->dropoff_location,
+                'dropoff_place_name' => $trip->dropoff_place_name,
                 'dropoff_lat' => $trip->dropoff_lat,
                 'dropoff_lng' => $trip->dropoff_lng,
                 'fare' => $trip->fare,
@@ -211,9 +219,11 @@ class TripController extends Controller
             'pickup_location' => 'required|string|min:3',
             'pickup_lat' => 'required|numeric|between:-90,90',
             'pickup_lng' => 'required|numeric|between:-180,180',
+            'pickup_place_name' => 'nullable|string|max:255',
             'dropoff_location' => 'required|string|min:3',
             'dropoff_lat' => 'required|numeric|between:-90,90',
             'dropoff_lng' => 'required|numeric|between:-180,180',
+            'dropoff_place_name' => 'nullable|string|max:255',
             'fare' => 'required|numeric|min:0',
         ]);
 
@@ -230,7 +240,18 @@ class TripController extends Controller
 
         $ride = Ride::query()->with('driver.vehicles')->findOrFail((int) $validated['ride_id']);
 
-        // ❌ Enforce: BUS trips MUST come from booking only
+        // Enforce transport-type and travel-mode structural invariants first
+        try {
+            RidePolicy::assertTransportRules($ride);
+        } catch (DomainException $e) {
+            return response()->json([
+                'success' => false,
+                'message' => $e->getMessage(),
+                'error_code' => $e->getErrorCode(),
+            ], 422);
+        }
+
+        // ❌ BUS trips MUST come from booking — use POST /api/passenger/trips/create-from-booking
         if ($ride->isBus()) {
             return response()->json([
                 'success' => false,
@@ -239,7 +260,7 @@ class TripController extends Controller
             ], 422);
         }
 
-        // ❌ Enforce: SCHEDULED rides must use booking flow
+        // ❌ SCHEDULED rides must use booking flow — use POST /api/passenger/trips/create-from-booking
         if ($ride->isScheduled()) {
             return response()->json([
                 'success' => false,
@@ -248,9 +269,8 @@ class TripController extends Controller
             ], 422);
         }
 
+        // ❌ Only private on-demand (CAR/MOTORCYCLE + ON_DEMAND) may create trips directly
         try {
-            // Enforce transport rules first
-            RidePolicy::assertTransportRules($ride);
             RidePolicy::assertTripAllowed($ride);
         } catch (DomainException $e) {
             return response()->json([
@@ -394,9 +414,11 @@ class TripController extends Controller
             'passenger_id' => $passengerMobileUserId,
             'driver_id' => null,
             'pickup_location' => $booking->pickup_address ?: $booking->ride?->origin_address,
+            'pickup_place_name' => $booking->pickup_address ?: $booking->ride?->origin_address,
             'pickup_lat' => $booking->pickup_lat ?: $booking->ride?->origin_lat,
             'pickup_lng' => $booking->pickup_lng ?: $booking->ride?->origin_lng,
             'dropoff_location' => $booking->dropoff_address ?: $booking->ride?->destination_address,
+            'dropoff_place_name' => $booking->dropoff_address ?: $booking->ride?->destination_address,
             'dropoff_lat' => $booking->dropoff_lat ?: $booking->ride?->destination_lat,
             'dropoff_lng' => $booking->dropoff_lng ?: $booking->ride?->destination_lng,
             'fare' => $booking->total_price,
@@ -726,7 +748,13 @@ class TripController extends Controller
                     'name' => $trip->driver?->name,
                 ],
                 'pickup_location' => $trip->pickup_location,
+                'pickup_place_name' => $trip->pickup_place_name,
+                'pickup_lat' => $trip->pickup_lat,
+                'pickup_lng' => $trip->pickup_lng,
                 'dropoff_location' => $trip->dropoff_location,
+                'dropoff_place_name' => $trip->dropoff_place_name,
+                'dropoff_lat' => $trip->dropoff_lat,
+                'dropoff_lng' => $trip->dropoff_lng,
                 'fare' => $trip->fare,
                 'status' => $trip->status,
                 'trip_state' => $trip->status,
@@ -759,9 +787,11 @@ class TripController extends Controller
                     'phone' => $trip->passenger?->phone,
                 ],
                 'pickup_location' => $trip->pickup_location,
+                'pickup_place_name' => $trip->pickup_place_name,
                 'pickup_lat' => $trip->pickup_lat,
                 'pickup_lng' => $trip->pickup_lng,
                 'dropoff_location' => $trip->dropoff_location,
+                'dropoff_place_name' => $trip->dropoff_place_name,
                 'dropoff_lat' => $trip->dropoff_lat,
                 'dropoff_lng' => $trip->dropoff_lng,
                 'fare' => $trip->fare,

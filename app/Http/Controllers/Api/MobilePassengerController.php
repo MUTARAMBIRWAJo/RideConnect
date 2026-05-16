@@ -179,9 +179,11 @@ class MobilePassengerController extends Controller
             'pickup_location' => 'required|string|min:3',
             'pickup_lat' => 'required|numeric|between:-90,90',
             'pickup_lng' => 'required|numeric|between:-180,180',
+            'pickup_place_name' => 'nullable|string|max:255',
             'dropoff_location' => 'required|string|min:3',
             'dropoff_lat' => 'required|numeric|between:-90,90',
             'dropoff_lng' => 'required|numeric|between:-180,180',
+            'dropoff_place_name' => 'nullable|string|max:255',
         ]);
 
         if ($validator->fails()) {
@@ -213,17 +215,19 @@ class MobilePassengerController extends Controller
 
         // Create trip
         $trip = new Trip([
-            'ride_id' => $validated['ride_id'] ?? null,
-            'passenger_id' => $passengerMobileUserId,
-            'pickup_location' => $validated['pickup_location'],
-            'pickup_lat' => $validated['pickup_lat'],
-            'pickup_lng' => $validated['pickup_lng'],
-            'dropoff_location' => $validated['dropoff_location'],
-            'dropoff_lat' => $validated['dropoff_lat'],
-            'dropoff_lng' => $validated['dropoff_lng'],
-            'fare' => 0, // Will be calculated
-            'status' => 'PENDING',
-            'requested_at' => now(),
+            'ride_id'            => $validated['ride_id'] ?? null,
+            'passenger_id'       => $passengerMobileUserId,
+            'pickup_location'    => $validated['pickup_location'],
+            'pickup_place_name'  => $validated['pickup_place_name'] ?? null,
+            'pickup_lat'         => $validated['pickup_lat'],
+            'pickup_lng'         => $validated['pickup_lng'],
+            'dropoff_location'   => $validated['dropoff_location'],
+            'dropoff_place_name' => $validated['dropoff_place_name'] ?? null,
+            'dropoff_lat'        => $validated['dropoff_lat'],
+            'dropoff_lng'        => $validated['dropoff_lng'],
+            'fare'               => $validated['fare'] ?? 0,
+            'status'             => 'PENDING',
+            'requested_at'       => now(),
         ]);
 
         $trip->validateForExecution();

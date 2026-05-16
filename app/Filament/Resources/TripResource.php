@@ -41,58 +41,52 @@ class TripResource extends Resource
             ->schema([
                 Forms\Components\Section::make('Trip Details')
                     ->schema([
-                        Forms\Components\Select::make('transport_type')
-                            ->label('Transport Type')
-                            ->options([
-                                'BUS' => '🚌 Bus (Public Transport)',
-                                'CAR' => '🚗 Private Car',
-                                'MOTORCYCLE' => '🏍 Motorcycle',
-                            ])
-                            ->reactive()
-                            ->afterStateUpdated(fn (callable $set) => $set('ride_id', null))
-                            ->helperText('Filter rides by transport type to find eligible options.'),
                         Forms\Components\Select::make('ride_id')
                             ->label('Select Ride')
                             ->searchable()
                             ->live()
                             ->required()
                             ->options(function (callable $get): array {
-                                $transportType = $get('transport_type');
-
                                 return Ride::query()
-                                    ->when($transportType, function (EloquentBuilder $query, $type): EloquentBuilder {
-                                        return $query->where('transport_type', $type);
-                                    })
+                                    // Only public transport (BUS / SCHEDULED + route) rides may appear
+                                    // in the trip creation dropdown.
+                                    ->where('transport_type', Ride::TRANSPORT_BUS)
+                                    ->where('travel_mode',   Ride::MODE_SCHEDULED)
+                                    ->whereNotNull('route_id')
                                     ->orderBy('origin_address', 'asc')
                                     ->orderBy('destination_address', 'asc')
                                     ->get()
                                     ->mapWithKeys(fn (Ride $ride): array => [
                                         $ride->id => sprintf(
-                                            '%s → %s | %s',
-                                            $ride->origin_address ?? 'Unknown',
+                                            '%s → %s | Route #%s',
+                                            $ride->origin_address      ?? 'Unknown',
                                             $ride->destination_address ?? 'Unknown',
-                                            $ride->transport_type
+                                            $ride->route_id
                                         ),
                                     ])
                                     ->all();
                             })
-                            ->helperText('Search and select a ride to check eligibility. Rides are sorted alphabetically by origin and destination.')
-                            ->rule(function ($get) {
-                                $rideId = $get('ride_id');
-
-                                if (! $rideId) {
-                                    return null;
+                            ->helperText('Only BUS public-transport rides are shown. Private transport (CAR/MOTO) cannot create trips directly.')
+                            ->rules(function (string $attribute, mixed $value, Closure $fail) use ($get): void {
+                                if (! $value) {
+                                    return;
                                 }
 
-                                $ride = Ride::find($rideId);
+                                $ride = Ride::query()->with('driver.vehicles')->find((int) $value);
 
                                 if (! $ride) {
-                                    return null;
+                                    $fail('The selected ride no longer exists.');
+
+                                    return;
                                 }
 
-                                return RidePolicy::canRequestTrip($ride)
-                                    ? null
-                                    : 'Selected ride cannot be used for trip requests. Choose an on-demand ride.';
+                                // Enforce: only public-transport (BUS + SCHEDULED + route) in trip form
+                                if (! RidePolicy::isPublicTransport($ride)) {
+                                    $fail(
+                                        'Only BUS public-transport rides linked to a scheduled route can be used to create trips. '
+                                        . 'CAR and MOTORCYCLE rides must use the booking / request flow.'
+                                    );
+                                }
                             })
                             ->afterStateUpdated(function ($state, callable $set, callable $get): void {
                                 if (! $state) {
@@ -122,12 +116,14 @@ class TripResource extends Resource
                                     $set('pickup_location', $ride->origin_address);
                                     $set('pickup_lat', $ride->origin_lat);
                                     $set('pickup_lng', $ride->origin_lng);
+                                    $set('pickup_place_name', $ride->origin_address ?? null);
                                 }
 
                                 if (! $get('dropoff_location')) {
                                     $set('dropoff_location', $ride->destination_address);
                                     $set('dropoff_lat', $ride->destination_lat);
                                     $set('dropoff_lng', $ride->destination_lng);
+                                    $set('dropoff_place_name', $ride->destination_address ?? null);
                                 }
                             }),
                         Forms\Components\Placeholder::make('ride_trip_rule')
@@ -146,10 +142,10 @@ class TripResource extends Resource
                                 }
 
                                 return sprintf(
-                                    'Ride %s (%s) is %s for trip requests.',
+                                    'Ride %s (%s) is %s.',
                                     $ride->id,
                                     $ride->transport_type,
-                                    RidePolicy::canRequestTrip($ride) ? 'eligible' : 'not eligible'
+                                    RidePolicy::isPublicTransport($ride) ? 'public transport — eligible for trip creation' : 'private — not eligible for direct trips'
                                 );
                             })
                             ->columnSpanFull(),
@@ -309,80 +305,41 @@ class TripResource extends Resource
                             ->default(0)
                             ->helperText('Automatically set from the selected booking or ride. Keep this value if you override manually.')
                             ->live(onBlur: true),
-                        Forms\Components\Select::make('pickup_map_point')
-                            ->label('Pickup Map Point')
-                            ->options(fn (): array => collect(config('ride.map_points', []))
-                                ->mapWithKeys(fn (array $point, string $key): array => [$key => $point['label'] ?? $key])
-                                ->all())
-                            ->searchable()
-                            ->dehydrated(false)
-                            ->live()
-                            ->afterStateUpdated(function ($state, callable $set): void {
-                                $point = config('ride.map_points.'.(string) $state);
 
-                                if (! is_array($point)) {
-                                    return;
-                                }
-
-                                $set('pickup_location', $point['label'] ?? null);
-                                $set('pickup_lat', $point['lat'] ?? null);
-                                $set('pickup_lng', $point['lng'] ?? null);
-                            }),
-                        Forms\Components\View::make('filament.forms.components.address-autocomplete')
+                        /* ================================================================
+                             LOCATION INPUTS — exclusive search-or-map UX
+                             Users either search by place name OR pick from a map, never both.
+                             ================================================================ */
+                        Forms\Components\View::make('filament.forms.components.location-input')
                             ->viewData([
-                                'addressField' => 'pickup_location',
-                                'latField' => 'pickup_lat',
-                                'lngField' => 'pickup_lng',
-                                'label' => 'Pickup Location',
-                                'placeholder' => 'Enter pickup address...',
+                                'addressField'   => 'pickup_location',
+                                'latField'       => 'pickup_lat',
+                                'lngField'       => 'pickup_lng',
+                                'placeNameField' => 'pickup_place_name',
+                                'label'          => 'Pickup Location',
+                                'placeholder'    => 'Search pickup by name, or switch to map mode…',
                             ])
                             ->columnSpanFull(),
-                        Forms\Components\TextInput::make('pickup_location')
-                            ->hidden()
-                            ->required(),
-                        Forms\Components\TextInput::make('pickup_lat')
-                            ->hidden()
-                            ->required(),
-                        Forms\Components\TextInput::make('pickup_lng')
-                            ->hidden()
-                            ->required(),
-                        Forms\Components\Select::make('dropoff_map_point')
-                            ->label('Dropoff Map Point')
-                            ->options(fn (): array => collect(config('ride.map_points', []))
-                                ->mapWithKeys(fn (array $point, string $key): array => [$key => $point['label'] ?? $key])
-                                ->all())
-                            ->searchable()
-                            ->dehydrated(false)
-                            ->live()
-                            ->afterStateUpdated(function ($state, callable $set): void {
-                                $point = config('ride.map_points.'.(string) $state);
+                        Forms\Components\Hidden::make('pickup_location'),
+                        Forms\Components\Hidden::make('pickup_lat'),
+                        Forms\Components\Hidden::make('pickup_lng'),
+                        Forms\Components\Hidden::make('pickup_place_name'),
 
-                                if (! is_array($point)) {
-                                    return;
-                                }
-
-                                $set('dropoff_location', $point['label'] ?? null);
-                                $set('dropoff_lat', $point['lat'] ?? null);
-                                $set('dropoff_lng', $point['lng'] ?? null);
-                            }),
-                        Forms\Components\View::make('filament.forms.components.address-autocomplete')
+                        Forms\Components\View::make('filament.forms.components.location-input')
                             ->viewData([
-                                'addressField' => 'dropoff_location',
-                                'latField' => 'dropoff_lat',
-                                'lngField' => 'dropoff_lng',
-                                'label' => 'Dropoff Location',
-                                'placeholder' => 'Enter dropoff address...',
+                                'addressField'   => 'dropoff_location',
+                                'latField'       => 'dropoff_lat',
+                                'lngField'       => 'dropoff_lng',
+                                'placeNameField' => 'dropoff_place_name',
+                                'label'          => 'Dropoff Location',
+                                'placeholder'    => 'Search dropoff by name, or switch to map mode…',
                             ])
                             ->columnSpanFull(),
-                        Forms\Components\TextInput::make('dropoff_location')
-                            ->hidden()
-                            ->required(),
-                        Forms\Components\TextInput::make('dropoff_lat')
-                            ->hidden()
-                            ->required(),
-                        Forms\Components\TextInput::make('dropoff_lng')
-                            ->hidden()
-                            ->required(),
+                        Forms\Components\Hidden::make('dropoff_location'),
+                        Forms\Components\Hidden::make('dropoff_lat'),
+                        Forms\Components\Hidden::make('dropoff_lng'),
+                        Forms\Components\Hidden::make('dropoff_place_name'),
+
                         Forms\Components\Select::make('status')
                             ->options([
                                 'PENDING' => 'Pending',
@@ -445,6 +402,10 @@ class TripResource extends Resource
                 Tables\Columns\TextColumn::make('pickup_location')
                     ->label('Pickup Location')
                     ->limit(30),
+                Tables\Columns\TextColumn::make('pickup_place_name')
+                    ->label('Pickup Place')
+                    ->limit(30)
+                    ->toggleable(isToggledHiddenByDefault: true),
                 Tables\Columns\TextColumn::make('dropoff_location')
                     ->label('Dropoff Location')
                     ->limit(30),

@@ -63,10 +63,10 @@ class RidePolicy
      * Get the allowed passenger flow for this ride.
      *
      * Maps transport_type and travel_mode to the allowed action:
-     * - BUS (SCHEDULED) → BOOKING_ONLY
-     * - CAR (SCHEDULED) → BOOKING_ONLY
-     * - CAR (ON_DEMAND) → TRIP_ONLY
-     * - MOTORCYCLE (ON_DEMAND) → TRIP_ONLY
+     * - BUS (SCHEDULED, has route)  → BOOKING_ONLY
+     * - CAR (SCHEDULED)             → BOOKING_ONLY
+     * - CAR (ON_DEMAND)             → TRIP_ONLY
+     * - MOTORCYCLE (ON_DEMAND)      → TRIP_ONLY
      *
      * @return string One of: BOOKING_ONLY, TRIP_ONLY, BOTH, NONE
      */
@@ -112,6 +112,86 @@ class RidePolicy
         return self::FLOW_NONE;
     }
 
+    // ================================================================
+    // PUBLIC / PRIVATE TRANSPORT CLASSIFICATION
+    // ================================================================
+
+    /**
+     * Is this ride part of the public transport system?
+     *
+     * PUBLIC TRANSPORT = BUS rides operated on scheduled routes.
+     *
+     * Examples:
+     * - BUS / SCHEDULED / route_id > 0  → true
+     * - CAR  / SCHEDULED                → false
+     * - CAR  / ON_DEMAND                → false
+     * - MOTORCYCLE / ON_DEMAND          → false
+     */
+    public static function isPublicTransport(Ride $ride): bool
+    {
+        return $ride->isBus() && $ride->isScheduled() && (int) $ride->route_id > 0;
+    }
+
+    /**
+     * Is this ride part of the private transport system?
+     *
+     * PRIVATE TRANSPORT = CAR or MOTORCYCLE rides.
+     * These use ride requests, AI matching, and booking workflow instead
+     * of direct public trip creation.
+     *
+     * Examples:
+     * - BUS / SCHEDULED                 → false
+     * - CAR  / SCHEDULED                → true
+     * - CAR  / ON_DEMAND                → true
+     * - MOTORCYCLE / ON_DEMAND          → true
+     */
+    public static function isPrivateTransport(Ride $ride): bool
+    {
+        return $ride->isCar() || $ride->isMotorcycle();
+    }
+
+    // ================================================================
+    // FLOW ACCESSOR METHODS
+    // ================================================================
+
+    /**
+     * Can this ride create trips directly (no booking required)?
+     *
+     * Only ON_DEMAND private transport (CAR / MOTORCYCLE) supports direct
+     * trip creation. BUS trips must be created from a booking via
+     * createFromBooking().
+     *
+     * Examples:
+     * - BUS/SCHEDULED       → false  (must use booking flow)
+     * - CAR/SCHEDULED       → false  (must use booking flow)
+     * - CAR/ON_DEMAND       → true   (direct trip via AI/matching)
+     * - MOTORCYCLE/ON_DEMAND → true  (direct trip via AI/matching)
+     */
+    public static function canCreateDirectTrip(Ride $ride): bool
+    {
+        return self::isPrivateTransport($ride) && $ride->isOnDemand();
+    }
+
+    /**
+     * Can this ride be used in a booking workflow?
+     *
+     * SCHEDULED rides (both BUS and CAR) support booking.
+     *
+     * Examples:
+     * - BUS/SCHEDULED / route_id > 0  → true
+     * - CAR/SCHEDULED                 → true
+     * - CAR/ON_DEMAND                 → false
+     * - MOTORCYCLE/ON_DEMAND          → false
+     */
+    public static function canUseBookingFlow(Ride $ride): bool
+    {
+        if ($ride->isBus()) {
+            return $ride->isScheduled() && (int) $ride->route_id > 0;
+        }
+
+        return $ride->isCar() && $ride->isScheduled();
+    }
+
     /**
      * Check if a ride has available seats for reservation.
      */
@@ -149,14 +229,19 @@ class RidePolicy
      *
      * Throws DomainException if trip requests are not allowed.
      *
+     * Only direct-trip-capable rides (private transport ON_DEMAND) pass.
+     * For BUS / SCHEDULED rides, the only valid entrypoint is
+     * createFromBooking() — a direct /trips POST is rejected.
+     *
      *
      * @throws DomainException
      */
     public static function assertTripAllowed(Ride $ride): void
     {
-        if (! self::canRequestTrip($ride)) {
+        if (! self::canCreateDirectTrip($ride)) {
             throw DomainException::make(
-                'Trip requests are only allowed on ON_DEMAND rides',
+                'Trip requests are only allowed for private on-demand rides (CAR/MOTORCYCLE). '
+                . 'BUS and SCHEDULED CAR rides must use the booking flow.',
                 'TRIP_NOT_ALLOWED_FOR_TRAVEL_MODE'
             );
         }

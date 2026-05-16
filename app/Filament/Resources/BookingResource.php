@@ -130,24 +130,34 @@ class BookingResource extends Resource
                             ])
                             ->all();
                     })
-                    ->helperText('Only rides with SCHEDULED travel mode can be booked.')
-                    ->rule(function ($get) {
-                        $rideId = $get('ride_id');
-
-                        if (! $rideId) {
-                            return null;
+                    ->helperText('Only SCHEDULED rides can be booked. Trip requests go through the Trips panel.')
+                    ->rules(function (string $attribute, mixed $value, \Closure $fail) use ($get): void {
+                        if (! $value) {
+                            return;
                         }
 
-                        $ride = Ride::find($rideId);
+                        $ride = Ride::query()->find((int) $value);
 
                         if (! $ride) {
-                            return null;
+                            $fail('The selected ride no longer exists.');
+                            return;
                         }
 
-                        return RidePolicy::canBook($ride)
-                            ? null
-                            : 'Selected ride cannot be booked. Choose a scheduled ride.';
-                    }),
+                        $transportType = $get('transport_type') ?? $ride->transport_type;
+
+                        if (! RidePolicy::canBook($ride)) {
+                            $fail(
+                                sprintf(
+                                    'Ride "%s – %s" is %s and cannot be booked. '
+                                    . 'Only SCHEDULED rides with an active route support booking.',
+                                    $ride->origin_address,
+                                    $ride->destination_address,
+                                    strtoupper((string) ($ride->travel_mode ?? 'unknown'))
+                                )
+                            );
+                        }
+                    })
+                    ->columnSpanFull(),
                 Forms\Components\Placeholder::make('ride_booking_rule')
                     ->label('Ride Rule')
                     ->content(function ($get) {
@@ -208,18 +218,21 @@ class BookingResource extends Resource
                     ->validationMessages([
                         'rura_compliance' => 'Entered fare does not match RURA legal tariff for this route.',
                     ])
-                    ->rule(function ($get) {
+                    ->rules(function (string $attribute, mixed $value, \Closure $fail) use ($get): void {
                         // Validate against RURA tariff
                         $rideId = $get('ride_id');
                         $seats = $get('seats_booked') ?: 1;
-                        $entered = $get('total_price');
+                        $entered = $value;
+
                         if (! $rideId || ! $entered) {
-                            return null;
+                            return;
                         }
-                        $ride = \App\Models\Ride::find($rideId);
+
+                        $ride = \App\Models\Ride::find((int) $rideId);
                         if (! $ride) {
-                            return null;
+                            return;
                         }
+
                         $origin = ['lat' => $ride->origin_lat, 'lng' => $ride->origin_lng];
                         $destination = ['lat' => $ride->destination_lat, 'lng' => $ride->destination_lng];
                         $zoneService = app(\App\Services\RuraZoneService::class);
@@ -228,95 +241,46 @@ class BookingResource extends Resource
                         $destinationZone = $zoneService->getZoneForCoordinates($destination['lat'], $destination['lng']);
                         $tariffRow = $tariffService->lookupTariff(null, $originZone, $destinationZone, null);
                         $legalFare = is_array($tariffRow) ? (float) ($tariffRow['fare_rwf'] ?? 0) : 0;
+
                         if ($legalFare > 0) {
                             $totalLegal = $legalFare * $seats;
 
-                            return abs(((float) $entered) - $totalLegal) < 0.01 ? null : 'rura_compliance';
+                            if (abs((float) $entered - $totalLegal) >= 0.01) {
+                                $fail('rura_compliance');
+                            }
                         }
-
-                        return null;
                     }),
-                Forms\Components\TextInput::make('currency')
-                    ->required()
-                    ->maxLength(3)
-                    ->default('RWF'),
-                Forms\Components\Select::make('status')
-                    ->options([
-                        'PENDING' => 'Pending',
-                        'CONFIRMED' => 'Confirmed',
-                        'CANCELLED' => 'Cancelled',
-                        'COMPLETED' => 'Completed',
-                    ])
-                    ->default('PENDING')
-                    ->required(),
-                Forms\Components\Select::make('pickup_map_point')
-                    ->label('Pickup Map Point')
-                    ->options(fn (): array => collect(config('ride.map_points', []))
-                        ->mapWithKeys(fn (array $point, string $key): array => [$key => $point['label'] ?? $key])
-                        ->all())
-                    ->searchable()
-                    ->live()
-                    ->dehydrated(false)
-                    ->afterStateUpdated(function ($state, callable $set): void {
-                        $point = config('ride.map_points.'.(string) $state);
-
-                        if (! is_array($point)) {
-                            return;
-                        }
-
-                        $set('pickup_address', $point['label'] ?? null);
-                        $set('pickup_lat', $point['lat'] ?? null);
-                        $set('pickup_lng', $point['lng'] ?? null);
-                    }),
-                Forms\Components\View::make('filament.forms.components.address-autocomplete')
+                /* ================================================================
+                     LOCATION INPUTS — exclusive search-or-map UX for Booking form
+                     ================================================================ */
+                Forms\Components\View::make('filament.forms.components.location-input')
                     ->viewData([
-                        'addressField' => 'pickup_address',
-                        'latField' => 'pickup_lat',
-                        'lngField' => 'pickup_lng',
-                        'label' => 'Pickup Location',
-                        'placeholder' => 'Enter pickup address...',
+                        'addressField'   => 'pickup_address',
+                        'latField'       => 'pickup_lat',
+                        'lngField'       => 'pickup_lng',
+                        'placeNameField' => null,           // booking table has no place_name column
+                        'label'          => 'Pickup Location',
+                        'placeholder'    => 'Search pickup by name, or switch to map mode…',
                     ])
                     ->columnSpanFull(),
-                Forms\Components\TextInput::make('pickup_address')
-                    ->hidden(),
-                Forms\Components\TextInput::make('pickup_lat')
-                    ->hidden(),
-                Forms\Components\TextInput::make('pickup_lng')
-                    ->hidden(),
-                Forms\Components\Select::make('dropoff_map_point')
-                    ->label('Dropoff Map Point')
-                    ->options(fn (): array => collect(config('ride.map_points', []))
-                        ->mapWithKeys(fn (array $point, string $key): array => [$key => $point['label'] ?? $key])
-                        ->all())
-                    ->searchable()
-                    ->live()
-                    ->dehydrated(false)
-                    ->afterStateUpdated(function ($state, callable $set): void {
-                        $point = config('ride.map_points.'.(string) $state);
+                Forms\Components\Hidden::make('pickup_address'),
+                Forms\Components\Hidden::make('pickup_lat'),
+                Forms\Components\Hidden::make('pickup_lng'),
 
-                        if (! is_array($point)) {
-                            return;
-                        }
-
-                        $set('dropoff_address', $point['label'] ?? null);
-                        $set('dropoff_lat', $point['lat'] ?? null);
-                        $set('dropoff_lng', $point['lng'] ?? null);
-                    }),
-                Forms\Components\View::make('filament.forms.components.address-autocomplete')
+                Forms\Components\View::make('filament.forms.components.location-input')
                     ->viewData([
-                        'addressField' => 'dropoff_address',
-                        'latField' => 'dropoff_lat',
-                        'lngField' => 'dropoff_lng',
-                        'label' => 'Dropoff Location',
-                        'placeholder' => 'Enter dropoff address...',
+                        'addressField'   => 'dropoff_address',
+                        'latField'       => 'dropoff_lat',
+                        'lngField'       => 'dropoff_lng',
+                        'placeNameField' => null,           // booking table has no place_name column
+                        'label'          => 'Dropoff Location',
+                        'placeholder'    => 'Search dropoff by name, or switch to map mode…',
                     ])
                     ->columnSpanFull(),
-                Forms\Components\TextInput::make('dropoff_address')
-                    ->hidden(),
-                Forms\Components\TextInput::make('dropoff_lat')
-                    ->hidden(),
-                Forms\Components\TextInput::make('dropoff_lng')
-                    ->hidden(),
+                Forms\Components\Hidden::make('dropoff_address'),
+                Forms\Components\Hidden::make('dropoff_lat'),
+                Forms\Components\Hidden::make('dropoff_lng'),
+
                 Forms\Components\Textarea::make('special_requests'),
                 Forms\Components\DateTimePicker::make('confirmed_at'),
                 Forms\Components\DateTimePicker::make('cancelled_at'),

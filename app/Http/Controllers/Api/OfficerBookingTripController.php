@@ -262,19 +262,21 @@ class OfficerBookingTripController extends Controller
         }
 
         $validated = $request->validate([
-            'passenger_id' => 'required|integer|exists:mobile_users,id',
-            'driver_id' => 'required|integer|exists:drivers,id',
-            'ride_id' => 'required|integer|exists:rides,id',
-            'pickup_location' => 'required|string|max:255',
-            'pickup_lat' => 'required|numeric',
-            'pickup_lng' => 'required|numeric',
-            'pickup_zone' => 'nullable|string|max:100',
-            'dropoff_location' => 'required|string|max:255',
-            'dropoff_lat' => 'required|numeric',
-            'dropoff_lng' => 'required|numeric',
-            'dropoff_zone' => 'nullable|string|max:100',
-            'fare' => 'required|numeric|min:0',
-            'special_requests' => 'nullable|string|max:500',
+            'passenger_id'       => 'required|integer|exists:mobile_users,id',
+            'driver_id'          => 'required|integer|exists:drivers,id',
+            'ride_id'            => 'required|integer|exists:rides,id',
+            'pickup_location'    => 'required|string|max:255',
+            'pickup_place_name'  => 'nullable|string|max:255',
+            'pickup_lat'         => 'required|numeric',
+            'pickup_lng'         => 'required|numeric',
+            'pickup_zone'        => 'nullable|string|max:100',
+            'dropoff_location'   => 'required|string|max:255',
+            'dropoff_place_name' => 'nullable|string|max:255',
+            'dropoff_lat'        => 'required|numeric',
+            'dropoff_lng'        => 'required|numeric',
+            'dropoff_zone'       => 'nullable|string|max:100',
+            'fare'               => 'required|numeric|min:0',
+            'special_requests'   => 'nullable|string|max:500',
         ]);
 
         try {
@@ -290,21 +292,23 @@ class OfficerBookingTripController extends Controller
             }
 
             $trip = Trip::create([
-                'ride_id' => $validated['ride_id'],
-                'passenger_id' => $validated['passenger_id'],
-                'driver_id' => $validated['driver_id'],
-                'pickup_location' => $validated['pickup_location'],
-                'pickup_lat' => $validated['pickup_lat'],
-                'pickup_lng' => $validated['pickup_lng'],
-                'pickup_zone' => $validated['pickup_zone'],
-                'dropoff_location' => $validated['dropoff_location'],
-                'dropoff_lat' => $validated['dropoff_lat'],
-                'dropoff_lng' => $validated['dropoff_lng'],
-                'dropoff_zone' => $validated['dropoff_zone'],
-                'fare' => $validated['fare'],
-                'status' => 'ACCEPTED', // Officer-created trips start as accepted
-                'requested_at' => now(),
-                'accepted_at' => now(),
+                'ride_id'             => $validated['ride_id'],
+                'passenger_id'        => $validated['passenger_id'],
+                'driver_id'           => $validated['driver_id'],
+                'pickup_location'     => $validated['pickup_location'],
+                'pickup_place_name'   => $validated['pickup_place_name'] ?? null,
+                'pickup_lat'          => $validated['pickup_lat'],
+                'pickup_lng'          => $validated['pickup_lng'],
+                'pickup_zone'         => $validated['pickup_zone'],
+                'dropoff_location'    => $validated['dropoff_location'],
+                'dropoff_place_name'  => $validated['dropoff_place_name'] ?? null,
+                'dropoff_lat'         => $validated['dropoff_lat'],
+                'dropoff_lng'         => $validated['dropoff_lng'],
+                'dropoff_zone'        => $validated['dropoff_zone'],
+                'fare'                => $validated['fare'],
+                'status'              => 'ACCEPTED', // Officer-created trips start as accepted
+                'requested_at'        => now(),
+                'accepted_at'         => now(),
             ]);
 
             // Decrement available seats on the ride

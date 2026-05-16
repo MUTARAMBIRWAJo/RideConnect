@@ -9,6 +9,7 @@ use App\Http\Controllers\Api\Admin\RideRouteHistoryController;
 use App\Http\Controllers\Api\Admin\UserApprovalController;
 use App\Http\Controllers\Api\Admin\UserManagementController;
 use App\Http\Controllers\Api\AIController;
+use App\Http\Controllers\Api\LocationApiController;
 use App\Http\Controllers\Api\Analytics\AnalyticsController;
 use App\Http\Controllers\Api\AuthController as ApiAuthController;
 use App\Http\Controllers\Api\BookingController;
@@ -451,6 +452,22 @@ Route::prefix('v1')->group(function () {
         Route::get('/finance', [HealthCheckController::class, 'finance']);
         Route::get('/settlement', [HealthCheckController::class, 'settlement']);
         Route::get('/warehouse', [HealthCheckController::class, 'warehouse']);
+    });
+
+    /* ===========================
+       LOCATION API (Places / Geocoding — all roles)
+       =========================== */
+
+    Route::prefix('locations')->group(function () {
+        // Public — no auth required for geocoding help
+        Route::get('/search', [\App\Http\Controllers\Api\LocationApiController::class, 'search'])
+            ->name('locations.search');
+        Route::get('/place-details', [\App\Http\Controllers\Api\LocationApiController::class, 'placeDetails'])
+            ->name('locations.place_details');
+        Route::get('/reverse-geocode', [\App\Http\Controllers\Api\LocationApiController::class, 'reverseGeocode'])
+            ->name('locations.reverse_geocode');
+        Route::get('/geocode', [\App\Http\Controllers\Api\LocationApiController::class, 'geocode'])
+            ->name('locations.geocode');
     });
 
     /* ===========================
