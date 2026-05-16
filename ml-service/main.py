@@ -15,7 +15,7 @@ from dotenv import load_dotenv
 from fastapi import BackgroundTasks, FastAPI, HTTPException, Request
 from fastapi.exceptions import RequestValidationError
 from fastapi.responses import JSONResponse
-from pydantic import BaseModel, ConfigDict, Field, field_validator
+from pydantic import BaseModel, Field, field_validator, model_validator
 from psycopg2 import pool
 from psycopg2.extras import Json
 
@@ -154,10 +154,17 @@ class DriverRankerCandidate(BaseModel):
 
 
 class RankDriversRequest(BaseModel):
-	model_config = ConfigDict(populate_by_name=True)
-
-	booking_context: DriverRankerBookingContext = Field(..., alias="booking")
+	booking: DriverRankerBookingContext | None = None
+	booking_context: DriverRankerBookingContext | None = None
 	candidates: list[DriverRankerCandidate] = Field(..., min_length=1, max_length=20)
+
+	@model_validator(mode="after")
+	def normalize_booking_context(self) -> "RankDriversRequest":
+		if self.booking_context is None:
+			self.booking_context = self.booking
+		if self.booking_context is None:
+			raise ValueError("booking or booking_context is required")
+		return self
 
 
 class GPSReading(BaseModel):
@@ -169,7 +176,30 @@ class GPSReading(BaseModel):
 
 
 class AnomalyDetectionRequest(BaseModel):
-	gps_reading: GPSReading
+	gps_reading: GPSReading | None = None
+	speed_kmh: float | None = Field(None, ge=0, le=300)
+	acceleration_ms2: float | None = Field(None, ge=-15, le=15)
+	heading_change_degrees: float | None = Field(None, ge=0, le=360)
+	route_deviation_meters: float | None = Field(None, ge=0, le=5000)
+	stop_duration_seconds: float | None = Field(None, ge=0, le=7200)
+
+	@model_validator(mode="after")
+	def normalize_gps_reading(self) -> "AnomalyDetectionRequest":
+		if self.gps_reading is not None:
+			return self
+
+		values = {
+			"speed_kmh": self.speed_kmh,
+			"acceleration_ms2": self.acceleration_ms2,
+			"heading_change_degrees": self.heading_change_degrees,
+			"route_deviation_meters": self.route_deviation_meters,
+			"stop_duration_seconds": self.stop_duration_seconds,
+		}
+		if any(value is None for value in values.values()):
+			raise ValueError("gps_reading or all flat GPS fields are required")
+
+		self.gps_reading = GPSReading(**values)
+		return self
 
 
 class PredictDemandRequest(BaseModel):
