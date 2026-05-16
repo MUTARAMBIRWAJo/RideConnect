@@ -3,10 +3,11 @@ from fastapi import APIRouter, HTTPException
 
 from app.core.config import settings
 from app.core.logging import get_logger
-from app.core.startup import get_model_loader
 from app.core.scaler_manager import get_scaler_manager
 from app.schemas.match_response import HealthResponse
 from app.services.behavior_detector_loader import get_behavior_detector_loader
+from app.services.model_loader import get_model_loader
+from app.services.ranker_loader import get_driver_ranker_loader
 
 logger = get_logger(__name__)
 router = APIRouter(tags=["health"])
@@ -40,6 +41,14 @@ async def health_check() -> HealthResponse:
         except Exception:
             behavior_model_loaded = False
 
+        try:
+            ranker_loader = get_driver_ranker_loader()
+            ranker_info = ranker_loader.get_model_metadata()
+            driver_ranker_loaded = ranker_loader.is_loaded()
+        except Exception:
+            ranker_info = {}
+            driver_ranker_loaded = False
+
         return HealthResponse(
             status="healthy",
             version=settings.APP_VERSION,
@@ -49,6 +58,8 @@ async def health_check() -> HealthResponse:
             model_output_shape=model_info.get("output_shape"),
             scaler_loaded=scaler_loaded,
             behavior_model_loaded=behavior_model_loaded,
+            driver_ranker_loaded=driver_ranker_loaded,
+            driver_ranker=ranker_info,
             tensorflow_version=model_info.get("tensorflow_version"),
             uptime_seconds=model_info.get("uptime_seconds", 0.0),
             available_devices=model_info.get("available_devices", []),

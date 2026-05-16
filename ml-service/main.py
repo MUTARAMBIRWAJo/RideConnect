@@ -8,6 +8,7 @@ from typing import Any
 
 import joblib
 import numpy as np
+import pandas as pd
 import psycopg2
 import tensorflow as tf
 from dotenv import load_dotenv
@@ -17,6 +18,9 @@ from fastapi.responses import JSONResponse
 from pydantic import BaseModel, Field, field_validator
 from psycopg2 import pool
 from psycopg2.extras import Json
+
+from app.services.behavior_detector_loader import BehaviorDetectorLoader
+from app.services.ranker_loader import DriverRankerError, DriverRankerLoader
 
 # -----------------------------------------------------------------------------
 # Environment bootstrapping
@@ -82,6 +86,8 @@ async def validation_exception_handler(request: Request, exc: RequestValidationE
 # Global model references loaded during startup and reload operations.
 fare_estimator: Any = None
 driver_ranker: Any = None
+driver_ranker_loader: DriverRankerLoader | None = None
+behavior_detector_loader: BehaviorDetectorLoader | None = None
 demand_model: Any = None
 
 # V2 LSTM scaler and zone mapping.
@@ -113,7 +119,7 @@ class PredictFareRequest(BaseModel):
 		return value
 
 
-class RankDriversRequest(BaseModel):
+class LegacyRankDriversRequest(BaseModel):
 	# Driver ranker requires exactly 21 feature values.
 	features: list[float] = Field(..., min_length=DRIVER_CONTRACT_FEATURES, max_length=DRIVER_CONTRACT_FEATURES)
 
@@ -125,6 +131,38 @@ class RankDriversRequest(BaseModel):
 				f"features must contain exactly {DRIVER_CONTRACT_FEATURES} values for driver ranking"
 			)
 		return value
+
+
+class DriverRankerBookingContext(BaseModel):
+	pickup_lat: float = Field(..., ge=-90, le=90)
+	pickup_lng: float = Field(..., ge=-180, le=180)
+	hour_of_day: int = Field(..., ge=0, le=23)
+	day_of_week: int = Field(..., ge=0, le=6)
+
+
+class DriverRankerCandidate(BaseModel):
+	driver_id: str | int
+	distance_to_pickup_km: float = Field(..., ge=0)
+	driver_rating: float = Field(..., ge=0, le=5)
+	acceptance_rate: float = Field(..., ge=0, le=1)
+	vehicle_type: str = Field(..., min_length=1)
+
+
+class RankDriversRequest(BaseModel):
+	booking_context: DriverRankerBookingContext
+	candidates: list[DriverRankerCandidate] = Field(..., min_length=1, max_length=20)
+
+
+class GPSReading(BaseModel):
+	speed_kmh: float = Field(..., ge=0, le=300)
+	acceleration_ms2: float = Field(..., ge=-15, le=15)
+	heading_change_degrees: float = Field(..., ge=0, le=360)
+	route_deviation_meters: float = Field(..., ge=0, le=5000)
+	stop_duration_seconds: float = Field(..., ge=0, le=7200)
+
+
+class AnomalyDetectionRequest(BaseModel):
+	gps_reading: GPSReading
 
 
 class PredictDemandRequest(BaseModel):
@@ -293,10 +331,12 @@ def _build_log_insert(
 
 def _load_models() -> None:
 	"""Load sklearn and V2 LSTM artifacts into global references."""
-	global fare_estimator, driver_ranker, demand_model, feat_scaler, target_scaler, zone_map
+	global fare_estimator, driver_ranker, driver_ranker_loader, behavior_detector_loader, demand_model, feat_scaler, target_scaler, zone_map
 
 	fare_estimator = None
 	driver_ranker = None
+	driver_ranker_loader = None
+	behavior_detector_loader = None
 	demand_model = None
 	feat_scaler = None
 	target_scaler = None
@@ -314,6 +354,22 @@ def _load_models() -> None:
 		LOGGER.info("Sklearn model artifact loaded from %s", SKLEARN_MODEL_PATH)
 	except Exception:
 		LOGGER.exception("Failed to load sklearn model artifact.")
+
+	try:
+		driver_ranker_loader = DriverRankerLoader()
+		driver_ranker_loader.load()
+		LOGGER.info("Production driver ranker artifacts loaded and validated.")
+	except Exception:
+		LOGGER.exception("Failed to load production driver ranker artifacts.")
+		driver_ranker_loader = None
+
+	try:
+		behavior_detector_loader = BehaviorDetectorLoader()
+		behavior_detector_loader.load()
+		LOGGER.info("Behavior detector artifacts loaded and validated.")
+	except Exception:
+		LOGGER.exception("Failed to load behavior detector artifacts.")
+		behavior_detector_loader = None
 
 	# Load V2 LSTM demand model with dual inputs.
 	try:
@@ -446,14 +502,20 @@ def _model_versions() -> dict[str, str]:
 		"service_version": MODEL_VERSION,
 		"fare_estimator": "unavailable",
 		"driver_ranker": "unavailable",
+		"behavior_detector": "unavailable",
 		"demand_lstm": "unavailable",
 	}
 
 	if SKLEARN_MODEL_PATH.exists():
 		versions["fare_estimator"] = str(int(SKLEARN_MODEL_PATH.stat().st_mtime))
 		versions["driver_ranker"] = str(int(SKLEARN_MODEL_PATH.stat().st_mtime))
-	if LSTM_MODEL_PATH.exists():
-		versions["demand_lstm"] = str(int(LSTM_MODEL_PATH.stat().st_mtime))
+	if LSTM_MODEL_PATH_V2.exists():
+		versions["demand_lstm"] = str(int(LSTM_MODEL_PATH_V2.stat().st_mtime))
+
+	if driver_ranker_loader is not None and driver_ranker_loader.is_loaded():
+		versions["driver_ranker"] = driver_ranker_loader.get_model_metadata().get("version", MODEL_VERSION)
+	if behavior_detector_loader is not None and behavior_detector_loader.is_loaded():
+		versions["behavior_detector"] = "behavior_isolation_forest_v1"
 
 	if METRICS_PATH.exists():
 		try:
@@ -484,6 +546,12 @@ def _model_compatibility() -> dict[str, dict[str, Any]]:
 	"""
 	fare_expected = _safe_int(getattr(fare_estimator, "n_features_in_", None))
 	driver_expected = _safe_int(getattr(driver_ranker, "n_features_in_", None))
+	ranker_metadata = (
+		driver_ranker_loader.get_model_metadata()
+		if driver_ranker_loader is not None
+		else {}
+	)
+	ranker_feature_columns = ranker_metadata.get("feature_columns", [])
 
 	demand_input_shape = getattr(demand_model, "input_shape", None)
 	demand_timesteps: int | None = None
@@ -508,10 +576,15 @@ def _model_compatibility() -> dict[str, dict[str, Any]]:
 			"model_expected_features": fare_expected,
 		},
 		"driver_ranker": {
-			"loaded": driver_ranker is not None,
-			"compatible": driver_compatible,
-			"endpoint_expected_features": DRIVER_CONTRACT_FEATURES,
-			"model_expected_features": driver_expected,
+			"loaded": driver_ranker_loader is not None and driver_ranker_loader.is_loaded(),
+			"compatible": driver_ranker_loader is not None and driver_ranker_loader.is_loaded(),
+			"endpoint_expected_features": ranker_feature_columns,
+			"model_expected_features": len(ranker_feature_columns),
+			"valid_vehicle_types": ranker_metadata.get("valid_vehicle_types", []),
+			"training_metrics": ranker_metadata.get("training_metrics", {}),
+		},
+		"behavior_detector": {
+			"loaded": behavior_detector_loader is not None and behavior_detector_loader.is_loaded(),
 		},
 		"demand_lstm_v2": {
 			"loaded": demand_model is not None,
@@ -557,7 +630,8 @@ def health() -> dict[str, Any]:
 	try:
 		# Determine health status.
 		fare_ok = fare_estimator is not None
-		driver_ok = driver_ranker is not None
+		driver_ok = driver_ranker_loader is not None and driver_ranker_loader.is_loaded()
+		behavior_ok = behavior_detector_loader is not None and behavior_detector_loader.is_loaded()
 		demand_ok = (
 			demand_model is not None
 			and feat_scaler is not None
@@ -576,8 +650,14 @@ def health() -> dict[str, Any]:
 			"models_loaded": {
 				"fare_estimator": fare_ok,
 				"driver_ranker": driver_ok,
+				"behavior_detector": behavior_ok,
 				"demand_lstm_v2": demand_ok,
 			},
+			"driver_ranker": (
+				driver_ranker_loader.get_model_metadata()
+				if driver_ranker_loader is not None
+				else {"loaded": False}
+			),
 			"model_compatibility": _model_compatibility(),
 			"db_logging_enabled": db_ok,
 			"model_versions": _model_versions(),
@@ -603,7 +683,8 @@ def reload_models() -> dict[str, Any]:
 		"status": "reloaded",
 		"models_loaded": {
 			"fare_estimator": fare_estimator is not None,
-			"driver_ranker": driver_ranker is not None,
+			"driver_ranker": driver_ranker_loader is not None and driver_ranker_loader.is_loaded(),
+			"behavior_detector": behavior_detector_loader is not None and behavior_detector_loader.is_loaded(),
 			"demand_lstm": demand_model is not None,
 		},
 		"model_compatibility": _model_compatibility(),
@@ -619,7 +700,21 @@ def examples() -> dict[str, Any]:
 			"features": [0.1] * FARE_CONTRACT_FEATURES,
 		},
 		"rank_drivers": {
-			"features": [0.1] * DRIVER_CONTRACT_FEATURES,
+			"booking_context": {
+				"pickup_lat": -1.9441,
+				"pickup_lng": 30.0619,
+				"hour_of_day": 8,
+				"day_of_week": 2,
+			},
+			"candidates": [
+				{
+					"driver_id": "drv-A",
+					"distance_to_pickup_km": 0.8,
+					"driver_rating": 4.9,
+					"acceptance_rate": 0.96,
+					"vehicle_type": "sedan",
+				}
+			],
 		},
 		"predict_demand_v2": {
 			"zone_id": "Z01",
@@ -644,13 +739,31 @@ def predict_fare_help() -> dict[str, Any]:
 @app.get("/ml/rank-drivers")
 def rank_drivers_help() -> dict[str, Any]:
 	"""Browser-friendly help for the driver ranking endpoint."""
+	valid_types = []
+	if driver_ranker_loader is not None:
+		valid_types = driver_ranker_loader.valid_vehicle_types()
+
 	return {
 		"detail": "Use POST for this endpoint.",
 		"expected_method": "POST",
+		"valid_vehicle_types": valid_types,
 		"example_payload": {
-			"features": [0.1] * DRIVER_CONTRACT_FEATURES,
+			"booking_context": {
+				"pickup_lat": -1.9441,
+				"pickup_lng": 30.0619,
+				"hour_of_day": 8,
+				"day_of_week": 2,
+			},
+			"candidates": [
+				{
+					"driver_id": "drv-A",
+					"distance_to_pickup_km": 0.8,
+					"driver_rating": 4.9,
+					"acceptance_rate": 0.96,
+					"vehicle_type": "sedan",
+				}
+			],
 		},
-		"example_curl": "curl -X POST http://localhost:8080/ml/rank-drivers -H 'Content-Type: application/json' -d '{\"features\":[0.1,0.1,...]}'",
 	}
 
 
@@ -697,7 +810,7 @@ def predict_demand_help() -> dict[str, Any]:
 			"zone_id": "Z01",
 			"history": [[0.1] * 17 for _ in range(16)],
 		},
-		"example_curl": "curl -X POST http://localhost:8080/ml/predict-demand -H 'Content-Type: application/json' -d '{\"zone_id\":\"Z01\",\"history\":[[0.1]*17]*16}'".
+		"example_curl": "curl -X POST http://localhost:8080/ml/predict-demand -H 'Content-Type: application/json' -d '{\"zone_id\":\"Z01\",\"history\":[[0.1]*17]*16}'",
 	}
 
 
@@ -741,30 +854,116 @@ def predict_fare(payload: PredictFareRequest) -> dict[str, Any]:
 
 @app.post("/ml/rank-drivers")
 def rank_drivers(payload: RankDriversRequest) -> dict[str, Any]:
-	"""Rank a driver using strict 21-feature input validation."""
-	if driver_ranker is None:
+	"""Rank candidate drivers by predicted successful assignment probability."""
+	started_at = time.perf_counter()
+	if driver_ranker_loader is None or not driver_ranker_loader.is_loaded():
 		raise HTTPException(status_code=503, detail="driver ranker model is not loaded")
 
-	features = np.array(payload.features, dtype=np.float32).reshape(1, -1)
-	if features.shape[1] != DRIVER_CONTRACT_FEATURES:
-		raise HTTPException(
-			status_code=400,
-			detail=(
-				f"invalid driver feature length: expected {DRIVER_CONTRACT_FEATURES}, "
-				f"got {features.shape[1]}"
-			),
-		)
+	valid_vehicle_types = driver_ranker_loader.valid_vehicle_types()
+	for candidate in payload.candidates:
+		if candidate.vehicle_type not in valid_vehicle_types:
+			raise HTTPException(
+				status_code=422,
+				detail={
+					"message": "Invalid vehicle_type",
+					"offending_value": candidate.vehicle_type,
+					"valid_values": valid_vehicle_types,
+				},
+			)
 
 	try:
-		prediction = _predict_with_retries(driver_ranker, features)
-		ranks = prediction.reshape(-1).tolist()
+		rows: list[dict[str, Any]] = []
+		for candidate in payload.candidates:
+			rows.append(
+				{
+					"distance_to_pickup_km": candidate.distance_to_pickup_km,
+					"driver_rating": candidate.driver_rating,
+					"acceptance_rate": candidate.acceptance_rate,
+					"vehicle_type_encoded": driver_ranker_loader.encode_vehicle_type(candidate.vehicle_type),
+					"hour_of_day": payload.booking_context.hour_of_day,
+					"day_of_week": payload.booking_context.day_of_week,
+				}
+			)
+
+		features = pd.DataFrame(rows, columns=driver_ranker_loader.feature_columns)
+		probabilities = driver_ranker_loader.predict_proba(features)
+		ranked_candidates = []
+		for candidate, score in zip(payload.candidates, probabilities, strict=True):
+			ranked_candidates.append(
+				{
+					"driver_id": candidate.driver_id,
+					"score": round(float(score), 4),
+					"assignment_confidence": round(float(score), 4),
+					"distance_to_pickup_km": candidate.distance_to_pickup_km,
+					"vehicle_type": candidate.vehicle_type,
+				}
+			)
+
+		ranked_candidates.sort(key=lambda candidate: candidate["score"], reverse=True)
+		for rank, candidate in enumerate(ranked_candidates, start=1):
+			candidate["rank"] = rank
+
+		metadata = driver_ranker_loader.get_model_metadata()
+		best_driver = ranked_candidates[0]
+		elapsed_ms = (time.perf_counter() - started_at) * 1000
+
+		LOGGER.info(
+			"Driver ranking complete request_id=%s candidate_count=%s best_driver_id=%s top_score=%.4f elapsed_inference_ms=%.2f model_version=%s",
+			"N/A",
+			len(payload.candidates),
+			best_driver["driver_id"],
+			best_driver["score"],
+			elapsed_ms,
+			metadata["version"],
+		)
 	except Exception as exc:
 		LOGGER.exception("Driver ranking failed.")
-		raise HTTPException(status_code=500, detail=f"driver ranking failed: {exc}") from exc
+		raise HTTPException(status_code=500, detail="driver ranking failed") from exc
 
-	response = {"driver_ranks": ranks}
+	response = {
+		"status": "success",
+		"data": {
+			"best_driver": best_driver,
+			"ranked_candidates": ranked_candidates,
+			"model_version": metadata["version"],
+			"candidates_evaluated": len(payload.candidates),
+		},
+	}
 	_log_prediction("driver_ranker", payload.model_dump(), response)
 	return response
+
+
+@app.post("/ml/detect-anomaly")
+def detect_anomaly(payload: AnomalyDetectionRequest) -> dict[str, Any]:
+	"""Detect anomalous driver behavior from GPS readings."""
+	if behavior_detector_loader is None or not behavior_detector_loader.is_loaded():
+		raise HTTPException(status_code=503, detail="behavior detector is not loaded")
+
+	try:
+		is_anomaly, anomaly_score = behavior_detector_loader.predict(payload.gps_reading.model_dump())
+		severity = "low"
+		if is_anomaly and anomaly_score < -0.20:
+			severity = "high"
+		elif is_anomaly and anomaly_score < -0.05:
+			severity = "medium"
+
+		response = {
+			"status": "success",
+			"data": {
+				"is_anomaly": bool(is_anomaly),
+				"anomaly_score": round(float(anomaly_score), 4),
+				"severity": severity,
+				"model_version": "behavior_isolation_forest_v1",
+				"detected_at": datetime.now(timezone.utc).isoformat().replace("+00:00", "Z"),
+			},
+		}
+		_log_prediction("behavior_detector", payload.model_dump(), response)
+		return response
+	except ValueError as exc:
+		raise HTTPException(status_code=422, detail=str(exc)) from exc
+	except Exception as exc:
+		LOGGER.exception("Behavior anomaly detection failed.")
+		raise HTTPException(status_code=500, detail="anomaly detection failed") from exc
 
 
 @app.post("/ml/predict-demand")

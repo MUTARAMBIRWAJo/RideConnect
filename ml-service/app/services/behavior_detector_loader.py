@@ -39,6 +39,10 @@ class BehaviorDetectorLoader:
             BehaviorDetectorError: If loading fails
             Exception: If unexpected error occurs
         """
+        self.load()
+
+    def load(self) -> None:
+        """Load the behavior detector artifacts synchronously."""
         try:
             # Check if files exist
             for path, name in [
@@ -114,7 +118,7 @@ class BehaviorDetectorLoader:
 
             # Get predictions
             predictions = self.detector.predict(scaled_features)
-            is_anomaly = predictions[0] == -1
+            is_anomaly = bool(predictions[0] == -1)
 
             # Get anomaly scores (lower = more anomalous)
             scores = self.detector.score_samples(scaled_features)

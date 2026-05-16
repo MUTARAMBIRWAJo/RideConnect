@@ -48,6 +48,8 @@ class Trip extends Model
         'started_at',
         'completed_at',
         'paid_to_driver_at',
+        'ranker_score',
+        'ranker_version',
     ];
 
     protected $casts = [
@@ -68,6 +70,7 @@ class Trip extends Model
         'started_at' => 'datetime',
         'completed_at' => 'datetime',
         'paid_to_driver_at' => 'datetime',
+        'ranker_score' => 'decimal:4',
     ];
 
     public function passenger()
