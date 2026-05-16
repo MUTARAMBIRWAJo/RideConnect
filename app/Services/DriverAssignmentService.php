@@ -5,8 +5,8 @@ namespace App\Services;
 use App\Models\Driver;
 use App\Models\Ride;
 use App\Models\Trip;
-use App\Services\Ml\DriverRankerService;
-use Illuminate\Support\Facades\Schema;
+use App\Models\Vehicle;
+use Illuminate\Support\Facades\DB;
 
 /**
  * DriverAssignmentService handles automatic driver assignment for trips.
@@ -19,10 +19,6 @@ use Illuminate\Support\Facades\Schema;
  */
 class DriverAssignmentService
 {
-    public function __construct(private readonly DriverRankerService $driverRankerService)
-    {
-    }
-
     /**
      * Find and auto-assign the best available driver for a trip.
      *
@@ -39,26 +35,6 @@ class DriverAssignmentService
      */
     public function findBestDriver(Trip $trip, Ride $ride): ?Driver
     {
-        $selection = $this->selectBestDriver($trip, $ride);
-
-        return $selection['driver'];
-    }
-
-    /**
-     * @return array{driver: Driver|null, score: float|null, version: string|null, source: string}
-     */
-    private function selectBestDriver(Trip $trip, Ride $ride): array
-    {
-        $candidates = $this->candidateDrivers($trip, $ride);
-
-        return $this->driverRankerService->chooseBestDriver($trip, $ride, $candidates);
-    }
-
-    /**
-     * @return \Illuminate\Support\Collection<int, Driver>
-     */
-    private function candidateDrivers(Trip $trip, Ride $ride)
-    {
         $vehicleTypes = $this->getVehicleTypesForTransport($ride->transport_type);
 
         $query = Driver::query()
@@ -69,42 +45,15 @@ class DriverAssignmentService
             ->whereHas('vehicles', function ($q) use ($vehicleTypes) {
                 $q->where('is_active', true)
                   ->whereIn('vehicle_type', $vehicleTypes);
-            })
-            ->select('drivers.*')
-            ->selectSub(
-                Trip::query()
-                    ->selectRaw('COUNT(*)')
-                    ->whereColumn('trips.driver_id', 'drivers.id'),
-                'trips_total_count'
-            )
-            ->selectSub(
-                Trip::query()
-                    ->selectRaw('COUNT(*)')
-                    ->whereColumn('trips.driver_id', 'drivers.id')
-                    ->whereIn('status', ['ACCEPTED', 'STARTED', 'COMPLETED']),
-                'trips_accepted_count'
-            );
+            });
 
         // Filter by proximity if coordinates are available
-        if ($trip->pickup_lat && $trip->pickup_lng) {
-            $query->where(function ($q) {
-                $q->whereNotNull('driver_locations.latitude')
-                    ->orWhereNotNull('drivers.current_latitude');
-            });
+        if ($trip->pickup_lat && $trip->pickup_lng && $ride->isOnDemand()) {
+            $query->whereNotNull('driver_locations.latitude');
             $query = $this->orderByProximity($query, $trip->pickup_lat, $trip->pickup_lng);
-        } else {
-            $query->orderByDesc('drivers.rating');
         }
 
-        return $query
-            ->limit(20)
-            ->get()
-            ->each(function (Driver $driver) use ($vehicleTypes): void {
-                $vehicle = $driver->vehicles
-                    ->first(fn ($vehicle): bool => $vehicle->is_active && in_array($vehicle->vehicle_type, $vehicleTypes, true));
-
-                $driver->setAttribute('ranker_vehicle_type', $vehicle?->vehicle_type ?? $vehicleTypes[0] ?? 'sedan');
-            });
+        return $query->first();
     }
 
     /**
@@ -132,22 +81,11 @@ class DriverAssignmentService
             "
             (
                 6371 * acos(
-                    cos(radians(?)) * cos(radians(COALESCE(driver_locations.latitude, drivers.current_latitude))) *
-                    cos(radians(COALESCE(driver_locations.longitude, drivers.current_longitude)) - radians(?)) +
-                    sin(radians(?)) * sin(radians(COALESCE(driver_locations.latitude, drivers.current_latitude)))
+                    cos(radians(?)) * cos(radians(driver_locations.latitude)) *
+                    cos(radians(driver_locations.longitude) - radians(?)) +
+                    sin(radians(?)) * sin(radians(driver_locations.latitude))
                 )
             ) ASC
-            ",
-            [$lat, $lng, $lat]
-        )->selectRaw(
-            "
-            (
-                6371 * acos(
-                    cos(radians(?)) * cos(radians(COALESCE(driver_locations.latitude, drivers.current_latitude))) *
-                    cos(radians(COALESCE(driver_locations.longitude, drivers.current_longitude)) - radians(?)) +
-                    sin(radians(?)) * sin(radians(COALESCE(driver_locations.latitude, drivers.current_latitude)))
-                )
-            ) AS distance_to_pickup_km
             ",
             [$lat, $lng, $lat]
         );
@@ -185,20 +123,9 @@ class DriverAssignmentService
      * @param Driver $driver
      * @return Trip
      */
-    public function assignDriver(Trip $trip, Driver $driver, ?float $rankerScore = null, ?string $rankerVersion = null): Trip
+    public function assignDriver(Trip $trip, Driver $driver): Trip
     {
-        $attributes = ['driver_id' => $driver->id];
-
-        if (Schema::hasColumn('trips', 'ranker_score')) {
-            $attributes['ranker_score'] = $rankerScore;
-        }
-
-        if (Schema::hasColumn('trips', 'ranker_version')) {
-            $attributes['ranker_version'] = $rankerVersion;
-        }
-
-        $trip->update($attributes);
-
+        $trip->update(['driver_id' => $driver->id]);
         return $trip->fresh();
     }
 
@@ -213,18 +140,12 @@ class DriverAssignmentService
      */
     public function autoAssign(Trip $trip, Ride $ride): ?Trip
     {
-        $selection = $this->selectBestDriver($trip, $ride);
-        $driver = $selection['driver'];
+        $driver = $this->findBestDriver($trip, $ride);
 
         if (!$driver) {
             return null;
         }
 
-        return $this->assignDriver(
-            $trip,
-            $driver,
-            $selection['score'],
-            $selection['version']
-        );
+        return $this->assignDriver($trip, $driver);
     }
 }

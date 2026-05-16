@@ -92,7 +92,6 @@ return [
         'url' => env('ML_SERVICE_URL', env('RIDE_AI_BASE_URL', 'https://ml-service-j72g.onrender.com')),
         'api_key' => env('ML_SERVICE_API_KEY', env('RIDE_AI_API_KEY')),
         'timeout' => env('ML_SERVICE_TIMEOUT', 10),
-        'ranking_enabled' => env('ML_RANKING_ENABLED', true),
     ],
 
     'ocr_space' => [

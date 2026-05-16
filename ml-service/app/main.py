@@ -4,7 +4,7 @@ from fastapi import FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
 
-from app.api import health, matching, ml, prediction
+from app.api import health, matching, prediction
 from app.api.admin_routes import router as admin_router
 from app.core.config import settings
 from app.core.logging import get_logger
@@ -36,7 +36,6 @@ def create_app() -> FastAPI:
     app.add_middleware(RequestContextMiddleware)
 
     app.include_router(health.router)
-    app.include_router(ml.router)
     app.include_router(matching.router)
     app.include_router(prediction.router)
     app.include_router(admin_router, prefix="/api/admin")
