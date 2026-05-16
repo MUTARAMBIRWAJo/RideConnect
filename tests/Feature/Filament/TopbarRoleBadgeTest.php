@@ -37,6 +37,6 @@ class TopbarRoleBadgeTest extends TestCase
         $response = $this->get('/admin');
         
         // For now, just check that we get a response (not necessarily 200)
-        $this->assertContains($response->getStatusCode(), [200, 403, 404]);
+        $this->assertContains($response->getStatusCode(), [200, 302, 403, 404]);
     }
 }

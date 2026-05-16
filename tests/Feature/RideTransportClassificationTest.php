@@ -22,7 +22,7 @@ class RideTransportClassificationTest extends TestCase
             'driver_id' => $driver->id,
             'vehicle_id' => $vehicle->id,
             'travel_mode' => Ride::MODE_ON_DEMAND,
-            'status' => 'PUBLISHED',
+            'status' => 'scheduled',
             'available_seats' => 4,
             'price_per_seat' => 1000,
         ]);
@@ -55,7 +55,7 @@ class RideTransportClassificationTest extends TestCase
             'driver_id' => $driver->id,
             'vehicle_id' => $vehicle->id,
             'travel_mode' => Ride::MODE_SCHEDULED,
-            'status' => 'PUBLISHED',
+            'status' => 'scheduled',
             'available_seats' => 4,
             'price_per_seat' => 1000,
             'departure_time' => now()->addHours(2),
@@ -137,7 +137,7 @@ class RideTransportClassificationTest extends TestCase
             'driver_id' => $driver->id,
             'vehicle_id' => $vehicle->id,
             'travel_mode' => Ride::MODE_SCHEDULED,
-            'status' => 'PUBLISHED',
+            'status' => 'scheduled',
         ]);
         $booking = Booking::factory()->create([
             'user_id' => $passenger->id,
@@ -167,6 +167,7 @@ class RideTransportClassificationTest extends TestCase
         $busRide = Ride::factory()->create([
             'transport_type' => Ride::TRANSPORT_BUS,
             'travel_mode' => Ride::MODE_SCHEDULED,
+            'route_id' => $this->createRouteId(),
         ]);
 
         $carScheduledRide = Ride::factory()->create([
@@ -209,6 +210,7 @@ class RideTransportClassificationTest extends TestCase
         $busRide = new Ride([
             'transport_type' => Ride::TRANSPORT_BUS,
             'travel_mode' => Ride::MODE_SCHEDULED,
+            'route_id' => $this->createRouteId(),
         ]);
         $busRide->validateTransportRules(); // Should not throw
 
@@ -232,12 +234,42 @@ class RideTransportClassificationTest extends TestCase
 
         // Invalid combinations should throw exceptions
         $this->expectException(\InvalidArgumentException::class);
-        $this->expectExceptionMessage('Invalid transport configuration');
+        $this->expectExceptionMessage('BUS must be SCHEDULED');
 
         $invalidBusRide = new Ride([
             'transport_type' => Ride::TRANSPORT_BUS,
             'travel_mode' => Ride::MODE_ON_DEMAND,
+            'route_id' => $this->createRouteId(),
         ]);
         $invalidBusRide->validateTransportRules();
+    }
+
+    private function createRouteId(): int
+    {
+        $zoneId = \Illuminate\Support\Facades\DB::table('zones')->insertGetId([
+            'name' => 'Route Zone ' . uniqid(),
+            'code' => 'RZ' . substr(uniqid(), -6),
+            'created_at' => now(),
+            'updated_at' => now(),
+        ]);
+
+        $corridor = \App\Models\Corridor::query()->create([
+            'code' => 'C' . substr(uniqid(), -6),
+            'name' => 'Route Corridor',
+            'kinyarwanda_name' => 'Route Corridor',
+            'start_zone_id' => $zoneId,
+            'end_zone_id' => $zoneId,
+            'base_fare' => 100,
+            'price_per_km' => 0,
+        ]);
+
+        return \App\Models\TransportRoute::query()->create([
+            'corridor_id' => $corridor->id,
+            'route_code' => 'R' . substr(uniqid(), -6),
+            'name' => 'Test Route',
+            'origin' => 'Origin',
+            'destination' => 'Destination',
+            'is_active' => true,
+        ])->id;
     }
 }

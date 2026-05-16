@@ -13,8 +13,8 @@ return new class extends Migration
     {
         Schema::create('rides', function (Blueprint $table) {
             $table->id();
-            $table->foreignId('driver_id')->constrained('drivers')->onDelete('cascade');
-            $table->foreignId('vehicle_id')->constrained('vehicles')->onDelete('cascade');
+            $table->foreignId('driver_id')->nullable()->constrained('drivers')->onDelete('set null');
+            $table->foreignId('vehicle_id')->nullable()->constrained('vehicles')->onDelete('set null');
             $table->string('origin_address');
             $table->decimal('origin_lat', 10, 8);
             $table->decimal('origin_lng', 11, 8);

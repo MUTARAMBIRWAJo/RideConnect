@@ -97,7 +97,7 @@ class PublicTransportPolicyTest extends TestCase
             'origin_address' => $route->origin,
             'destination_address' => $route->destination,
             'available_seats' => 10,
-            'status' => 'PUBLISHED',
+            'status' => 'scheduled',
             'departure_time' => now()->addHours(8),
         ]);
 
@@ -178,7 +178,7 @@ class PublicTransportPolicyTest extends TestCase
             'origin_address' => $route->origin,
             'destination_address' => $route->destination,
             'available_seats' => 10,
-            'status' => 'PUBLISHED',
+            'status' => 'scheduled',
             'departure_time' => now()->addHours(8),
         ]);
 

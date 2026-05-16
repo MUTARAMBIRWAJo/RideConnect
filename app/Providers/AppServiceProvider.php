@@ -13,6 +13,7 @@ use App\Policies\UserPolicy;
 use App\Policies\MobileUserPolicy;
 use App\Policies\ManagerPolicy;
 use App\Policies\RidePolicy;
+use App\Policies\TripPolicy;
 use App\Policies\RolePolicy;
 use App\Policies\PermissionPolicy;
 use App\Policies\DriverPayoutPolicy;
@@ -89,6 +90,7 @@ class AppServiceProvider extends ServiceProvider
         Gate::policy(MobileUser::class, MobileUserPolicy::class);
         Gate::policy(Manager::class, ManagerPolicy::class);
         Gate::policy(Ride::class, RidePolicy::class);
+        Gate::policy(Trip::class, TripPolicy::class);
         Gate::policy(Role::class, RolePolicy::class);
         Gate::policy(Permission::class, PermissionPolicy::class);
         Gate::policy(DriverPayout::class, DriverPayoutPolicy::class);

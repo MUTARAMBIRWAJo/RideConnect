@@ -62,8 +62,20 @@ class Ride extends Model
         'travel_mode',
         'ride_type',
         'origin_address',
+        'origin_lat',
+        'origin_lng',
         'destination_address',
+        'destination_lat',
+        'destination_lng',
+        'departure_time',
+        'arrival_time_estimated',
+        'available_seats',
+        'price_per_seat',
+        'currency',
+        'description',
+        'status',
         'bus_number',
+        'luggage_allowed',
         'pets_allowed',
         'smoking_allowed',
         'cancelled_at',
@@ -178,6 +190,10 @@ class Ride extends Model
      */
     public function validateTransportRules(): void
     {
+        if (!$this->ride_type) {
+            $this->ride_type = self::TYPE_LOCAL;
+        }
+
         // Validate ride_type is valid
         if (!in_array($this->ride_type, [self::TYPE_INTERCITY, self::TYPE_LOCAL], true)) {
             throw new \InvalidArgumentException("Invalid ride type: {$this->ride_type}");

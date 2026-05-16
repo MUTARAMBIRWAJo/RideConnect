@@ -33,6 +33,11 @@ class DriverPayout extends Model
         return $this->belongsTo(Driver::class);
     }
 
+    public function setPayoutDateAttribute($value): void
+    {
+        $this->attributes['payout_date'] = \Illuminate\Support\Carbon::parse($value)->toDateString();
+    }
+
     public function processor()
     {
         return $this->belongsTo(User::class, 'processed_by');

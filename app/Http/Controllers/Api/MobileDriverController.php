@@ -257,6 +257,7 @@ public function __construct(
                 'message' => 'Trip accepted successfully. Please proceed to pickup location.',
                 'data' => [
                     'trip_id' => $trip->id,
+                    'trip_state' => $trip->status,
                     'accepted_at' => $trip->accepted_at->toIso8601String(),
                 ],
             ]);

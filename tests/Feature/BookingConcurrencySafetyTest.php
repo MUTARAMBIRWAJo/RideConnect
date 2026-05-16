@@ -29,7 +29,7 @@ class BookingConcurrencySafetyTest extends TestCase
             'travel_mode' => Ride::MODE_SCHEDULED,
             'transport_type' => Ride::TRANSPORT_CAR,
             'available_seats' => 1,
-            'status' => 'PUBLISHED',
+            'status' => 'scheduled',
             'departure_time' => now()->addHours(2),
         ]);
 
@@ -88,7 +88,7 @@ class BookingConcurrencySafetyTest extends TestCase
             'vehicle_id' => $vehicle->id,
             'travel_mode' => Ride::MODE_ON_DEMAND,
             'transport_type' => Ride::TRANSPORT_MOTORCYCLE,
-            'status' => 'PUBLISHED',
+            'status' => 'scheduled',
         ]);
 
         $passenger = User::factory()->create(['is_approved' => true]);
@@ -124,7 +124,7 @@ class BookingConcurrencySafetyTest extends TestCase
             'vehicle_id' => $vehicle->id,
             'travel_mode' => Ride::MODE_SCHEDULED,
             'transport_type' => Ride::TRANSPORT_CAR,
-            'status' => 'PUBLISHED',
+            'status' => 'scheduled',
             'departure_time' => now()->subHour(),
             'available_seats' => 5,
         ]);

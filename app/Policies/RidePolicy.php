@@ -7,6 +7,16 @@ use App\Models\User;
 
 class RidePolicy
 {
+    public function viewAny(User $user): bool
+    {
+        return in_array($user->role?->value ?? $user->role, ['SUPER_ADMIN', 'ADMIN'], true);
+    }
+
+    public function view(User $user, Ride $ride): bool
+    {
+        return $this->viewAny($user);
+    }
+
     public function create(User $user): bool
     {
         return in_array($user->role?->value ?? $user->role, ['SUPER_ADMIN', 'ADMIN'], true);

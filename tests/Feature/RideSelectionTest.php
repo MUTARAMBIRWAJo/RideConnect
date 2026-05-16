@@ -24,6 +24,7 @@ class RideSelectionTest extends TestCase
             'destination_address' => 'Kigali',
             'transport_type' => 'BUS',
             'travel_mode' => 'SCHEDULED',
+            'route_id' => $this->createRouteId(),
         ]);
         
         $rideKigali = Ride::factory()->create([
@@ -32,6 +33,7 @@ class RideSelectionTest extends TestCase
             'destination_address' => 'Musanze',
             'transport_type' => 'BUS',
             'travel_mode' => 'SCHEDULED',
+            'route_id' => $this->createRouteId(),
         ]);
         
         $rideGitarama = Ride::factory()->create([
@@ -65,6 +67,7 @@ class RideSelectionTest extends TestCase
             'driver_id' => $driver->id,
             'transport_type' => 'BUS',
             'travel_mode' => 'SCHEDULED',
+            'route_id' => $this->createRouteId(),
         ]);
         
         $carRide = Ride::factory()->create([
@@ -115,6 +118,7 @@ class RideSelectionTest extends TestCase
             'driver_id' => $driver->id,
             'transport_type' => 'BUS',
             'travel_mode' => 'SCHEDULED',
+            'route_id' => $this->createRouteId(),
         ]);
         
         $response = $this->get('/api/rides');
@@ -185,6 +189,7 @@ class RideSelectionTest extends TestCase
             'driver_id' => $driver->id,
             'transport_type' => 'BUS',
             'travel_mode' => 'SCHEDULED',
+            'route_id' => $this->createRouteId(),
         ]);
         
         $response = $this->get('/api/rides');
@@ -212,5 +217,34 @@ class RideSelectionTest extends TestCase
         $this->assertArrayHasKey('address', $ride['destination']);
         $this->assertArrayHasKey('lat', $ride['destination']);
         $this->assertArrayHasKey('lng', $ride['destination']);
+    }
+
+    private function createRouteId(): int
+    {
+        $zoneId = \Illuminate\Support\Facades\DB::table('zones')->insertGetId([
+            'name' => 'Selection Zone ' . uniqid(),
+            'code' => 'SZ' . substr(uniqid(), -6),
+            'created_at' => now(),
+            'updated_at' => now(),
+        ]);
+
+        $corridor = \App\Models\Corridor::query()->create([
+            'code' => 'SC' . substr(uniqid(), -6),
+            'name' => 'Selection Corridor',
+            'kinyarwanda_name' => 'Selection Corridor',
+            'start_zone_id' => $zoneId,
+            'end_zone_id' => $zoneId,
+            'base_fare' => 100,
+            'price_per_km' => 0,
+        ]);
+
+        return \App\Models\TransportRoute::query()->create([
+            'corridor_id' => $corridor->id,
+            'route_code' => 'SR' . substr(uniqid(), -6),
+            'name' => 'Selection Route',
+            'origin' => 'Origin',
+            'destination' => 'Destination',
+            'is_active' => true,
+        ])->id;
     }
 }

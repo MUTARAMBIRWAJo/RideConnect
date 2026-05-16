@@ -129,6 +129,8 @@ class TaxCalculationTest extends TestCase
 
     private function seedTaxRules(): void
     {
+        TaxRule::where('jurisdiction', 'RW')->delete();
+
         TaxRule::insert([
             [
                 'applies_to'     => 'ride',

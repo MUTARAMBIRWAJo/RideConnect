@@ -25,7 +25,7 @@ class RideFlowTest extends TestCase
             'travel_mode' => Ride::MODE_SCHEDULED,
             'transport_type' => Ride::TRANSPORT_BUS,
             'available_seats' => 1,
-            'status' => 'PUBLISHED',
+            'status' => 'scheduled',
             'departure_time' => now()->addHours(2),
         ]);
 
@@ -59,7 +59,7 @@ class RideFlowTest extends TestCase
             'vehicle_id' => $vehicle->id,
             'transport_type' => Ride::TRANSPORT_MOTORCYCLE,
             'travel_mode' => Ride::MODE_ON_DEMAND,
-            'status' => 'PUBLISHED',
+            'status' => 'scheduled',
         ]);
 
         $trip = Trip::factory()->create([
@@ -113,7 +113,7 @@ class RideFlowTest extends TestCase
             'vehicle_id' => $vehicle->id,
             'transport_type' => Ride::TRANSPORT_BUS,
             'travel_mode' => Ride::MODE_SCHEDULED,
-            'status' => 'PUBLISHED',
+            'status' => 'scheduled',
         ]);
 
         $trip = Trip::factory()->create([
@@ -149,7 +149,7 @@ class RideFlowTest extends TestCase
             'vehicle_id' => $vehicle->id,
             'transport_type' => Ride::TRANSPORT_CAR,
             'travel_mode' => Ride::MODE_SCHEDULED,
-            'status' => 'PUBLISHED',
+            'status' => 'scheduled',
         ]);
 
         $trip = Trip::factory()->create([

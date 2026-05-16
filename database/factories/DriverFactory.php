@@ -3,6 +3,7 @@
 namespace Database\Factories;
 
 use App\Models\Driver;
+use App\Models\MobileUser;
 use App\Models\User;
 use Illuminate\Database\Eloquent\Factories\Factory;
 
@@ -12,6 +13,31 @@ use Illuminate\Database\Eloquent\Factories\Factory;
 class DriverFactory extends Factory
 {
     protected $model = Driver::class;
+
+    public function configure(): static
+    {
+        return $this->afterCreating(function (Driver $driver): void {
+            $mobileUser = MobileUser::query()->find($driver->id);
+
+            if (! $mobileUser) {
+                $mobileUser = new MobileUser();
+                $mobileUser->forceFill([
+                    'id' => $driver->id,
+                    'first_name' => 'Driver',
+                    'last_name' => (string) $driver->id,
+                    'email' => $driver->user?->email ?? 'driver' . $driver->id . '@example.test',
+                    'phone' => $driver->user?->phone ?? '+2507' . str_pad((string) $driver->id, 8, '0', STR_PAD_LEFT),
+                    'password' => bcrypt('password'),
+                    'role' => 'DRIVER',
+                    'is_verified' => true,
+                ])->save();
+            }
+
+            if ($driver->user && ! $driver->user->mobile_user_id) {
+                $driver->user->forceFill(['mobile_user_id' => $mobileUser->id])->save();
+            }
+        });
+    }
 
     public function definition(): array
     {

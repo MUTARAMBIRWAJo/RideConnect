@@ -14,7 +14,10 @@ class ComplianceReport extends Model
         'report_type',
         'period_start',
         'period_end',
+        'period_from',
+        'period_to',
         'generated_by',
+        'requested_by',
         'file_path',
         'format',
         'status',
@@ -44,6 +47,36 @@ class ComplianceReport extends Model
     public function generator(): BelongsTo
     {
         return $this->belongsTo(User::class, 'generated_by');
+    }
+
+    public function getPeriodFromAttribute(): ?string
+    {
+        return $this->period_start?->toDateString();
+    }
+
+    public function setPeriodFromAttribute($value): void
+    {
+        $this->attributes['period_start'] = $value;
+    }
+
+    public function getPeriodToAttribute(): ?string
+    {
+        return $this->period_end?->toDateString();
+    }
+
+    public function setPeriodToAttribute($value): void
+    {
+        $this->attributes['period_end'] = $value;
+    }
+
+    public function getRequestedByAttribute(): ?int
+    {
+        return $this->generated_by;
+    }
+
+    public function setRequestedByAttribute($value): void
+    {
+        $this->attributes['generated_by'] = $value;
     }
 
     public function scopeReady(\Illuminate\Database\Eloquent\Builder $query): \Illuminate\Database\Eloquent\Builder

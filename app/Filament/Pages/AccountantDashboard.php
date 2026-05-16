@@ -72,6 +72,11 @@ class AccountantDashboard extends Page
         return static::canAccess();
     }
 
+    public static function canView(): bool
+    {
+        return static::canAccess();
+    }
+
     public function getTitle(): string
     {
         return 'Accountant Dashboard';

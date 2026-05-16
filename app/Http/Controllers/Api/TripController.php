@@ -16,6 +16,7 @@ use App\Events\Domain\TripStarted;
 use App\Events\Domain\TripCompleted;
 use App\Exceptions\DomainException;
 use App\Services\AITrainingDataLogger;
+use App\Services\DriverAssignmentService;
 use App\Services\Location\TripLocationService;
 use App\Services\MobileNotificationService;
 use Illuminate\Http\JsonResponse;
@@ -267,10 +268,10 @@ class TripController extends Controller
             ], 422);
         }
 
-        if (strtolower((string) $ride->driver->status) !== 'active') {
+        if (strtolower((string) $ride->driver->status) !== 'approved') {
             return response()->json([
                 'status' => 'error',
-                'message' => 'Assigned ride driver is not active',
+                'message' => 'Assigned ride driver is not approved',
             ], 422);
         }
 
@@ -392,7 +393,7 @@ class TripController extends Controller
             'booking_id' => $booking->id,
             'ride_id' => $booking->ride_id,
             'passenger_id' => $passengerMobileUserId,
-            'driver_id' => $booking->ride?->driver_id,
+            'driver_id' => null,
             'pickup_location' => $booking->pickup_address ?: $booking->ride?->origin_address,
             'pickup_lat' => $booking->pickup_lat ?: $booking->ride?->origin_lat,
             'pickup_lng' => $booking->pickup_lng ?: $booking->ride?->origin_lng,

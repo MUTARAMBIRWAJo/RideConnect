@@ -77,7 +77,7 @@ class DriverApiTest extends TestCase
         $ride = Ride::factory()->create([
             'transport_type' => 'CAR',
             'travel_mode' => 'ON_DEMAND',
-            'status' => 'published',
+            'status' => 'scheduled',
         ]);
 
         // Create a pending trip with an associated ride
@@ -123,7 +123,7 @@ class DriverApiTest extends TestCase
         $ride = Ride::factory()->create([
             'transport_type' => 'CAR',
             'travel_mode' => 'ON_DEMAND',
-            'status' => 'published',
+            'status' => 'scheduled',
         ]);
 
         $trip = Trip::factory()->create([
@@ -267,7 +267,7 @@ class DriverApiTest extends TestCase
         $ride = Ride::factory()->create([
             'transport_type' => 'CAR',
             'travel_mode' => 'ON_DEMAND',
-            'status' => 'published',
+            'status' => 'scheduled',
         ]);
 
         $carTrip = Trip::factory()->create([

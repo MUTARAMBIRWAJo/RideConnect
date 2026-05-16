@@ -41,7 +41,7 @@ class DomainEventsEmissionTest extends TestCase
             'vehicle_id' => $vehicle->id,
             'travel_mode' => Ride::MODE_SCHEDULED,
             'transport_type' => Ride::TRANSPORT_CAR,
-            'status' => 'PUBLISHED',
+            'status' => 'scheduled',
             'available_seats' => 2,
             'departure_time' => now()->addHours(2),
         ]);

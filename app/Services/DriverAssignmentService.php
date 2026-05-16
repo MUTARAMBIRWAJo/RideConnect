@@ -61,12 +61,7 @@ class DriverAssignmentService
      */
     private function getVehicleTypesForTransport(string $transportType): array
     {
-        return match ($transportType) {
-            'CAR' => ['sedan', 'suv', 'hatchback', 'compact'],
-            'MOTORCYCLE' => ['motorcycle'],
-            'BUS' => ['bus'],
-            default => [],
-        };
+        return TransportMappingService::getVehicleTypesFor($transportType);
     }
 
     /**

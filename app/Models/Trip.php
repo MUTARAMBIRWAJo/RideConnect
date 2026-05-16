@@ -23,6 +23,8 @@ class Trip extends Model
         'ride_id',
         'passenger_id',
         'driver_id',
+        'route_state_id',
+        'weather_condition_id',
         'pickup_location',
         'pickup_lat',
         'pickup_lng',
@@ -86,6 +88,16 @@ class Trip extends Model
     public function driver()
     {
         return $this->belongsTo(Driver::class, 'driver_id');
+    }
+
+    public function routeState()
+    {
+        return $this->belongsTo(RouteState::class, 'route_state_id');
+    }
+
+    public function weatherCondition()
+    {
+        return $this->belongsTo(WeatherCondition::class, 'weather_condition_id');
     }
 
     public function setStatusAttribute($value): void

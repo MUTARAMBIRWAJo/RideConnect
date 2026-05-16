@@ -68,7 +68,7 @@ class MlService
             ->acceptJson()
             ->asJson()
             ->timeout($timeout)
-            ->retry(2, 200);
+            ->retry(2, 200, throw: false);
 
         if ($apiKey !== '') {
             $client = $client->withHeader('X-API-Key', $apiKey);
@@ -81,7 +81,7 @@ class MlService
     {
         $configuredUrl = (string) config('services.ml_service.url', '');
 
-        if ($configuredUrl === '' || ! str_contains($configuredUrl, 'ml-service-j72g.onrender.com')) {
+        if ($configuredUrl === '') {
             return 'https://ml-service-j72g.onrender.com';
         }
 

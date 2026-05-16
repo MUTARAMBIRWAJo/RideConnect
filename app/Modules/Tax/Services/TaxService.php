@@ -147,8 +147,11 @@ class TaxService
             $totalTax += $taxAmount;
 
             $lineItems[] = [
+                'tax_code'     => $this->taxCodeFor($rule->applies_to),
                 'rule_name'    => $rule->tax_name,
                 'percentage'   => $rule->percentage,
+                'gross_amount' => $grossAmount,
+                'tax_amount'   => $taxAmount,
                 'amount'       => $taxAmount,
                 'jurisdiction' => $jurisdiction,
             ];
@@ -162,5 +165,15 @@ class TaxService
             netAmount:    round($grossAmount - $totalTax, 2),
             lineItems:    $lineItems,
         );
+    }
+
+    private function taxCodeFor(string $appliesTo): string
+    {
+        return match ($appliesTo) {
+            'ride' => 'VAT',
+            'commission' => 'WHT_COMMISSION',
+            'payout' => 'WHT_PAYOUT',
+            default => strtoupper($appliesTo),
+        };
     }
 }

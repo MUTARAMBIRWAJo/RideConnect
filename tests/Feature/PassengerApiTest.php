@@ -72,7 +72,7 @@ class PassengerApiTest extends TestCase
         Ride::factory()->create([
             'transport_type' => 'CAR',
             'travel_mode' => 'ON_DEMAND',
-            'status' => 'published',
+            'status' => 'scheduled',
             'available_seats' => 4,
         ]);
 
@@ -105,7 +105,7 @@ class PassengerApiTest extends TestCase
         $ride = Ride::factory()->create([
             'transport_type' => 'CAR',
             'travel_mode' => 'ON_DEMAND',
-            'status' => 'published',
+            'status' => 'scheduled',
         ]);
 
         $response = $this->actingAs($this->passengerUser, 'sanctum')
@@ -126,7 +126,7 @@ class PassengerApiTest extends TestCase
         $ride = Ride::factory()->create([
             'transport_type' => 'CAR',
             'travel_mode' => 'SCHEDULED',
-            'status' => 'published',
+            'status' => 'scheduled',
             'price_per_seat' => 5000,
         ]);
 
@@ -153,7 +153,7 @@ class PassengerApiTest extends TestCase
         $ride = Ride::factory()->create([
             'transport_type' => 'CAR',
             'travel_mode' => 'ON_DEMAND',
-            'status' => 'published',
+            'status' => 'scheduled',
         ]);
 
         $response = $this->actingAs($this->passengerUser, 'sanctum')
@@ -234,13 +234,13 @@ class PassengerApiTest extends TestCase
         $scheduledRide = Ride::factory()->create([
             'transport_type' => 'CAR',
             'travel_mode' => 'SCHEDULED',
-            'status' => 'published',
+            'status' => 'scheduled',
         ]);
 
         $onDemandRide = Ride::factory()->create([
             'transport_type' => 'CAR',
             'travel_mode' => 'ON_DEMAND',
-            'status' => 'published',
+            'status' => 'scheduled',
         ]);
 
         $response = $this->actingAs($this->passengerUser, 'sanctum')

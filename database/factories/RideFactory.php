@@ -81,4 +81,15 @@ class RideFactory extends Factory
             'arrival_time_estimated' => now()->addHours(1),
         ]);
     }
+
+    /**
+     * Create a ride without requiring a driver (for on-demand matching).
+     */
+    public function unassigned(): static
+    {
+        return $this->state(fn (array $attributes) => [
+            'driver_id' => null,
+            'vehicle_id' => null,
+        ]);
+    }
 }

@@ -19,7 +19,7 @@ class ManagerFactory extends Factory
             'name' => $this->faker->name(),
             'email' => $this->faker->unique()->safeEmail(),
             'password' => Hash::make('password'),
-            'role' => 'manager',
+            'role' => \App\Enums\UserRole::ADMIN->value,
         ];
     }
 
@@ -29,7 +29,7 @@ class ManagerFactory extends Factory
     public function superAdmin(): static
     {
         return $this->state(fn (array $attributes) => [
-            'role' => 'super_admin',
+            'role' => \App\Enums\UserRole::SUPER_ADMIN->value,
         ]);
     }
 }

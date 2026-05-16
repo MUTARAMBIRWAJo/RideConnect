@@ -1,0 +1,2193 @@
+PHPUnit Started (PHPUnit 11.5.52 using PHP 8.4.18 (cli) on Linux)
+Test Runner Configured
+Bootstrap Finished (/home/joseph/projects/RideConnectBackend/vendor/autoload.php)
+Event Facade Sealed
+Test Runner Triggered Deprecation (Metadata found in doc-comment for method Tests\Unit\DomainEventRegistryTest::it_registers_expected_event_listener_contracts(). Metadata in doc-comments is deprecated and will no longer be supported in PHPUnit 12. Update your test code to use attributes instead.)
+Test Runner Triggered Deprecation (Metadata found in doc-comment for method Tests\Unit\DomainGuardTest::it_detects_policy_bypass_patterns(). Metadata in doc-comments is deprecated and will no longer be supported in PHPUnit 12. Update your test code to use attributes instead.)
+Test Runner Triggered Deprecation (Metadata found in doc-comment for method Tests\Unit\DomainGuardTest::it_allows_guarded_controllers(). Metadata in doc-comments is deprecated and will no longer be supported in PHPUnit 12. Update your test code to use attributes instead.)
+Test Runner Triggered Deprecation (Metadata found in doc-comment for method Tests\Unit\DriverMatchingServiceTest::it_returns_null_when_no_eligible_driver(). Metadata in doc-comments is deprecated and will no longer be supported in PHPUnit 12. Update your test code to use attributes instead.)
+Test Runner Triggered Deprecation (Metadata found in doc-comment for method Tests\Unit\DriverMatchingServiceTest::it_selects_compatible_online_driver_with_placeholder_scores(). Metadata in doc-comments is deprecated and will no longer be supported in PHPUnit 12. Update your test code to use attributes instead.)
+Test Runner Triggered Deprecation (Metadata found in doc-comment for method Tests\Unit\MatchingEngineTest::it_prefers_closer_and_more_reliable_drivers(). Metadata in doc-comments is deprecated and will no longer be supported in PHPUnit 12. Update your test code to use attributes instead.)
+Test Runner Triggered Deprecation (Metadata found in doc-comment for method Tests\Unit\MatchingEngineTest::it_remains_null_safe_when_snapshot_data_is_missing(). Metadata in doc-comments is deprecated and will no longer be supported in PHPUnit 12. Update your test code to use attributes instead.)
+Test Runner Triggered Deprecation (Metadata found in doc-comment for method Tests\Unit\TransportMappingServiceTest::test_vehicle_to_transport_mapping_is_correct(). Metadata in doc-comments is deprecated and will no longer be supported in PHPUnit 12. Update your test code to use attributes instead.)
+Test Runner Triggered Deprecation (Metadata found in doc-comment for method Tests\Unit\TransportMappingServiceTest::test_mapping_service_is_case_insensitive(). Metadata in doc-comments is deprecated and will no longer be supported in PHPUnit 12. Update your test code to use attributes instead.)
+Test Runner Triggered Deprecation (Metadata found in doc-comment for method Tests\Unit\TransportMappingServiceTest::test_unknown_vehicle_type_returns_null(). Metadata in doc-comments is deprecated and will no longer be supported in PHPUnit 12. Update your test code to use attributes instead.)
+Test Runner Triggered Deprecation (Metadata found in doc-comment for method Tests\Unit\TransportMappingServiceTest::test_is_compatible_returns_true_for_matching_types(). Metadata in doc-comments is deprecated and will no longer be supported in PHPUnit 12. Update your test code to use attributes instead.)
+Test Runner Triggered Deprecation (Metadata found in doc-comment for method Tests\Unit\TransportMappingServiceTest::test_is_compatible_returns_false_for_mismatched_types(). Metadata in doc-comments is deprecated and will no longer be supported in PHPUnit 12. Update your test code to use attributes instead.)
+Test Runner Triggered Deprecation (Metadata found in doc-comment for method Tests\Unit\TransportMappingServiceTest::test_is_compatible_is_case_insensitive(). Metadata in doc-comments is deprecated and will no longer be supported in PHPUnit 12. Update your test code to use attributes instead.)
+Test Runner Triggered Deprecation (Metadata found in doc-comment for method Tests\Unit\TransportMappingServiceTest::test_is_compatible_returns_false_for_null_values(). Metadata in doc-comments is deprecated and will no longer be supported in PHPUnit 12. Update your test code to use attributes instead.)
+Test Runner Triggered Deprecation (Metadata found in doc-comment for method Tests\Unit\TransportMappingServiceTest::test_normalize_converts_to_lowercase_and_trims(). Metadata in doc-comments is deprecated and will no longer be supported in PHPUnit 12. Update your test code to use attributes instead.)
+Test Runner Triggered Deprecation (Metadata found in doc-comment for method Tests\Unit\TransportMappingServiceTest::test_get_vehicle_types_for_transport_type(). Metadata in doc-comments is deprecated and will no longer be supported in PHPUnit 12. Update your test code to use attributes instead.)
+Test Runner Triggered Deprecation (Metadata found in doc-comment for method Tests\Unit\TransportMappingServiceTest::test_get_all_vehicle_types(). Metadata in doc-comments is deprecated and will no longer be supported in PHPUnit 12. Update your test code to use attributes instead.)
+Test Runner Triggered Deprecation (Metadata found in doc-comment for method Tests\Unit\TransportMappingServiceTest::test_get_all_transport_types(). Metadata in doc-comments is deprecated and will no longer be supported in PHPUnit 12. Update your test code to use attributes instead.)
+Test Runner Triggered Deprecation (Metadata found in doc-comment for method Tests\Unit\TripLocationServiceTest::it_updates_and_reads_current_location(). Metadata in doc-comments is deprecated and will no longer be supported in PHPUnit 12. Update your test code to use attributes instead.)
+Test Runner Triggered Deprecation (Metadata found in doc-comment for method Tests\Unit\TripStateMachineTest::it_allows_valid_transitions(). Metadata in doc-comments is deprecated and will no longer be supported in PHPUnit 12. Update your test code to use attributes instead.)
+Test Runner Triggered Deprecation (Metadata found in doc-comment for method Tests\Unit\TripStateMachineTest::it_blocks_invalid_transitions(). Metadata in doc-comments is deprecated and will no longer be supported in PHPUnit 12. Update your test code to use attributes instead.)
+Test Runner Triggered Deprecation (Metadata found in doc-comment for method Tests\Unit\TripStateMachineTest::assert_transition_throws_for_invalid_transition(). Metadata in doc-comments is deprecated and will no longer be supported in PHPUnit 12. Update your test code to use attributes instead.)
+Test Runner Triggered Deprecation (Metadata found in doc-comment for method Tests\Feature\AiMatchingSchemaTest::it_exposes_the_ai_matching_columns(). Metadata in doc-comments is deprecated and will no longer be supported in PHPUnit 12. Update your test code to use attributes instead.)
+Test Runner Triggered Deprecation (Metadata found in doc-comment for method Tests\Feature\AiMatchingSchemaTest::it_preserves_historical_snapshots_across_multiple_trips(). Metadata in doc-comments is deprecated and will no longer be supported in PHPUnit 12. Update your test code to use attributes instead.)
+Test Runner Triggered Deprecation (Metadata found in doc-comment for method Tests\Feature\AiMatchingSchemaTest::it_keeps_the_relationship_bridge_between_mobile_users_and_users(). Metadata in doc-comments is deprecated and will no longer be supported in PHPUnit 12. Update your test code to use attributes instead.)
+Test Runner Triggered Deprecation (Metadata found in doc-comment for method Tests\Feature\BookingConcurrencySafetyTest::concurrent_booking_does_not_overbook_with_lock(). Metadata in doc-comments is deprecated and will no longer be supported in PHPUnit 12. Update your test code to use attributes instead.)
+Test Runner Triggered Deprecation (Metadata found in doc-comment for method Tests\Feature\BookingConcurrencySafetyTest::booking_validation_uses_ride_policy(). Metadata in doc-comments is deprecated and will no longer be supported in PHPUnit 12. Update your test code to use attributes instead.)
+Test Runner Triggered Deprecation (Metadata found in doc-comment for method Tests\Feature\BookingConcurrencySafetyTest::booking_prevents_departed_ride(). Metadata in doc-comments is deprecated and will no longer be supported in PHPUnit 12. Update your test code to use attributes instead.)
+Test Runner Triggered Deprecation (Metadata found in doc-comment for method Tests\Feature\BookingConcurrencySafetyTest::api_contract_includes_ride_rules(). Metadata in doc-comments is deprecated and will no longer be supported in PHPUnit 12. Update your test code to use attributes instead.)
+Test Runner Triggered Deprecation (Metadata found in doc-comment for method Tests\Feature\BookingConcurrencySafetyTest::ride_rules_correctly_indicate_scheduled_car_can_book(). Metadata in doc-comments is deprecated and will no longer be supported in PHPUnit 12. Update your test code to use attributes instead.)
+Test Runner Triggered Deprecation (Metadata found in doc-comment for method Tests\Feature\BookingConcurrencySafetyTest::ride_rules_correctly_indicate_ondemand_car_can_request_trip(). Metadata in doc-comments is deprecated and will no longer be supported in PHPUnit 12. Update your test code to use attributes instead.)
+Test Runner Triggered Deprecation (Metadata found in doc-comment for method Tests\Feature\DomainEventsEmissionTest::booking_and_trip_events_are_emitted(). Metadata in doc-comments is deprecated and will no longer be supported in PHPUnit 12. Update your test code to use attributes instead.)
+Test Runner Triggered Deprecation (Metadata found in doc-comment for method Tests\Feature\DomainEventsEmissionTest::ride_created_event_is_emitted(). Metadata in doc-comments is deprecated and will no longer be supported in PHPUnit 12. Update your test code to use attributes instead.)
+Test Runner Triggered Deprecation (Metadata found in doc-comment for method Tests\Feature\PublicTransportPolicyTest::test_bus_ride_must_have_route(). Metadata in doc-comments is deprecated and will no longer be supported in PHPUnit 12. Update your test code to use attributes instead.)
+Test Runner Triggered Deprecation (Metadata found in doc-comment for method Tests\Feature\PublicTransportPolicyTest::test_cannot_create_bus_without_route(). Metadata in doc-comments is deprecated and will no longer be supported in PHPUnit 12. Update your test code to use attributes instead.)
+Test Runner Triggered Deprecation (Metadata found in doc-comment for method Tests\Feature\PublicTransportPolicyTest::test_passenger_can_book_bus_route(). Metadata in doc-comments is deprecated and will no longer be supported in PHPUnit 12. Update your test code to use attributes instead.)
+Test Runner Triggered Deprecation (Metadata found in doc-comment for method Tests\Feature\PublicTransportPolicyTest::test_bus_trip_created_from_booking_only(). Metadata in doc-comments is deprecated and will no longer be supported in PHPUnit 12. Update your test code to use attributes instead.)
+Test Runner Triggered Deprecation (Metadata found in doc-comment for method Tests\Feature\PublicTransportPolicyTest::test_admin_can_update_routes_dynamically(). Metadata in doc-comments is deprecated and will no longer be supported in PHPUnit 12. Update your test code to use attributes instead.)
+Test Runner Triggered Deprecation (Metadata found in doc-comment for method Tests\Feature\RideApiContractTest::ride_api_always_exposes_ride_rules(). Metadata in doc-comments is deprecated and will no longer be supported in PHPUnit 12. Update your test code to use attributes instead.)
+Test Runner Triggered Deprecation (Metadata found in doc-comment for method Tests\Feature\RideFlowTest::cannot_overbook_seats(). Metadata in doc-comments is deprecated and will no longer be supported in PHPUnit 12. Update your test code to use attributes instead.)
+Test Runner Triggered Deprecation (Metadata found in doc-comment for method Tests\Feature\RideFlowTest::driver_cannot_accept_wrong_vehicle_type(). Metadata in doc-comments is deprecated and will no longer be supported in PHPUnit 12. Update your test code to use attributes instead.)
+Test Runner Triggered Deprecation (Metadata found in doc-comment for method Tests\Feature\RideFlowTest::api_returns_correct_flags(). Metadata in doc-comments is deprecated and will no longer be supported in PHPUnit 12. Update your test code to use attributes instead.)
+Test Runner Triggered Deprecation (Metadata found in doc-comment for method Tests\Feature\RideFlowTest::driver_can_accept_with_compatible_vehicle_type(). Metadata in doc-comments is deprecated and will no longer be supported in PHPUnit 12. Update your test code to use attributes instead.)
+Test Runner Triggered Deprecation (Metadata found in doc-comment for method Tests\Feature\RideFlowTest::driver_can_accept_car_ride_with_suv(). Metadata in doc-comments is deprecated and will no longer be supported in PHPUnit 12. Update your test code to use attributes instead.)
+Test Runner Triggered Deprecation (Metadata found in doc-comment for method Tests\Feature\RideFlowTest::ride_model_has_vehicle_compatibility_helper(). Metadata in doc-comments is deprecated and will no longer be supported in PHPUnit 12. Update your test code to use attributes instead.)
+Test Runner Triggered Deprecation (Metadata found in doc-comment for method Tests\Feature\RideTransportClassificationTest::cannot_create_booking_for_on_demand_ride(). Metadata in doc-comments is deprecated and will no longer be supported in PHPUnit 12. Update your test code to use attributes instead.)
+Test Runner Triggered Deprecation (Metadata found in doc-comment for method Tests\Feature\RideTransportClassificationTest::can_create_booking_for_scheduled_ride(). Metadata in doc-comments is deprecated and will no longer be supported in PHPUnit 12. Update your test code to use attributes instead.)
+Test Runner Triggered Deprecation (Metadata found in doc-comment for method Tests\Feature\RideTransportClassificationTest::can_create_trip_directly_for_on_demand_ride(). Metadata in doc-comments is deprecated and will no longer be supported in PHPUnit 12. Update your test code to use attributes instead.)
+Test Runner Triggered Deprecation (Metadata found in doc-comment for method Tests\Feature\RideTransportClassificationTest::trip_from_booking_works_correctly(). Metadata in doc-comments is deprecated and will no longer be supported in PHPUnit 12. Update your test code to use attributes instead.)
+Test Runner Triggered Deprecation (Metadata found in doc-comment for method Tests\Feature\RideTransportClassificationTest::ride_classification_works_correctly(). Metadata in doc-comments is deprecated and will no longer be supported in PHPUnit 12. Update your test code to use attributes instead.)
+Test Runner Triggered Deprecation (Metadata found in doc-comment for method Tests\Feature\RideTransportClassificationTest::ride_validation_rules_work(). Metadata in doc-comments is deprecated and will no longer be supported in PHPUnit 12. Update your test code to use attributes instead.)
+Test Suite Loaded (176 tests)
+Test Runner Started
+Test Suite Sorted
+Test Runner Execution Started (176 tests)
+Test Suite Started (/home/joseph/projects/RideConnectBackend/phpunit.xml, 176 tests)
+Test Suite Started (Unit, 48 tests)
+Test Suite Started (Tests\Unit\DomainEventRegistryTest, 1 test)
+Test Preparation Started (Tests\Unit\DomainEventRegistryTest::it_registers_expected_event_listener_contracts)
+Test Prepared (Tests\Unit\DomainEventRegistryTest::it_registers_expected_event_listener_contracts)
+Test Passed (Tests\Unit\DomainEventRegistryTest::it_registers_expected_event_listener_contracts)
+Test Finished (Tests\Unit\DomainEventRegistryTest::it_registers_expected_event_listener_contracts)
+Test Suite Finished (Tests\Unit\DomainEventRegistryTest, 1 test)
+Test Suite Started (Tests\Unit\DomainGuardTest, 2 tests)
+Test Preparation Started (Tests\Unit\DomainGuardTest::it_detects_policy_bypass_patterns)
+Test Prepared (Tests\Unit\DomainGuardTest::it_detects_policy_bypass_patterns)
+Test Passed (Tests\Unit\DomainGuardTest::it_detects_policy_bypass_patterns)
+Test Finished (Tests\Unit\DomainGuardTest::it_detects_policy_bypass_patterns)
+Test Preparation Started (Tests\Unit\DomainGuardTest::it_allows_guarded_controllers)
+Test Prepared (Tests\Unit\DomainGuardTest::it_allows_guarded_controllers)
+Test Passed (Tests\Unit\DomainGuardTest::it_allows_guarded_controllers)
+Test Finished (Tests\Unit\DomainGuardTest::it_allows_guarded_controllers)
+Test Suite Finished (Tests\Unit\DomainGuardTest, 2 tests)
+Test Suite Started (Tests\Unit\DriverMatchingServiceTest, 2 tests)
+Test Preparation Started (Tests\Unit\DriverMatchingServiceTest::it_returns_null_when_no_eligible_driver)
+Before Test Method Called (Tests\Unit\DriverMatchingServiceTest::setUp)
+Before Test Method Finished:
+- Tests\Unit\DriverMatchingServiceTest::setUp
+Test Prepared (Tests\Unit\DriverMatchingServiceTest::it_returns_null_when_no_eligible_driver)
+After Test Method Called (Tests\Unit\DriverMatchingServiceTest::tearDown)
+After Test Method Finished:
+- Tests\Unit\DriverMatchingServiceTest::tearDown
+Test Passed (Tests\Unit\DriverMatchingServiceTest::it_returns_null_when_no_eligible_driver)
+Test Finished (Tests\Unit\DriverMatchingServiceTest::it_returns_null_when_no_eligible_driver)
+Test Preparation Started (Tests\Unit\DriverMatchingServiceTest::it_selects_compatible_online_driver_with_placeholder_scores)
+Before Test Method Called (Tests\Unit\DriverMatchingServiceTest::setUp)
+Before Test Method Finished:
+- Tests\Unit\DriverMatchingServiceTest::setUp
+Test Prepared (Tests\Unit\DriverMatchingServiceTest::it_selects_compatible_online_driver_with_placeholder_scores)
+After Test Method Called (Tests\Unit\DriverMatchingServiceTest::tearDown)
+After Test Method Finished:
+- Tests\Unit\DriverMatchingServiceTest::tearDown
+Test Passed (Tests\Unit\DriverMatchingServiceTest::it_selects_compatible_online_driver_with_placeholder_scores)
+Test Finished (Tests\Unit\DriverMatchingServiceTest::it_selects_compatible_online_driver_with_placeholder_scores)
+After Last Test Method Called (Tests\Unit\DriverMatchingServiceTest::tearDownAfterClass)
+After Last Test Method Finished:
+- Tests\Unit\DriverMatchingServiceTest::tearDownAfterClass
+Test Suite Finished (Tests\Unit\DriverMatchingServiceTest, 2 tests)
+Test Suite Started (Tests\Unit\EventReplayTest, 7 tests)
+Test Preparation Started (Tests\Unit\EventReplayTest::test_domain_event_is_persisted_to_table)
+Before Test Method Called (Tests\Unit\EventReplayTest::setUp)
+Before Test Method Finished:
+- Tests\Unit\EventReplayTest::setUp
+Test Prepared (Tests\Unit\EventReplayTest::test_domain_event_is_persisted_to_table)
+After Test Method Called (Tests\Unit\EventReplayTest::tearDown)
+After Test Method Finished:
+- Tests\Unit\EventReplayTest::tearDown
+Test Passed (Tests\Unit\EventReplayTest::test_domain_event_is_persisted_to_table)
+Test Finished (Tests\Unit\EventReplayTest::test_domain_event_is_persisted_to_table)
+Test Preparation Started (Tests\Unit\EventReplayTest::test_event_outbox_record_created_alongside_event)
+Before Test Method Called (Tests\Unit\EventReplayTest::setUp)
+Before Test Method Finished:
+- Tests\Unit\EventReplayTest::setUp
+Test Prepared (Tests\Unit\EventReplayTest::test_event_outbox_record_created_alongside_event)
+After Test Method Called (Tests\Unit\EventReplayTest::tearDown)
+After Test Method Finished:
+- Tests\Unit\EventReplayTest::tearDown
+Test Passed (Tests\Unit\EventReplayTest::test_event_outbox_record_created_alongside_event)
+Test Finished (Tests\Unit\EventReplayTest::test_event_outbox_record_created_alongside_event)
+Test Preparation Started (Tests\Unit\EventReplayTest::test_domain_event_payload_cannot_be_updated)
+Before Test Method Called (Tests\Unit\EventReplayTest::setUp)
+Before Test Method Finished:
+- Tests\Unit\EventReplayTest::setUp
+Test Prepared (Tests\Unit\EventReplayTest::test_domain_event_payload_cannot_be_updated)
+After Test Method Called (Tests\Unit\EventReplayTest::tearDown)
+After Test Method Finished:
+- Tests\Unit\EventReplayTest::tearDown
+Test Passed (Tests\Unit\EventReplayTest::test_domain_event_payload_cannot_be_updated)
+Test Finished (Tests\Unit\EventReplayTest::test_domain_event_payload_cannot_be_updated)
+Test Preparation Started (Tests\Unit\EventReplayTest::test_domain_event_cannot_be_deleted)
+Before Test Method Called (Tests\Unit\EventReplayTest::setUp)
+Before Test Method Finished:
+- Tests\Unit\EventReplayTest::setUp
+Test Prepared (Tests\Unit\EventReplayTest::test_domain_event_cannot_be_deleted)
+After Test Method Called (Tests\Unit\EventReplayTest::tearDown)
+After Test Method Finished:
+- Tests\Unit\EventReplayTest::tearDown
+Test Passed (Tests\Unit\EventReplayTest::test_domain_event_cannot_be_deleted)
+Test Finished (Tests\Unit\EventReplayTest::test_domain_event_cannot_be_deleted)
+Test Preparation Started (Tests\Unit\EventReplayTest::test_replay_returns_events_ordered_by_version)
+Before Test Method Called (Tests\Unit\EventReplayTest::setUp)
+Before Test Method Finished:
+- Tests\Unit\EventReplayTest::setUp
+Test Prepared (Tests\Unit\EventReplayTest::test_replay_returns_events_ordered_by_version)
+After Test Method Called (Tests\Unit\EventReplayTest::tearDown)
+After Test Method Finished:
+- Tests\Unit\EventReplayTest::tearDown
+Test Passed (Tests\Unit\EventReplayTest::test_replay_returns_events_ordered_by_version)
+Test Finished (Tests\Unit\EventReplayTest::test_replay_returns_events_ordered_by_version)
+Test Preparation Started (Tests\Unit\EventReplayTest::test_replay_from_version_filters_older_events)
+Before Test Method Called (Tests\Unit\EventReplayTest::setUp)
+Before Test Method Finished:
+- Tests\Unit\EventReplayTest::setUp
+Test Prepared (Tests\Unit\EventReplayTest::test_replay_from_version_filters_older_events)
+Test Errored (Tests\Unit\EventReplayTest::test_replay_from_version_filters_older_events)
+Property [version] does not exist on this collection instance.
+After Test Method Called (Tests\Unit\EventReplayTest::tearDown)
+After Test Method Finished:
+- Tests\Unit\EventReplayTest::tearDown
+Test Finished (Tests\Unit\EventReplayTest::test_replay_from_version_filters_older_events)
+Test Preparation Started (Tests\Unit\EventReplayTest::test_replay_by_type_returns_all_matching_events)
+Before Test Method Called (Tests\Unit\EventReplayTest::setUp)
+Before Test Method Finished:
+- Tests\Unit\EventReplayTest::setUp
+Test Prepared (Tests\Unit\EventReplayTest::test_replay_by_type_returns_all_matching_events)
+After Test Method Called (Tests\Unit\EventReplayTest::tearDown)
+After Test Method Finished:
+- Tests\Unit\EventReplayTest::tearDown
+Test Passed (Tests\Unit\EventReplayTest::test_replay_by_type_returns_all_matching_events)
+Test Finished (Tests\Unit\EventReplayTest::test_replay_by_type_returns_all_matching_events)
+After Last Test Method Called (Tests\Unit\EventReplayTest::tearDownAfterClass)
+After Last Test Method Finished:
+- Tests\Unit\EventReplayTest::tearDownAfterClass
+Test Suite Finished (Tests\Unit\EventReplayTest, 7 tests)
+Test Suite Started (Tests\Unit\ExampleTest, 1 test)
+Test Preparation Started (Tests\Unit\ExampleTest::test_that_true_is_true)
+Test Prepared (Tests\Unit\ExampleTest::test_that_true_is_true)
+Test Passed (Tests\Unit\ExampleTest::test_that_true_is_true)
+Test Finished (Tests\Unit\ExampleTest::test_that_true_is_true)
+Test Suite Finished (Tests\Unit\ExampleTest, 1 test)
+Test Suite Started (Tests\Unit\LedgerDoubleEntryTest, 9 tests)
+Test Preparation Started (Tests\Unit\LedgerDoubleEntryTest::test_balanced_transaction_is_recorded)
+Before Test Method Called (Tests\Unit\LedgerDoubleEntryTest::setUp)
+Before Test Method Finished:
+- Tests\Unit\LedgerDoubleEntryTest::setUp
+Test Prepared (Tests\Unit\LedgerDoubleEntryTest::test_balanced_transaction_is_recorded)
+After Test Method Called (Tests\Unit\LedgerDoubleEntryTest::tearDown)
+After Test Method Finished:
+- Tests\Unit\LedgerDoubleEntryTest::tearDown
+Test Passed (Tests\Unit\LedgerDoubleEntryTest::test_balanced_transaction_is_recorded)
+Test Finished (Tests\Unit\LedgerDoubleEntryTest::test_balanced_transaction_is_recorded)
+Test Preparation Started (Tests\Unit\LedgerDoubleEntryTest::test_imbalanced_transaction_throws_exception)
+Before Test Method Called (Tests\Unit\LedgerDoubleEntryTest::setUp)
+Before Test Method Finished:
+- Tests\Unit\LedgerDoubleEntryTest::setUp
+Test Prepared (Tests\Unit\LedgerDoubleEntryTest::test_imbalanced_transaction_throws_exception)
+After Test Method Called (Tests\Unit\LedgerDoubleEntryTest::tearDown)
+After Test Method Finished:
+- Tests\Unit\LedgerDoubleEntryTest::tearDown
+Test Passed (Tests\Unit\LedgerDoubleEntryTest::test_imbalanced_transaction_throws_exception)
+Test Finished (Tests\Unit\LedgerDoubleEntryTest::test_imbalanced_transaction_throws_exception)
+Test Preparation Started (Tests\Unit\LedgerDoubleEntryTest::test_single_entry_throws_exception)
+Before Test Method Called (Tests\Unit\LedgerDoubleEntryTest::setUp)
+Before Test Method Finished:
+- Tests\Unit\LedgerDoubleEntryTest::setUp
+Test Prepared (Tests\Unit\LedgerDoubleEntryTest::test_single_entry_throws_exception)
+After Test Method Called (Tests\Unit\LedgerDoubleEntryTest::tearDown)
+After Test Method Finished:
+- Tests\Unit\LedgerDoubleEntryTest::tearDown
+Test Passed (Tests\Unit\LedgerDoubleEntryTest::test_single_entry_throws_exception)
+Test Finished (Tests\Unit\LedgerDoubleEntryTest::test_single_entry_throws_exception)
+Test Preparation Started (Tests\Unit\LedgerDoubleEntryTest::test_settlement_flow_creates_balanced_entries)
+Before Test Method Called (Tests\Unit\LedgerDoubleEntryTest::setUp)
+Before Test Method Finished:
+- Tests\Unit\LedgerDoubleEntryTest::setUp
+Test Prepared (Tests\Unit\LedgerDoubleEntryTest::test_settlement_flow_creates_balanced_entries)
+After Test Method Called (Tests\Unit\LedgerDoubleEntryTest::tearDown)
+After Test Method Finished:
+- Tests\Unit\LedgerDoubleEntryTest::tearDown
+Test Passed (Tests\Unit\LedgerDoubleEntryTest::test_settlement_flow_creates_balanced_entries)
+Test Finished (Tests\Unit\LedgerDoubleEntryTest::test_settlement_flow_creates_balanced_entries)
+Test Preparation Started (Tests\Unit\LedgerDoubleEntryTest::test_ledger_entry_cannot_be_updated_via_model)
+Before Test Method Called (Tests\Unit\LedgerDoubleEntryTest::setUp)
+Before Test Method Finished:
+- Tests\Unit\LedgerDoubleEntryTest::setUp
+Test Prepared (Tests\Unit\LedgerDoubleEntryTest::test_ledger_entry_cannot_be_updated_via_model)
+After Test Method Called (Tests\Unit\LedgerDoubleEntryTest::tearDown)
+After Test Method Finished:
+- Tests\Unit\LedgerDoubleEntryTest::tearDown
+Test Passed (Tests\Unit\LedgerDoubleEntryTest::test_ledger_entry_cannot_be_updated_via_model)
+Test Finished (Tests\Unit\LedgerDoubleEntryTest::test_ledger_entry_cannot_be_updated_via_model)
+Test Preparation Started (Tests\Unit\LedgerDoubleEntryTest::test_ledger_entry_cannot_be_deleted_via_model)
+Before Test Method Called (Tests\Unit\LedgerDoubleEntryTest::setUp)
+Before Test Method Finished:
+- Tests\Unit\LedgerDoubleEntryTest::setUp
+Test Prepared (Tests\Unit\LedgerDoubleEntryTest::test_ledger_entry_cannot_be_deleted_via_model)
+After Test Method Called (Tests\Unit\LedgerDoubleEntryTest::tearDown)
+After Test Method Finished:
+- Tests\Unit\LedgerDoubleEntryTest::tearDown
+Test Passed (Tests\Unit\LedgerDoubleEntryTest::test_ledger_entry_cannot_be_deleted_via_model)
+Test Finished (Tests\Unit\LedgerDoubleEntryTest::test_ledger_entry_cannot_be_deleted_via_model)
+Test Preparation Started (Tests\Unit\LedgerDoubleEntryTest::test_refund_flow_balances)
+Before Test Method Called (Tests\Unit\LedgerDoubleEntryTest::setUp)
+Before Test Method Finished:
+- Tests\Unit\LedgerDoubleEntryTest::setUp
+Test Prepared (Tests\Unit\LedgerDoubleEntryTest::test_refund_flow_balances)
+Test Failed (Tests\Unit\LedgerDoubleEntryTest::test_refund_flow_balances)
+Failed asserting that 10000.0 matches expected 5000.0.
+After Test Method Called (Tests\Unit\LedgerDoubleEntryTest::tearDown)
+After Test Method Finished:
+- Tests\Unit\LedgerDoubleEntryTest::tearDown
+Test Finished (Tests\Unit\LedgerDoubleEntryTest::test_refund_flow_balances)
+Test Preparation Started (Tests\Unit\LedgerDoubleEntryTest::test_asset_account_balance_is_debit_minus_credit)
+Before Test Method Called (Tests\Unit\LedgerDoubleEntryTest::setUp)
+Before Test Method Finished:
+- Tests\Unit\LedgerDoubleEntryTest::setUp
+Test Prepared (Tests\Unit\LedgerDoubleEntryTest::test_asset_account_balance_is_debit_minus_credit)
+After Test Method Called (Tests\Unit\LedgerDoubleEntryTest::tearDown)
+After Test Method Finished:
+- Tests\Unit\LedgerDoubleEntryTest::tearDown
+Test Passed (Tests\Unit\LedgerDoubleEntryTest::test_asset_account_balance_is_debit_minus_credit)
+Test Finished (Tests\Unit\LedgerDoubleEntryTest::test_asset_account_balance_is_debit_minus_credit)
+Test Preparation Started (Tests\Unit\LedgerDoubleEntryTest::test_each_transaction_gets_a_unique_uuid)
+Before Test Method Called (Tests\Unit\LedgerDoubleEntryTest::setUp)
+Before Test Method Finished:
+- Tests\Unit\LedgerDoubleEntryTest::setUp
+Test Prepared (Tests\Unit\LedgerDoubleEntryTest::test_each_transaction_gets_a_unique_uuid)
+After Test Method Called (Tests\Unit\LedgerDoubleEntryTest::tearDown)
+After Test Method Finished:
+- Tests\Unit\LedgerDoubleEntryTest::tearDown
+Test Passed (Tests\Unit\LedgerDoubleEntryTest::test_each_transaction_gets_a_unique_uuid)
+Test Finished (Tests\Unit\LedgerDoubleEntryTest::test_each_transaction_gets_a_unique_uuid)
+After Last Test Method Called (Tests\Unit\LedgerDoubleEntryTest::tearDownAfterClass)
+After Last Test Method Finished:
+- Tests\Unit\LedgerDoubleEntryTest::tearDownAfterClass
+Test Suite Finished (Tests\Unit\LedgerDoubleEntryTest, 9 tests)
+Test Suite Started (Tests\Unit\MatchingEngineTest, 2 tests)
+Test Preparation Started (Tests\Unit\MatchingEngineTest::it_prefers_closer_and_more_reliable_drivers)
+Before Test Method Called (Tests\Unit\MatchingEngineTest::setUp)
+Before Test Method Finished:
+- Tests\Unit\MatchingEngineTest::setUp
+Test Prepared (Tests\Unit\MatchingEngineTest::it_prefers_closer_and_more_reliable_drivers)
+Test Errored (Tests\Unit\MatchingEngineTest::it_prefers_closer_and_more_reliable_drivers)
+Call to undefined relationship [routeState] on model [App\Models\Trip].
+After Test Method Called (Tests\Unit\MatchingEngineTest::tearDown)
+After Test Method Finished:
+- Tests\Unit\MatchingEngineTest::tearDown
+Test Finished (Tests\Unit\MatchingEngineTest::it_prefers_closer_and_more_reliable_drivers)
+Test Preparation Started (Tests\Unit\MatchingEngineTest::it_remains_null_safe_when_snapshot_data_is_missing)
+Before Test Method Called (Tests\Unit\MatchingEngineTest::setUp)
+Before Test Method Finished:
+- Tests\Unit\MatchingEngineTest::setUp
+Test Prepared (Tests\Unit\MatchingEngineTest::it_remains_null_safe_when_snapshot_data_is_missing)
+After Test Method Called (Tests\Unit\MatchingEngineTest::tearDown)
+After Test Method Finished:
+- Tests\Unit\MatchingEngineTest::tearDown
+Test Passed (Tests\Unit\MatchingEngineTest::it_remains_null_safe_when_snapshot_data_is_missing)
+Test Finished (Tests\Unit\MatchingEngineTest::it_remains_null_safe_when_snapshot_data_is_missing)
+After Last Test Method Called (Tests\Unit\MatchingEngineTest::tearDownAfterClass)
+After Last Test Method Finished:
+- Tests\Unit\MatchingEngineTest::tearDownAfterClass
+Test Suite Finished (Tests\Unit\MatchingEngineTest, 2 tests)
+Test Suite Started (Tests\Unit\OfficerOverviewStatsTest, 1 test)
+Test Preparation Started (Tests\Unit\OfficerOverviewStatsTest::test_driver_status_uses_fallback_count_when_is_online_column_is_missing)
+Before Test Method Called (Tests\Unit\OfficerOverviewStatsTest::setUp)
+Before Test Method Finished:
+- Tests\Unit\OfficerOverviewStatsTest::setUp
+Test Prepared (Tests\Unit\OfficerOverviewStatsTest::test_driver_status_uses_fallback_count_when_is_online_column_is_missing)
+Test Errored (Tests\Unit\OfficerOverviewStatsTest::test_driver_status_uses_fallback_count_when_is_online_column_is_missing)
+Could not load mock App\Models\Driver, class already exists
+After Test Method Called (Tests\Unit\OfficerOverviewStatsTest::tearDown)
+After Test Method Errored (Tests\Unit\OfficerOverviewStatsTest::tearDown)
+Method count(<Any Arguments>) from Mockery_2 should be called
+ exactly 1 times but called 0 times.
+After Test Method Finished:
+- Tests\Unit\OfficerOverviewStatsTest::tearDown
+Test Considered Risky (Tests\Unit\OfficerOverviewStatsTest::test_driver_status_uses_fallback_count_when_is_online_column_is_missing)
+Test code or tested code did not remove its own error handlers
+Test Considered Risky (Tests\Unit\OfficerOverviewStatsTest::test_driver_status_uses_fallback_count_when_is_online_column_is_missing)
+Test code or tested code did not remove its own exception handlers
+Test Finished (Tests\Unit\OfficerOverviewStatsTest::test_driver_status_uses_fallback_count_when_is_online_column_is_missing)
+After Last Test Method Called (Tests\Unit\OfficerOverviewStatsTest::tearDownAfterClass)
+After Last Test Method Finished:
+- Tests\Unit\OfficerOverviewStatsTest::tearDownAfterClass
+Test Suite Finished (Tests\Unit\OfficerOverviewStatsTest, 1 test)
+Test Suite Started (Tests\Unit\TaxCalculationTest, 7 tests)
+Test Preparation Started (Tests\Unit\TaxCalculationTest::test_ride_tax_returns_correct_vat_amount)
+Before Test Method Called (Tests\Unit\TaxCalculationTest::setUp)
+Before Test Method Errored (Tests\Unit\TaxCalculationTest::setUp)
+SQLSTATE[HY000]: General error: 1 cannot start a transaction within a transaction
+Before Test Method Finished:
+- Tests\Unit\TaxCalculationTest::setUp
+Test Preparation Failed (Tests\Unit\TaxCalculationTest::test_ride_tax_returns_correct_vat_amount)
+Test Errored (Tests\Unit\TaxCalculationTest::test_ride_tax_returns_correct_vat_amount)
+SQLSTATE[HY000]: General error: 1 cannot start a transaction within a transaction
+After Test Method Called (Tests\Unit\TaxCalculationTest::tearDown)
+After Test Method Finished:
+- Tests\Unit\TaxCalculationTest::tearDown
+Test Preparation Started (Tests\Unit\TaxCalculationTest::test_ride_tax_with_zero_amount)
+Before Test Method Called (Tests\Unit\TaxCalculationTest::setUp)
+Before Test Method Errored (Tests\Unit\TaxCalculationTest::setUp)
+SQLSTATE[HY000]: General error: 1 cannot start a transaction within a transaction
+Before Test Method Finished:
+- Tests\Unit\TaxCalculationTest::setUp
+Test Preparation Failed (Tests\Unit\TaxCalculationTest::test_ride_tax_with_zero_amount)
+Test Errored (Tests\Unit\TaxCalculationTest::test_ride_tax_with_zero_amount)
+SQLSTATE[HY000]: General error: 1 cannot start a transaction within a transaction
+After Test Method Called (Tests\Unit\TaxCalculationTest::tearDown)
+After Test Method Finished:
+- Tests\Unit\TaxCalculationTest::tearDown
+Test Preparation Started (Tests\Unit\TaxCalculationTest::test_ride_tax_with_fractional_amount)
+Before Test Method Called (Tests\Unit\TaxCalculationTest::setUp)
+Before Test Method Errored (Tests\Unit\TaxCalculationTest::setUp)
+SQLSTATE[HY000]: General error: 1 cannot start a transaction within a transaction
+Before Test Method Finished:
+- Tests\Unit\TaxCalculationTest::setUp
+Test Preparation Failed (Tests\Unit\TaxCalculationTest::test_ride_tax_with_fractional_amount)
+Test Errored (Tests\Unit\TaxCalculationTest::test_ride_tax_with_fractional_amount)
+SQLSTATE[HY000]: General error: 1 cannot start a transaction within a transaction
+After Test Method Called (Tests\Unit\TaxCalculationTest::tearDown)
+After Test Method Finished:
+- Tests\Unit\TaxCalculationTest::tearDown
+Test Preparation Started (Tests\Unit\TaxCalculationTest::test_commission_tax_applies_15_pct_wht)
+Before Test Method Called (Tests\Unit\TaxCalculationTest::setUp)
+Before Test Method Errored (Tests\Unit\TaxCalculationTest::setUp)
+SQLSTATE[HY000]: General error: 1 cannot start a transaction within a transaction
+Before Test Method Finished:
+- Tests\Unit\TaxCalculationTest::setUp
+Test Preparation Failed (Tests\Unit\TaxCalculationTest::test_commission_tax_applies_15_pct_wht)
+Test Errored (Tests\Unit\TaxCalculationTest::test_commission_tax_applies_15_pct_wht)
+SQLSTATE[HY000]: General error: 1 cannot start a transaction within a transaction
+After Test Method Called (Tests\Unit\TaxCalculationTest::tearDown)
+After Test Method Finished:
+- Tests\Unit\TaxCalculationTest::tearDown
+Test Preparation Started (Tests\Unit\TaxCalculationTest::test_payout_tax_applies_5_pct_wht)
+Before Test Method Called (Tests\Unit\TaxCalculationTest::setUp)
+Before Test Method Errored (Tests\Unit\TaxCalculationTest::setUp)
+SQLSTATE[HY000]: General error: 1 cannot start a transaction within a transaction
+Before Test Method Finished:
+- Tests\Unit\TaxCalculationTest::setUp
+Test Preparation Failed (Tests\Unit\TaxCalculationTest::test_payout_tax_applies_5_pct_wht)
+Test Errored (Tests\Unit\TaxCalculationTest::test_payout_tax_applies_5_pct_wht)
+SQLSTATE[HY000]: General error: 1 cannot start a transaction within a transaction
+After Test Method Called (Tests\Unit\TaxCalculationTest::tearDown)
+After Test Method Finished:
+- Tests\Unit\TaxCalculationTest::tearDown
+Test Preparation Started (Tests\Unit\TaxCalculationTest::test_returns_zero_when_no_rule_matches_jurisdiction)
+Before Test Method Called (Tests\Unit\TaxCalculationTest::setUp)
+Before Test Method Errored (Tests\Unit\TaxCalculationTest::setUp)
+SQLSTATE[HY000]: General error: 1 cannot start a transaction within a transaction
+Before Test Method Finished:
+- Tests\Unit\TaxCalculationTest::setUp
+Test Preparation Failed (Tests\Unit\TaxCalculationTest::test_returns_zero_when_no_rule_matches_jurisdiction)
+Test Errored (Tests\Unit\TaxCalculationTest::test_returns_zero_when_no_rule_matches_jurisdiction)
+SQLSTATE[HY000]: General error: 1 cannot start a transaction within a transaction
+After Test Method Called (Tests\Unit\TaxCalculationTest::tearDown)
+After Test Method Finished:
+- Tests\Unit\TaxCalculationTest::tearDown
+Test Preparation Started (Tests\Unit\TaxCalculationTest::test_tax_breakdown_dto_serialises_to_json)
+Before Test Method Called (Tests\Unit\TaxCalculationTest::setUp)
+Before Test Method Errored (Tests\Unit\TaxCalculationTest::setUp)
+SQLSTATE[HY000]: General error: 1 cannot start a transaction within a transaction
+Before Test Method Finished:
+- Tests\Unit\TaxCalculationTest::setUp
+Test Preparation Failed (Tests\Unit\TaxCalculationTest::test_tax_breakdown_dto_serialises_to_json)
+Test Errored (Tests\Unit\TaxCalculationTest::test_tax_breakdown_dto_serialises_to_json)
+SQLSTATE[HY000]: General error: 1 cannot start a transaction within a transaction
+After Test Method Called (Tests\Unit\TaxCalculationTest::tearDown)
+After Test Method Finished:
+- Tests\Unit\TaxCalculationTest::tearDown
+After Last Test Method Called (Tests\Unit\TaxCalculationTest::tearDownAfterClass)
+After Last Test Method Finished:
+- Tests\Unit\TaxCalculationTest::tearDownAfterClass
+Test Suite Finished (Tests\Unit\TaxCalculationTest, 7 tests)
+Test Suite Started (Tests\Unit\TransportMappingServiceTest, 11 tests)
+Test Preparation Started (Tests\Unit\TransportMappingServiceTest::test_vehicle_to_transport_mapping_is_correct)
+Test Prepared (Tests\Unit\TransportMappingServiceTest::test_vehicle_to_transport_mapping_is_correct)
+Test Passed (Tests\Unit\TransportMappingServiceTest::test_vehicle_to_transport_mapping_is_correct)
+Test Finished (Tests\Unit\TransportMappingServiceTest::test_vehicle_to_transport_mapping_is_correct)
+Test Preparation Started (Tests\Unit\TransportMappingServiceTest::test_mapping_service_is_case_insensitive)
+Test Prepared (Tests\Unit\TransportMappingServiceTest::test_mapping_service_is_case_insensitive)
+Test Passed (Tests\Unit\TransportMappingServiceTest::test_mapping_service_is_case_insensitive)
+Test Finished (Tests\Unit\TransportMappingServiceTest::test_mapping_service_is_case_insensitive)
+Test Preparation Started (Tests\Unit\TransportMappingServiceTest::test_unknown_vehicle_type_returns_null)
+Test Prepared (Tests\Unit\TransportMappingServiceTest::test_unknown_vehicle_type_returns_null)
+Test Passed (Tests\Unit\TransportMappingServiceTest::test_unknown_vehicle_type_returns_null)
+Test Finished (Tests\Unit\TransportMappingServiceTest::test_unknown_vehicle_type_returns_null)
+Test Preparation Started (Tests\Unit\TransportMappingServiceTest::test_is_compatible_returns_true_for_matching_types)
+Test Prepared (Tests\Unit\TransportMappingServiceTest::test_is_compatible_returns_true_for_matching_types)
+Test Passed (Tests\Unit\TransportMappingServiceTest::test_is_compatible_returns_true_for_matching_types)
+Test Finished (Tests\Unit\TransportMappingServiceTest::test_is_compatible_returns_true_for_matching_types)
+Test Preparation Started (Tests\Unit\TransportMappingServiceTest::test_is_compatible_returns_false_for_mismatched_types)
+Test Prepared (Tests\Unit\TransportMappingServiceTest::test_is_compatible_returns_false_for_mismatched_types)
+Test Passed (Tests\Unit\TransportMappingServiceTest::test_is_compatible_returns_false_for_mismatched_types)
+Test Finished (Tests\Unit\TransportMappingServiceTest::test_is_compatible_returns_false_for_mismatched_types)
+Test Preparation Started (Tests\Unit\TransportMappingServiceTest::test_is_compatible_is_case_insensitive)
+Test Prepared (Tests\Unit\TransportMappingServiceTest::test_is_compatible_is_case_insensitive)
+Test Passed (Tests\Unit\TransportMappingServiceTest::test_is_compatible_is_case_insensitive)
+Test Finished (Tests\Unit\TransportMappingServiceTest::test_is_compatible_is_case_insensitive)
+Test Preparation Started (Tests\Unit\TransportMappingServiceTest::test_is_compatible_returns_false_for_null_values)
+Test Prepared (Tests\Unit\TransportMappingServiceTest::test_is_compatible_returns_false_for_null_values)
+Test Passed (Tests\Unit\TransportMappingServiceTest::test_is_compatible_returns_false_for_null_values)
+Test Finished (Tests\Unit\TransportMappingServiceTest::test_is_compatible_returns_false_for_null_values)
+Test Preparation Started (Tests\Unit\TransportMappingServiceTest::test_normalize_converts_to_lowercase_and_trims)
+Test Prepared (Tests\Unit\TransportMappingServiceTest::test_normalize_converts_to_lowercase_and_trims)
+Test Passed (Tests\Unit\TransportMappingServiceTest::test_normalize_converts_to_lowercase_and_trims)
+Test Finished (Tests\Unit\TransportMappingServiceTest::test_normalize_converts_to_lowercase_and_trims)
+Test Preparation Started (Tests\Unit\TransportMappingServiceTest::test_get_vehicle_types_for_transport_type)
+Test Prepared (Tests\Unit\TransportMappingServiceTest::test_get_vehicle_types_for_transport_type)
+Test Passed (Tests\Unit\TransportMappingServiceTest::test_get_vehicle_types_for_transport_type)
+Test Finished (Tests\Unit\TransportMappingServiceTest::test_get_vehicle_types_for_transport_type)
+Test Preparation Started (Tests\Unit\TransportMappingServiceTest::test_get_all_vehicle_types)
+Test Prepared (Tests\Unit\TransportMappingServiceTest::test_get_all_vehicle_types)
+Test Passed (Tests\Unit\TransportMappingServiceTest::test_get_all_vehicle_types)
+Test Finished (Tests\Unit\TransportMappingServiceTest::test_get_all_vehicle_types)
+Test Preparation Started (Tests\Unit\TransportMappingServiceTest::test_get_all_transport_types)
+Test Prepared (Tests\Unit\TransportMappingServiceTest::test_get_all_transport_types)
+Test Passed (Tests\Unit\TransportMappingServiceTest::test_get_all_transport_types)
+Test Finished (Tests\Unit\TransportMappingServiceTest::test_get_all_transport_types)
+Test Suite Finished (Tests\Unit\TransportMappingServiceTest, 11 tests)
+Test Suite Started (Tests\Unit\TripLocationServiceTest, 1 test)
+Test Preparation Started (Tests\Unit\TripLocationServiceTest::it_updates_and_reads_current_location)
+Before Test Method Called (Tests\Unit\TripLocationServiceTest::setUp)
+Before Test Method Errored (Tests\Unit\TripLocationServiceTest::setUp)
+SQLSTATE[HY000]: General error: 1 cannot start a transaction within a transaction
+Before Test Method Finished:
+- Tests\Unit\TripLocationServiceTest::setUp
+Test Preparation Failed (Tests\Unit\TripLocationServiceTest::it_updates_and_reads_current_location)
+Test Errored (Tests\Unit\TripLocationServiceTest::it_updates_and_reads_current_location)
+SQLSTATE[HY000]: General error: 1 cannot start a transaction within a transaction
+After Test Method Called (Tests\Unit\TripLocationServiceTest::tearDown)
+After Test Method Finished:
+- Tests\Unit\TripLocationServiceTest::tearDown
+After Last Test Method Called (Tests\Unit\TripLocationServiceTest::tearDownAfterClass)
+After Last Test Method Finished:
+- Tests\Unit\TripLocationServiceTest::tearDownAfterClass
+Test Suite Finished (Tests\Unit\TripLocationServiceTest, 1 test)
+Test Suite Started (Tests\Unit\TripStateMachineTest, 3 tests)
+Test Preparation Started (Tests\Unit\TripStateMachineTest::it_allows_valid_transitions)
+Test Prepared (Tests\Unit\TripStateMachineTest::it_allows_valid_transitions)
+Test Passed (Tests\Unit\TripStateMachineTest::it_allows_valid_transitions)
+Test Finished (Tests\Unit\TripStateMachineTest::it_allows_valid_transitions)
+Test Preparation Started (Tests\Unit\TripStateMachineTest::it_blocks_invalid_transitions)
+Test Prepared (Tests\Unit\TripStateMachineTest::it_blocks_invalid_transitions)
+Test Passed (Tests\Unit\TripStateMachineTest::it_blocks_invalid_transitions)
+Test Finished (Tests\Unit\TripStateMachineTest::it_blocks_invalid_transitions)
+Test Preparation Started (Tests\Unit\TripStateMachineTest::assert_transition_throws_for_invalid_transition)
+Test Prepared (Tests\Unit\TripStateMachineTest::assert_transition_throws_for_invalid_transition)
+Test Passed (Tests\Unit\TripStateMachineTest::assert_transition_throws_for_invalid_transition)
+Test Finished (Tests\Unit\TripStateMachineTest::assert_transition_throws_for_invalid_transition)
+Test Suite Finished (Tests\Unit\TripStateMachineTest, 3 tests)
+Test Suite Started (Tests\Unit\TripStatusNormalizationTest, 1 test)
+Test Preparation Started (Tests\Unit\TripStatusNormalizationTest::it_normalizes_lowercase_status_values_to_database_enum_values)
+Before Test Method Called (Tests\Unit\TripStatusNormalizationTest::setUp)
+Before Test Method Errored (Tests\Unit\TripStatusNormalizationTest::setUp)
+SQLSTATE[HY000]: General error: 1 cannot start a transaction within a transaction
+Before Test Method Finished:
+- Tests\Unit\TripStatusNormalizationTest::setUp
+Test Preparation Failed (Tests\Unit\TripStatusNormalizationTest::it_normalizes_lowercase_status_values_to_database_enum_values)
+Test Errored (Tests\Unit\TripStatusNormalizationTest::it_normalizes_lowercase_status_values_to_database_enum_values)
+SQLSTATE[HY000]: General error: 1 cannot start a transaction within a transaction
+After Test Method Called (Tests\Unit\TripStatusNormalizationTest::tearDown)
+After Test Method Finished:
+- Tests\Unit\TripStatusNormalizationTest::tearDown
+After Last Test Method Called (Tests\Unit\TripStatusNormalizationTest::tearDownAfterClass)
+After Last Test Method Finished:
+- Tests\Unit\TripStatusNormalizationTest::tearDownAfterClass
+Test Suite Finished (Tests\Unit\TripStatusNormalizationTest, 1 test)
+Test Suite Finished (Unit, 48 tests)
+Test Suite Started (Feature, 128 tests)
+Test Suite Started (Tests\Feature\AiMatchingSchemaTest, 3 tests)
+Test Preparation Started (Tests\Feature\AiMatchingSchemaTest::it_exposes_the_ai_matching_columns)
+Before Test Method Called (Tests\Feature\AiMatchingSchemaTest::setUp)
+Before Test Method Errored (Tests\Feature\AiMatchingSchemaTest::setUp)
+SQLSTATE[HY000]: General error: 1 cannot start a transaction within a transaction
+Before Test Method Finished:
+- Tests\Feature\AiMatchingSchemaTest::setUp
+Test Preparation Failed (Tests\Feature\AiMatchingSchemaTest::it_exposes_the_ai_matching_columns)
+Test Errored (Tests\Feature\AiMatchingSchemaTest::it_exposes_the_ai_matching_columns)
+SQLSTATE[HY000]: General error: 1 cannot start a transaction within a transaction
+After Test Method Called (Tests\Feature\AiMatchingSchemaTest::tearDown)
+After Test Method Finished:
+- Tests\Feature\AiMatchingSchemaTest::tearDown
+Test Preparation Started (Tests\Feature\AiMatchingSchemaTest::it_preserves_historical_snapshots_across_multiple_trips)
+Before Test Method Called (Tests\Feature\AiMatchingSchemaTest::setUp)
+Before Test Method Errored (Tests\Feature\AiMatchingSchemaTest::setUp)
+SQLSTATE[HY000]: General error: 1 cannot start a transaction within a transaction
+Before Test Method Finished:
+- Tests\Feature\AiMatchingSchemaTest::setUp
+Test Preparation Failed (Tests\Feature\AiMatchingSchemaTest::it_preserves_historical_snapshots_across_multiple_trips)
+Test Errored (Tests\Feature\AiMatchingSchemaTest::it_preserves_historical_snapshots_across_multiple_trips)
+SQLSTATE[HY000]: General error: 1 cannot start a transaction within a transaction
+After Test Method Called (Tests\Feature\AiMatchingSchemaTest::tearDown)
+After Test Method Finished:
+- Tests\Feature\AiMatchingSchemaTest::tearDown
+Test Preparation Started (Tests\Feature\AiMatchingSchemaTest::it_keeps_the_relationship_bridge_between_mobile_users_and_users)
+Before Test Method Called (Tests\Feature\AiMatchingSchemaTest::setUp)
+Before Test Method Errored (Tests\Feature\AiMatchingSchemaTest::setUp)
+SQLSTATE[HY000]: General error: 1 cannot start a transaction within a transaction
+Before Test Method Finished:
+- Tests\Feature\AiMatchingSchemaTest::setUp
+Test Preparation Failed (Tests\Feature\AiMatchingSchemaTest::it_keeps_the_relationship_bridge_between_mobile_users_and_users)
+Test Errored (Tests\Feature\AiMatchingSchemaTest::it_keeps_the_relationship_bridge_between_mobile_users_and_users)
+SQLSTATE[HY000]: General error: 1 cannot start a transaction within a transaction
+After Test Method Called (Tests\Feature\AiMatchingSchemaTest::tearDown)
+After Test Method Finished:
+- Tests\Feature\AiMatchingSchemaTest::tearDown
+After Last Test Method Called (Tests\Feature\AiMatchingSchemaTest::tearDownAfterClass)
+After Last Test Method Finished:
+- Tests\Feature\AiMatchingSchemaTest::tearDownAfterClass
+Test Suite Finished (Tests\Feature\AiMatchingSchemaTest, 3 tests)
+Test Suite Started (Tests\Feature\Api\AdminEndpointAccessMatrixTest, 4 tests)
+Test Preparation Started (Tests\Feature\Api\AdminEndpointAccessMatrixTest::test_admin_dashboard_access_matrix_per_role)
+Before Test Method Called (Tests\Feature\Api\AdminEndpointAccessMatrixTest::setUp)
+Before Test Method Errored (Tests\Feature\Api\AdminEndpointAccessMatrixTest::setUp)
+SQLSTATE[HY000]: General error: 1 cannot start a transaction within a transaction
+Before Test Method Finished:
+- Tests\Feature\Api\AdminEndpointAccessMatrixTest::setUp
+Test Preparation Failed (Tests\Feature\Api\AdminEndpointAccessMatrixTest::test_admin_dashboard_access_matrix_per_role)
+Test Errored (Tests\Feature\Api\AdminEndpointAccessMatrixTest::test_admin_dashboard_access_matrix_per_role)
+SQLSTATE[HY000]: General error: 1 cannot start a transaction within a transaction
+After Test Method Called (Tests\Feature\Api\AdminEndpointAccessMatrixTest::tearDown)
+After Test Method Finished:
+- Tests\Feature\Api\AdminEndpointAccessMatrixTest::tearDown
+Test Preparation Started (Tests\Feature\Api\AdminEndpointAccessMatrixTest::test_system_logs_access_matrix_per_role)
+Before Test Method Called (Tests\Feature\Api\AdminEndpointAccessMatrixTest::setUp)
+Before Test Method Errored (Tests\Feature\Api\AdminEndpointAccessMatrixTest::setUp)
+SQLSTATE[HY000]: General error: 1 cannot start a transaction within a transaction
+Before Test Method Finished:
+- Tests\Feature\Api\AdminEndpointAccessMatrixTest::setUp
+Test Preparation Failed (Tests\Feature\Api\AdminEndpointAccessMatrixTest::test_system_logs_access_matrix_per_role)
+Test Errored (Tests\Feature\Api\AdminEndpointAccessMatrixTest::test_system_logs_access_matrix_per_role)
+SQLSTATE[HY000]: General error: 1 cannot start a transaction within a transaction
+After Test Method Called (Tests\Feature\Api\AdminEndpointAccessMatrixTest::tearDown)
+After Test Method Finished:
+- Tests\Feature\Api\AdminEndpointAccessMatrixTest::tearDown
+Test Preparation Started (Tests\Feature\Api\AdminEndpointAccessMatrixTest::test_finance_export_access_matrix_per_role)
+Before Test Method Called (Tests\Feature\Api\AdminEndpointAccessMatrixTest::setUp)
+Before Test Method Errored (Tests\Feature\Api\AdminEndpointAccessMatrixTest::setUp)
+SQLSTATE[HY000]: General error: 1 cannot start a transaction within a transaction
+Before Test Method Finished:
+- Tests\Feature\Api\AdminEndpointAccessMatrixTest::setUp
+Test Preparation Failed (Tests\Feature\Api\AdminEndpointAccessMatrixTest::test_finance_export_access_matrix_per_role)
+Test Errored (Tests\Feature\Api\AdminEndpointAccessMatrixTest::test_finance_export_access_matrix_per_role)
+SQLSTATE[HY000]: General error: 1 cannot start a transaction within a transaction
+After Test Method Called (Tests\Feature\Api\AdminEndpointAccessMatrixTest::tearDown)
+After Test Method Finished:
+- Tests\Feature\Api\AdminEndpointAccessMatrixTest::tearDown
+Test Preparation Started (Tests\Feature\Api\AdminEndpointAccessMatrixTest::test_update_role_access_matrix_per_role)
+Before Test Method Called (Tests\Feature\Api\AdminEndpointAccessMatrixTest::setUp)
+Before Test Method Errored (Tests\Feature\Api\AdminEndpointAccessMatrixTest::setUp)
+SQLSTATE[HY000]: General error: 1 cannot start a transaction within a transaction
+Before Test Method Finished:
+- Tests\Feature\Api\AdminEndpointAccessMatrixTest::setUp
+Test Preparation Failed (Tests\Feature\Api\AdminEndpointAccessMatrixTest::test_update_role_access_matrix_per_role)
+Test Errored (Tests\Feature\Api\AdminEndpointAccessMatrixTest::test_update_role_access_matrix_per_role)
+SQLSTATE[HY000]: General error: 1 cannot start a transaction within a transaction
+After Test Method Called (Tests\Feature\Api\AdminEndpointAccessMatrixTest::tearDown)
+After Test Method Finished:
+- Tests\Feature\Api\AdminEndpointAccessMatrixTest::tearDown
+After Last Test Method Called (Tests\Feature\Api\AdminEndpointAccessMatrixTest::tearDownAfterClass)
+After Last Test Method Finished:
+- Tests\Feature\Api\AdminEndpointAccessMatrixTest::tearDownAfterClass
+Test Suite Finished (Tests\Feature\Api\AdminEndpointAccessMatrixTest, 4 tests)
+Test Suite Started (Tests\Feature\Api\MlProxyEndpointsTest, 5 tests)
+Test Preparation Started (Tests\Feature\Api\MlProxyEndpointsTest::test_predict_fare_rejects_invalid_feature_count)
+Before Test Method Called (Tests\Feature\Api\MlProxyEndpointsTest::setUp)
+Before Test Method Errored (Tests\Feature\Api\MlProxyEndpointsTest::setUp)
+SQLSTATE[HY000]: General error: 1 cannot start a transaction within a transaction
+Before Test Method Finished:
+- Tests\Feature\Api\MlProxyEndpointsTest::setUp
+Test Preparation Failed (Tests\Feature\Api\MlProxyEndpointsTest::test_predict_fare_rejects_invalid_feature_count)
+Test Errored (Tests\Feature\Api\MlProxyEndpointsTest::test_predict_fare_rejects_invalid_feature_count)
+SQLSTATE[HY000]: General error: 1 cannot start a transaction within a transaction
+After Test Method Called (Tests\Feature\Api\MlProxyEndpointsTest::tearDown)
+After Test Method Finished:
+- Tests\Feature\Api\MlProxyEndpointsTest::tearDown
+Test Preparation Started (Tests\Feature\Api\MlProxyEndpointsTest::test_rank_drivers_proxies_successful_response)
+Before Test Method Called (Tests\Feature\Api\MlProxyEndpointsTest::setUp)
+Before Test Method Errored (Tests\Feature\Api\MlProxyEndpointsTest::setUp)
+SQLSTATE[HY000]: General error: 1 cannot start a transaction within a transaction
+Before Test Method Finished:
+- Tests\Feature\Api\MlProxyEndpointsTest::setUp
+Test Preparation Failed (Tests\Feature\Api\MlProxyEndpointsTest::test_rank_drivers_proxies_successful_response)
+Test Errored (Tests\Feature\Api\MlProxyEndpointsTest::test_rank_drivers_proxies_successful_response)
+SQLSTATE[HY000]: General error: 1 cannot start a transaction within a transaction
+After Test Method Called (Tests\Feature\Api\MlProxyEndpointsTest::tearDown)
+After Test Method Finished:
+- Tests\Feature\Api\MlProxyEndpointsTest::tearDown
+Test Preparation Started (Tests\Feature\Api\MlProxyEndpointsTest::test_predict_demand_proxies_upstream_bad_request)
+Before Test Method Called (Tests\Feature\Api\MlProxyEndpointsTest::setUp)
+Before Test Method Errored (Tests\Feature\Api\MlProxyEndpointsTest::setUp)
+SQLSTATE[HY000]: General error: 1 cannot start a transaction within a transaction
+Before Test Method Finished:
+- Tests\Feature\Api\MlProxyEndpointsTest::setUp
+Test Preparation Failed (Tests\Feature\Api\MlProxyEndpointsTest::test_predict_demand_proxies_upstream_bad_request)
+Test Errored (Tests\Feature\Api\MlProxyEndpointsTest::test_predict_demand_proxies_upstream_bad_request)
+SQLSTATE[HY000]: General error: 1 cannot start a transaction within a transaction
+After Test Method Called (Tests\Feature\Api\MlProxyEndpointsTest::tearDown)
+After Test Method Finished:
+- Tests\Feature\Api\MlProxyEndpointsTest::tearDown
+Test Preparation Started (Tests\Feature\Api\MlProxyEndpointsTest::test_health_proxies_successful_response)
+Before Test Method Called (Tests\Feature\Api\MlProxyEndpointsTest::setUp)
+Before Test Method Errored (Tests\Feature\Api\MlProxyEndpointsTest::setUp)
+SQLSTATE[HY000]: General error: 1 cannot start a transaction within a transaction
+Before Test Method Finished:
+- Tests\Feature\Api\MlProxyEndpointsTest::setUp
+Test Preparation Failed (Tests\Feature\Api\MlProxyEndpointsTest::test_health_proxies_successful_response)
+Test Errored (Tests\Feature\Api\MlProxyEndpointsTest::test_health_proxies_successful_response)
+SQLSTATE[HY000]: General error: 1 cannot start a transaction within a transaction
+After Test Method Called (Tests\Feature\Api\MlProxyEndpointsTest::tearDown)
+After Test Method Finished:
+- Tests\Feature\Api\MlProxyEndpointsTest::tearDown
+Test Preparation Started (Tests\Feature\Api\MlProxyEndpointsTest::test_reload_models_proxies_upstream_server_error)
+Before Test Method Called (Tests\Feature\Api\MlProxyEndpointsTest::setUp)
+Before Test Method Errored (Tests\Feature\Api\MlProxyEndpointsTest::setUp)
+SQLSTATE[HY000]: General error: 1 cannot start a transaction within a transaction
+Before Test Method Finished:
+- Tests\Feature\Api\MlProxyEndpointsTest::setUp
+Test Preparation Failed (Tests\Feature\Api\MlProxyEndpointsTest::test_reload_models_proxies_upstream_server_error)
+Test Errored (Tests\Feature\Api\MlProxyEndpointsTest::test_reload_models_proxies_upstream_server_error)
+SQLSTATE[HY000]: General error: 1 cannot start a transaction within a transaction
+After Test Method Called (Tests\Feature\Api\MlProxyEndpointsTest::tearDown)
+After Test Method Finished:
+- Tests\Feature\Api\MlProxyEndpointsTest::tearDown
+After Last Test Method Called (Tests\Feature\Api\MlProxyEndpointsTest::tearDownAfterClass)
+After Last Test Method Finished:
+- Tests\Feature\Api\MlProxyEndpointsTest::tearDownAfterClass
+Test Suite Finished (Tests\Feature\Api\MlProxyEndpointsTest, 5 tests)
+Test Suite Started (Tests\Feature\Api\PassengerNotificationEndpointsTest, 9 tests)
+Test Preparation Started (Tests\Feature\Api\PassengerNotificationEndpointsTest::test_passenger_can_list_only_online_approved_drivers)
+Before Test Method Called (Tests\Feature\Api\PassengerNotificationEndpointsTest::setUp)
+Before Test Method Finished:
+- Tests\Feature\Api\PassengerNotificationEndpointsTest::setUp
+Test Prepared (Tests\Feature\Api\PassengerNotificationEndpointsTest::test_passenger_can_list_only_online_approved_drivers)
+Test Errored (Tests\Feature\Api\PassengerNotificationEndpointsTest::test_passenger_can_list_only_online_approved_drivers)
+SQLSTATE[HY000]: General error: 1 no such table: users (Connection: sqlite, Database: :memory:, SQL: insert into "users" ("is_approved", "name", "email", "email_verified_at", "password", "remember_token", "role", "updated_at", "created_at") values (1, Mr. Wallace Price PhD, kailyn53@example.net, 2026-05-16 15:07:42, $2y$04$a30hpQIfhpBqeNHSZXiXvOv9TMlLukgHh/2K8z/KABidzyBxPbJzS, xNawdUlk0i, PASSENGER, 2026-05-16 15:07:42, 2026-05-16 15:07:42))
+After Test Method Called (Tests\Feature\Api\PassengerNotificationEndpointsTest::tearDown)
+After Test Method Finished:
+- Tests\Feature\Api\PassengerNotificationEndpointsTest::tearDown
+Test Finished (Tests\Feature\Api\PassengerNotificationEndpointsTest::test_passenger_can_list_only_online_approved_drivers)
+Test Preparation Started (Tests\Feature\Api\PassengerNotificationEndpointsTest::test_passenger_ride_request_creates_trip_and_driver_notification)
+Before Test Method Called (Tests\Feature\Api\PassengerNotificationEndpointsTest::setUp)
+Before Test Method Finished:
+- Tests\Feature\Api\PassengerNotificationEndpointsTest::setUp
+Test Prepared (Tests\Feature\Api\PassengerNotificationEndpointsTest::test_passenger_ride_request_creates_trip_and_driver_notification)
+Test Errored (Tests\Feature\Api\PassengerNotificationEndpointsTest::test_passenger_ride_request_creates_trip_and_driver_notification)
+SQLSTATE[HY000]: General error: 1 no such table: mobile_users (Connection: sqlite, Database: :memory:, SQL: insert into "mobile_users" ("first_name", "last_name", "phone", "email", "password", "role", "is_verified", "updated_at", "created_at") values (Passenger, One, +250789295467, passenger.one.wy8xprqw@example.com, $2y$04$7gPbSf9qzGi..ipb1iYSrOrzTZUK2syjOFknza9uDVO3qWCLkPW.K, PASSENGER, 1, 2026-05-16 15:07:42, 2026-05-16 15:07:42))
+After Test Method Called (Tests\Feature\Api\PassengerNotificationEndpointsTest::tearDown)
+After Test Method Finished:
+- Tests\Feature\Api\PassengerNotificationEndpointsTest::tearDown
+Test Finished (Tests\Feature\Api\PassengerNotificationEndpointsTest::test_passenger_ride_request_creates_trip_and_driver_notification)
+Test Preparation Started (Tests\Feature\Api\PassengerNotificationEndpointsTest::test_notification_endpoints_read_lifecycle)
+Before Test Method Called (Tests\Feature\Api\PassengerNotificationEndpointsTest::setUp)
+Before Test Method Finished:
+- Tests\Feature\Api\PassengerNotificationEndpointsTest::setUp
+Test Prepared (Tests\Feature\Api\PassengerNotificationEndpointsTest::test_notification_endpoints_read_lifecycle)
+Test Errored (Tests\Feature\Api\PassengerNotificationEndpointsTest::test_notification_endpoints_read_lifecycle)
+SQLSTATE[HY000]: General error: 1 no such table: users (Connection: sqlite, Database: :memory:, SQL: insert into "users" ("is_approved", "name", "email", "email_verified_at", "password", "remember_token", "role", "updated_at", "created_at") values (1, Laverne Bernhard, elta.bailey@example.com, 2026-05-16 15:07:42, $2y$04$a30hpQIfhpBqeNHSZXiXvOv9TMlLukgHh/2K8z/KABidzyBxPbJzS, rIXoxVN8T1, PASSENGER, 2026-05-16 15:07:42, 2026-05-16 15:07:42))
+After Test Method Called (Tests\Feature\Api\PassengerNotificationEndpointsTest::tearDown)
+After Test Method Finished:
+- Tests\Feature\Api\PassengerNotificationEndpointsTest::tearDown
+Test Finished (Tests\Feature\Api\PassengerNotificationEndpointsTest::test_notification_endpoints_read_lifecycle)
+Test Preparation Started (Tests\Feature\Api\PassengerNotificationEndpointsTest::test_user_can_register_and_remove_push_token)
+Before Test Method Called (Tests\Feature\Api\PassengerNotificationEndpointsTest::setUp)
+Before Test Method Finished:
+- Tests\Feature\Api\PassengerNotificationEndpointsTest::setUp
+Test Prepared (Tests\Feature\Api\PassengerNotificationEndpointsTest::test_user_can_register_and_remove_push_token)
+Test Errored (Tests\Feature\Api\PassengerNotificationEndpointsTest::test_user_can_register_and_remove_push_token)
+SQLSTATE[HY000]: General error: 1 no such table: users (Connection: sqlite, Database: :memory:, SQL: insert into "users" ("is_approved", "name", "email", "email_verified_at", "password", "remember_token", "role", "updated_at", "created_at") values (1, Prof. Johnnie Barrows II, eunice34@example.org, 2026-05-16 15:07:42, $2y$04$a30hpQIfhpBqeNHSZXiXvOv9TMlLukgHh/2K8z/KABidzyBxPbJzS, d7w4aDcmwt, PASSENGER, 2026-05-16 15:07:42, 2026-05-16 15:07:42))
+After Test Method Called (Tests\Feature\Api\PassengerNotificationEndpointsTest::tearDown)
+After Test Method Finished:
+- Tests\Feature\Api\PassengerNotificationEndpointsTest::tearDown
+Test Finished (Tests\Feature\Api\PassengerNotificationEndpointsTest::test_user_can_register_and_remove_push_token)
+Test Preparation Started (Tests\Feature\Api\PassengerNotificationEndpointsTest::test_clear_actioned_notifications_keeps_non_actioned_notifications)
+Before Test Method Called (Tests\Feature\Api\PassengerNotificationEndpointsTest::setUp)
+Before Test Method Finished:
+- Tests\Feature\Api\PassengerNotificationEndpointsTest::setUp
+Test Prepared (Tests\Feature\Api\PassengerNotificationEndpointsTest::test_clear_actioned_notifications_keeps_non_actioned_notifications)
+Test Errored (Tests\Feature\Api\PassengerNotificationEndpointsTest::test_clear_actioned_notifications_keeps_non_actioned_notifications)
+SQLSTATE[HY000]: General error: 1 no such table: users (Connection: sqlite, Database: :memory:, SQL: insert into "users" ("is_approved", "name", "email", "email_verified_at", "password", "remember_token", "role", "updated_at", "created_at") values (1, Earlene Pollich Sr., agrant@example.org, 2026-05-16 15:07:42, $2y$04$a30hpQIfhpBqeNHSZXiXvOv9TMlLukgHh/2K8z/KABidzyBxPbJzS, JLeY8APHpY, PASSENGER, 2026-05-16 15:07:42, 2026-05-16 15:07:42))
+After Test Method Called (Tests\Feature\Api\PassengerNotificationEndpointsTest::tearDown)
+After Test Method Finished:
+- Tests\Feature\Api\PassengerNotificationEndpointsTest::tearDown
+Test Finished (Tests\Feature\Api\PassengerNotificationEndpointsTest::test_clear_actioned_notifications_keeps_non_actioned_notifications)
+Test Preparation Started (Tests\Feature\Api\PassengerNotificationEndpointsTest::test_cannot_delete_non_actioned_notification_but_can_delete_actioned)
+Before Test Method Called (Tests\Feature\Api\PassengerNotificationEndpointsTest::setUp)
+Before Test Method Finished:
+- Tests\Feature\Api\PassengerNotificationEndpointsTest::setUp
+Test Prepared (Tests\Feature\Api\PassengerNotificationEndpointsTest::test_cannot_delete_non_actioned_notification_but_can_delete_actioned)
+Test Errored (Tests\Feature\Api\PassengerNotificationEndpointsTest::test_cannot_delete_non_actioned_notification_but_can_delete_actioned)
+SQLSTATE[HY000]: General error: 1 no such table: users (Connection: sqlite, Database: :memory:, SQL: insert into "users" ("is_approved", "name", "email", "email_verified_at", "password", "remember_token", "role", "updated_at", "created_at") values (1, Nils Morar, kyleigh.blick@example.com, 2026-05-16 15:07:42, $2y$04$a30hpQIfhpBqeNHSZXiXvOv9TMlLukgHh/2K8z/KABidzyBxPbJzS, KEc9QuwEVQ, PASSENGER, 2026-05-16 15:07:42, 2026-05-16 15:07:42))
+After Test Method Called (Tests\Feature\Api\PassengerNotificationEndpointsTest::tearDown)
+After Test Method Finished:
+- Tests\Feature\Api\PassengerNotificationEndpointsTest::tearDown
+Test Finished (Tests\Feature\Api\PassengerNotificationEndpointsTest::test_cannot_delete_non_actioned_notification_but_can_delete_actioned)
+Test Preparation Started (Tests\Feature\Api\PassengerNotificationEndpointsTest::test_notifications_list_exposes_can_be_cleared_flag)
+Before Test Method Called (Tests\Feature\Api\PassengerNotificationEndpointsTest::setUp)
+Before Test Method Finished:
+- Tests\Feature\Api\PassengerNotificationEndpointsTest::setUp
+Test Prepared (Tests\Feature\Api\PassengerNotificationEndpointsTest::test_notifications_list_exposes_can_be_cleared_flag)
+Test Errored (Tests\Feature\Api\PassengerNotificationEndpointsTest::test_notifications_list_exposes_can_be_cleared_flag)
+SQLSTATE[HY000]: General error: 1 no such table: users (Connection: sqlite, Database: :memory:, SQL: insert into "users" ("is_approved", "name", "email", "email_verified_at", "password", "remember_token", "role", "updated_at", "created_at") values (1, Felicia Hegmann, hhermann@example.org, 2026-05-16 15:07:43, $2y$04$a30hpQIfhpBqeNHSZXiXvOv9TMlLukgHh/2K8z/KABidzyBxPbJzS, pTlkwOJ5rD, PASSENGER, 2026-05-16 15:07:43, 2026-05-16 15:07:43))
+After Test Method Called (Tests\Feature\Api\PassengerNotificationEndpointsTest::tearDown)
+After Test Method Finished:
+- Tests\Feature\Api\PassengerNotificationEndpointsTest::tearDown
+Test Finished (Tests\Feature\Api\PassengerNotificationEndpointsTest::test_notifications_list_exposes_can_be_cleared_flag)
+Test Preparation Started (Tests\Feature\Api\PassengerNotificationEndpointsTest::test_notifications_can_filter_only_clearable)
+Before Test Method Called (Tests\Feature\Api\PassengerNotificationEndpointsTest::setUp)
+Before Test Method Finished:
+- Tests\Feature\Api\PassengerNotificationEndpointsTest::setUp
+Test Prepared (Tests\Feature\Api\PassengerNotificationEndpointsTest::test_notifications_can_filter_only_clearable)
+Test Errored (Tests\Feature\Api\PassengerNotificationEndpointsTest::test_notifications_can_filter_only_clearable)
+SQLSTATE[HY000]: General error: 1 no such table: users (Connection: sqlite, Database: :memory:, SQL: insert into "users" ("is_approved", "name", "email", "email_verified_at", "password", "remember_token", "role", "updated_at", "created_at") values (1, Prof. Peyton Gottlieb II, beahan.malvina@example.com, 2026-05-16 15:07:43, $2y$04$a30hpQIfhpBqeNHSZXiXvOv9TMlLukgHh/2K8z/KABidzyBxPbJzS, iPlkJdAczI, PASSENGER, 2026-05-16 15:07:43, 2026-05-16 15:07:43))
+After Test Method Called (Tests\Feature\Api\PassengerNotificationEndpointsTest::tearDown)
+After Test Method Finished:
+- Tests\Feature\Api\PassengerNotificationEndpointsTest::tearDown
+Test Finished (Tests\Feature\Api\PassengerNotificationEndpointsTest::test_notifications_can_filter_only_clearable)
+Test Preparation Started (Tests\Feature\Api\PassengerNotificationEndpointsTest::test_notifications_can_filter_only_action_required)
+Before Test Method Called (Tests\Feature\Api\PassengerNotificationEndpointsTest::setUp)
+Before Test Method Finished:
+- Tests\Feature\Api\PassengerNotificationEndpointsTest::setUp
+Test Prepared (Tests\Feature\Api\PassengerNotificationEndpointsTest::test_notifications_can_filter_only_action_required)
+Test Errored (Tests\Feature\Api\PassengerNotificationEndpointsTest::test_notifications_can_filter_only_action_required)
+SQLSTATE[HY000]: General error: 1 no such table: users (Connection: sqlite, Database: :memory:, SQL: insert into "users" ("is_approved", "name", "email", "email_verified_at", "password", "remember_token", "role", "updated_at", "created_at") values (1, Terrence Mann V, phickle@example.com, 2026-05-16 15:07:43, $2y$04$a30hpQIfhpBqeNHSZXiXvOv9TMlLukgHh/2K8z/KABidzyBxPbJzS, C5FpgQNl2B, PASSENGER, 2026-05-16 15:07:43, 2026-05-16 15:07:43))
+After Test Method Called (Tests\Feature\Api\PassengerNotificationEndpointsTest::tearDown)
+After Test Method Finished:
+- Tests\Feature\Api\PassengerNotificationEndpointsTest::tearDown
+Test Finished (Tests\Feature\Api\PassengerNotificationEndpointsTest::test_notifications_can_filter_only_action_required)
+After Last Test Method Called (Tests\Feature\Api\PassengerNotificationEndpointsTest::tearDownAfterClass)
+After Last Test Method Finished:
+- Tests\Feature\Api\PassengerNotificationEndpointsTest::tearDownAfterClass
+Test Suite Finished (Tests\Feature\Api\PassengerNotificationEndpointsTest, 9 tests)
+Test Suite Started (Tests\Feature\Api\RideCategoryPromotionTest, 3 tests)
+Test Preparation Started (Tests\Feature\Api\RideCategoryPromotionTest::test_create_as_booking_when_departure_is_greater_than_six_hours)
+Before Test Method Called (Tests\Feature\Api\RideCategoryPromotionTest::setUp)
+Before Test Method Finished:
+- Tests\Feature\Api\RideCategoryPromotionTest::setUp
+Test Prepared (Tests\Feature\Api\RideCategoryPromotionTest::test_create_as_booking_when_departure_is_greater_than_six_hours)
+Test Errored (Tests\Feature\Api\RideCategoryPromotionTest::test_create_as_booking_when_departure_is_greater_than_six_hours)
+SQLSTATE[HY000]: General error: 1 no such table: mobile_users (Connection: sqlite, Database: :memory:, SQL: insert into "mobile_users" ("first_name", "last_name", "phone", "email", "password", "role", "is_verified", "updated_at", "created_at") values (Passenger, Tester, +250787540910, passenger.tester.napha6rx@example.com, $2y$04$03kwMsEsU83BQgz7T0r25u0X3tD/PgDbEMBY0hSO7uvuClrTk3EDS, PASSENGER, 1, 2026-05-16 15:07:43, 2026-05-16 15:07:43))
+After Test Method Called (Tests\Feature\Api\RideCategoryPromotionTest::tearDown)
+After Test Method Finished:
+- Tests\Feature\Api\RideCategoryPromotionTest::tearDown
+Test Finished (Tests\Feature\Api\RideCategoryPromotionTest::test_create_as_booking_when_departure_is_greater_than_six_hours)
+Test Preparation Started (Tests\Feature\Api\RideCategoryPromotionTest::test_create_as_trip_when_departure_is_less_or_equal_to_six_hours)
+Before Test Method Called (Tests\Feature\Api\RideCategoryPromotionTest::setUp)
+Before Test Method Finished:
+- Tests\Feature\Api\RideCategoryPromotionTest::setUp
+Test Prepared (Tests\Feature\Api\RideCategoryPromotionTest::test_create_as_trip_when_departure_is_less_or_equal_to_six_hours)
+Test Errored (Tests\Feature\Api\RideCategoryPromotionTest::test_create_as_trip_when_departure_is_less_or_equal_to_six_hours)
+SQLSTATE[HY000]: General error: 1 no such table: mobile_users (Connection: sqlite, Database: :memory:, SQL: insert into "mobile_users" ("first_name", "last_name", "phone", "email", "password", "role", "is_verified", "updated_at", "created_at") values (Passenger, Tester, +250785008775, passenger.tester.cxx3chor@example.com, $2y$04$DNO//2eO4sjt9bsXC1qj5eLspAoVaNHz/tQsrcHS6qGSozesZsAiW, PASSENGER, 1, 2026-05-16 15:07:43, 2026-05-16 15:07:43))
+After Test Method Called (Tests\Feature\Api\RideCategoryPromotionTest::tearDown)
+After Test Method Finished:
+- Tests\Feature\Api\RideCategoryPromotionTest::tearDown
+Test Finished (Tests\Feature\Api\RideCategoryPromotionTest::test_create_as_trip_when_departure_is_less_or_equal_to_six_hours)
+Test Preparation Started (Tests\Feature\Api\RideCategoryPromotionTest::test_convert_existing_booking_to_trip_when_threshold_is_crossed)
+Before Test Method Called (Tests\Feature\Api\RideCategoryPromotionTest::setUp)
+Before Test Method Finished:
+- Tests\Feature\Api\RideCategoryPromotionTest::setUp
+Test Prepared (Tests\Feature\Api\RideCategoryPromotionTest::test_convert_existing_booking_to_trip_when_threshold_is_crossed)
+Test Errored (Tests\Feature\Api\RideCategoryPromotionTest::test_convert_existing_booking_to_trip_when_threshold_is_crossed)
+SQLSTATE[HY000]: General error: 1 no such table: mobile_users (Connection: sqlite, Database: :memory:, SQL: insert into "mobile_users" ("first_name", "last_name", "phone", "email", "password", "role", "is_verified", "updated_at", "created_at") values (Passenger, Tester, +250788867230, passenger.tester.eiz41e0a@example.com, $2y$04$y/wNMqnzIaHj0krS02tWlemN.xiu/Uvf.Sx2ipLkVaNlpTkm0GQye, PASSENGER, 1, 2026-05-16 15:07:43, 2026-05-16 15:07:43))
+After Test Method Called (Tests\Feature\Api\RideCategoryPromotionTest::tearDown)
+After Test Method Finished:
+- Tests\Feature\Api\RideCategoryPromotionTest::tearDown
+Test Finished (Tests\Feature\Api\RideCategoryPromotionTest::test_convert_existing_booking_to_trip_when_threshold_is_crossed)
+After Last Test Method Called (Tests\Feature\Api\RideCategoryPromotionTest::tearDownAfterClass)
+After Last Test Method Finished:
+- Tests\Feature\Api\RideCategoryPromotionTest::tearDownAfterClass
+Test Suite Finished (Tests\Feature\Api\RideCategoryPromotionTest, 3 tests)
+Test Suite Started (Tests\Feature\AuthLoginRedirectTest, 5 tests)
+Test Preparation Started (Tests\Feature\AuthLoginRedirectTest::test_super_admin_redirects_to_super_dashboard)
+Before Test Method Called (Tests\Feature\AuthLoginRedirectTest::setUp)
+Before Test Method Errored (Tests\Feature\AuthLoginRedirectTest::setUp)
+SQLSTATE[HY000]: General error: 1 cannot start a transaction within a transaction
+Before Test Method Finished:
+- Tests\Feature\AuthLoginRedirectTest::setUp
+Test Preparation Failed (Tests\Feature\AuthLoginRedirectTest::test_super_admin_redirects_to_super_dashboard)
+Test Errored (Tests\Feature\AuthLoginRedirectTest::test_super_admin_redirects_to_super_dashboard)
+SQLSTATE[HY000]: General error: 1 cannot start a transaction within a transaction
+After Test Method Called (Tests\Feature\AuthLoginRedirectTest::tearDown)
+After Test Method Finished:
+- Tests\Feature\AuthLoginRedirectTest::tearDown
+Test Preparation Started (Tests\Feature\AuthLoginRedirectTest::test_admin_redirects_to_admin_dashboard)
+Before Test Method Called (Tests\Feature\AuthLoginRedirectTest::setUp)
+Before Test Method Errored (Tests\Feature\AuthLoginRedirectTest::setUp)
+SQLSTATE[HY000]: General error: 1 cannot start a transaction within a transaction
+Before Test Method Finished:
+- Tests\Feature\AuthLoginRedirectTest::setUp
+Test Preparation Failed (Tests\Feature\AuthLoginRedirectTest::test_admin_redirects_to_admin_dashboard)
+Test Errored (Tests\Feature\AuthLoginRedirectTest::test_admin_redirects_to_admin_dashboard)
+SQLSTATE[HY000]: General error: 1 cannot start a transaction within a transaction
+After Test Method Called (Tests\Feature\AuthLoginRedirectTest::tearDown)
+After Test Method Finished:
+- Tests\Feature\AuthLoginRedirectTest::tearDown
+Test Preparation Started (Tests\Feature\AuthLoginRedirectTest::test_officer_redirects_to_officer_panel_root)
+Before Test Method Called (Tests\Feature\AuthLoginRedirectTest::setUp)
+Before Test Method Errored (Tests\Feature\AuthLoginRedirectTest::setUp)
+SQLSTATE[HY000]: General error: 1 cannot start a transaction within a transaction
+Before Test Method Finished:
+- Tests\Feature\AuthLoginRedirectTest::setUp
+Test Preparation Failed (Tests\Feature\AuthLoginRedirectTest::test_officer_redirects_to_officer_panel_root)
+Test Errored (Tests\Feature\AuthLoginRedirectTest::test_officer_redirects_to_officer_panel_root)
+SQLSTATE[HY000]: General error: 1 cannot start a transaction within a transaction
+After Test Method Called (Tests\Feature\AuthLoginRedirectTest::tearDown)
+After Test Method Finished:
+- Tests\Feature\AuthLoginRedirectTest::tearDown
+Test Preparation Started (Tests\Feature\AuthLoginRedirectTest::test_accountant_redirects_to_accountant_panel_root)
+Before Test Method Called (Tests\Feature\AuthLoginRedirectTest::setUp)
+Before Test Method Errored (Tests\Feature\AuthLoginRedirectTest::setUp)
+SQLSTATE[HY000]: General error: 1 cannot start a transaction within a transaction
+Before Test Method Finished:
+- Tests\Feature\AuthLoginRedirectTest::setUp
+Test Preparation Failed (Tests\Feature\AuthLoginRedirectTest::test_accountant_redirects_to_accountant_panel_root)
+Test Errored (Tests\Feature\AuthLoginRedirectTest::test_accountant_redirects_to_accountant_panel_root)
+SQLSTATE[HY000]: General error: 1 cannot start a transaction within a transaction
+After Test Method Called (Tests\Feature\AuthLoginRedirectTest::tearDown)
+After Test Method Finished:
+- Tests\Feature\AuthLoginRedirectTest::tearDown
+Test Preparation Started (Tests\Feature\AuthLoginRedirectTest::test_mobile_user_redirects_to_dashboard)
+Before Test Method Called (Tests\Feature\AuthLoginRedirectTest::setUp)
+Before Test Method Errored (Tests\Feature\AuthLoginRedirectTest::setUp)
+SQLSTATE[HY000]: General error: 1 cannot start a transaction within a transaction
+Before Test Method Finished:
+- Tests\Feature\AuthLoginRedirectTest::setUp
+Test Preparation Failed (Tests\Feature\AuthLoginRedirectTest::test_mobile_user_redirects_to_dashboard)
+Test Errored (Tests\Feature\AuthLoginRedirectTest::test_mobile_user_redirects_to_dashboard)
+SQLSTATE[HY000]: General error: 1 cannot start a transaction within a transaction
+After Test Method Called (Tests\Feature\AuthLoginRedirectTest::tearDown)
+After Test Method Finished:
+- Tests\Feature\AuthLoginRedirectTest::tearDown
+After Last Test Method Called (Tests\Feature\AuthLoginRedirectTest::tearDownAfterClass)
+After Last Test Method Finished:
+- Tests\Feature\AuthLoginRedirectTest::tearDownAfterClass
+Test Suite Finished (Tests\Feature\AuthLoginRedirectTest, 5 tests)
+Test Suite Started (Tests\Feature\BookingConcurrencySafetyTest, 6 tests)
+Test Preparation Started (Tests\Feature\BookingConcurrencySafetyTest::concurrent_booking_does_not_overbook_with_lock)
+Before Test Method Called (Tests\Feature\BookingConcurrencySafetyTest::setUp)
+Before Test Method Errored (Tests\Feature\BookingConcurrencySafetyTest::setUp)
+SQLSTATE[HY000]: General error: 1 cannot start a transaction within a transaction
+Before Test Method Finished:
+- Tests\Feature\BookingConcurrencySafetyTest::setUp
+Test Preparation Failed (Tests\Feature\BookingConcurrencySafetyTest::concurrent_booking_does_not_overbook_with_lock)
+Test Errored (Tests\Feature\BookingConcurrencySafetyTest::concurrent_booking_does_not_overbook_with_lock)
+SQLSTATE[HY000]: General error: 1 cannot start a transaction within a transaction
+After Test Method Called (Tests\Feature\BookingConcurrencySafetyTest::tearDown)
+After Test Method Finished:
+- Tests\Feature\BookingConcurrencySafetyTest::tearDown
+Test Preparation Started (Tests\Feature\BookingConcurrencySafetyTest::booking_validation_uses_ride_policy)
+Before Test Method Called (Tests\Feature\BookingConcurrencySafetyTest::setUp)
+Before Test Method Errored (Tests\Feature\BookingConcurrencySafetyTest::setUp)
+SQLSTATE[HY000]: General error: 1 cannot start a transaction within a transaction
+Before Test Method Finished:
+- Tests\Feature\BookingConcurrencySafetyTest::setUp
+Test Preparation Failed (Tests\Feature\BookingConcurrencySafetyTest::booking_validation_uses_ride_policy)
+Test Errored (Tests\Feature\BookingConcurrencySafetyTest::booking_validation_uses_ride_policy)
+SQLSTATE[HY000]: General error: 1 cannot start a transaction within a transaction
+After Test Method Called (Tests\Feature\BookingConcurrencySafetyTest::tearDown)
+After Test Method Finished:
+- Tests\Feature\BookingConcurrencySafetyTest::tearDown
+Test Preparation Started (Tests\Feature\BookingConcurrencySafetyTest::booking_prevents_departed_ride)
+Before Test Method Called (Tests\Feature\BookingConcurrencySafetyTest::setUp)
+Before Test Method Errored (Tests\Feature\BookingConcurrencySafetyTest::setUp)
+SQLSTATE[HY000]: General error: 1 cannot start a transaction within a transaction
+Before Test Method Finished:
+- Tests\Feature\BookingConcurrencySafetyTest::setUp
+Test Preparation Failed (Tests\Feature\BookingConcurrencySafetyTest::booking_prevents_departed_ride)
+Test Errored (Tests\Feature\BookingConcurrencySafetyTest::booking_prevents_departed_ride)
+SQLSTATE[HY000]: General error: 1 cannot start a transaction within a transaction
+After Test Method Called (Tests\Feature\BookingConcurrencySafetyTest::tearDown)
+After Test Method Finished:
+- Tests\Feature\BookingConcurrencySafetyTest::tearDown
+Test Preparation Started (Tests\Feature\BookingConcurrencySafetyTest::api_contract_includes_ride_rules)
+Before Test Method Called (Tests\Feature\BookingConcurrencySafetyTest::setUp)
+Before Test Method Errored (Tests\Feature\BookingConcurrencySafetyTest::setUp)
+SQLSTATE[HY000]: General error: 1 cannot start a transaction within a transaction
+Before Test Method Finished:
+- Tests\Feature\BookingConcurrencySafetyTest::setUp
+Test Preparation Failed (Tests\Feature\BookingConcurrencySafetyTest::api_contract_includes_ride_rules)
+Test Errored (Tests\Feature\BookingConcurrencySafetyTest::api_contract_includes_ride_rules)
+SQLSTATE[HY000]: General error: 1 cannot start a transaction within a transaction
+After Test Method Called (Tests\Feature\BookingConcurrencySafetyTest::tearDown)
+After Test Method Finished:
+- Tests\Feature\BookingConcurrencySafetyTest::tearDown
+Test Preparation Started (Tests\Feature\BookingConcurrencySafetyTest::ride_rules_correctly_indicate_scheduled_car_can_book)
+Before Test Method Called (Tests\Feature\BookingConcurrencySafetyTest::setUp)
+Before Test Method Errored (Tests\Feature\BookingConcurrencySafetyTest::setUp)
+SQLSTATE[HY000]: General error: 1 cannot start a transaction within a transaction
+Before Test Method Finished:
+- Tests\Feature\BookingConcurrencySafetyTest::setUp
+Test Preparation Failed (Tests\Feature\BookingConcurrencySafetyTest::ride_rules_correctly_indicate_scheduled_car_can_book)
+Test Errored (Tests\Feature\BookingConcurrencySafetyTest::ride_rules_correctly_indicate_scheduled_car_can_book)
+SQLSTATE[HY000]: General error: 1 cannot start a transaction within a transaction
+After Test Method Called (Tests\Feature\BookingConcurrencySafetyTest::tearDown)
+After Test Method Finished:
+- Tests\Feature\BookingConcurrencySafetyTest::tearDown
+Test Preparation Started (Tests\Feature\BookingConcurrencySafetyTest::ride_rules_correctly_indicate_ondemand_car_can_request_trip)
+Before Test Method Called (Tests\Feature\BookingConcurrencySafetyTest::setUp)
+Before Test Method Errored (Tests\Feature\BookingConcurrencySafetyTest::setUp)
+SQLSTATE[HY000]: General error: 1 cannot start a transaction within a transaction
+Before Test Method Finished:
+- Tests\Feature\BookingConcurrencySafetyTest::setUp
+Test Preparation Failed (Tests\Feature\BookingConcurrencySafetyTest::ride_rules_correctly_indicate_ondemand_car_can_request_trip)
+Test Errored (Tests\Feature\BookingConcurrencySafetyTest::ride_rules_correctly_indicate_ondemand_car_can_request_trip)
+SQLSTATE[HY000]: General error: 1 cannot start a transaction within a transaction
+After Test Method Called (Tests\Feature\BookingConcurrencySafetyTest::tearDown)
+After Test Method Finished:
+- Tests\Feature\BookingConcurrencySafetyTest::tearDown
+After Last Test Method Called (Tests\Feature\BookingConcurrencySafetyTest::tearDownAfterClass)
+After Last Test Method Finished:
+- Tests\Feature\BookingConcurrencySafetyTest::tearDownAfterClass
+Test Suite Finished (Tests\Feature\BookingConcurrencySafetyTest, 6 tests)
+Test Suite Started (Tests\Feature\ComplianceReportTest, 6 tests)
+Test Preparation Started (Tests\Feature\ComplianceReportTest::test_requesting_report_creates_pending_record)
+Before Test Method Called (Tests\Feature\ComplianceReportTest::setUp)
+Before Test Method Errored (Tests\Feature\ComplianceReportTest::setUp)
+SQLSTATE[HY000]: General error: 1 cannot start a transaction within a transaction
+Before Test Method Finished:
+- Tests\Feature\ComplianceReportTest::setUp
+Test Preparation Failed (Tests\Feature\ComplianceReportTest::test_requesting_report_creates_pending_record)
+Test Errored (Tests\Feature\ComplianceReportTest::test_requesting_report_creates_pending_record)
+SQLSTATE[HY000]: General error: 1 cannot start a transaction within a transaction
+After Test Method Called (Tests\Feature\ComplianceReportTest::tearDown)
+After Test Method Finished:
+- Tests\Feature\ComplianceReportTest::tearDown
+Test Preparation Started (Tests\Feature\ComplianceReportTest::test_csv_report_generates_and_marks_ready)
+Before Test Method Called (Tests\Feature\ComplianceReportTest::setUp)
+Before Test Method Errored (Tests\Feature\ComplianceReportTest::setUp)
+SQLSTATE[HY000]: General error: 1 cannot start a transaction within a transaction
+Before Test Method Finished:
+- Tests\Feature\ComplianceReportTest::setUp
+Test Preparation Failed (Tests\Feature\ComplianceReportTest::test_csv_report_generates_and_marks_ready)
+Test Errored (Tests\Feature\ComplianceReportTest::test_csv_report_generates_and_marks_ready)
+SQLSTATE[HY000]: General error: 1 cannot start a transaction within a transaction
+After Test Method Called (Tests\Feature\ComplianceReportTest::tearDown)
+After Test Method Finished:
+- Tests\Feature\ComplianceReportTest::tearDown
+Test Preparation Started (Tests\Feature\ComplianceReportTest::test_csv_report_file_is_valid_utf8)
+Before Test Method Called (Tests\Feature\ComplianceReportTest::setUp)
+Before Test Method Errored (Tests\Feature\ComplianceReportTest::setUp)
+SQLSTATE[HY000]: General error: 1 cannot start a transaction within a transaction
+Before Test Method Finished:
+- Tests\Feature\ComplianceReportTest::setUp
+Test Preparation Failed (Tests\Feature\ComplianceReportTest::test_csv_report_file_is_valid_utf8)
+Test Errored (Tests\Feature\ComplianceReportTest::test_csv_report_file_is_valid_utf8)
+SQLSTATE[HY000]: General error: 1 cannot start a transaction within a transaction
+After Test Method Called (Tests\Feature\ComplianceReportTest::tearDown)
+After Test Method Finished:
+- Tests\Feature\ComplianceReportTest::tearDown
+Test Preparation Started (Tests\Feature\ComplianceReportTest::test_json_report_generates_valid_json)
+Before Test Method Called (Tests\Feature\ComplianceReportTest::setUp)
+Before Test Method Errored (Tests\Feature\ComplianceReportTest::setUp)
+SQLSTATE[HY000]: General error: 1 cannot start a transaction within a transaction
+Before Test Method Finished:
+- Tests\Feature\ComplianceReportTest::setUp
+Test Preparation Failed (Tests\Feature\ComplianceReportTest::test_json_report_generates_valid_json)
+Test Errored (Tests\Feature\ComplianceReportTest::test_json_report_generates_valid_json)
+SQLSTATE[HY000]: General error: 1 cannot start a transaction within a transaction
+After Test Method Called (Tests\Feature\ComplianceReportTest::tearDown)
+After Test Method Finished:
+- Tests\Feature\ComplianceReportTest::tearDown
+Test Preparation Started (Tests\Feature\ComplianceReportTest::test_generated_report_stores_row_count_in_summary)
+Before Test Method Called (Tests\Feature\ComplianceReportTest::setUp)
+Before Test Method Errored (Tests\Feature\ComplianceReportTest::setUp)
+SQLSTATE[HY000]: General error: 1 cannot start a transaction within a transaction
+Before Test Method Finished:
+- Tests\Feature\ComplianceReportTest::setUp
+Test Preparation Failed (Tests\Feature\ComplianceReportTest::test_generated_report_stores_row_count_in_summary)
+Test Errored (Tests\Feature\ComplianceReportTest::test_generated_report_stores_row_count_in_summary)
+SQLSTATE[HY000]: General error: 1 cannot start a transaction within a transaction
+After Test Method Called (Tests\Feature\ComplianceReportTest::tearDown)
+After Test Method Finished:
+- Tests\Feature\ComplianceReportTest::tearDown
+Test Preparation Started (Tests\Feature\ComplianceReportTest::test_unknown_report_type_marks_status_as_failed)
+Before Test Method Called (Tests\Feature\ComplianceReportTest::setUp)
+Before Test Method Errored (Tests\Feature\ComplianceReportTest::setUp)
+SQLSTATE[HY000]: General error: 1 cannot start a transaction within a transaction
+Before Test Method Finished:
+- Tests\Feature\ComplianceReportTest::setUp
+Test Preparation Failed (Tests\Feature\ComplianceReportTest::test_unknown_report_type_marks_status_as_failed)
+Test Errored (Tests\Feature\ComplianceReportTest::test_unknown_report_type_marks_status_as_failed)
+SQLSTATE[HY000]: General error: 1 cannot start a transaction within a transaction
+After Test Method Called (Tests\Feature\ComplianceReportTest::tearDown)
+After Test Method Finished:
+- Tests\Feature\ComplianceReportTest::tearDown
+After Last Test Method Called (Tests\Feature\ComplianceReportTest::tearDownAfterClass)
+After Last Test Method Finished:
+- Tests\Feature\ComplianceReportTest::tearDownAfterClass
+Test Suite Finished (Tests\Feature\ComplianceReportTest, 6 tests)
+Test Suite Started (Tests\Feature\DashboardRoutingTest, 11 tests)
+Test Preparation Started (Tests\Feature\DashboardRoutingTest::test_super_admin_can_access_super_dashboard_logic)
+Before Test Method Called (Tests\Feature\DashboardRoutingTest::setUp)
+Before Test Method Errored (Tests\Feature\DashboardRoutingTest::setUp)
+SQLSTATE[HY000]: General error: 1 cannot start a transaction within a transaction
+Before Test Method Finished:
+- Tests\Feature\DashboardRoutingTest::setUp
+Test Preparation Failed (Tests\Feature\DashboardRoutingTest::test_super_admin_can_access_super_dashboard_logic)
+Test Errored (Tests\Feature\DashboardRoutingTest::test_super_admin_can_access_super_dashboard_logic)
+SQLSTATE[HY000]: General error: 1 cannot start a transaction within a transaction
+After Test Method Called (Tests\Feature\DashboardRoutingTest::tearDown)
+After Test Method Finished:
+- Tests\Feature\DashboardRoutingTest::tearDown
+Test Preparation Started (Tests\Feature\DashboardRoutingTest::test_admin_can_access_admin_dashboard_logic)
+Before Test Method Called (Tests\Feature\DashboardRoutingTest::setUp)
+Before Test Method Errored (Tests\Feature\DashboardRoutingTest::setUp)
+SQLSTATE[HY000]: General error: 1 cannot start a transaction within a transaction
+Before Test Method Finished:
+- Tests\Feature\DashboardRoutingTest::setUp
+Test Preparation Failed (Tests\Feature\DashboardRoutingTest::test_admin_can_access_admin_dashboard_logic)
+Test Errored (Tests\Feature\DashboardRoutingTest::test_admin_can_access_admin_dashboard_logic)
+SQLSTATE[HY000]: General error: 1 cannot start a transaction within a transaction
+After Test Method Called (Tests\Feature\DashboardRoutingTest::tearDown)
+After Test Method Finished:
+- Tests\Feature\DashboardRoutingTest::tearDown
+Test Preparation Started (Tests\Feature\DashboardRoutingTest::test_accountant_can_access_accountant_dashboard_logic)
+Before Test Method Called (Tests\Feature\DashboardRoutingTest::setUp)
+Before Test Method Errored (Tests\Feature\DashboardRoutingTest::setUp)
+SQLSTATE[HY000]: General error: 1 cannot start a transaction within a transaction
+Before Test Method Finished:
+- Tests\Feature\DashboardRoutingTest::setUp
+Test Preparation Failed (Tests\Feature\DashboardRoutingTest::test_accountant_can_access_accountant_dashboard_logic)
+Test Errored (Tests\Feature\DashboardRoutingTest::test_accountant_can_access_accountant_dashboard_logic)
+SQLSTATE[HY000]: General error: 1 cannot start a transaction within a transaction
+After Test Method Called (Tests\Feature\DashboardRoutingTest::tearDown)
+After Test Method Finished:
+- Tests\Feature\DashboardRoutingTest::tearDown
+Test Preparation Started (Tests\Feature\DashboardRoutingTest::test_officer_can_access_officer_dashboard_logic)
+Before Test Method Called (Tests\Feature\DashboardRoutingTest::setUp)
+Before Test Method Errored (Tests\Feature\DashboardRoutingTest::setUp)
+SQLSTATE[HY000]: General error: 1 cannot start a transaction within a transaction
+Before Test Method Finished:
+- Tests\Feature\DashboardRoutingTest::setUp
+Test Preparation Failed (Tests\Feature\DashboardRoutingTest::test_officer_can_access_officer_dashboard_logic)
+Test Errored (Tests\Feature\DashboardRoutingTest::test_officer_can_access_officer_dashboard_logic)
+SQLSTATE[HY000]: General error: 1 cannot start a transaction within a transaction
+After Test Method Called (Tests\Feature\DashboardRoutingTest::tearDown)
+After Test Method Finished:
+- Tests\Feature\DashboardRoutingTest::tearDown
+Test Preparation Started (Tests\Feature\DashboardRoutingTest::test_driver_can_access_driver_dashboard_logic)
+Before Test Method Called (Tests\Feature\DashboardRoutingTest::setUp)
+Before Test Method Errored (Tests\Feature\DashboardRoutingTest::setUp)
+SQLSTATE[HY000]: General error: 1 cannot start a transaction within a transaction
+Before Test Method Finished:
+- Tests\Feature\DashboardRoutingTest::setUp
+Test Preparation Failed (Tests\Feature\DashboardRoutingTest::test_driver_can_access_driver_dashboard_logic)
+Test Errored (Tests\Feature\DashboardRoutingTest::test_driver_can_access_driver_dashboard_logic)
+SQLSTATE[HY000]: General error: 1 cannot start a transaction within a transaction
+After Test Method Called (Tests\Feature\DashboardRoutingTest::tearDown)
+After Test Method Finished:
+- Tests\Feature\DashboardRoutingTest::tearDown
+Test Preparation Started (Tests\Feature\DashboardRoutingTest::test_passenger_can_access_passenger_dashboard_logic)
+Before Test Method Called (Tests\Feature\DashboardRoutingTest::setUp)
+Before Test Method Errored (Tests\Feature\DashboardRoutingTest::setUp)
+SQLSTATE[HY000]: General error: 1 cannot start a transaction within a transaction
+Before Test Method Finished:
+- Tests\Feature\DashboardRoutingTest::setUp
+Test Preparation Failed (Tests\Feature\DashboardRoutingTest::test_passenger_can_access_passenger_dashboard_logic)
+Test Errored (Tests\Feature\DashboardRoutingTest::test_passenger_can_access_passenger_dashboard_logic)
+SQLSTATE[HY000]: General error: 1 cannot start a transaction within a transaction
+After Test Method Called (Tests\Feature\DashboardRoutingTest::tearDown)
+After Test Method Finished:
+- Tests\Feature\DashboardRoutingTest::tearDown
+Test Preparation Started (Tests\Feature\DashboardRoutingTest::test_unauthenticated_cannot_access_dashboards_logic)
+Before Test Method Called (Tests\Feature\DashboardRoutingTest::setUp)
+Before Test Method Errored (Tests\Feature\DashboardRoutingTest::setUp)
+SQLSTATE[HY000]: General error: 1 cannot start a transaction within a transaction
+Before Test Method Finished:
+- Tests\Feature\DashboardRoutingTest::setUp
+Test Preparation Failed (Tests\Feature\DashboardRoutingTest::test_unauthenticated_cannot_access_dashboards_logic)
+Test Errored (Tests\Feature\DashboardRoutingTest::test_unauthenticated_cannot_access_dashboards_logic)
+SQLSTATE[HY000]: General error: 1 cannot start a transaction within a transaction
+After Test Method Called (Tests\Feature\DashboardRoutingTest::tearDown)
+After Test Method Finished:
+- Tests\Feature\DashboardRoutingTest::tearDown
+Test Preparation Started (Tests\Feature\DashboardRoutingTest::test_dashboard_page_class_exists_for_role_redirect_logic)
+Before Test Method Called (Tests\Feature\DashboardRoutingTest::setUp)
+Before Test Method Errored (Tests\Feature\DashboardRoutingTest::setUp)
+SQLSTATE[HY000]: General error: 1 cannot start a transaction within a transaction
+Before Test Method Finished:
+- Tests\Feature\DashboardRoutingTest::setUp
+Test Preparation Failed (Tests\Feature\DashboardRoutingTest::test_dashboard_page_class_exists_for_role_redirect_logic)
+Test Errored (Tests\Feature\DashboardRoutingTest::test_dashboard_page_class_exists_for_role_redirect_logic)
+SQLSTATE[HY000]: General error: 1 cannot start a transaction within a transaction
+After Test Method Called (Tests\Feature\DashboardRoutingTest::tearDown)
+After Test Method Finished:
+- Tests\Feature\DashboardRoutingTest::tearDown
+Test Preparation Started (Tests\Feature\DashboardRoutingTest::test_admin_cannot_access_super_dashboard_logic)
+Before Test Method Called (Tests\Feature\DashboardRoutingTest::setUp)
+Before Test Method Errored (Tests\Feature\DashboardRoutingTest::setUp)
+SQLSTATE[HY000]: General error: 1 cannot start a transaction within a transaction
+Before Test Method Finished:
+- Tests\Feature\DashboardRoutingTest::setUp
+Test Preparation Failed (Tests\Feature\DashboardRoutingTest::test_admin_cannot_access_super_dashboard_logic)
+Test Errored (Tests\Feature\DashboardRoutingTest::test_admin_cannot_access_super_dashboard_logic)
+SQLSTATE[HY000]: General error: 1 cannot start a transaction within a transaction
+After Test Method Called (Tests\Feature\DashboardRoutingTest::tearDown)
+After Test Method Finished:
+- Tests\Feature\DashboardRoutingTest::tearDown
+Test Preparation Started (Tests\Feature\DashboardRoutingTest::test_driver_dashboard_widgets_and_columns_resolve)
+Before Test Method Called (Tests\Feature\DashboardRoutingTest::setUp)
+Before Test Method Errored (Tests\Feature\DashboardRoutingTest::setUp)
+SQLSTATE[HY000]: General error: 1 cannot start a transaction within a transaction
+Before Test Method Finished:
+- Tests\Feature\DashboardRoutingTest::setUp
+Test Preparation Failed (Tests\Feature\DashboardRoutingTest::test_driver_dashboard_widgets_and_columns_resolve)
+Test Errored (Tests\Feature\DashboardRoutingTest::test_driver_dashboard_widgets_and_columns_resolve)
+SQLSTATE[HY000]: General error: 1 cannot start a transaction within a transaction
+After Test Method Called (Tests\Feature\DashboardRoutingTest::tearDown)
+After Test Method Finished:
+- Tests\Feature\DashboardRoutingTest::tearDown
+Test Preparation Started (Tests\Feature\DashboardRoutingTest::test_passenger_dashboard_widgets_and_columns_resolve)
+Before Test Method Called (Tests\Feature\DashboardRoutingTest::setUp)
+Before Test Method Errored (Tests\Feature\DashboardRoutingTest::setUp)
+SQLSTATE[HY000]: General error: 1 cannot start a transaction within a transaction
+Before Test Method Finished:
+- Tests\Feature\DashboardRoutingTest::setUp
+Test Preparation Failed (Tests\Feature\DashboardRoutingTest::test_passenger_dashboard_widgets_and_columns_resolve)
+Test Errored (Tests\Feature\DashboardRoutingTest::test_passenger_dashboard_widgets_and_columns_resolve)
+SQLSTATE[HY000]: General error: 1 cannot start a transaction within a transaction
+After Test Method Called (Tests\Feature\DashboardRoutingTest::tearDown)
+After Test Method Finished:
+- Tests\Feature\DashboardRoutingTest::tearDown
+After Last Test Method Called (Tests\Feature\DashboardRoutingTest::tearDownAfterClass)
+After Last Test Method Finished:
+- Tests\Feature\DashboardRoutingTest::tearDownAfterClass
+Test Suite Finished (Tests\Feature\DashboardRoutingTest, 11 tests)
+Test Suite Started (Tests\Feature\DomainEventsEmissionTest, 2 tests)
+Test Preparation Started (Tests\Feature\DomainEventsEmissionTest::booking_and_trip_events_are_emitted)
+Before Test Method Called (Tests\Feature\DomainEventsEmissionTest::setUp)
+Before Test Method Errored (Tests\Feature\DomainEventsEmissionTest::setUp)
+SQLSTATE[HY000]: General error: 1 cannot start a transaction within a transaction
+Before Test Method Finished:
+- Tests\Feature\DomainEventsEmissionTest::setUp
+Test Preparation Failed (Tests\Feature\DomainEventsEmissionTest::booking_and_trip_events_are_emitted)
+Test Errored (Tests\Feature\DomainEventsEmissionTest::booking_and_trip_events_are_emitted)
+SQLSTATE[HY000]: General error: 1 cannot start a transaction within a transaction
+After Test Method Called (Tests\Feature\DomainEventsEmissionTest::tearDown)
+After Test Method Finished:
+- Tests\Feature\DomainEventsEmissionTest::tearDown
+Test Preparation Started (Tests\Feature\DomainEventsEmissionTest::ride_created_event_is_emitted)
+Before Test Method Called (Tests\Feature\DomainEventsEmissionTest::setUp)
+Before Test Method Errored (Tests\Feature\DomainEventsEmissionTest::setUp)
+SQLSTATE[HY000]: General error: 1 cannot start a transaction within a transaction
+Before Test Method Finished:
+- Tests\Feature\DomainEventsEmissionTest::setUp
+Test Preparation Failed (Tests\Feature\DomainEventsEmissionTest::ride_created_event_is_emitted)
+Test Errored (Tests\Feature\DomainEventsEmissionTest::ride_created_event_is_emitted)
+SQLSTATE[HY000]: General error: 1 cannot start a transaction within a transaction
+After Test Method Called (Tests\Feature\DomainEventsEmissionTest::tearDown)
+After Test Method Finished:
+- Tests\Feature\DomainEventsEmissionTest::tearDown
+After Last Test Method Called (Tests\Feature\DomainEventsEmissionTest::tearDownAfterClass)
+After Last Test Method Finished:
+- Tests\Feature\DomainEventsEmissionTest::tearDownAfterClass
+Test Suite Finished (Tests\Feature\DomainEventsEmissionTest, 2 tests)
+Test Suite Started (Tests\Feature\DriverApiTest, 8 tests)
+Test Preparation Started (Tests\Feature\DriverApiTest::test_update_driver_status)
+Before Test Method Called (Tests\Feature\DriverApiTest::setUp)
+Before Test Method Errored (Tests\Feature\DriverApiTest::setUp)
+SQLSTATE[HY000]: General error: 1 cannot start a transaction within a transaction
+Before Test Method Finished:
+- Tests\Feature\DriverApiTest::setUp
+Test Preparation Failed (Tests\Feature\DriverApiTest::test_update_driver_status)
+Test Errored (Tests\Feature\DriverApiTest::test_update_driver_status)
+SQLSTATE[HY000]: General error: 1 cannot start a transaction within a transaction
+After Test Method Called (Tests\Feature\DriverApiTest::tearDown)
+After Test Method Finished:
+- Tests\Feature\DriverApiTest::tearDown
+Test Preparation Started (Tests\Feature\DriverApiTest::test_get_available_trips)
+Before Test Method Called (Tests\Feature\DriverApiTest::setUp)
+Before Test Method Errored (Tests\Feature\DriverApiTest::setUp)
+SQLSTATE[HY000]: General error: 1 cannot start a transaction within a transaction
+Before Test Method Finished:
+- Tests\Feature\DriverApiTest::setUp
+Test Preparation Failed (Tests\Feature\DriverApiTest::test_get_available_trips)
+Test Errored (Tests\Feature\DriverApiTest::test_get_available_trips)
+SQLSTATE[HY000]: General error: 1 cannot start a transaction within a transaction
+After Test Method Called (Tests\Feature\DriverApiTest::tearDown)
+After Test Method Finished:
+- Tests\Feature\DriverApiTest::tearDown
+Test Preparation Started (Tests\Feature\DriverApiTest::test_accept_trip)
+Before Test Method Called (Tests\Feature\DriverApiTest::setUp)
+Before Test Method Errored (Tests\Feature\DriverApiTest::setUp)
+SQLSTATE[HY000]: General error: 1 cannot start a transaction within a transaction
+Before Test Method Finished:
+- Tests\Feature\DriverApiTest::setUp
+Test Preparation Failed (Tests\Feature\DriverApiTest::test_accept_trip)
+Test Errored (Tests\Feature\DriverApiTest::test_accept_trip)
+SQLSTATE[HY000]: General error: 1 cannot start a transaction within a transaction
+After Test Method Called (Tests\Feature\DriverApiTest::tearDown)
+After Test Method Finished:
+- Tests\Feature\DriverApiTest::tearDown
+Test Preparation Started (Tests\Feature\DriverApiTest::test_update_location)
+Before Test Method Called (Tests\Feature\DriverApiTest::setUp)
+Before Test Method Errored (Tests\Feature\DriverApiTest::setUp)
+SQLSTATE[HY000]: General error: 1 cannot start a transaction within a transaction
+Before Test Method Finished:
+- Tests\Feature\DriverApiTest::setUp
+Test Preparation Failed (Tests\Feature\DriverApiTest::test_update_location)
+Test Errored (Tests\Feature\DriverApiTest::test_update_location)
+SQLSTATE[HY000]: General error: 1 cannot start a transaction within a transaction
+After Test Method Called (Tests\Feature\DriverApiTest::tearDown)
+After Test Method Finished:
+- Tests\Feature\DriverApiTest::tearDown
+Test Preparation Started (Tests\Feature\DriverApiTest::test_start_trip)
+Before Test Method Called (Tests\Feature\DriverApiTest::setUp)
+Before Test Method Errored (Tests\Feature\DriverApiTest::setUp)
+SQLSTATE[HY000]: General error: 1 cannot start a transaction within a transaction
+Before Test Method Finished:
+- Tests\Feature\DriverApiTest::setUp
+Test Preparation Failed (Tests\Feature\DriverApiTest::test_start_trip)
+Test Errored (Tests\Feature\DriverApiTest::test_start_trip)
+SQLSTATE[HY000]: General error: 1 cannot start a transaction within a transaction
+After Test Method Called (Tests\Feature\DriverApiTest::tearDown)
+After Test Method Finished:
+- Tests\Feature\DriverApiTest::tearDown
+Test Preparation Started (Tests\Feature\DriverApiTest::test_complete_trip)
+Before Test Method Called (Tests\Feature\DriverApiTest::setUp)
+Before Test Method Errored (Tests\Feature\DriverApiTest::setUp)
+SQLSTATE[HY000]: General error: 1 cannot start a transaction within a transaction
+Before Test Method Finished:
+- Tests\Feature\DriverApiTest::setUp
+Test Preparation Failed (Tests\Feature\DriverApiTest::test_complete_trip)
+Test Errored (Tests\Feature\DriverApiTest::test_complete_trip)
+SQLSTATE[HY000]: General error: 1 cannot start a transaction within a transaction
+After Test Method Called (Tests\Feature\DriverApiTest::tearDown)
+After Test Method Finished:
+- Tests\Feature\DriverApiTest::tearDown
+Test Preparation Started (Tests\Feature\DriverApiTest::test_cancel_trip)
+Before Test Method Called (Tests\Feature\DriverApiTest::setUp)
+Before Test Method Errored (Tests\Feature\DriverApiTest::setUp)
+SQLSTATE[HY000]: General error: 1 cannot start a transaction within a transaction
+Before Test Method Finished:
+- Tests\Feature\DriverApiTest::setUp
+Test Preparation Failed (Tests\Feature\DriverApiTest::test_cancel_trip)
+Test Errored (Tests\Feature\DriverApiTest::test_cancel_trip)
+SQLSTATE[HY000]: General error: 1 cannot start a transaction within a transaction
+After Test Method Called (Tests\Feature\DriverApiTest::tearDown)
+After Test Method Finished:
+- Tests\Feature\DriverApiTest::tearDown
+Test Preparation Started (Tests\Feature\DriverApiTest::test_driver_cannot_accept_incompatible_vehicle_trip)
+Before Test Method Called (Tests\Feature\DriverApiTest::setUp)
+Before Test Method Errored (Tests\Feature\DriverApiTest::setUp)
+SQLSTATE[HY000]: General error: 1 cannot start a transaction within a transaction
+Before Test Method Finished:
+- Tests\Feature\DriverApiTest::setUp
+Test Preparation Failed (Tests\Feature\DriverApiTest::test_driver_cannot_accept_incompatible_vehicle_trip)
+Test Errored (Tests\Feature\DriverApiTest::test_driver_cannot_accept_incompatible_vehicle_trip)
+SQLSTATE[HY000]: General error: 1 cannot start a transaction within a transaction
+After Test Method Called (Tests\Feature\DriverApiTest::tearDown)
+After Test Method Finished:
+- Tests\Feature\DriverApiTest::tearDown
+After Last Test Method Called (Tests\Feature\DriverApiTest::tearDownAfterClass)
+After Last Test Method Finished:
+- Tests\Feature\DriverApiTest::tearDownAfterClass
+Test Suite Finished (Tests\Feature\DriverApiTest, 8 tests)
+Test Suite Started (Tests\Feature\ExampleTest, 1 test)
+Test Preparation Started (Tests\Feature\ExampleTest::test_the_application_redirects_to_login)
+Before Test Method Called (Tests\Feature\ExampleTest::setUp)
+Before Test Method Errored (Tests\Feature\ExampleTest::setUp)
+SQLSTATE[HY000]: General error: 1 cannot start a transaction within a transaction
+Before Test Method Finished:
+- Tests\Feature\ExampleTest::setUp
+Test Preparation Failed (Tests\Feature\ExampleTest::test_the_application_redirects_to_login)
+Test Errored (Tests\Feature\ExampleTest::test_the_application_redirects_to_login)
+SQLSTATE[HY000]: General error: 1 cannot start a transaction within a transaction
+After Test Method Called (Tests\Feature\ExampleTest::tearDown)
+After Test Method Finished:
+- Tests\Feature\ExampleTest::tearDown
+After Last Test Method Called (Tests\Feature\ExampleTest::tearDownAfterClass)
+After Last Test Method Finished:
+- Tests\Feature\ExampleTest::tearDownAfterClass
+Test Suite Finished (Tests\Feature\ExampleTest, 1 test)
+Test Suite Started (Tests\Feature\Filament\AnalyticsResourcesAccessMatrixTest, 2 tests)
+Test Preparation Started (Tests\Feature\Filament\AnalyticsResourcesAccessMatrixTest::test_performance_metrics_access_matrix_per_role)
+Before Test Method Called (Tests\Feature\Filament\AnalyticsResourcesAccessMatrixTest::setUp)
+Before Test Method Errored (Tests\Feature\Filament\AnalyticsResourcesAccessMatrixTest::setUp)
+SQLSTATE[HY000]: General error: 1 cannot start a transaction within a transaction
+Before Test Method Finished:
+- Tests\Feature\Filament\AnalyticsResourcesAccessMatrixTest::setUp
+Test Preparation Failed (Tests\Feature\Filament\AnalyticsResourcesAccessMatrixTest::test_performance_metrics_access_matrix_per_role)
+Test Errored (Tests\Feature\Filament\AnalyticsResourcesAccessMatrixTest::test_performance_metrics_access_matrix_per_role)
+SQLSTATE[HY000]: General error: 1 cannot start a transaction within a transaction
+After Test Method Called (Tests\Feature\Filament\AnalyticsResourcesAccessMatrixTest::tearDown)
+After Test Method Finished:
+- Tests\Feature\Filament\AnalyticsResourcesAccessMatrixTest::tearDown
+Test Preparation Started (Tests\Feature\Filament\AnalyticsResourcesAccessMatrixTest::test_route_optimizations_access_matrix_per_role)
+Before Test Method Called (Tests\Feature\Filament\AnalyticsResourcesAccessMatrixTest::setUp)
+Before Test Method Errored (Tests\Feature\Filament\AnalyticsResourcesAccessMatrixTest::setUp)
+SQLSTATE[HY000]: General error: 1 cannot start a transaction within a transaction
+Before Test Method Finished:
+- Tests\Feature\Filament\AnalyticsResourcesAccessMatrixTest::setUp
+Test Preparation Failed (Tests\Feature\Filament\AnalyticsResourcesAccessMatrixTest::test_route_optimizations_access_matrix_per_role)
+Test Errored (Tests\Feature\Filament\AnalyticsResourcesAccessMatrixTest::test_route_optimizations_access_matrix_per_role)
+SQLSTATE[HY000]: General error: 1 cannot start a transaction within a transaction
+After Test Method Called (Tests\Feature\Filament\AnalyticsResourcesAccessMatrixTest::tearDown)
+After Test Method Finished:
+- Tests\Feature\Filament\AnalyticsResourcesAccessMatrixTest::tearDown
+After Last Test Method Called (Tests\Feature\Filament\AnalyticsResourcesAccessMatrixTest::tearDownAfterClass)
+After Last Test Method Finished:
+- Tests\Feature\Filament\AnalyticsResourcesAccessMatrixTest::tearDownAfterClass
+Test Suite Finished (Tests\Feature\Filament\AnalyticsResourcesAccessMatrixTest, 2 tests)
+Test Suite Started (Tests\Feature\Filament\DemandForecastResourceAccessMatrixTest, 1 test)
+Test Preparation Started (Tests\Feature\Filament\DemandForecastResourceAccessMatrixTest::test_demand_forecasts_access_matrix_per_role)
+Before Test Method Called (Tests\Feature\Filament\DemandForecastResourceAccessMatrixTest::setUp)
+Before Test Method Errored (Tests\Feature\Filament\DemandForecastResourceAccessMatrixTest::setUp)
+SQLSTATE[HY000]: General error: 1 cannot start a transaction within a transaction
+Before Test Method Finished:
+- Tests\Feature\Filament\DemandForecastResourceAccessMatrixTest::setUp
+Test Preparation Failed (Tests\Feature\Filament\DemandForecastResourceAccessMatrixTest::test_demand_forecasts_access_matrix_per_role)
+Test Errored (Tests\Feature\Filament\DemandForecastResourceAccessMatrixTest::test_demand_forecasts_access_matrix_per_role)
+SQLSTATE[HY000]: General error: 1 cannot start a transaction within a transaction
+After Test Method Called (Tests\Feature\Filament\DemandForecastResourceAccessMatrixTest::tearDown)
+After Test Method Finished:
+- Tests\Feature\Filament\DemandForecastResourceAccessMatrixTest::tearDown
+After Last Test Method Called (Tests\Feature\Filament\DemandForecastResourceAccessMatrixTest::tearDownAfterClass)
+After Last Test Method Finished:
+- Tests\Feature\Filament\DemandForecastResourceAccessMatrixTest::tearDownAfterClass
+Test Suite Finished (Tests\Feature\Filament\DemandForecastResourceAccessMatrixTest, 1 test)
+Test Suite Started (Tests\Feature\Filament\FinanceResourceRenderTest, 1 test)
+Test Preparation Started (Tests\Feature\Filament\FinanceResourceRenderTest::test_finance_resource_page_renders_for_authorized_user)
+Before Test Method Called (Tests\Feature\Filament\FinanceResourceRenderTest::setUp)
+Before Test Method Errored (Tests\Feature\Filament\FinanceResourceRenderTest::setUp)
+SQLSTATE[HY000]: General error: 1 cannot start a transaction within a transaction
+Before Test Method Finished:
+- Tests\Feature\Filament\FinanceResourceRenderTest::setUp
+Test Preparation Failed (Tests\Feature\Filament\FinanceResourceRenderTest::test_finance_resource_page_renders_for_authorized_user)
+Test Errored (Tests\Feature\Filament\FinanceResourceRenderTest::test_finance_resource_page_renders_for_authorized_user)
+SQLSTATE[HY000]: General error: 1 cannot start a transaction within a transaction
+After Test Method Called (Tests\Feature\Filament\FinanceResourceRenderTest::tearDown)
+After Test Method Finished:
+- Tests\Feature\Filament\FinanceResourceRenderTest::tearDown
+After Last Test Method Called (Tests\Feature\Filament\FinanceResourceRenderTest::tearDownAfterClass)
+After Last Test Method Finished:
+- Tests\Feature\Filament\FinanceResourceRenderTest::tearDownAfterClass
+Test Suite Finished (Tests\Feature\Filament\FinanceResourceRenderTest, 1 test)
+Test Suite Started (Tests\Feature\Filament\RoleDashboardNavigationVisibilityTest, 5 tests)
+Test Preparation Started (Tests\Feature\Filament\RoleDashboardNavigationVisibilityTest::test_super_admin_sees_only_super_dashboard_navigation)
+Before Test Method Called (Tests\Feature\Filament\RoleDashboardNavigationVisibilityTest::setUp)
+Before Test Method Errored (Tests\Feature\Filament\RoleDashboardNavigationVisibilityTest::setUp)
+SQLSTATE[HY000]: General error: 1 cannot start a transaction within a transaction
+Before Test Method Finished:
+- Tests\Feature\Filament\RoleDashboardNavigationVisibilityTest::setUp
+Test Preparation Failed (Tests\Feature\Filament\RoleDashboardNavigationVisibilityTest::test_super_admin_sees_only_super_dashboard_navigation)
+Test Errored (Tests\Feature\Filament\RoleDashboardNavigationVisibilityTest::test_super_admin_sees_only_super_dashboard_navigation)
+SQLSTATE[HY000]: General error: 1 cannot start a transaction within a transaction
+After Test Method Called (Tests\Feature\Filament\RoleDashboardNavigationVisibilityTest::tearDown)
+After Test Method Finished:
+- Tests\Feature\Filament\RoleDashboardNavigationVisibilityTest::tearDown
+Test Preparation Started (Tests\Feature\Filament\RoleDashboardNavigationVisibilityTest::test_admin_sees_only_admin_dashboard_navigation)
+Before Test Method Called (Tests\Feature\Filament\RoleDashboardNavigationVisibilityTest::setUp)
+Before Test Method Errored (Tests\Feature\Filament\RoleDashboardNavigationVisibilityTest::setUp)
+SQLSTATE[HY000]: General error: 1 cannot start a transaction within a transaction
+Before Test Method Finished:
+- Tests\Feature\Filament\RoleDashboardNavigationVisibilityTest::setUp
+Test Preparation Failed (Tests\Feature\Filament\RoleDashboardNavigationVisibilityTest::test_admin_sees_only_admin_dashboard_navigation)
+Test Errored (Tests\Feature\Filament\RoleDashboardNavigationVisibilityTest::test_admin_sees_only_admin_dashboard_navigation)
+SQLSTATE[HY000]: General error: 1 cannot start a transaction within a transaction
+After Test Method Called (Tests\Feature\Filament\RoleDashboardNavigationVisibilityTest::tearDown)
+After Test Method Finished:
+- Tests\Feature\Filament\RoleDashboardNavigationVisibilityTest::tearDown
+Test Preparation Started (Tests\Feature\Filament\RoleDashboardNavigationVisibilityTest::test_accountant_sees_only_accountant_dashboard_navigation)
+Before Test Method Called (Tests\Feature\Filament\RoleDashboardNavigationVisibilityTest::setUp)
+Before Test Method Errored (Tests\Feature\Filament\RoleDashboardNavigationVisibilityTest::setUp)
+SQLSTATE[HY000]: General error: 1 cannot start a transaction within a transaction
+Before Test Method Finished:
+- Tests\Feature\Filament\RoleDashboardNavigationVisibilityTest::setUp
+Test Preparation Failed (Tests\Feature\Filament\RoleDashboardNavigationVisibilityTest::test_accountant_sees_only_accountant_dashboard_navigation)
+Test Errored (Tests\Feature\Filament\RoleDashboardNavigationVisibilityTest::test_accountant_sees_only_accountant_dashboard_navigation)
+SQLSTATE[HY000]: General error: 1 cannot start a transaction within a transaction
+After Test Method Called (Tests\Feature\Filament\RoleDashboardNavigationVisibilityTest::tearDown)
+After Test Method Finished:
+- Tests\Feature\Filament\RoleDashboardNavigationVisibilityTest::tearDown
+Test Preparation Started (Tests\Feature\Filament\RoleDashboardNavigationVisibilityTest::test_officer_sees_only_officer_dashboard_navigation)
+Before Test Method Called (Tests\Feature\Filament\RoleDashboardNavigationVisibilityTest::setUp)
+Before Test Method Errored (Tests\Feature\Filament\RoleDashboardNavigationVisibilityTest::setUp)
+SQLSTATE[HY000]: General error: 1 cannot start a transaction within a transaction
+Before Test Method Finished:
+- Tests\Feature\Filament\RoleDashboardNavigationVisibilityTest::setUp
+Test Preparation Failed (Tests\Feature\Filament\RoleDashboardNavigationVisibilityTest::test_officer_sees_only_officer_dashboard_navigation)
+Test Errored (Tests\Feature\Filament\RoleDashboardNavigationVisibilityTest::test_officer_sees_only_officer_dashboard_navigation)
+SQLSTATE[HY000]: General error: 1 cannot start a transaction within a transaction
+After Test Method Called (Tests\Feature\Filament\RoleDashboardNavigationVisibilityTest::tearDown)
+After Test Method Finished:
+- Tests\Feature\Filament\RoleDashboardNavigationVisibilityTest::tearDown
+Test Preparation Started (Tests\Feature\Filament\RoleDashboardNavigationVisibilityTest::test_unauthenticated_user_sees_no_dashboard_navigation)
+Before Test Method Called (Tests\Feature\Filament\RoleDashboardNavigationVisibilityTest::setUp)
+Before Test Method Errored (Tests\Feature\Filament\RoleDashboardNavigationVisibilityTest::setUp)
+SQLSTATE[HY000]: General error: 1 cannot start a transaction within a transaction
+Before Test Method Finished:
+- Tests\Feature\Filament\RoleDashboardNavigationVisibilityTest::setUp
+Test Preparation Failed (Tests\Feature\Filament\RoleDashboardNavigationVisibilityTest::test_unauthenticated_user_sees_no_dashboard_navigation)
+Test Errored (Tests\Feature\Filament\RoleDashboardNavigationVisibilityTest::test_unauthenticated_user_sees_no_dashboard_navigation)
+SQLSTATE[HY000]: General error: 1 cannot start a transaction within a transaction
+After Test Method Called (Tests\Feature\Filament\RoleDashboardNavigationVisibilityTest::tearDown)
+After Test Method Finished:
+- Tests\Feature\Filament\RoleDashboardNavigationVisibilityTest::tearDown
+After Last Test Method Called (Tests\Feature\Filament\RoleDashboardNavigationVisibilityTest::tearDownAfterClass)
+After Last Test Method Finished:
+- Tests\Feature\Filament\RoleDashboardNavigationVisibilityTest::tearDownAfterClass
+Test Suite Finished (Tests\Feature\Filament\RoleDashboardNavigationVisibilityTest, 5 tests)
+Test Suite Started (Tests\Feature\Filament\RolePermissionResourceAccessTest, 1 test)
+Test Preparation Started (Tests\Feature\Filament\RolePermissionResourceAccessTest::test_non_super_admin_gets_403_on_roles_and_permissions_resources)
+Before Test Method Called (Tests\Feature\Filament\RolePermissionResourceAccessTest::setUp)
+Before Test Method Errored (Tests\Feature\Filament\RolePermissionResourceAccessTest::setUp)
+SQLSTATE[HY000]: General error: 1 cannot start a transaction within a transaction
+Before Test Method Finished:
+- Tests\Feature\Filament\RolePermissionResourceAccessTest::setUp
+Test Preparation Failed (Tests\Feature\Filament\RolePermissionResourceAccessTest::test_non_super_admin_gets_403_on_roles_and_permissions_resources)
+Test Errored (Tests\Feature\Filament\RolePermissionResourceAccessTest::test_non_super_admin_gets_403_on_roles_and_permissions_resources)
+SQLSTATE[HY000]: General error: 1 cannot start a transaction within a transaction
+After Test Method Called (Tests\Feature\Filament\RolePermissionResourceAccessTest::tearDown)
+After Test Method Finished:
+- Tests\Feature\Filament\RolePermissionResourceAccessTest::tearDown
+After Last Test Method Called (Tests\Feature\Filament\RolePermissionResourceAccessTest::tearDownAfterClass)
+After Last Test Method Finished:
+- Tests\Feature\Filament\RolePermissionResourceAccessTest::tearDownAfterClass
+Test Suite Finished (Tests\Feature\Filament\RolePermissionResourceAccessTest, 1 test)
+Test Suite Started (Tests\Feature\Filament\SmokeDashboardAccessTest, 1 test)
+Test Preparation Started (Tests\Feature\Filament\SmokeDashboardAccessTest::test_dashboard_role_access_matrix)
+Before Test Method Called (Tests\Feature\Filament\SmokeDashboardAccessTest::setUp)
+Before Test Method Errored (Tests\Feature\Filament\SmokeDashboardAccessTest::setUp)
+SQLSTATE[HY000]: General error: 1 cannot start a transaction within a transaction
+Before Test Method Finished:
+- Tests\Feature\Filament\SmokeDashboardAccessTest::setUp
+Test Preparation Failed (Tests\Feature\Filament\SmokeDashboardAccessTest::test_dashboard_role_access_matrix)
+Test Errored (Tests\Feature\Filament\SmokeDashboardAccessTest::test_dashboard_role_access_matrix)
+SQLSTATE[HY000]: General error: 1 cannot start a transaction within a transaction
+After Test Method Called (Tests\Feature\Filament\SmokeDashboardAccessTest::tearDown)
+After Test Method Finished:
+- Tests\Feature\Filament\SmokeDashboardAccessTest::tearDown
+After Last Test Method Called (Tests\Feature\Filament\SmokeDashboardAccessTest::tearDownAfterClass)
+After Last Test Method Finished:
+- Tests\Feature\Filament\SmokeDashboardAccessTest::tearDownAfterClass
+Test Suite Finished (Tests\Feature\Filament\SmokeDashboardAccessTest, 1 test)
+Test Suite Started (Tests\Feature\Filament\SuperDashboardRenderTest, 1 test)
+Test Preparation Started (Tests\Feature\Filament\SuperDashboardRenderTest::test_super_dashboard_page_renders_without_multiple_root_element_error)
+Before Test Method Called (Tests\Feature\Filament\SuperDashboardRenderTest::setUp)
+Before Test Method Errored (Tests\Feature\Filament\SuperDashboardRenderTest::setUp)
+SQLSTATE[HY000]: General error: 1 cannot start a transaction within a transaction
+Before Test Method Finished:
+- Tests\Feature\Filament\SuperDashboardRenderTest::setUp
+Test Preparation Failed (Tests\Feature\Filament\SuperDashboardRenderTest::test_super_dashboard_page_renders_without_multiple_root_element_error)
+Test Errored (Tests\Feature\Filament\SuperDashboardRenderTest::test_super_dashboard_page_renders_without_multiple_root_element_error)
+SQLSTATE[HY000]: General error: 1 cannot start a transaction within a transaction
+After Test Method Called (Tests\Feature\Filament\SuperDashboardRenderTest::tearDown)
+After Test Method Finished:
+- Tests\Feature\Filament\SuperDashboardRenderTest::tearDown
+After Last Test Method Called (Tests\Feature\Filament\SuperDashboardRenderTest::tearDownAfterClass)
+After Last Test Method Finished:
+- Tests\Feature\Filament\SuperDashboardRenderTest::tearDownAfterClass
+Test Suite Finished (Tests\Feature\Filament\SuperDashboardRenderTest, 1 test)
+Test Suite Started (Tests\Feature\Filament\TopbarRoleBadgeTest, 1 test)
+Test Preparation Started (Tests\Feature\Filament\TopbarRoleBadgeTest::test_super_admin_sees_role_badge_in_admin_topbar)
+Before Test Method Called (Tests\Feature\Filament\TopbarRoleBadgeTest::setUp)
+Before Test Method Errored (Tests\Feature\Filament\TopbarRoleBadgeTest::setUp)
+SQLSTATE[HY000]: General error: 1 cannot start a transaction within a transaction
+Before Test Method Finished:
+- Tests\Feature\Filament\TopbarRoleBadgeTest::setUp
+Test Preparation Failed (Tests\Feature\Filament\TopbarRoleBadgeTest::test_super_admin_sees_role_badge_in_admin_topbar)
+Test Errored (Tests\Feature\Filament\TopbarRoleBadgeTest::test_super_admin_sees_role_badge_in_admin_topbar)
+SQLSTATE[HY000]: General error: 1 cannot start a transaction within a transaction
+After Test Method Called (Tests\Feature\Filament\TopbarRoleBadgeTest::tearDown)
+After Test Method Finished:
+- Tests\Feature\Filament\TopbarRoleBadgeTest::tearDown
+After Last Test Method Called (Tests\Feature\Filament\TopbarRoleBadgeTest::tearDownAfterClass)
+After Last Test Method Finished:
+- Tests\Feature\Filament\TopbarRoleBadgeTest::tearDownAfterClass
+Test Suite Finished (Tests\Feature\Filament\TopbarRoleBadgeTest, 1 test)
+Test Suite Started (Tests\Feature\PassengerApiTest, 7 tests)
+Test Preparation Started (Tests\Feature\PassengerApiTest::test_get_rides_returns_correct_structure)
+Before Test Method Called (Tests\Feature\PassengerApiTest::setUp)
+Before Test Method Errored (Tests\Feature\PassengerApiTest::setUp)
+SQLSTATE[HY000]: General error: 1 cannot start a transaction within a transaction
+Before Test Method Finished:
+- Tests\Feature\PassengerApiTest::setUp
+Test Preparation Failed (Tests\Feature\PassengerApiTest::test_get_rides_returns_correct_structure)
+Test Errored (Tests\Feature\PassengerApiTest::test_get_rides_returns_correct_structure)
+SQLSTATE[HY000]: General error: 1 cannot start a transaction within a transaction
+After Test Method Called (Tests\Feature\PassengerApiTest::tearDown)
+After Test Method Finished:
+- Tests\Feature\PassengerApiTest::tearDown
+Test Preparation Started (Tests\Feature\PassengerApiTest::test_cannot_book_on_demand_ride)
+Before Test Method Called (Tests\Feature\PassengerApiTest::setUp)
+Before Test Method Errored (Tests\Feature\PassengerApiTest::setUp)
+SQLSTATE[HY000]: General error: 1 cannot start a transaction within a transaction
+Before Test Method Finished:
+- Tests\Feature\PassengerApiTest::setUp
+Test Preparation Failed (Tests\Feature\PassengerApiTest::test_cannot_book_on_demand_ride)
+Test Errored (Tests\Feature\PassengerApiTest::test_cannot_book_on_demand_ride)
+SQLSTATE[HY000]: General error: 1 cannot start a transaction within a transaction
+After Test Method Called (Tests\Feature\PassengerApiTest::tearDown)
+After Test Method Finished:
+- Tests\Feature\PassengerApiTest::tearDown
+Test Preparation Started (Tests\Feature\PassengerApiTest::test_can_book_scheduled_ride)
+Before Test Method Called (Tests\Feature\PassengerApiTest::setUp)
+Before Test Method Errored (Tests\Feature\PassengerApiTest::setUp)
+SQLSTATE[HY000]: General error: 1 cannot start a transaction within a transaction
+Before Test Method Finished:
+- Tests\Feature\PassengerApiTest::setUp
+Test Preparation Failed (Tests\Feature\PassengerApiTest::test_can_book_scheduled_ride)
+Test Errored (Tests\Feature\PassengerApiTest::test_can_book_scheduled_ride)
+SQLSTATE[HY000]: General error: 1 cannot start a transaction within a transaction
+After Test Method Called (Tests\Feature\PassengerApiTest::tearDown)
+After Test Method Finished:
+- Tests\Feature\PassengerApiTest::tearDown
+Test Preparation Started (Tests\Feature\PassengerApiTest::test_can_request_on_demand_trip)
+Before Test Method Called (Tests\Feature\PassengerApiTest::setUp)
+Before Test Method Errored (Tests\Feature\PassengerApiTest::setUp)
+SQLSTATE[HY000]: General error: 1 cannot start a transaction within a transaction
+Before Test Method Finished:
+- Tests\Feature\PassengerApiTest::setUp
+Test Preparation Failed (Tests\Feature\PassengerApiTest::test_can_request_on_demand_trip)
+Test Errored (Tests\Feature\PassengerApiTest::test_can_request_on_demand_trip)
+SQLSTATE[HY000]: General error: 1 cannot start a transaction within a transaction
+After Test Method Called (Tests\Feature\PassengerApiTest::tearDown)
+After Test Method Finished:
+- Tests\Feature\PassengerApiTest::tearDown
+Test Preparation Started (Tests\Feature\PassengerApiTest::test_get_current_trip_returns_active_trip)
+Before Test Method Called (Tests\Feature\PassengerApiTest::setUp)
+Before Test Method Errored (Tests\Feature\PassengerApiTest::setUp)
+SQLSTATE[HY000]: General error: 1 cannot start a transaction within a transaction
+Before Test Method Finished:
+- Tests\Feature\PassengerApiTest::setUp
+Test Preparation Failed (Tests\Feature\PassengerApiTest::test_get_current_trip_returns_active_trip)
+Test Errored (Tests\Feature\PassengerApiTest::test_get_current_trip_returns_active_trip)
+SQLSTATE[HY000]: General error: 1 cannot start a transaction within a transaction
+After Test Method Called (Tests\Feature\PassengerApiTest::tearDown)
+After Test Method Finished:
+- Tests\Feature\PassengerApiTest::tearDown
+Test Preparation Started (Tests\Feature\PassengerApiTest::test_track_trip_returns_location_data)
+Before Test Method Called (Tests\Feature\PassengerApiTest::setUp)
+Before Test Method Errored (Tests\Feature\PassengerApiTest::setUp)
+SQLSTATE[HY000]: General error: 1 cannot start a transaction within a transaction
+Before Test Method Finished:
+- Tests\Feature\PassengerApiTest::setUp
+Test Preparation Failed (Tests\Feature\PassengerApiTest::test_track_trip_returns_location_data)
+Test Errored (Tests\Feature\PassengerApiTest::test_track_trip_returns_location_data)
+SQLSTATE[HY000]: General error: 1 cannot start a transaction within a transaction
+After Test Method Called (Tests\Feature\PassengerApiTest::tearDown)
+After Test Method Finished:
+- Tests\Feature\PassengerApiTest::tearDown
+Test Preparation Started (Tests\Feature\PassengerApiTest::test_api_returns_ride_rules_correctly)
+Before Test Method Called (Tests\Feature\PassengerApiTest::setUp)
+Before Test Method Errored (Tests\Feature\PassengerApiTest::setUp)
+SQLSTATE[HY000]: General error: 1 cannot start a transaction within a transaction
+Before Test Method Finished:
+- Tests\Feature\PassengerApiTest::setUp
+Test Preparation Failed (Tests\Feature\PassengerApiTest::test_api_returns_ride_rules_correctly)
+Test Errored (Tests\Feature\PassengerApiTest::test_api_returns_ride_rules_correctly)
+SQLSTATE[HY000]: General error: 1 cannot start a transaction within a transaction
+After Test Method Called (Tests\Feature\PassengerApiTest::tearDown)
+After Test Method Finished:
+- Tests\Feature\PassengerApiTest::tearDown
+After Last Test Method Called (Tests\Feature\PassengerApiTest::tearDownAfterClass)
+After Last Test Method Finished:
+- Tests\Feature\PassengerApiTest::tearDownAfterClass
+Test Suite Finished (Tests\Feature\PassengerApiTest, 7 tests)
+Test Suite Started (Tests\Feature\PrivateTransportFlowTest, 9 tests)
+Test Preparation Started (Tests\Feature\PrivateTransportFlowTest::test_car_scheduled_flow_with_booking)
+Before Test Method Called (Tests\Feature\PrivateTransportFlowTest::setUp)
+Before Test Method Errored (Tests\Feature\PrivateTransportFlowTest::setUp)
+SQLSTATE[HY000]: General error: 1 cannot start a transaction within a transaction
+Before Test Method Finished:
+- Tests\Feature\PrivateTransportFlowTest::setUp
+Test Preparation Failed (Tests\Feature\PrivateTransportFlowTest::test_car_scheduled_flow_with_booking)
+Test Errored (Tests\Feature\PrivateTransportFlowTest::test_car_scheduled_flow_with_booking)
+SQLSTATE[HY000]: General error: 1 cannot start a transaction within a transaction
+After Test Method Called (Tests\Feature\PrivateTransportFlowTest::tearDown)
+After Test Method Finished:
+- Tests\Feature\PrivateTransportFlowTest::tearDown
+Test Preparation Started (Tests\Feature\PrivateTransportFlowTest::test_car_on_demand_flow_direct_trip)
+Before Test Method Called (Tests\Feature\PrivateTransportFlowTest::setUp)
+Before Test Method Errored (Tests\Feature\PrivateTransportFlowTest::setUp)
+SQLSTATE[HY000]: General error: 1 cannot start a transaction within a transaction
+Before Test Method Finished:
+- Tests\Feature\PrivateTransportFlowTest::setUp
+Test Preparation Failed (Tests\Feature\PrivateTransportFlowTest::test_car_on_demand_flow_direct_trip)
+Test Errored (Tests\Feature\PrivateTransportFlowTest::test_car_on_demand_flow_direct_trip)
+SQLSTATE[HY000]: General error: 1 cannot start a transaction within a transaction
+After Test Method Called (Tests\Feature\PrivateTransportFlowTest::tearDown)
+After Test Method Finished:
+- Tests\Feature\PrivateTransportFlowTest::tearDown
+Test Preparation Started (Tests\Feature\PrivateTransportFlowTest::test_motorcycle_on_demand_flow)
+Before Test Method Called (Tests\Feature\PrivateTransportFlowTest::setUp)
+Before Test Method Errored (Tests\Feature\PrivateTransportFlowTest::setUp)
+SQLSTATE[HY000]: General error: 1 cannot start a transaction within a transaction
+Before Test Method Finished:
+- Tests\Feature\PrivateTransportFlowTest::setUp
+Test Preparation Failed (Tests\Feature\PrivateTransportFlowTest::test_motorcycle_on_demand_flow)
+Test Errored (Tests\Feature\PrivateTransportFlowTest::test_motorcycle_on_demand_flow)
+SQLSTATE[HY000]: General error: 1 cannot start a transaction within a transaction
+After Test Method Called (Tests\Feature\PrivateTransportFlowTest::tearDown)
+After Test Method Finished:
+- Tests\Feature\PrivateTransportFlowTest::tearDown
+Test Preparation Started (Tests\Feature\PrivateTransportFlowTest::test_cannot_create_scheduled_motorcycle)
+Before Test Method Called (Tests\Feature\PrivateTransportFlowTest::setUp)
+Before Test Method Errored (Tests\Feature\PrivateTransportFlowTest::setUp)
+SQLSTATE[HY000]: General error: 1 cannot start a transaction within a transaction
+Before Test Method Finished:
+- Tests\Feature\PrivateTransportFlowTest::setUp
+Test Preparation Failed (Tests\Feature\PrivateTransportFlowTest::test_cannot_create_scheduled_motorcycle)
+Test Errored (Tests\Feature\PrivateTransportFlowTest::test_cannot_create_scheduled_motorcycle)
+SQLSTATE[HY000]: General error: 1 cannot start a transaction within a transaction
+After Test Method Called (Tests\Feature\PrivateTransportFlowTest::tearDown)
+After Test Method Finished:
+- Tests\Feature\PrivateTransportFlowTest::tearDown
+Test Preparation Started (Tests\Feature\PrivateTransportFlowTest::test_cannot_create_on_demand_bus)
+Before Test Method Called (Tests\Feature\PrivateTransportFlowTest::setUp)
+Before Test Method Errored (Tests\Feature\PrivateTransportFlowTest::setUp)
+SQLSTATE[HY000]: General error: 1 cannot start a transaction within a transaction
+Before Test Method Finished:
+- Tests\Feature\PrivateTransportFlowTest::setUp
+Test Preparation Failed (Tests\Feature\PrivateTransportFlowTest::test_cannot_create_on_demand_bus)
+Test Errored (Tests\Feature\PrivateTransportFlowTest::test_cannot_create_on_demand_bus)
+SQLSTATE[HY000]: General error: 1 cannot start a transaction within a transaction
+After Test Method Called (Tests\Feature\PrivateTransportFlowTest::tearDown)
+After Test Method Finished:
+- Tests\Feature\PrivateTransportFlowTest::tearDown
+Test Preparation Started (Tests\Feature\PrivateTransportFlowTest::test_trip_requires_locations)
+Before Test Method Called (Tests\Feature\PrivateTransportFlowTest::setUp)
+Before Test Method Errored (Tests\Feature\PrivateTransportFlowTest::setUp)
+SQLSTATE[HY000]: General error: 1 cannot start a transaction within a transaction
+Before Test Method Finished:
+- Tests\Feature\PrivateTransportFlowTest::setUp
+Test Preparation Failed (Tests\Feature\PrivateTransportFlowTest::test_trip_requires_locations)
+Test Errored (Tests\Feature\PrivateTransportFlowTest::test_trip_requires_locations)
+SQLSTATE[HY000]: General error: 1 cannot start a transaction within a transaction
+After Test Method Called (Tests\Feature\PrivateTransportFlowTest::tearDown)
+After Test Method Finished:
+- Tests\Feature\PrivateTransportFlowTest::tearDown
+Test Preparation Started (Tests\Feature\PrivateTransportFlowTest::test_driver_auto_assignment_vehicle_compatibility)
+Before Test Method Called (Tests\Feature\PrivateTransportFlowTest::setUp)
+Before Test Method Errored (Tests\Feature\PrivateTransportFlowTest::setUp)
+SQLSTATE[HY000]: General error: 1 cannot start a transaction within a transaction
+Before Test Method Finished:
+- Tests\Feature\PrivateTransportFlowTest::setUp
+Test Preparation Failed (Tests\Feature\PrivateTransportFlowTest::test_driver_auto_assignment_vehicle_compatibility)
+Test Errored (Tests\Feature\PrivateTransportFlowTest::test_driver_auto_assignment_vehicle_compatibility)
+SQLSTATE[HY000]: General error: 1 cannot start a transaction within a transaction
+After Test Method Called (Tests\Feature\PrivateTransportFlowTest::tearDown)
+After Test Method Finished:
+- Tests\Feature\PrivateTransportFlowTest::tearDown
+Test Preparation Started (Tests\Feature\PrivateTransportFlowTest::test_trip_state_machine_transitions)
+Before Test Method Called (Tests\Feature\PrivateTransportFlowTest::setUp)
+Before Test Method Errored (Tests\Feature\PrivateTransportFlowTest::setUp)
+SQLSTATE[HY000]: General error: 1 cannot start a transaction within a transaction
+Before Test Method Finished:
+- Tests\Feature\PrivateTransportFlowTest::setUp
+Test Preparation Failed (Tests\Feature\PrivateTransportFlowTest::test_trip_state_machine_transitions)
+Test Errored (Tests\Feature\PrivateTransportFlowTest::test_trip_state_machine_transitions)
+SQLSTATE[HY000]: General error: 1 cannot start a transaction within a transaction
+After Test Method Called (Tests\Feature\PrivateTransportFlowTest::tearDown)
+After Test Method Finished:
+- Tests\Feature\PrivateTransportFlowTest::tearDown
+Test Preparation Started (Tests\Feature\PrivateTransportFlowTest::test_ride_api_response_includes_rules)
+Before Test Method Called (Tests\Feature\PrivateTransportFlowTest::setUp)
+Before Test Method Errored (Tests\Feature\PrivateTransportFlowTest::setUp)
+SQLSTATE[HY000]: General error: 1 cannot start a transaction within a transaction
+Before Test Method Finished:
+- Tests\Feature\PrivateTransportFlowTest::setUp
+Test Preparation Failed (Tests\Feature\PrivateTransportFlowTest::test_ride_api_response_includes_rules)
+Test Errored (Tests\Feature\PrivateTransportFlowTest::test_ride_api_response_includes_rules)
+SQLSTATE[HY000]: General error: 1 cannot start a transaction within a transaction
+After Test Method Called (Tests\Feature\PrivateTransportFlowTest::tearDown)
+After Test Method Finished:
+- Tests\Feature\PrivateTransportFlowTest::tearDown
+After Last Test Method Called (Tests\Feature\PrivateTransportFlowTest::tearDownAfterClass)
+After Last Test Method Finished:
+- Tests\Feature\PrivateTransportFlowTest::tearDownAfterClass
+Test Suite Finished (Tests\Feature\PrivateTransportFlowTest, 9 tests)
+Test Suite Started (Tests\Feature\PublicTransportPolicyTest, 5 tests)
+Test Preparation Started (Tests\Feature\PublicTransportPolicyTest::test_bus_ride_must_have_route)
+Before Test Method Called (Tests\Feature\PublicTransportPolicyTest::setUp)
+Before Test Method Errored (Tests\Feature\PublicTransportPolicyTest::setUp)
+SQLSTATE[HY000]: General error: 1 cannot start a transaction within a transaction
+Before Test Method Finished:
+- Tests\Feature\PublicTransportPolicyTest::setUp
+Test Preparation Failed (Tests\Feature\PublicTransportPolicyTest::test_bus_ride_must_have_route)
+Test Errored (Tests\Feature\PublicTransportPolicyTest::test_bus_ride_must_have_route)
+SQLSTATE[HY000]: General error: 1 cannot start a transaction within a transaction
+After Test Method Called (Tests\Feature\PublicTransportPolicyTest::tearDown)
+After Test Method Finished:
+- Tests\Feature\PublicTransportPolicyTest::tearDown
+Test Preparation Started (Tests\Feature\PublicTransportPolicyTest::test_cannot_create_bus_without_route)
+Before Test Method Called (Tests\Feature\PublicTransportPolicyTest::setUp)
+Before Test Method Errored (Tests\Feature\PublicTransportPolicyTest::setUp)
+SQLSTATE[HY000]: General error: 1 cannot start a transaction within a transaction
+Before Test Method Finished:
+- Tests\Feature\PublicTransportPolicyTest::setUp
+Test Preparation Failed (Tests\Feature\PublicTransportPolicyTest::test_cannot_create_bus_without_route)
+Test Errored (Tests\Feature\PublicTransportPolicyTest::test_cannot_create_bus_without_route)
+SQLSTATE[HY000]: General error: 1 cannot start a transaction within a transaction
+After Test Method Called (Tests\Feature\PublicTransportPolicyTest::tearDown)
+After Test Method Finished:
+- Tests\Feature\PublicTransportPolicyTest::tearDown
+Test Preparation Started (Tests\Feature\PublicTransportPolicyTest::test_passenger_can_book_bus_route)
+Before Test Method Called (Tests\Feature\PublicTransportPolicyTest::setUp)
+Before Test Method Errored (Tests\Feature\PublicTransportPolicyTest::setUp)
+SQLSTATE[HY000]: General error: 1 cannot start a transaction within a transaction
+Before Test Method Finished:
+- Tests\Feature\PublicTransportPolicyTest::setUp
+Test Preparation Failed (Tests\Feature\PublicTransportPolicyTest::test_passenger_can_book_bus_route)
+Test Errored (Tests\Feature\PublicTransportPolicyTest::test_passenger_can_book_bus_route)
+SQLSTATE[HY000]: General error: 1 cannot start a transaction within a transaction
+After Test Method Called (Tests\Feature\PublicTransportPolicyTest::tearDown)
+After Test Method Finished:
+- Tests\Feature\PublicTransportPolicyTest::tearDown
+Test Preparation Started (Tests\Feature\PublicTransportPolicyTest::test_bus_trip_created_from_booking_only)
+Before Test Method Called (Tests\Feature\PublicTransportPolicyTest::setUp)
+Before Test Method Errored (Tests\Feature\PublicTransportPolicyTest::setUp)
+SQLSTATE[HY000]: General error: 1 cannot start a transaction within a transaction
+Before Test Method Finished:
+- Tests\Feature\PublicTransportPolicyTest::setUp
+Test Preparation Failed (Tests\Feature\PublicTransportPolicyTest::test_bus_trip_created_from_booking_only)
+Test Errored (Tests\Feature\PublicTransportPolicyTest::test_bus_trip_created_from_booking_only)
+SQLSTATE[HY000]: General error: 1 cannot start a transaction within a transaction
+After Test Method Called (Tests\Feature\PublicTransportPolicyTest::tearDown)
+After Test Method Finished:
+- Tests\Feature\PublicTransportPolicyTest::tearDown
+Test Preparation Started (Tests\Feature\PublicTransportPolicyTest::test_admin_can_update_routes_dynamically)
+Before Test Method Called (Tests\Feature\PublicTransportPolicyTest::setUp)
+Before Test Method Errored (Tests\Feature\PublicTransportPolicyTest::setUp)
+SQLSTATE[HY000]: General error: 1 cannot start a transaction within a transaction
+Before Test Method Finished:
+- Tests\Feature\PublicTransportPolicyTest::setUp
+Test Preparation Failed (Tests\Feature\PublicTransportPolicyTest::test_admin_can_update_routes_dynamically)
+Test Errored (Tests\Feature\PublicTransportPolicyTest::test_admin_can_update_routes_dynamically)
+SQLSTATE[HY000]: General error: 1 cannot start a transaction within a transaction
+After Test Method Called (Tests\Feature\PublicTransportPolicyTest::tearDown)
+After Test Method Finished:
+- Tests\Feature\PublicTransportPolicyTest::tearDown
+After Last Test Method Called (Tests\Feature\PublicTransportPolicyTest::tearDownAfterClass)
+After Last Test Method Finished:
+- Tests\Feature\PublicTransportPolicyTest::tearDownAfterClass
+Test Suite Finished (Tests\Feature\PublicTransportPolicyTest, 5 tests)
+Test Suite Started (Tests\Feature\RealtimeBroadcastTest, 4 tests)
+Test Preparation Started (Tests\Feature\RealtimeBroadcastTest::test_driver_location_update_triggers_supabase_broadcast)
+Before Test Method Called (Tests\Feature\RealtimeBroadcastTest::setUp)
+Before Test Method Errored (Tests\Feature\RealtimeBroadcastTest::setUp)
+SQLSTATE[HY000]: General error: 1 cannot start a transaction within a transaction
+Before Test Method Finished:
+- Tests\Feature\RealtimeBroadcastTest::setUp
+Test Preparation Failed (Tests\Feature\RealtimeBroadcastTest::test_driver_location_update_triggers_supabase_broadcast)
+Test Errored (Tests\Feature\RealtimeBroadcastTest::test_driver_location_update_triggers_supabase_broadcast)
+SQLSTATE[HY000]: General error: 1 cannot start a transaction within a transaction
+After Test Method Called (Tests\Feature\RealtimeBroadcastTest::tearDown)
+After Test Method Finished:
+- Tests\Feature\RealtimeBroadcastTest::tearDown
+Test Preparation Started (Tests\Feature\RealtimeBroadcastTest::test_trip_matched_triggers_driver_notification)
+Before Test Method Called (Tests\Feature\RealtimeBroadcastTest::setUp)
+Before Test Method Errored (Tests\Feature\RealtimeBroadcastTest::setUp)
+SQLSTATE[HY000]: General error: 1 cannot start a transaction within a transaction
+Before Test Method Finished:
+- Tests\Feature\RealtimeBroadcastTest::setUp
+Test Preparation Failed (Tests\Feature\RealtimeBroadcastTest::test_trip_matched_triggers_driver_notification)
+Test Errored (Tests\Feature\RealtimeBroadcastTest::test_trip_matched_triggers_driver_notification)
+SQLSTATE[HY000]: General error: 1 cannot start a transaction within a transaction
+After Test Method Called (Tests\Feature\RealtimeBroadcastTest::tearDown)
+After Test Method Finished:
+- Tests\Feature\RealtimeBroadcastTest::tearDown
+Test Preparation Started (Tests\Feature\RealtimeBroadcastTest::test_trip_started_triggers_passenger_update)
+Before Test Method Called (Tests\Feature\RealtimeBroadcastTest::setUp)
+Before Test Method Errored (Tests\Feature\RealtimeBroadcastTest::setUp)
+SQLSTATE[HY000]: General error: 1 cannot start a transaction within a transaction
+Before Test Method Finished:
+- Tests\Feature\RealtimeBroadcastTest::setUp
+Test Preparation Failed (Tests\Feature\RealtimeBroadcastTest::test_trip_started_triggers_passenger_update)
+Test Errored (Tests\Feature\RealtimeBroadcastTest::test_trip_started_triggers_passenger_update)
+SQLSTATE[HY000]: General error: 1 cannot start a transaction within a transaction
+After Test Method Called (Tests\Feature\RealtimeBroadcastTest::tearDown)
+After Test Method Finished:
+- Tests\Feature\RealtimeBroadcastTest::tearDown
+Test Preparation Started (Tests\Feature\RealtimeBroadcastTest::test_trip_completed_triggers_both_trip_and_passenger_updates)
+Before Test Method Called (Tests\Feature\RealtimeBroadcastTest::setUp)
+Before Test Method Errored (Tests\Feature\RealtimeBroadcastTest::setUp)
+SQLSTATE[HY000]: General error: 1 cannot start a transaction within a transaction
+Before Test Method Finished:
+- Tests\Feature\RealtimeBroadcastTest::setUp
+Test Preparation Failed (Tests\Feature\RealtimeBroadcastTest::test_trip_completed_triggers_both_trip_and_passenger_updates)
+Test Errored (Tests\Feature\RealtimeBroadcastTest::test_trip_completed_triggers_both_trip_and_passenger_updates)
+SQLSTATE[HY000]: General error: 1 cannot start a transaction within a transaction
+After Test Method Called (Tests\Feature\RealtimeBroadcastTest::tearDown)
+After Test Method Finished:
+- Tests\Feature\RealtimeBroadcastTest::tearDown
+After Last Test Method Called (Tests\Feature\RealtimeBroadcastTest::tearDownAfterClass)
+After Last Test Method Finished:
+- Tests\Feature\RealtimeBroadcastTest::tearDownAfterClass
+Test Suite Finished (Tests\Feature\RealtimeBroadcastTest, 4 tests)
+Test Suite Started (Tests\Feature\RideApiContractTest, 1 test)
+Test Preparation Started (Tests\Feature\RideApiContractTest::ride_api_always_exposes_ride_rules)
+Before Test Method Called (Tests\Feature\RideApiContractTest::setUp)
+Before Test Method Errored (Tests\Feature\RideApiContractTest::setUp)
+SQLSTATE[HY000]: General error: 1 cannot start a transaction within a transaction
+Before Test Method Finished:
+- Tests\Feature\RideApiContractTest::setUp
+Test Preparation Failed (Tests\Feature\RideApiContractTest::ride_api_always_exposes_ride_rules)
+Test Errored (Tests\Feature\RideApiContractTest::ride_api_always_exposes_ride_rules)
+SQLSTATE[HY000]: General error: 1 cannot start a transaction within a transaction
+After Test Method Called (Tests\Feature\RideApiContractTest::tearDown)
+After Test Method Finished:
+- Tests\Feature\RideApiContractTest::tearDown
+After Last Test Method Called (Tests\Feature\RideApiContractTest::tearDownAfterClass)
+After Last Test Method Finished:
+- Tests\Feature\RideApiContractTest::tearDownAfterClass
+Test Suite Finished (Tests\Feature\RideApiContractTest, 1 test)
+Test Suite Started (Tests\Feature\RideFlowTest, 6 tests)
+Test Preparation Started (Tests\Feature\RideFlowTest::cannot_overbook_seats)
+Before Test Method Called (Tests\Feature\RideFlowTest::setUp)
+Before Test Method Errored (Tests\Feature\RideFlowTest::setUp)
+SQLSTATE[HY000]: General error: 1 cannot start a transaction within a transaction
+Before Test Method Finished:
+- Tests\Feature\RideFlowTest::setUp
+Test Preparation Failed (Tests\Feature\RideFlowTest::cannot_overbook_seats)
+Test Errored (Tests\Feature\RideFlowTest::cannot_overbook_seats)
+SQLSTATE[HY000]: General error: 1 cannot start a transaction within a transaction
+After Test Method Called (Tests\Feature\RideFlowTest::tearDown)
+After Test Method Finished:
+- Tests\Feature\RideFlowTest::tearDown
+Test Preparation Started (Tests\Feature\RideFlowTest::driver_cannot_accept_wrong_vehicle_type)
+Before Test Method Called (Tests\Feature\RideFlowTest::setUp)
+Before Test Method Errored (Tests\Feature\RideFlowTest::setUp)
+SQLSTATE[HY000]: General error: 1 cannot start a transaction within a transaction
+Before Test Method Finished:
+- Tests\Feature\RideFlowTest::setUp
+Test Preparation Failed (Tests\Feature\RideFlowTest::driver_cannot_accept_wrong_vehicle_type)
+Test Errored (Tests\Feature\RideFlowTest::driver_cannot_accept_wrong_vehicle_type)
+SQLSTATE[HY000]: General error: 1 cannot start a transaction within a transaction
+After Test Method Called (Tests\Feature\RideFlowTest::tearDown)
+After Test Method Finished:
+- Tests\Feature\RideFlowTest::tearDown
+Test Preparation Started (Tests\Feature\RideFlowTest::api_returns_correct_flags)
+Before Test Method Called (Tests\Feature\RideFlowTest::setUp)
+Before Test Method Errored (Tests\Feature\RideFlowTest::setUp)
+SQLSTATE[HY000]: General error: 1 cannot start a transaction within a transaction
+Before Test Method Finished:
+- Tests\Feature\RideFlowTest::setUp
+Test Preparation Failed (Tests\Feature\RideFlowTest::api_returns_correct_flags)
+Test Errored (Tests\Feature\RideFlowTest::api_returns_correct_flags)
+SQLSTATE[HY000]: General error: 1 cannot start a transaction within a transaction
+After Test Method Called (Tests\Feature\RideFlowTest::tearDown)
+After Test Method Finished:
+- Tests\Feature\RideFlowTest::tearDown
+Test Preparation Started (Tests\Feature\RideFlowTest::driver_can_accept_with_compatible_vehicle_type)
+Before Test Method Called (Tests\Feature\RideFlowTest::setUp)
+Before Test Method Errored (Tests\Feature\RideFlowTest::setUp)
+SQLSTATE[HY000]: General error: 1 cannot start a transaction within a transaction
+Before Test Method Finished:
+- Tests\Feature\RideFlowTest::setUp
+Test Preparation Failed (Tests\Feature\RideFlowTest::driver_can_accept_with_compatible_vehicle_type)
+Test Errored (Tests\Feature\RideFlowTest::driver_can_accept_with_compatible_vehicle_type)
+SQLSTATE[HY000]: General error: 1 cannot start a transaction within a transaction
+After Test Method Called (Tests\Feature\RideFlowTest::tearDown)
+After Test Method Finished:
+- Tests\Feature\RideFlowTest::tearDown
+Test Preparation Started (Tests\Feature\RideFlowTest::driver_can_accept_car_ride_with_suv)
+Before Test Method Called (Tests\Feature\RideFlowTest::setUp)
+Before Test Method Errored (Tests\Feature\RideFlowTest::setUp)
+SQLSTATE[HY000]: General error: 1 cannot start a transaction within a transaction
+Before Test Method Finished:
+- Tests\Feature\RideFlowTest::setUp
+Test Preparation Failed (Tests\Feature\RideFlowTest::driver_can_accept_car_ride_with_suv)
+Test Errored (Tests\Feature\RideFlowTest::driver_can_accept_car_ride_with_suv)
+SQLSTATE[HY000]: General error: 1 cannot start a transaction within a transaction
+After Test Method Called (Tests\Feature\RideFlowTest::tearDown)
+After Test Method Finished:
+- Tests\Feature\RideFlowTest::tearDown
+Test Preparation Started (Tests\Feature\RideFlowTest::ride_model_has_vehicle_compatibility_helper)
+Before Test Method Called (Tests\Feature\RideFlowTest::setUp)
+Before Test Method Errored (Tests\Feature\RideFlowTest::setUp)
+SQLSTATE[HY000]: General error: 1 cannot start a transaction within a transaction
+Before Test Method Finished:
+- Tests\Feature\RideFlowTest::setUp
+Test Preparation Failed (Tests\Feature\RideFlowTest::ride_model_has_vehicle_compatibility_helper)
+Test Errored (Tests\Feature\RideFlowTest::ride_model_has_vehicle_compatibility_helper)
+SQLSTATE[HY000]: General error: 1 cannot start a transaction within a transaction
+After Test Method Called (Tests\Feature\RideFlowTest::tearDown)
+After Test Method Finished:
+- Tests\Feature\RideFlowTest::tearDown
+After Last Test Method Called (Tests\Feature\RideFlowTest::tearDownAfterClass)
+After Last Test Method Finished:
+- Tests\Feature\RideFlowTest::tearDownAfterClass
+Test Suite Finished (Tests\Feature\RideFlowTest, 6 tests)
+Test Suite Started (Tests\Feature\RideSelectionTest, 5 tests)
+Test Preparation Started (Tests\Feature\RideSelectionTest::test_rides_are_sorted_alphabetically)
+Before Test Method Called (Tests\Feature\RideSelectionTest::setUp)
+Before Test Method Errored (Tests\Feature\RideSelectionTest::setUp)
+SQLSTATE[HY000]: General error: 1 cannot start a transaction within a transaction
+Before Test Method Finished:
+- Tests\Feature\RideSelectionTest::setUp
+Test Preparation Failed (Tests\Feature\RideSelectionTest::test_rides_are_sorted_alphabetically)
+Test Errored (Tests\Feature\RideSelectionTest::test_rides_are_sorted_alphabetically)
+SQLSTATE[HY000]: General error: 1 cannot start a transaction within a transaction
+After Test Method Called (Tests\Feature\RideSelectionTest::tearDown)
+After Test Method Finished:
+- Tests\Feature\RideSelectionTest::tearDown
+Test Preparation Started (Tests\Feature\RideSelectionTest::test_filter_by_transport_type)
+Before Test Method Called (Tests\Feature\RideSelectionTest::setUp)
+Before Test Method Errored (Tests\Feature\RideSelectionTest::setUp)
+SQLSTATE[HY000]: General error: 1 cannot start a transaction within a transaction
+Before Test Method Finished:
+- Tests\Feature\RideSelectionTest::setUp
+Test Preparation Failed (Tests\Feature\RideSelectionTest::test_filter_by_transport_type)
+Test Errored (Tests\Feature\RideSelectionTest::test_filter_by_transport_type)
+SQLSTATE[HY000]: General error: 1 cannot start a transaction within a transaction
+After Test Method Called (Tests\Feature\RideSelectionTest::tearDown)
+After Test Method Finished:
+- Tests\Feature\RideSelectionTest::tearDown
+Test Preparation Started (Tests\Feature\RideSelectionTest::test_api_includes_transport_type_and_travel_mode)
+Before Test Method Called (Tests\Feature\RideSelectionTest::setUp)
+Before Test Method Errored (Tests\Feature\RideSelectionTest::setUp)
+SQLSTATE[HY000]: General error: 1 cannot start a transaction within a transaction
+Before Test Method Finished:
+- Tests\Feature\RideSelectionTest::setUp
+Test Preparation Failed (Tests\Feature\RideSelectionTest::test_api_includes_transport_type_and_travel_mode)
+Test Errored (Tests\Feature\RideSelectionTest::test_api_includes_transport_type_and_travel_mode)
+SQLSTATE[HY000]: General error: 1 cannot start a transaction within a transaction
+After Test Method Called (Tests\Feature\RideSelectionTest::tearDown)
+After Test Method Finished:
+- Tests\Feature\RideSelectionTest::tearDown
+Test Preparation Started (Tests\Feature\RideSelectionTest::test_rides_sorted_by_destination_when_origins_same)
+Before Test Method Called (Tests\Feature\RideSelectionTest::setUp)
+Before Test Method Errored (Tests\Feature\RideSelectionTest::setUp)
+SQLSTATE[HY000]: General error: 1 cannot start a transaction within a transaction
+Before Test Method Finished:
+- Tests\Feature\RideSelectionTest::setUp
+Test Preparation Failed (Tests\Feature\RideSelectionTest::test_rides_sorted_by_destination_when_origins_same)
+Test Errored (Tests\Feature\RideSelectionTest::test_rides_sorted_by_destination_when_origins_same)
+SQLSTATE[HY000]: General error: 1 cannot start a transaction within a transaction
+After Test Method Called (Tests\Feature\RideSelectionTest::tearDown)
+After Test Method Finished:
+- Tests\Feature\RideSelectionTest::tearDown
+Test Preparation Started (Tests\Feature\RideSelectionTest::test_api_response_structure_for_flutter)
+Before Test Method Called (Tests\Feature\RideSelectionTest::setUp)
+Before Test Method Errored (Tests\Feature\RideSelectionTest::setUp)
+SQLSTATE[HY000]: General error: 1 cannot start a transaction within a transaction
+Before Test Method Finished:
+- Tests\Feature\RideSelectionTest::setUp
+Test Preparation Failed (Tests\Feature\RideSelectionTest::test_api_response_structure_for_flutter)
+Test Errored (Tests\Feature\RideSelectionTest::test_api_response_structure_for_flutter)
+SQLSTATE[HY000]: General error: 1 cannot start a transaction within a transaction
+After Test Method Called (Tests\Feature\RideSelectionTest::tearDown)
+After Test Method Finished:
+- Tests\Feature\RideSelectionTest::tearDown
+After Last Test Method Called (Tests\Feature\RideSelectionTest::tearDownAfterClass)
+After Last Test Method Finished:
+- Tests\Feature\RideSelectionTest::tearDownAfterClass
+Test Suite Finished (Tests\Feature\RideSelectionTest, 5 tests)
+Test Suite Started (Tests\Feature\RideTransportClassificationTest, 6 tests)
+Test Preparation Started (Tests\Feature\RideTransportClassificationTest::cannot_create_booking_for_on_demand_ride)
+Before Test Method Called (Tests\Feature\RideTransportClassificationTest::setUp)
+Before Test Method Errored (Tests\Feature\RideTransportClassificationTest::setUp)
+SQLSTATE[HY000]: General error: 1 cannot start a transaction within a transaction
+Before Test Method Finished:
+- Tests\Feature\RideTransportClassificationTest::setUp
+Test Preparation Failed (Tests\Feature\RideTransportClassificationTest::cannot_create_booking_for_on_demand_ride)
+Test Errored (Tests\Feature\RideTransportClassificationTest::cannot_create_booking_for_on_demand_ride)
+SQLSTATE[HY000]: General error: 1 cannot start a transaction within a transaction
+After Test Method Called (Tests\Feature\RideTransportClassificationTest::tearDown)
+After Test Method Finished:
+- Tests\Feature\RideTransportClassificationTest::tearDown
+Test Preparation Started (Tests\Feature\RideTransportClassificationTest::can_create_booking_for_scheduled_ride)
+Before Test Method Called (Tests\Feature\RideTransportClassificationTest::setUp)
+Before Test Method Errored (Tests\Feature\RideTransportClassificationTest::setUp)
+SQLSTATE[HY000]: General error: 1 cannot start a transaction within a transaction
+Before Test Method Finished:
+- Tests\Feature\RideTransportClassificationTest::setUp
+Test Preparation Failed (Tests\Feature\RideTransportClassificationTest::can_create_booking_for_scheduled_ride)
+Test Errored (Tests\Feature\RideTransportClassificationTest::can_create_booking_for_scheduled_ride)
+SQLSTATE[HY000]: General error: 1 cannot start a transaction within a transaction
+After Test Method Called (Tests\Feature\RideTransportClassificationTest::tearDown)
+After Test Method Finished:
+- Tests\Feature\RideTransportClassificationTest::tearDown
+Test Preparation Started (Tests\Feature\RideTransportClassificationTest::can_create_trip_directly_for_on_demand_ride)
+Before Test Method Called (Tests\Feature\RideTransportClassificationTest::setUp)
+Before Test Method Errored (Tests\Feature\RideTransportClassificationTest::setUp)
+SQLSTATE[HY000]: General error: 1 cannot start a transaction within a transaction
+Before Test Method Finished:
+- Tests\Feature\RideTransportClassificationTest::setUp
+Test Preparation Failed (Tests\Feature\RideTransportClassificationTest::can_create_trip_directly_for_on_demand_ride)
+Test Errored (Tests\Feature\RideTransportClassificationTest::can_create_trip_directly_for_on_demand_ride)
+SQLSTATE[HY000]: General error: 1 cannot start a transaction within a transaction
+After Test Method Called (Tests\Feature\RideTransportClassificationTest::tearDown)
+After Test Method Finished:
+- Tests\Feature\RideTransportClassificationTest::tearDown
+Test Preparation Started (Tests\Feature\RideTransportClassificationTest::trip_from_booking_works_correctly)
+Before Test Method Called (Tests\Feature\RideTransportClassificationTest::setUp)
+Before Test Method Errored (Tests\Feature\RideTransportClassificationTest::setUp)
+SQLSTATE[HY000]: General error: 1 cannot start a transaction within a transaction
+Before Test Method Finished:
+- Tests\Feature\RideTransportClassificationTest::setUp
+Test Preparation Failed (Tests\Feature\RideTransportClassificationTest::trip_from_booking_works_correctly)
+Test Errored (Tests\Feature\RideTransportClassificationTest::trip_from_booking_works_correctly)
+SQLSTATE[HY000]: General error: 1 cannot start a transaction within a transaction
+After Test Method Called (Tests\Feature\RideTransportClassificationTest::tearDown)
+After Test Method Finished:
+- Tests\Feature\RideTransportClassificationTest::tearDown
+Test Preparation Started (Tests\Feature\RideTransportClassificationTest::ride_classification_works_correctly)
+Before Test Method Called (Tests\Feature\RideTransportClassificationTest::setUp)
+Before Test Method Errored (Tests\Feature\RideTransportClassificationTest::setUp)
+SQLSTATE[HY000]: General error: 1 cannot start a transaction within a transaction
+Before Test Method Finished:
+- Tests\Feature\RideTransportClassificationTest::setUp
+Test Preparation Failed (Tests\Feature\RideTransportClassificationTest::ride_classification_works_correctly)
+Test Errored (Tests\Feature\RideTransportClassificationTest::ride_classification_works_correctly)
+SQLSTATE[HY000]: General error: 1 cannot start a transaction within a transaction
+After Test Method Called (Tests\Feature\RideTransportClassificationTest::tearDown)
+After Test Method Finished:
+- Tests\Feature\RideTransportClassificationTest::tearDown
+Test Preparation Started (Tests\Feature\RideTransportClassificationTest::ride_validation_rules_work)
+Before Test Method Called (Tests\Feature\RideTransportClassificationTest::setUp)
+Before Test Method Errored (Tests\Feature\RideTransportClassificationTest::setUp)
+SQLSTATE[HY000]: General error: 1 cannot start a transaction within a transaction
+Before Test Method Finished:
+- Tests\Feature\RideTransportClassificationTest::setUp
+Test Preparation Failed (Tests\Feature\RideTransportClassificationTest::ride_validation_rules_work)
+Test Errored (Tests\Feature\RideTransportClassificationTest::ride_validation_rules_work)
+SQLSTATE[HY000]: General error: 1 cannot start a transaction within a transaction
+After Test Method Called (Tests\Feature\RideTransportClassificationTest::tearDown)
+After Test Method Finished:
+- Tests\Feature\RideTransportClassificationTest::tearDown
+After Last Test Method Called (Tests\Feature\RideTransportClassificationTest::tearDownAfterClass)
+After Last Test Method Finished:
+- Tests\Feature\RideTransportClassificationTest::tearDownAfterClass
+Test Suite Finished (Tests\Feature\RideTransportClassificationTest, 6 tests)
+Test Suite Started (Tests\Feature\SettlementIdempotencyTest, 5 tests)
+Test Preparation Started (Tests\Feature\SettlementIdempotencyTest::test_first_settlement_creates_payout_record)
+Before Test Method Called (Tests\Feature\SettlementIdempotencyTest::setUp)
+Before Test Method Errored (Tests\Feature\SettlementIdempotencyTest::setUp)
+SQLSTATE[HY000]: General error: 1 cannot start a transaction within a transaction
+Before Test Method Finished:
+- Tests\Feature\SettlementIdempotencyTest::setUp
+Test Preparation Failed (Tests\Feature\SettlementIdempotencyTest::test_first_settlement_creates_payout_record)
+Test Errored (Tests\Feature\SettlementIdempotencyTest::test_first_settlement_creates_payout_record)
+SQLSTATE[HY000]: General error: 1 cannot start a transaction within a transaction
+After Test Method Called (Tests\Feature\SettlementIdempotencyTest::tearDown)
+After Test Method Finished:
+- Tests\Feature\SettlementIdempotencyTest::tearDown
+Test Preparation Started (Tests\Feature\SettlementIdempotencyTest::test_second_settlement_same_date_is_idempotent)
+Before Test Method Called (Tests\Feature\SettlementIdempotencyTest::setUp)
+Before Test Method Errored (Tests\Feature\SettlementIdempotencyTest::setUp)
+SQLSTATE[HY000]: General error: 1 cannot start a transaction within a transaction
+Before Test Method Finished:
+- Tests\Feature\SettlementIdempotencyTest::setUp
+Test Preparation Failed (Tests\Feature\SettlementIdempotencyTest::test_second_settlement_same_date_is_idempotent)
+Test Errored (Tests\Feature\SettlementIdempotencyTest::test_second_settlement_same_date_is_idempotent)
+SQLSTATE[HY000]: General error: 1 cannot start a transaction within a transaction
+After Test Method Called (Tests\Feature\SettlementIdempotencyTest::tearDown)
+After Test Method Finished:
+- Tests\Feature\SettlementIdempotencyTest::tearDown
+Test Preparation Started (Tests\Feature\SettlementIdempotencyTest::test_different_date_creates_new_payout)
+Before Test Method Called (Tests\Feature\SettlementIdempotencyTest::setUp)
+Before Test Method Errored (Tests\Feature\SettlementIdempotencyTest::setUp)
+SQLSTATE[HY000]: General error: 1 cannot start a transaction within a transaction
+Before Test Method Finished:
+- Tests\Feature\SettlementIdempotencyTest::setUp
+Test Preparation Failed (Tests\Feature\SettlementIdempotencyTest::test_different_date_creates_new_payout)
+Test Errored (Tests\Feature\SettlementIdempotencyTest::test_different_date_creates_new_payout)
+SQLSTATE[HY000]: General error: 1 cannot start a transaction within a transaction
+After Test Method Called (Tests\Feature\SettlementIdempotencyTest::tearDown)
+After Test Method Finished:
+- Tests\Feature\SettlementIdempotencyTest::tearDown
+Test Preparation Started (Tests\Feature\SettlementIdempotencyTest::test_commission_is_8_percent_of_gross)
+Before Test Method Called (Tests\Feature\SettlementIdempotencyTest::setUp)
+Before Test Method Errored (Tests\Feature\SettlementIdempotencyTest::setUp)
+SQLSTATE[HY000]: General error: 1 cannot start a transaction within a transaction
+Before Test Method Finished:
+- Tests\Feature\SettlementIdempotencyTest::setUp
+Test Preparation Failed (Tests\Feature\SettlementIdempotencyTest::test_commission_is_8_percent_of_gross)
+Test Errored (Tests\Feature\SettlementIdempotencyTest::test_commission_is_8_percent_of_gross)
+SQLSTATE[HY000]: General error: 1 cannot start a transaction within a transaction
+After Test Method Called (Tests\Feature\SettlementIdempotencyTest::tearDown)
+After Test Method Finished:
+- Tests\Feature\SettlementIdempotencyTest::tearDown
+Test Preparation Started (Tests\Feature\SettlementIdempotencyTest::test_net_payout_is_gross_minus_commission_minus_tax)
+Before Test Method Called (Tests\Feature\SettlementIdempotencyTest::setUp)
+Before Test Method Errored (Tests\Feature\SettlementIdempotencyTest::setUp)
+SQLSTATE[HY000]: General error: 1 cannot start a transaction within a transaction
+Before Test Method Finished:
+- Tests\Feature\SettlementIdempotencyTest::setUp
+Test Preparation Failed (Tests\Feature\SettlementIdempotencyTest::test_net_payout_is_gross_minus_commission_minus_tax)
+Test Errored (Tests\Feature\SettlementIdempotencyTest::test_net_payout_is_gross_minus_commission_minus_tax)
+SQLSTATE[HY000]: General error: 1 cannot start a transaction within a transaction
+After Test Method Called (Tests\Feature\SettlementIdempotencyTest::tearDown)
+After Test Method Finished:
+- Tests\Feature\SettlementIdempotencyTest::tearDown
+After Last Test Method Called (Tests\Feature\SettlementIdempotencyTest::tearDownAfterClass)
+After Last Test Method Finished:
+- Tests\Feature\SettlementIdempotencyTest::tearDownAfterClass
+Test Suite Finished (Tests\Feature\SettlementIdempotencyTest, 5 tests)
+Test Suite Started (Tests\Feature\TripCreationTest, 4 tests)
+Test Preparation Started (Tests\Feature\TripCreationTest::test_trip_requires_locations)
+Before Test Method Called (Tests\Feature\TripCreationTest::setUp)
+Before Test Method Errored (Tests\Feature\TripCreationTest::setUp)
+SQLSTATE[HY000]: General error: 1 cannot start a transaction within a transaction
+Before Test Method Finished:
+- Tests\Feature\TripCreationTest::setUp
+Test Preparation Failed (Tests\Feature\TripCreationTest::test_trip_requires_locations)
+Test Errored (Tests\Feature\TripCreationTest::test_trip_requires_locations)
+SQLSTATE[HY000]: General error: 1 cannot start a transaction within a transaction
+After Test Method Called (Tests\Feature\TripCreationTest::tearDown)
+After Test Method Finished:
+- Tests\Feature\TripCreationTest::tearDown
+Test Preparation Started (Tests\Feature\TripCreationTest::test_trip_auto_assigns_driver_from_ride)
+Before Test Method Called (Tests\Feature\TripCreationTest::setUp)
+Before Test Method Errored (Tests\Feature\TripCreationTest::setUp)
+SQLSTATE[HY000]: General error: 1 cannot start a transaction within a transaction
+Before Test Method Finished:
+- Tests\Feature\TripCreationTest::setUp
+Test Preparation Failed (Tests\Feature\TripCreationTest::test_trip_auto_assigns_driver_from_ride)
+Test Errored (Tests\Feature\TripCreationTest::test_trip_auto_assigns_driver_from_ride)
+SQLSTATE[HY000]: General error: 1 cannot start a transaction within a transaction
+After Test Method Called (Tests\Feature\TripCreationTest::tearDown)
+After Test Method Finished:
+- Tests\Feature\TripCreationTest::tearDown
+Test Preparation Started (Tests\Feature\TripCreationTest::test_trip_fails_without_driver_for_selected_ride)
+Before Test Method Called (Tests\Feature\TripCreationTest::setUp)
+Before Test Method Errored (Tests\Feature\TripCreationTest::setUp)
+SQLSTATE[HY000]: General error: 1 cannot start a transaction within a transaction
+Before Test Method Finished:
+- Tests\Feature\TripCreationTest::setUp
+Test Preparation Failed (Tests\Feature\TripCreationTest::test_trip_fails_without_driver_for_selected_ride)
+Test Errored (Tests\Feature\TripCreationTest::test_trip_fails_without_driver_for_selected_ride)
+SQLSTATE[HY000]: General error: 1 cannot start a transaction within a transaction
+After Test Method Called (Tests\Feature\TripCreationTest::tearDown)
+After Test Method Finished:
+- Tests\Feature\TripCreationTest::tearDown
+Test Preparation Started (Tests\Feature\TripCreationTest::test_trip_fails_without_coordinates)
+Before Test Method Called (Tests\Feature\TripCreationTest::setUp)
+Before Test Method Errored (Tests\Feature\TripCreationTest::setUp)
+SQLSTATE[HY000]: General error: 1 cannot start a transaction within a transaction
+Before Test Method Finished:
+- Tests\Feature\TripCreationTest::setUp
+Test Preparation Failed (Tests\Feature\TripCreationTest::test_trip_fails_without_coordinates)
+Test Errored (Tests\Feature\TripCreationTest::test_trip_fails_without_coordinates)
+SQLSTATE[HY000]: General error: 1 cannot start a transaction within a transaction
+After Test Method Called (Tests\Feature\TripCreationTest::tearDown)
+After Test Method Finished:
+- Tests\Feature\TripCreationTest::tearDown
+After Last Test Method Called (Tests\Feature\TripCreationTest::tearDownAfterClass)
+After Last Test Method Finished:
+- Tests\Feature\TripCreationTest::tearDownAfterClass
+Test Suite Finished (Tests\Feature\TripCreationTest, 4 tests)
+Test Suite Finished (Feature, 128 tests)
+Test Suite Finished (/home/joseph/projects/RideConnectBackend/phpunit.xml, 176 tests)
+Test Runner Execution Finished
+Test Runner Finished
+PHPUnit Finished (Shell Exit Code: 2)

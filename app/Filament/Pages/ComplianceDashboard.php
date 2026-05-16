@@ -40,8 +40,16 @@ class ComplianceDashboard extends Page implements HasTable
 
         return $user->hasAnyRole([
             UserRole::SUPER_ADMIN->value,
-            UserRole::ACCOUNTANT->value,
-        ]);
+            UserRole::OFFICER->value,
+        ]) || in_array($user->role?->value ?? $user->role, [
+            UserRole::SUPER_ADMIN->value,
+            UserRole::OFFICER->value,
+        ], true);
+    }
+
+    public static function canView(): bool
+    {
+        return static::canAccess();
     }
 
     protected function getHeaderActions(): array

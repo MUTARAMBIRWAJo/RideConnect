@@ -3,13 +3,15 @@
 namespace App\Models;
 
 use App\Enums\UserRole;
+use Filament\Models\Contracts\FilamentUser;
+use Filament\Panel;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
 use Laravel\Sanctum\HasApiTokens;
 use Spatie\Permission\Traits\HasRoles;
 
-class User extends Authenticatable
+class User extends Authenticatable implements FilamentUser
 {
     /** @use HasFactory<\Database\Factories\UserFactory> */
     use HasApiTokens, HasFactory, Notifiable, HasRoles;
@@ -149,6 +151,15 @@ class User extends Authenticatable
     public function canOnlySeeOwnData(): bool
     {
         return $this->role && $this->role->canOnlySeeOwnData();
+    }
+
+    public function canAccessPanel(Panel $panel): bool
+    {
+        if (! $this->is_approved) {
+            return false;
+        }
+
+        return $this->role instanceof UserRole;
     }
 
     /**

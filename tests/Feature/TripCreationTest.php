@@ -4,6 +4,7 @@ namespace Tests\Feature;
 
 use App\Http\Controllers\Api\TripController;
 use App\Models\Driver;
+use App\Models\DriverLocation;
 use App\Models\MobileUser;
 use App\Models\Ride;
 use App\Models\Trip;
@@ -52,8 +53,17 @@ class TripCreationTest extends TestCase
         $user->update(['mobile_user_id' => $mobileUser->id]);
 
         $driverUser = User::factory()->create(['is_approved' => true, 'role' => 'DRIVER']);
-        $driver = Driver::factory()->create(['user_id' => $driverUser->id, 'status' => 'active']);
+        $driverMobileUser = MobileUser::factory()->create(['email' => $driverUser->email, 'role' => 'DRIVER']);
+        $driverUser->update(['mobile_user_id' => $driverMobileUser->id]);
+        
+        $driver = Driver::factory()->create(['user_id' => $driverUser->id, 'status' => 'approved']);
         $vehicle = Vehicle::factory()->create(['driver_id' => $driver->id, 'is_active' => true]);
+
+        // Create driver location for proximity search
+        DriverLocation::updateOrCreate(
+            ['driver_id' => $driverMobileUser->id],
+            ['latitude' => -1.9403, 'longitude' => 29.8739]
+        );
 
         $ride = Ride::factory()->create([
             'driver_id' => $driver->id,
@@ -66,7 +76,7 @@ class TripCreationTest extends TestCase
             'destination_address' => 'Destination Ave',
             'destination_lat' => -1.9500,
             'destination_lng' => 30.0588,
-            'status' => 'PUBLISHED',
+            'status' => 'scheduled',
         ]);
 
         $response = $this->actingAs($user)->postJson('/test/trips', [
@@ -107,7 +117,7 @@ class TripCreationTest extends TestCase
             'destination_address' => 'Destination Null',
             'destination_lat' => -1.9500,
             'destination_lng' => 30.0588,
-            'status' => 'PUBLISHED',
+            'status' => 'scheduled',
         ]);
 
         $response = $this->actingAs($user)->postJson('/test/trips', [

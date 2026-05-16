@@ -2,7 +2,6 @@
 
 namespace Database\Factories;
 
-use App\Models\Driver;
 use App\Models\MobileUser;
 use App\Models\Trip;
 use Illuminate\Database\Eloquent\Factories\Factory;
@@ -20,7 +19,7 @@ class TripFactory extends Factory
         
         return [
             'passenger_id' => MobileUser::factory(),
-            'driver_id' => Driver::factory(),
+            'driver_id' => null,
             'pickup_location' => $this->faker->address(),
             'pickup_lat' => $this->faker->latitude(),
             'pickup_lng' => $this->faker->longitude(),

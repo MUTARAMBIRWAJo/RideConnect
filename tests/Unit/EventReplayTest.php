@@ -136,7 +136,7 @@ class EventReplayTest extends TestCase
         }
 
         $allEvents  = $this->dispatcher->replay('ride', $rideId);
-        $fourthVersion = $allEvents->nth(3)?->version ?? 4;
+        $fourthVersion = $allEvents->get(3)?->version ?? 4;
 
         $filtered = $this->dispatcher->replay('ride', $rideId, $fourthVersion + 1);
 

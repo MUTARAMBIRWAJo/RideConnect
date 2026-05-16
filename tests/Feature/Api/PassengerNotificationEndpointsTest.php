@@ -7,15 +7,12 @@ use App\Models\Driver;
 use App\Models\MobileUser;
 use App\Models\Notification;
 use App\Models\User;
-use Illuminate\Foundation\Testing\DatabaseTransactions;
 use Illuminate\Support\Str;
 use Laravel\Sanctum\Sanctum;
 use Tests\TestCase;
 
 class PassengerNotificationEndpointsTest extends TestCase
 {
-    use DatabaseTransactions;
-
     public function test_passenger_can_list_only_online_approved_drivers(): void
     {
         $passenger = User::factory()->create([

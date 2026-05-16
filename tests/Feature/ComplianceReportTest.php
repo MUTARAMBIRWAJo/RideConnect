@@ -6,6 +6,7 @@ use App\Enums\UserRole;
 use App\Models\ComplianceReport;
 use App\Models\Manager;
 use App\Models\TaxRule;
+use App\Models\User;
 use App\Modules\Compliance\DTOs\ComplianceReportDTO;
 use App\Modules\Compliance\Services\ComplianceReportService;
 use Illuminate\Foundation\Testing\RefreshDatabase;
@@ -26,6 +27,7 @@ class ComplianceReportTest extends TestCase
     use RefreshDatabase;
 
     private ComplianceReportService $service;
+    private User $generator;
 
     protected function setUp(): void
     {
@@ -34,6 +36,7 @@ class ComplianceReportTest extends TestCase
         Storage::fake('local');
 
         $this->service = app(ComplianceReportService::class);
+        $this->generator = User::factory()->create();
     }
 
     // -----------------------------------------------------------------------
@@ -47,7 +50,7 @@ class ComplianceReportTest extends TestCase
             format:      'csv',
             periodStart:  '2025-01-01',
             periodEnd:    '2025-01-31',
-            generatedBy: 1,
+            generatedBy: $this->generator->id,
         );
 
         $report = $this->service->request($dto);
@@ -70,7 +73,7 @@ class ComplianceReportTest extends TestCase
             'period_from'  => '2025-01-01',
             'period_to'    => '2025-01-31',
             'status'       => 'pending',
-            'requested_by' => 1,
+            'requested_by' => $this->generator->id,
         ]);
 
         $generated = $this->service->generate($report->id);
@@ -89,7 +92,7 @@ class ComplianceReportTest extends TestCase
             'period_from'  => '2025-01-01',
             'period_to'    => '2025-01-31',
             'status'       => 'pending',
-            'requested_by' => 1,
+            'requested_by' => $this->generator->id,
         ]);
 
         $generated = $this->service->generate($report->id);
@@ -111,7 +114,7 @@ class ComplianceReportTest extends TestCase
             'period_start' => '2025-01-01',
             'period_end'   => '2025-01-31',
             'status'       => 'pending',
-            'generated_by' => 1,
+            'generated_by' => $this->generator->id,
         ]);
 
         $generated = $this->service->generate($report->id);
@@ -139,7 +142,7 @@ class ComplianceReportTest extends TestCase
             'period_from'  => '2025-01-01',
             'period_to'    => '2025-01-31',
             'status'       => 'pending',
-            'requested_by' => 1,
+            'requested_by' => $this->generator->id,
         ]);
 
         $generated = $this->service->generate($report->id);
@@ -161,7 +164,7 @@ class ComplianceReportTest extends TestCase
             'period_start' => '2025-01-01',
             'period_end'   => '2025-01-31',
             'status'       => 'pending',
-            'generated_by' => 1,
+            'generated_by' => $this->generator->id,
         ]);
 
         $this->expectException(\InvalidArgumentException::class);

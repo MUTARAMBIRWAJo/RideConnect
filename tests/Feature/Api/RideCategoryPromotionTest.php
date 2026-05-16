@@ -10,15 +10,12 @@ use App\Models\Ride;
 use App\Models\Trip;
 use App\Models\User;
 use App\Models\Vehicle;
-use Illuminate\Foundation\Testing\DatabaseTransactions;
 use Illuminate\Support\Str;
 use Laravel\Sanctum\Sanctum;
 use Tests\TestCase;
 
 class RideCategoryPromotionTest extends TestCase
 {
-    use DatabaseTransactions;
-
     public function test_create_as_booking_when_departure_is_greater_than_six_hours(): void
     {
         [$passenger] = $this->createPassengerUser();

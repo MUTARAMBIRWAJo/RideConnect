@@ -217,10 +217,8 @@ class LedgerService
     /**
      * Route: refund — reverse escrow back through clearing account.
      *
-     * Debit:  Platform Escrow  +amount
-     * Credit: Passenger Wallet +amount
-     * Debit:  Passenger Wallet +amount
-     * Credit: Clearing Account +amount
+     * Debit:  Platform Escrow +amount
+     * Credit: Clearing       +amount
      */
     public function recordRefund(Payment $payment, ?int $processedBy = null): LedgerTransaction
     {
@@ -236,8 +234,6 @@ class LedgerService
             "Refund payment #{$payment->id} booking #{$payment->booking_id}",
             [
                 array_merge(['account_id' => $escrowAcct->id,    'debit' => $amount, 'credit' => 0,      'description' => "Release from escrow for refund"], $ref),
-                array_merge(['account_id' => $passengerAcct->id, 'debit' => 0,       'credit' => $amount, 'description' => "Passenger credit for refund"], $ref),
-                array_merge(['account_id' => $passengerAcct->id, 'debit' => $amount, 'credit' => 0,      'description' => "Passenger debit for disbursement"], $ref),
                 array_merge(['account_id' => $clearingAcct->id,  'debit' => 0,       'credit' => $amount, 'description' => "Refund disbursement via clearing"], $ref),
             ],
             $processedBy

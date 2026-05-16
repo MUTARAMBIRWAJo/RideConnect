@@ -3,47 +3,24 @@
 namespace Tests\Unit;
 
 use App\Filament\Widgets\Dashboard\OfficerOverviewStats;
+use App\Models\Driver;
+use App\Models\Ride;
+use App\Models\Ticket;
+use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\Schema;
-use Mockery;
 use Tests\TestCase;
 
 class OfficerOverviewStatsTest extends TestCase
 {
     public function test_driver_status_uses_fallback_count_when_is_online_column_is_missing(): void
     {
-        $rideTodayQuery = Mockery::mock();
-        $rideTodayQuery->shouldReceive('count')->once()->andReturn(12);
+        Carbon::setTestNow(Carbon::parse('2026-05-16 10:00:00'));
 
-        $rideForecastQuery = Mockery::mock();
-        $rideForecastQuery->shouldReceive('count')->once()->andReturn(14);
-
-        $rideMock = Mockery::mock('App\Models\Ride');
-        $rideMock->shouldReceive('whereDate')
-            ->once()
-            ->with('created_at', Mockery::type('string'))
-            ->andReturn($rideTodayQuery);
-        $rideMock->shouldReceive('whereDate')
-            ->once()
-            ->with('created_at', '>=', Mockery::type('string'))
-            ->andReturn($rideForecastQuery);
-
-        $ticketQuery = Mockery::mock();
-        $ticketQuery->shouldReceive('count')->once()->andReturn(3);
-
-        $ticketMock = Mockery::mock('alias:App\\Models\\Ticket');
-        $ticketMock->shouldReceive('whereIn')
-            ->once()
-            ->with('status', ['OPEN', 'open'])
-            ->andReturn($ticketQuery);
-
-        $driverQuery = Mockery::mock();
-        $driverQuery->shouldReceive('count')->once()->andReturn(2);
-
-        $driverMock = Mockery::mock('alias:App\\Models\\Driver');
-        $driverMock->shouldReceive('whereIn')
-            ->once()
-            ->with('status', ['approved', 'APPROVED', 'active', 'ACTIVE'])
-            ->andReturn($driverQuery);
+        Driver::factory()->create(['status' => 'approved']);
+        Driver::factory()->create(['status' => 'approved']);
+        Driver::factory()->pending()->create();
+        Ride::factory()->count(2)->create(['created_at' => now()]);
+        Ticket::factory()->count(3)->create(['status' => 'open']);
 
         Schema::shouldReceive('hasColumn')
             ->once()
@@ -65,12 +42,5 @@ class OfficerOverviewStatsTest extends TestCase
 
         $this->assertNotNull($driversOnlineStat);
         $this->assertSame('2', $driversOnlineStat->getValue());
-    }
-
-    protected function tearDown(): void
-    {
-        Mockery::close();
-
-        parent::tearDown();
     }
 }

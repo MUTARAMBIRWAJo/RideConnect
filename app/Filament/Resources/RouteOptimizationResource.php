@@ -21,6 +21,8 @@ class RouteOptimizationResource extends Resource
 {
     protected static ?string $model = Ride::class;
 
+    protected static bool $shouldSkipAuthorization = true;
+
     protected static ?string $navigationIcon = 'heroicon-o-map';
 
     protected static ?string $navigationLabel = 'Route Optimization';
@@ -151,6 +153,11 @@ class RouteOptimizationResource extends Resource
         }
 
         return in_array((string) $role, [UserRole::SUPER_ADMIN->value, UserRole::ADMIN->value], true);
+    }
+
+    public static function canAccess(): bool
+    {
+        return static::canViewAny();
     }
 
     public static function canCreate(): bool

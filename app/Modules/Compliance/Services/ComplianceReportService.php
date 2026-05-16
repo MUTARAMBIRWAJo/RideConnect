@@ -93,8 +93,8 @@ class ComplianceReportService
 
     private function fetchReportData(ComplianceReport $report): array
     {
-        $from = $report->period_from;
-        $to   = $report->period_to;
+        $from = $report->period_start?->toDateString() ?? $report->period_from;
+        $to   = $report->period_end?->toDateString() ?? $report->period_to;
 
         return match ($report->report_type) {
             'daily_ride_summary'    => $this->dailyRideSummary($from, $to),
@@ -110,7 +110,9 @@ class ComplianceReportService
     private function writeFile(ComplianceReport $report, array $data): string
     {
         $dir    = 'compliance/' . date('Y/m');
-        $name   = "{$report->report_type}_{$report->period_from}_{$report->period_to}_{$report->id}.{$report->format}";
+        $from = $report->period_start?->toDateString() ?? $report->period_from;
+        $to = $report->period_end?->toDateString() ?? $report->period_to;
+        $name   = "{$report->report_type}_{$from}_{$to}_{$report->id}.{$report->format}";
         $path   = "{$dir}/{$name}";
 
         $content = match ($report->format) {
@@ -177,7 +179,7 @@ class ComplianceReportService
     {
         return Ride::where('status', 'completed')
             ->whereBetween('updated_at', [$from . ' 00:00:00', $to . ' 23:59:59'])
-            ->selectRaw("DATE(updated_at) as ride_date, COUNT(*) as total_rides, SUM(fare_amount) as total_fare")
+            ->selectRaw("DATE(updated_at) as ride_date, COUNT(*) as total_rides, SUM(price_per_seat) as total_fare")
             ->groupByRaw('DATE(updated_at)')
             ->orderBy('ride_date')
             ->get()

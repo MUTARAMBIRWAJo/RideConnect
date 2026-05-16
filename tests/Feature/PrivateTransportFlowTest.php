@@ -110,7 +110,7 @@ class PrivateTransportFlowTest extends TestCase
             'vehicle_id' => $this->carVehicle->id,
             'transport_type' => Ride::TRANSPORT_CAR,
             'travel_mode' => Ride::MODE_SCHEDULED,
-            'status' => 'published',
+            'status' => 'scheduled',
             'available_seats' => 4,
             'departure_time' => now()->addDays(1),
         ]);
@@ -170,7 +170,7 @@ class PrivateTransportFlowTest extends TestCase
             'vehicle_id' => $this->carVehicle->id,
             'transport_type' => Ride::TRANSPORT_CAR,
             'travel_mode' => Ride::MODE_ON_DEMAND,
-            'status' => 'published',
+            'status' => 'scheduled',
         ]);
 
         // 2. Verify ride rules only allow trip requests
@@ -212,7 +212,7 @@ class PrivateTransportFlowTest extends TestCase
             'vehicle_id' => $this->motorcycleVehicle->id,
             'transport_type' => Ride::TRANSPORT_MOTORCYCLE,
             'travel_mode' => Ride::MODE_ON_DEMAND,
-            'status' => 'published',
+            'status' => 'scheduled',
         ]);
 
         // 2. Verify ride rules only allow trip requests
