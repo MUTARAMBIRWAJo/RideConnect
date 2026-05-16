@@ -15,11 +15,12 @@ from dotenv import load_dotenv
 from fastapi import BackgroundTasks, FastAPI, HTTPException, Request
 from fastapi.exceptions import RequestValidationError
 from fastapi.responses import JSONResponse
-from pydantic import BaseModel, Field, field_validator
+from pydantic import BaseModel, ConfigDict, Field, field_validator
 from psycopg2 import pool
 from psycopg2.extras import Json
 
 from app.services.behavior_detector_loader import BehaviorDetectorLoader
+from app.core.json_response import NumpySafeJSONResponse
 from app.services.ranker_loader import DriverRankerError, DriverRankerLoader
 
 # -----------------------------------------------------------------------------
@@ -63,7 +64,11 @@ DEMAND_CONTRACT_SEQUENCE_LENGTH = int(os.getenv("DEMAND_CONTRACT_SEQUENCE_LENGTH
 # -----------------------------------------------------------------------------
 # App initialization
 # -----------------------------------------------------------------------------
-app = FastAPI(title="RideConnect ML Service", version="1.2.0")
+app = FastAPI(
+	title="RideConnect ML Service",
+	version="1.2.0",
+	default_response_class=NumpySafeJSONResponse,
+)
 
 
 @app.exception_handler(RequestValidationError)
@@ -149,7 +154,9 @@ class DriverRankerCandidate(BaseModel):
 
 
 class RankDriversRequest(BaseModel):
-	booking_context: DriverRankerBookingContext
+	model_config = ConfigDict(populate_by_name=True)
+
+	booking_context: DriverRankerBookingContext = Field(..., alias="booking")
 	candidates: list[DriverRankerCandidate] = Field(..., min_length=1, max_length=20)
 
 

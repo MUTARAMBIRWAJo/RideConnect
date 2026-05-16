@@ -9,7 +9,7 @@ from typing import Any
 
 import pandas as pd
 from fastapi import APIRouter, HTTPException, Request
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, ConfigDict, Field
 
 from app.core.config import settings
 from app.core.logging import get_logger
@@ -43,7 +43,9 @@ class DriverRankerCandidate(BaseModel):
 class DriverRankerRequest(BaseModel):
     """Driver ranking request."""
 
-    booking_context: DriverRankerBookingContext
+    model_config = ConfigDict(populate_by_name=True)
+
+    booking_context: DriverRankerBookingContext = Field(..., alias="booking")
     candidates: list[DriverRankerCandidate] = Field(..., min_length=1, max_length=20)
 
 

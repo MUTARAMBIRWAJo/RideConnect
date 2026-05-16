@@ -7,6 +7,7 @@ from fastapi.responses import JSONResponse
 from app.api import health, matching, ml, prediction
 from app.api.admin_routes import router as admin_router
 from app.core.config import settings
+from app.core.json_response import NumpySafeJSONResponse
 from app.core.logging import get_logger
 from app.core.startup import lifespan
 from app.middleware import RequestContextMiddleware, get_request_id
@@ -24,6 +25,7 @@ def create_app() -> FastAPI:
         docs_url="/docs",
         redoc_url="/redoc",
         lifespan=lifespan,
+        default_response_class=NumpySafeJSONResponse,
     )
 
     app.add_middleware(

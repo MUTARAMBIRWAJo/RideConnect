@@ -147,7 +147,7 @@ class DriverRankerLoader:
             )
             raise DriverRankerError("Vehicle type encoding failed") from exc
 
-    def predict_proba(self, features: pd.DataFrame) -> np.ndarray:
+    def predict_proba(self, features: pd.DataFrame) -> list[float]:
         """Predict positive-class successful assignment probabilities."""
         if not self.is_loaded():
             raise RuntimeError("Driver ranker is not loaded")
@@ -173,7 +173,7 @@ class DriverRankerLoader:
                     raise DriverRankerError(f"Positive class 1 missing from model classes: {class_values}")
                 positive_index = class_values.index(1)
 
-            return probabilities[:, positive_index]
+            return [float(probability) for probability in probabilities[:, positive_index]]
         except ValueError:
             raise
         except Exception as exc:
