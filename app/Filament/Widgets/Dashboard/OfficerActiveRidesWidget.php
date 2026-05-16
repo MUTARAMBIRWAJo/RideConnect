@@ -9,7 +9,7 @@ use Filament\Widgets\StatsOverviewWidget\Stat;
 
 class OfficerActiveRidesWidget extends StatsOverviewWidget
 {
-    protected int | string | array $columnSpan = 'full';
+    protected int|string|array $columnSpan = 'full';
 
     public static function isLazy(): bool
     {
@@ -24,6 +24,7 @@ class OfficerActiveRidesWidget extends StatsOverviewWidget
     public static function canView(): bool
     {
         $user = auth()->user();
+
         return $user && (method_exists($user, 'can') && ($user->can('view rides') || $user->can('manage rides')));
     }
 

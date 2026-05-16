@@ -3,18 +3,18 @@
 namespace App\Http\Controllers\Api;
 
 use App\Domain\Core\DomainGuard;
+use App\Domain\Driver\DriverPolicy;
+use App\Domain\Ride\RidePolicy;
+use App\Domain\Trip\TripStateMachine;
+use App\Events\Domain\TripCompleted;
+use App\Events\Domain\TripMatched;
+use App\Events\Domain\TripStarted;
+use App\Exceptions\DomainException;
 use App\Http\Controllers\Controller;
 use App\Models\Booking;
 use App\Models\MobileUser;
-use App\Models\Trip;
 use App\Models\Ride;
-use App\Domain\Ride\RidePolicy;
-use App\Domain\Driver\DriverPolicy;
-use App\Domain\Trip\TripStateMachine;
-use App\Events\Domain\TripMatched;
-use App\Events\Domain\TripStarted;
-use App\Events\Domain\TripCompleted;
-use App\Exceptions\DomainException;
+use App\Models\Trip;
 use App\Services\AITrainingDataLogger;
 use App\Services\DriverAssignmentService;
 use App\Services\Location\TripLocationService;
@@ -68,8 +68,7 @@ class TripController extends Controller
         private readonly MobileNotificationService $mobileNotificationService,
         private readonly TripLocationService $tripLocationService,
         private readonly DriverAssignmentService $driverAssignmentService,
-    ) {
-    }
+    ) {}
 
     /**
      * Display a listing of trips.
@@ -77,9 +76,9 @@ class TripController extends Controller
     public function index(Request $request): JsonResponse
     {
         $user = $request->user();
-        
+
         $query = Trip::query();
-        
+
         // Role-based filtering
         if ($user->role->isSuperAdmin() || $user->role->isManager()) {
             // Admins can see all trips
@@ -95,17 +94,17 @@ class TripController extends Controller
                 }
             });
         }
-        
+
         // Filter by status
         if ($request->has('status')) {
             $query->where('status', $request->status);
         }
-        
+
         $trips = $query->orderBy('created_at', 'desc')->get();
-        
+
         return response()->json([
             'success' => true,
-            'data' => $trips->map(fn($trip) => [
+            'data' => $trips->map(fn ($trip) => [
                 'id' => $trip->id,
                 'booking_id' => $trip->booking_id,
                 'ride_id' => $trip->ride_id,
@@ -151,7 +150,7 @@ class TripController extends Controller
                 ], 403);
             }
         }
-        
+
         return response()->json([
             'success' => true,
             'data' => [
@@ -198,15 +197,15 @@ class TripController extends Controller
         DomainGuard::assertUsingPolicy(__METHOD__);
 
         $user = $request->user();
-        
+
         // Check if user is approved
-        if (!$user->is_approved) {
+        if (! $user->is_approved) {
             return response()->json([
                 'success' => false,
                 'message' => 'Your account must be approved to request trips',
             ], 403);
         }
-        
+
         $validator = Validator::make($request->all(), [
             'ride_id' => 'required|exists:rides,id',
             'pickup_location' => 'required|string|min:3',
@@ -296,14 +295,14 @@ class TripController extends Controller
 
         // Auto-assign best available driver
         $assignedTrip = $this->driverAssignmentService->autoAssign($trip, $ride);
-        
+
         if (! $assignedTrip) {
             // No driver available - keep trip in PENDING, driver will be found later
             $assignedTrip = $trip;
         }
 
         app(AITrainingDataLogger::class)->logRideRequest($assignedTrip);
-        
+
         return response()->json([
             'success' => true,
             'message' => 'Trip request created successfully',
@@ -335,9 +334,9 @@ class TripController extends Controller
         ]);
 
         $booking = Booking::query()->with(['ride', 'user'])->findOrFail((int) $validated['booking_id']);
-        
+
         // Passengers can only convert their own bookings, admins can convert any
-        if (!$isAdmin && (int) $booking->user_id !== (int) $user->id) {
+        if (! $isAdmin && (int) $booking->user_id !== (int) $user->id) {
             return response()->json([
                 'success' => false,
                 'message' => 'You can only convert your own bookings to trips',
@@ -352,7 +351,7 @@ class TripController extends Controller
         }
 
         // Ensure booking has required location data
-        if (!$booking->pickup_address || !$booking->dropoff_address) {
+        if (! $booking->pickup_address || ! $booking->dropoff_address) {
             return response()->json([
                 'success' => false,
                 'message' => 'Booking must have pickup and dropoff locations',
@@ -433,15 +432,15 @@ class TripController extends Controller
 
         $trip = Trip::findOrFail($id);
         $user = $request->user();
-        
+
         // Check if user is a driver
-        if (!$user->isDriver()) {
+        if (! $user->isDriver()) {
             return response()->json([
                 'success' => false,
                 'message' => 'Only drivers can accept trip requests',
             ], 403);
         }
-        
+
         try {
             TripStateMachine::assertTransitionForTrip($trip, TripStateMachine::ACCEPTED);
         } catch (DomainException $e) {
@@ -451,10 +450,10 @@ class TripController extends Controller
                 'error_code' => $e->getErrorCode(),
             ], 422);
         }
-        
+
         // Get driver profile
         $driver = $user->driver;
-        if (!$driver) {
+        if (! $driver) {
             return response()->json([
                 'success' => false,
                 'message' => 'Driver profile not found',
@@ -470,7 +469,7 @@ class TripController extends Controller
                 'error_code' => $e->getErrorCode(),
             ], 422);
         }
-        
+
         $trip->update([
             'driver_id' => $driver->id,
             'status' => 'ACCEPTED',
@@ -485,7 +484,7 @@ class TripController extends Controller
             'driver_id' => $driver->id,
         ]);
         app(AITrainingDataLogger::class)->syncRideSnapshot($trip->fresh());
-        
+
         return response()->json([
             'success' => true,
             'message' => 'Trip accepted successfully',
@@ -506,15 +505,15 @@ class TripController extends Controller
     {
         $trip = Trip::findOrFail($id);
         $user = request()->user();
-        
+
         // Check if user is the driver of this trip
-        if ($trip->driver?->user_id !== $user->id && !$user->role->isSuperAdmin()) {
+        if ($trip->driver?->user_id !== $user->id && ! $user->role->isSuperAdmin()) {
             return response()->json([
                 'success' => false,
                 'message' => 'Only the assigned driver can start this trip',
             ], 403);
         }
-        
+
         try {
             TripStateMachine::assertTransitionForTrip($trip, TripStateMachine::STARTED);
         } catch (DomainException $e) {
@@ -524,7 +523,7 @@ class TripController extends Controller
                 'error_code' => $e->getErrorCode(),
             ], 422);
         }
-        
+
         $trip->update([
             'status' => 'STARTED',
             'started_at' => now(),
@@ -536,7 +535,7 @@ class TripController extends Controller
 
         app(AITrainingDataLogger::class)->logTripEvent($trip->fresh(), 'ride_started');
         app(AITrainingDataLogger::class)->syncRideSnapshot($trip->fresh());
-        
+
         return response()->json([
             'success' => true,
             'message' => 'Trip started successfully',
@@ -558,15 +557,15 @@ class TripController extends Controller
     {
         $trip = Trip::findOrFail($id);
         $user = request()->user();
-        
+
         // Check if user is the driver of this trip
-        if ($trip->driver?->user_id !== $user->id && !$user->role->isSuperAdmin()) {
+        if ($trip->driver?->user_id !== $user->id && ! $user->role->isSuperAdmin()) {
             return response()->json([
                 'success' => false,
                 'message' => 'Only the assigned driver can complete this trip',
             ], 403);
         }
-        
+
         try {
             TripStateMachine::assertTransitionForTrip($trip, TripStateMachine::COMPLETED);
         } catch (DomainException $e) {
@@ -576,7 +575,7 @@ class TripController extends Controller
                 'error_code' => $e->getErrorCode(),
             ], 422);
         }
-        
+
         $trip->update([
             'status' => 'COMPLETED',
             'completed_at' => now(),
@@ -588,7 +587,7 @@ class TripController extends Controller
 
         app(AITrainingDataLogger::class)->logTripEvent($trip->fresh(), 'ride_completed');
         app(AITrainingDataLogger::class)->syncRideSnapshot($trip->fresh());
-        
+
         return response()->json([
             'success' => true,
             'message' => 'Trip completed successfully',
@@ -623,14 +622,14 @@ class TripController extends Controller
             && (int) $trip->passenger_id === (int) $passengerMobileUserId;
         $isDriver = $trip->driver?->user_id === $user->id;
         $isAdmin = $user->role->isSuperAdmin() || $user->role->isManager();
-        
-        if (!$isPassenger && !$isDriver && !$isAdmin) {
+
+        if (! $isPassenger && ! $isDriver && ! $isAdmin) {
             return response()->json([
                 'success' => false,
                 'message' => 'Unauthorized to cancel this trip',
             ], 403);
         }
-        
+
         try {
             TripStateMachine::assertTransitionForTrip($trip, TripStateMachine::CANCELLED);
         } catch (DomainException $e) {
@@ -640,7 +639,7 @@ class TripController extends Controller
                 'error_code' => $e->getErrorCode(),
             ], 422);
         }
-        
+
         $trip->update([
             'status' => 'CANCELLED',
         ]);
@@ -655,7 +654,7 @@ class TripController extends Controller
             $user->id,
             $reason
         );
-        
+
         return response()->json([
             'success' => true,
             'message' => 'Trip cancelled successfully',
@@ -670,12 +669,12 @@ class TripController extends Controller
         $user = $request->user();
         $passengerMobileUserId = $user->mobile_user_id ? (int) $user->mobile_user_id : null;
         $driverId = $user->driver?->id ? (int) $user->driver->id : null;
-        
+
         $query = Trip::query();
-        
+
         // Filter by role (passenger or driver)
         $type = $request->get('type', 'all'); // 'passenger', 'driver', or 'all'
-        
+
         if ($type === 'passenger') {
             if (! $passengerMobileUserId) {
                 return response()->json([
@@ -705,17 +704,17 @@ class TripController extends Controller
                 }
             });
         }
-        
+
         // Filter by status
         if ($request->has('status')) {
             $query->where('status', $request->status);
         }
-        
+
         $trips = $query->orderBy('created_at', 'desc')->get();
-        
+
         return response()->json([
             'success' => true,
-            'data' => $trips->map(fn($trip) => [
+            'data' => $trips->map(fn ($trip) => [
                 'id' => $trip->id,
                 'type' => $trip->passenger_id === $user->id ? 'passenger' : 'driver',
                 'passenger' => [
@@ -749,10 +748,10 @@ class TripController extends Controller
             ->whereNull('driver_id')
             ->orderBy('requested_at', 'asc')
             ->get();
-        
+
         return response()->json([
             'success' => true,
-            'data' => $trips->map(fn($trip) => [
+            'data' => $trips->map(fn ($trip) => [
                 'id' => $trip->id,
                 'passenger' => [
                     'id' => $trip->passenger?->id,
@@ -789,5 +788,4 @@ class TripController extends Controller
             'user' => 'Passenger mobile profile is not linked. Please contact support.',
         ]);
     }
-
 }

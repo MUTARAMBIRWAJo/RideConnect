@@ -24,7 +24,7 @@ class MapDataController extends Controller
         $drivers = $driverLocations
             ->map(function (DriverLocation $location) use ($driversByProfileId) {
                 $driverProfile = $driversByProfileId->get($location->driver_id);
-                if (!$driverProfile) {
+                if (! $driverProfile) {
                     return null;
                 }
 
@@ -81,12 +81,12 @@ class MapDataController extends Controller
             })
             ->map(function (Trip $trip) use ($driversByUserId, $driverLocations) {
                 $driverProfile = $driversByUserId->get($trip->driver_id);
-                if (!$driverProfile) {
+                if (! $driverProfile) {
                     return null;
                 }
 
                 $driverLocation = $driverLocations->get($driverProfile->id);
-                if (!$driverLocation) {
+                if (! $driverLocation) {
                     return null;
                 }
 

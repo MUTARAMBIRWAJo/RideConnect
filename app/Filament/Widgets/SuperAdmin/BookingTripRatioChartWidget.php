@@ -9,7 +9,7 @@ class BookingTripRatioChartWidget extends ChartWidget
 {
     protected static ?string $heading = 'Booking vs Trip Ratio (Today)';
 
-    protected int | string | array $columnSpan = 1;
+    protected int|string|array $columnSpan = 1;
 
     protected function getData(): array
     {

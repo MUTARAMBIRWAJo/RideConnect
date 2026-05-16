@@ -11,14 +11,12 @@ use App\Models\User;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
-use Illuminate\Validation\ValidationException;
-use Laravel\Sanctum\PersonalAccessToken;
 
 class AuthController extends Controller
 {
     /**
      * Register a new user (API).
-     * 
+     *
      * Only passenger and rider roles are allowed via public API.
      * Managers (admin, officer, superadmin) are NOT allowed via public API.
      * New registrations require approval before login is allowed.
@@ -77,7 +75,7 @@ class AuthController extends Controller
 
     /**
      * Login user (API).
-     * 
+     *
      * Returns 401 for invalid credentials.
      * Returns 403 if account is not approved.
      * Returns token + user role on success.
@@ -87,7 +85,7 @@ class AuthController extends Controller
         $user = User::where('email', $request->validated('email'))->first();
 
         // Check if user exists and password is correct
-        if (!$user || !Hash::check($request->validated('password'), $user->password)) {
+        if (! $user || ! Hash::check($request->validated('password'), $user->password)) {
             return response()->json([
                 'success' => false,
                 'message' => 'Invalid credentials',
@@ -95,7 +93,7 @@ class AuthController extends Controller
         }
 
         // Check if user is approved
-        if (!$user->is_approved) {
+        if (! $user->is_approved) {
             return response()->json([
                 'success' => false,
                 'message' => 'Your account is pending approval. Please contact administrator.',
@@ -138,21 +136,21 @@ class AuthController extends Controller
             ->orWhere('phone', $login)
             ->first();
 
-        if (!$user || !Hash::check($request->validated('password'), $user->password)) {
+        if (! $user || ! Hash::check($request->validated('password'), $user->password)) {
             return response()->json([
                 'success' => false,
                 'message' => 'Invalid credentials',
             ], 401);
         }
 
-        if (!$user->isMobileUser()) {
+        if (! $user->isMobileUser()) {
             return response()->json([
                 'success' => false,
                 'message' => 'This endpoint is for passenger/driver accounts only.',
             ], 403);
         }
 
-        if (!$user->is_approved) {
+        if (! $user->is_approved) {
             return response()->json([
                 'success' => false,
                 'message' => 'Your account is pending approval. Please contact administrator.',
@@ -184,7 +182,7 @@ class AuthController extends Controller
 
     /**
      * Logout user (API).
-     * 
+     *
      * Revokes the current token.
      */
     public function logout(Request $request): JsonResponse
@@ -289,7 +287,7 @@ class AuthController extends Controller
 
     /**
      * Get current user's approval status (API).
-     * 
+     *
      * Users can check their approval status even before being approved.
      */
     public function approvalStatus(Request $request): JsonResponse
@@ -307,7 +305,7 @@ class AuthController extends Controller
                 ] : null,
                 'can_login' => $user->is_approved,
             ],
-            'message' => $user->is_approved 
+            'message' => $user->is_approved
                 ? 'Your account is approved.'
                 : 'Your account is pending approval. Please contact administrator.',
         ]);
@@ -355,7 +353,7 @@ class AuthController extends Controller
         $user = User::where('email', $validated['email'])->first();
 
         // Check if user exists and password is correct
-        if (!$user || !Hash::check($validated['password'], $user->password)) {
+        if (! $user || ! Hash::check($validated['password'], $user->password)) {
             return response()->json([
                 'success' => false,
                 'message' => 'Invalid credentials',
@@ -363,7 +361,7 @@ class AuthController extends Controller
         }
 
         // Check if user is a manager
-        if (!$user->isManager()) {
+        if (! $user->isManager()) {
             return response()->json([
                 'success' => false,
                 'message' => 'Only managers can login through this endpoint',
@@ -371,7 +369,7 @@ class AuthController extends Controller
         }
 
         // Check if user is approved
-        if (!$user->is_approved) {
+        if (! $user->is_approved) {
             return response()->json([
                 'success' => false,
                 'message' => 'Your account is pending approval.',

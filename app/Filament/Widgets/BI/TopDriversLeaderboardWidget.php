@@ -5,16 +5,18 @@ namespace App\Filament\Widgets\BI;
 use App\Filament\Support\RoleDashboardConfig;
 use App\Models\Driver;
 use App\Modules\Reporting\Services\ReportingService;
-use Illuminate\Contracts\Pagination\Paginator;
-use Illuminate\Database\Eloquent\Collection as EloquentCollection;
 use Filament\Tables;
 use Filament\Tables\Table;
 use Filament\Widgets\TableWidget as BaseWidget;
+use Illuminate\Contracts\Pagination\Paginator;
+use Illuminate\Database\Eloquent\Collection as EloquentCollection;
 
 class TopDriversLeaderboardWidget extends BaseWidget
 {
     protected static ?int $sort = 4;
-    protected int | string | array $columnSpan = 'full';
+
+    protected int|string|array $columnSpan = 'full';
+
     protected static ?string $heading = 'Top Drivers — This Month';
 
     public static function isLazy(): bool
@@ -49,12 +51,12 @@ class TopDriversLeaderboardWidget extends BaseWidget
     {
         /** @var ReportingService $reporting */
         $reporting = app(ReportingService::class);
-        $rankings  = $reporting->getDriverRankings();
+        $rankings = $reporting->getDriverRankings();
 
         $records = collect($rankings)
             ->values()
             ->map(function (array $row, int $index): Driver {
-                $model = new Driver();
+                $model = new Driver;
 
                 // Feed table rows from warehouse projections while honoring Eloquent return type.
                 $model->forceFill([
@@ -62,7 +64,7 @@ class TopDriversLeaderboardWidget extends BaseWidget
                     'driver_id' => $row['driver_id'] ?? 'N/A',
                     'driver_name' => $row['driver_name'] ?? 'Unknown',
                     'total_rides' => number_format((int) ($row['total_rides'] ?? 0)),
-                    'total_earned' => 'RWF ' . number_format((float) ($row['total_earned'] ?? 0)),
+                    'total_earned' => 'RWF '.number_format((float) ($row['total_earned'] ?? 0)),
                     'avg_rating' => number_format((float) ($row['avg_rating'] ?? 0), 2),
                 ]);
 

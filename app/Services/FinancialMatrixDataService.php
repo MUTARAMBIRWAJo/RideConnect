@@ -34,7 +34,7 @@ class FinancialMatrixDataService
                 ->sum($amountColumn);
 
             $dailyRows = DB::table($paymentsTable)
-                ->selectRaw('DATE(created_at) as day, SUM(' . $amountColumn . ') as gross, COUNT(*) as txns')
+                ->selectRaw('DATE(created_at) as day, SUM('.$amountColumn.') as gross, COUNT(*) as txns')
                 ->whereDate('created_at', '>=', $fromDate)
                 ->whereDate('created_at', '<=', $toDate)
                 ->groupBy('day')
@@ -101,7 +101,7 @@ class FinancialMatrixDataService
     private function resolvePaymentsSource(): array
     {
         foreach (['payments_v2', 'payments'] as $table) {
-            if (!Schema::hasTable($table)) {
+            if (! Schema::hasTable($table)) {
                 continue;
             }
 

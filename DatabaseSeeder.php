@@ -2,9 +2,6 @@
 
 namespace Database\Seeders;
 
-use App\Models\User;
-use App\Models\MobileUser;
-use App\Models\Manager;
 use Illuminate\Database\Console\Seeds\WithoutModelEvents;
 use Illuminate\Database\Seeder;
 use Illuminate\Support\Facades\DB;
@@ -34,7 +31,7 @@ class DatabaseSeeder extends Seeder
             return;
         }
 
-        if (!$skipReset && !$this->resetDatabaseForSeeding()) {
+        if (! $skipReset && ! $this->resetDatabaseForSeeding()) {
             $this->command?->warn('DB reset failed, continuing in resume-style mode to complete top-up without truncation.');
             $this->call([
                 AIRwandaTrainingSeeder::class,
@@ -76,9 +73,9 @@ class DatabaseSeeder extends Seeder
             TicketSeeder::class,
             ActivityLogSeeder::class,
         ]);
-        
-            // Register RuraTariffSeeder for easy seeding
-            $this->call(\Database\Seeders\RuraTariffSeeder::class);
+
+        // Register RuraTariffSeeder for easy seeding
+        $this->call(\Database\Seeders\RuraTariffSeeder::class);
 
         // Fintech architecture seeders (depend on drivers, rides, payments, users)
         $this->call([
@@ -125,7 +122,7 @@ class DatabaseSeeder extends Seeder
             ];
         }
 
-        if (!empty($rowsByEmail)) {
+        if (! empty($rowsByEmail)) {
             DB::table('users')->upsert(
                 array_values($rowsByEmail),
                 ['email'],
@@ -156,7 +153,7 @@ class DatabaseSeeder extends Seeder
             $rowsByEmail[$mobileUser->email] = [
                 'id' => $id,
                 'email' => $mobileUser->email,
-                'name' => $mobileUser->first_name . ' ' . $mobileUser->last_name,
+                'name' => $mobileUser->first_name.' '.$mobileUser->last_name,
                 'password' => $mobileUser->password,
                 'role' => $mobileUser->role,
                 'mobile_user_id' => $mobileUser->id,
@@ -169,7 +166,7 @@ class DatabaseSeeder extends Seeder
             ];
         }
 
-        if (!empty($rowsByEmail)) {
+        if (! empty($rowsByEmail)) {
             DB::table('users')->upsert(
                 array_values($rowsByEmail),
                 ['email'],
@@ -258,14 +255,14 @@ class DatabaseSeeder extends Seeder
             return;
         }
 
-        if (!Schema::hasColumn($table, 'id')) {
+        if (! Schema::hasColumn($table, 'id')) {
             return;
         }
 
         $sequence = DB::selectOne("SELECT pg_get_serial_sequence('{$table}', 'id') AS seq");
         $sequenceName = $sequence?->seq ?? null;
 
-        if (!is_string($sequenceName) || $sequenceName === '') {
+        if (! is_string($sequenceName) || $sequenceName === '') {
             return;
         }
 
@@ -274,14 +271,14 @@ class DatabaseSeeder extends Seeder
 
     private function syncTableIdSequence(string $table): void
     {
-        if (DB::getDriverName() !== 'pgsql' || !Schema::hasTable($table) || !Schema::hasColumn($table, 'id')) {
+        if (DB::getDriverName() !== 'pgsql' || ! Schema::hasTable($table) || ! Schema::hasColumn($table, 'id')) {
             return;
         }
 
         $sequence = DB::selectOne("SELECT pg_get_serial_sequence('{$table}', 'id') AS seq");
         $sequenceName = $sequence?->seq ?? null;
 
-        if (!is_string($sequenceName) || $sequenceName === '') {
+        if (! is_string($sequenceName) || $sequenceName === '') {
             return;
         }
 

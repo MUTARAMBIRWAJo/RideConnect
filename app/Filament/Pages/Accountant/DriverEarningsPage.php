@@ -34,7 +34,7 @@ class DriverEarningsPage extends Page
         return 'Driver Earnings';
     }
 
-    public static function getNavigationIcon(): string | Htmlable | null
+    public static function getNavigationIcon(): string|Htmlable|null
     {
         return 'heroicon-o-wallet';
     }
@@ -230,7 +230,7 @@ class DriverEarningsPage extends Page
     }
 
     /**
-     * @param array<int, int> $driverIds
+     * @param  array<int, int>  $driverIds
      * @return array<int, float>
      */
     private function resolveTripFallbackCommissions(array $driverIds): array
@@ -257,7 +257,7 @@ class DriverEarningsPage extends Page
     }
 
     /**
-     * @param array<int, int> $driverIds
+     * @param  array<int, int>  $driverIds
      * @return array<int, string>
      */
     private function resolveDriverNames(array $driverIds): array

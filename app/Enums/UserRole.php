@@ -4,7 +4,7 @@ namespace App\Enums;
 
 /**
  * User roles for role-based access control
- * 
+ *
  * Role Hierarchy:
  * - SUPER_ADMIN: Can view all data from the User table
  * - ADMIN/ACCOUNTANT/OFFICER (Managers): Can see their own data AND Mobile Users data
@@ -17,7 +17,7 @@ enum UserRole: string
     case ADMIN = 'ADMIN';
     case ACCOUNTANT = 'ACCOUNTANT';
     case OFFICER = 'OFFICER';
-    
+
     // Mobile user roles
     case DRIVER = 'DRIVER';
     case PASSENGER = 'PASSENGER';
@@ -122,6 +122,6 @@ enum UserRole: string
      */
     public static function allRoles(): array
     {
-        return array_map(fn($case) => $case->value, self::cases());
+        return array_map(fn ($case) => $case->value, self::cases());
     }
 }

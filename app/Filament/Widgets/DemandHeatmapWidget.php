@@ -9,7 +9,7 @@ class DemandHeatmapWidget extends Widget
 {
     protected static string $view = 'filament.widgets.demand-heatmap-widget';
 
-    protected int | string | array $columnSpan = [
+    protected int|string|array $columnSpan = [
         'md' => 1,
         'xl' => 2,
     ];

@@ -7,8 +7,8 @@ use App\Services\ActionAuditLogger;
 use App\Services\MobileNotificationService;
 use Filament\Notifications\Notification;
 use Filament\Pages\Page;
-use Illuminate\Support\Carbon;
 use Illuminate\Contracts\Support\Htmlable;
+use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Schema;
@@ -38,7 +38,7 @@ class LiveRidesPage extends Page
         return 'Live Rides';
     }
 
-    public static function getNavigationIcon(): string | Htmlable | null
+    public static function getNavigationIcon(): string|Htmlable|null
     {
         return 'heroicon-o-map';
     }
@@ -86,7 +86,7 @@ class LiveRidesPage extends Page
 
     private function loadActiveRides(): void
     {
-        if (!Schema::hasTable('rides')) {
+        if (! Schema::hasTable('rides')) {
             return;
         }
 
@@ -114,7 +114,7 @@ class LiveRidesPage extends Page
 
     public function forceCancel(int $rideId): void
     {
-        if (!auth()->user()->can('manage rides')) {
+        if (! auth()->user()->can('manage rides')) {
             abort(403);
         }
 
@@ -143,7 +143,7 @@ class LiveRidesPage extends Page
 
     public function prepareReassignment(int $rideId): void
     {
-        if (!auth()->user()->can('manage rides')) {
+        if (! auth()->user()->can('manage rides')) {
             abort(403);
         }
 
@@ -202,7 +202,7 @@ class LiveRidesPage extends Page
 
     public function reassignDriver(int $rideId, ?int $newDriverId = null): void
     {
-        if (!auth()->user()->can('manage rides')) {
+        if (! auth()->user()->can('manage rides')) {
             abort(403);
         }
 
@@ -468,7 +468,7 @@ class LiveRidesPage extends Page
             }
         }
 
-        if (!Schema::hasTable('driver_locations')) {
+        if (! Schema::hasTable('driver_locations')) {
             return $locationMap;
         }
 
@@ -477,7 +477,7 @@ class LiveRidesPage extends Page
         $mobileUserIdsByDriverId = [];
         if (Schema::hasTable('users')) {
             $userIds = array_values(array_filter(array_unique(array_map(static fn (array $row): int => (int) ($row['user_id'] ?? 0), $driverRows))));
-            if (!empty($userIds) && Schema::hasColumn('users', 'id') && Schema::hasColumn('users', 'mobile_user_id')) {
+            if (! empty($userIds) && Schema::hasColumn('users', 'id') && Schema::hasColumn('users', 'mobile_user_id')) {
                 $mobileUserIdsByUserId = DB::table('users')
                     ->whereIn('id', $userIds)
                     ->pluck('mobile_user_id', 'id')
@@ -495,7 +495,7 @@ class LiveRidesPage extends Page
         }
 
         $lookupIds = array_values(array_unique(array_filter(array_merge($driverIds, array_values($mobileUserIdsByDriverId)))));
-        if (empty($lookupIds) || !Schema::hasColumn('driver_locations', 'driver_id') || !Schema::hasColumn('driver_locations', 'latitude') || !Schema::hasColumn('driver_locations', 'longitude')) {
+        if (empty($lookupIds) || ! Schema::hasColumn('driver_locations', 'driver_id') || ! Schema::hasColumn('driver_locations', 'latitude') || ! Schema::hasColumn('driver_locations', 'longitude')) {
             return $locationMap;
         }
 
@@ -508,7 +508,7 @@ class LiveRidesPage extends Page
         $locationByKey = [];
         foreach ($locationRows as $locationRow) {
             $key = (int) $locationRow->driver_id;
-            if (!isset($locationByKey[$key])) {
+            if (! isset($locationByKey[$key])) {
                 $locationByKey[$key] = [
                     'lat' => (float) $locationRow->latitude,
                     'lng' => (float) $locationRow->longitude,
@@ -526,6 +526,7 @@ class LiveRidesPage extends Page
 
             if (isset($locationByKey[$driverId])) {
                 $locationMap[$driverId] = $locationByKey[$driverId];
+
                 continue;
             }
 
@@ -544,7 +545,7 @@ class LiveRidesPage extends Page
      */
     private function resolveDriverActiveLoadMap(array $driverIds): array
     {
-        if (empty($driverIds) || !Schema::hasTable('rides') || !Schema::hasColumn('rides', 'driver_id') || !Schema::hasColumn('rides', 'status')) {
+        if (empty($driverIds) || ! Schema::hasTable('rides') || ! Schema::hasColumn('rides', 'driver_id') || ! Schema::hasColumn('rides', 'status')) {
             return [];
         }
 
@@ -563,7 +564,7 @@ class LiveRidesPage extends Page
      */
     private function resolveRidePickupCoordinates(?int $rideId): array
     {
-        if (! $rideId || !Schema::hasTable('rides')) {
+        if (! $rideId || ! Schema::hasTable('rides')) {
             return ['lat' => null, 'lng' => null];
         }
 
@@ -572,7 +573,7 @@ class LiveRidesPage extends Page
             ->values()
             ->all();
 
-        if (!empty($rideColumns)) {
+        if (! empty($rideColumns)) {
             $ride = DB::table('rides')->where('id', $rideId)->first($rideColumns);
             $rideLat = isset($ride->origin_lat) ? (float) $ride->origin_lat : (isset($ride->pickup_lat) ? (float) $ride->pickup_lat : null);
             $rideLng = isset($ride->origin_lng) ? (float) $ride->origin_lng : (isset($ride->pickup_lng) ? (float) $ride->pickup_lng : null);
@@ -707,7 +708,7 @@ class LiveRidesPage extends Page
 
     private function resolveReplacementDriverId(?int $currentDriverId): ?int
     {
-        if (!Schema::hasTable('drivers')) {
+        if (! Schema::hasTable('drivers')) {
             return null;
         }
 
@@ -735,7 +736,7 @@ class LiveRidesPage extends Page
 
     private function resolvePassengerUserIdForRide(int $rideId): ?int
     {
-        if (!Schema::hasTable('bookings') || !Schema::hasColumn('bookings', 'ride_id') || !Schema::hasColumn('bookings', 'user_id')) {
+        if (! Schema::hasTable('bookings') || ! Schema::hasColumn('bookings', 'ride_id') || ! Schema::hasColumn('bookings', 'user_id')) {
             return null;
         }
 

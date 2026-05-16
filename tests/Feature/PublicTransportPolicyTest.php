@@ -126,7 +126,7 @@ class PublicTransportPolicyTest extends TestCase
             'status' => 'PENDING',
         ]);
 
-        $rideResponse = $this->actingAs($passenger)->getJson('/api/v1/passenger/rides/' . $ride->id);
+        $rideResponse = $this->actingAs($passenger)->getJson('/api/v1/passenger/rides/'.$ride->id);
         $rideResponse->assertOk();
         $rideResponse->assertJsonPath('data.transport_type', 'BUS');
         $rideResponse->assertJsonPath('data.bus_number', '102');
@@ -271,7 +271,7 @@ class PublicTransportPolicyTest extends TestCase
             'is_active' => false,
         ]);
 
-        $response = $this->actingAs($admin)->getJson('/api/v1/passenger/public-transport/routes?corridor_id=' . $corridor->id);
+        $response = $this->actingAs($admin)->getJson('/api/v1/passenger/public-transport/routes?corridor_id='.$corridor->id);
         $response->assertOk();
         $response->assertJsonCount(0, 'data');
 

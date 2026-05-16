@@ -114,7 +114,7 @@ class TransportMappingServiceTest extends TestCase
     public function test_get_all_vehicle_types()
     {
         $allVehicles = TransportMappingService::getAllVehicleTypes();
-        
+
         $this->assertContains('van', $allVehicles);
         $this->assertContains('sedan', $allVehicles);
         $this->assertContains('motorbike', $allVehicles);
@@ -125,7 +125,7 @@ class TransportMappingServiceTest extends TestCase
     public function test_get_all_transport_types()
     {
         $allTransports = TransportMappingService::getAllTransportTypes();
-        
+
         $this->assertContains(Ride::TRANSPORT_BUS, $allTransports);
         $this->assertContains(Ride::TRANSPORT_CAR, $allTransports);
         $this->assertContains(Ride::TRANSPORT_MOTORCYCLE, $allTransports);

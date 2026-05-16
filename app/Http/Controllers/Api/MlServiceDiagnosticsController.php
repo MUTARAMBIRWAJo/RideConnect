@@ -10,9 +10,9 @@ use Illuminate\Support\Facades\Log;
 
 /**
  * ML Service Diagnostics Controller
- * 
+ *
  * Test endpoints to verify ML service integration and test Demand Prediction API
- * 
+ *
  * Routes:
  * GET  /api/diagnostics/ml-health           - Check ML service health
  * GET  /api/diagnostics/ml-test-demand      - Test demand prediction endpoint
@@ -21,13 +21,11 @@ use Illuminate\Support\Facades\Log;
  */
 class MlServiceDiagnosticsController extends Controller
 {
-    public function __construct(private readonly AiPredictionService $aiService)
-    {
-    }
+    public function __construct(private readonly AiPredictionService $aiService) {}
 
     /**
      * Check ML Service Health
-     * 
+     *
      * GET /api/diagnostics/ml-health
      */
     public function mlHealth(): JsonResponse
@@ -35,7 +33,7 @@ class MlServiceDiagnosticsController extends Controller
         Log::info('Testing ML service health...');
 
         try {
-            $baseUrl = config('services.ml_service.url') 
+            $baseUrl = config('services.ml_service.url')
                 ?: config('services.ai_service.url');
 
             Log::info("Connecting to ML service at: {$baseUrl}");
@@ -46,7 +44,7 @@ class MlServiceDiagnosticsController extends Controller
 
             if ($response->successful()) {
                 $data = $response->json();
-                
+
                 return response()->json([
                     'success' => true,
                     'message' => 'ML Service is healthy',
@@ -86,9 +84,9 @@ class MlServiceDiagnosticsController extends Controller
 
     /**
      * Test Demand Prediction Endpoint
-     * 
+     *
      * GET /api/diagnostics/ml-test-demand
-     * 
+     *
      * Query parameters (optional):
      * - latitude: float (default: -1.9441)
      * - longitude: float (default: 30.0619)
@@ -111,7 +109,7 @@ class MlServiceDiagnosticsController extends Controller
 
             $response = $this->aiService->predictDemand($payload);
 
-            if (isset($response['demand_level']) && !isset($response['error'])) {
+            if (isset($response['demand_level']) && ! isset($response['error'])) {
                 return response()->json([
                     'success' => true,
                     'message' => 'Demand prediction retrieved successfully',
@@ -146,7 +144,7 @@ class MlServiceDiagnosticsController extends Controller
 
     /**
      * Test Matching Endpoint
-     * 
+     *
      * GET /api/diagnostics/ml-test-matching
      */
     public function testMatchingPrediction(): JsonResponse
@@ -193,7 +191,7 @@ class MlServiceDiagnosticsController extends Controller
 
             $response = $this->aiService->matchDriver($payload);
 
-            if (isset($response['best_driver']) && !isset($response['error'])) {
+            if (isset($response['best_driver']) && ! isset($response['error'])) {
                 return response()->json([
                     'success' => true,
                     'message' => 'Driver matching completed successfully',
@@ -226,7 +224,7 @@ class MlServiceDiagnosticsController extends Controller
 
     /**
      * Show ML Service Configuration
-     * 
+     *
      * GET /api/diagnostics/config
      */
     public function showConfig(): JsonResponse
@@ -234,12 +232,12 @@ class MlServiceDiagnosticsController extends Controller
         return response()->json([
             'ml_service' => [
                 'url' => config('services.ml_service.url'),
-                'api_key_set' => !empty(config('services.ml_service.api_key')),
+                'api_key_set' => ! empty(config('services.ml_service.api_key')),
                 'timeout' => config('services.ml_service.timeout'),
             ],
             'ai_service' => [
                 'url' => config('services.ai_service.url'),
-                'api_key_set' => !empty(config('services.ai_service.key')),
+                'api_key_set' => ! empty(config('services.ai_service.key')),
                 'timeout' => config('services.ai_service.timeout'),
             ],
             'app_environment' => config('app.env'),

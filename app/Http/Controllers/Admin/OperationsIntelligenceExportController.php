@@ -7,8 +7,8 @@ use App\Http\Controllers\Controller;
 use App\Models\User;
 use App\Services\OperationsIntelligenceDataService;
 use Barryvdh\DomPDF\Facade\Pdf;
-use Illuminate\Support\Carbon;
 use Illuminate\Http\Request;
+use Illuminate\Support\Carbon;
 use OpenSpout\Common\Entity\Row;
 use OpenSpout\Writer\XLSX\Writer;
 use Symfony\Component\HttpFoundation\BinaryFileResponse;
@@ -22,7 +22,7 @@ class OperationsIntelligenceExportController extends Controller
 
         [$from, $to] = $this->resolveDateRange($request);
         $snapshot = $service->snapshot($from, $to);
-        $fileName = 'operations-intelligence-' . now()->format('Ymd-His') . '.csv';
+        $fileName = 'operations-intelligence-'.now()->format('Ymd-His').'.csv';
 
         return response()->streamDownload(function () use ($snapshot): void {
             $out = fopen('php://output', 'w');
@@ -82,7 +82,7 @@ class OperationsIntelligenceExportController extends Controller
             'generatedAt' => now()->toDateTimeString(),
         ])->setPaper('a4', 'portrait');
 
-        return $pdf->download('operations-intelligence-' . now()->format('Ymd-His') . '.pdf');
+        return $pdf->download('operations-intelligence-'.now()->format('Ymd-His').'.pdf');
     }
 
     public function xlsx(Request $request, OperationsIntelligenceDataService $service): BinaryFileResponse
@@ -97,10 +97,10 @@ class OperationsIntelligenceExportController extends Controller
             abort(500, 'Failed to initialize export file.');
         }
 
-        $xlsxPath = $tmp . '.xlsx';
+        $xlsxPath = $tmp.'.xlsx';
         @unlink($tmp);
 
-        $writer = new Writer();
+        $writer = new Writer;
         $writer->openToFile($xlsxPath);
 
         $writer->addRow(Row::fromValues(['Operations Intelligence Report']));
@@ -145,7 +145,7 @@ class OperationsIntelligenceExportController extends Controller
 
         return response()->download(
             $xlsxPath,
-            'operations-intelligence-' . now()->format('Ymd-His') . '.xlsx',
+            'operations-intelligence-'.now()->format('Ymd-His').'.xlsx',
             ['Content-Type' => 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet']
         )->deleteFileAfterSend(true);
     }
@@ -170,7 +170,7 @@ class OperationsIntelligenceExportController extends Controller
 
     private function canExport(?User $user): bool
     {
-        if (!$user) {
+        if (! $user) {
             return false;
         }
 

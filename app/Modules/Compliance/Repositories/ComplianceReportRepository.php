@@ -16,9 +16,9 @@ class ComplianceReportRepository implements ComplianceReportRepositoryInterface
     public function markReady(int $id, string $filePath, array $summaryData): void
     {
         ComplianceReport::where('id', $id)->update([
-            'file_path'    => $filePath,
+            'file_path' => $filePath,
             'summary_data' => $summaryData,
-            'status'       => 'ready',
+            'status' => 'ready',
             'generated_at' => now(),
         ]);
     }
@@ -26,7 +26,7 @@ class ComplianceReportRepository implements ComplianceReportRepositoryInterface
     public function markFailed(int $id, string $error): void
     {
         ComplianceReport::where('id', $id)->update([
-            'status'        => 'failed',
+            'status' => 'failed',
             'error_message' => $error,
         ]);
     }
@@ -35,7 +35,7 @@ class ComplianceReportRepository implements ComplianceReportRepositoryInterface
     {
         return ComplianceReport::where('report_type', $reportType)
             ->when($from, fn ($q) => $q->whereDate('period_start', '>=', $from->format('Y-m-d')))
-            ->when($to,   fn ($q) => $q->whereDate('period_end',   '<=', $to->format('Y-m-d')))
+            ->when($to, fn ($q) => $q->whereDate('period_end', '<=', $to->format('Y-m-d')))
             ->orderBy('period_end', 'desc')
             ->get();
     }

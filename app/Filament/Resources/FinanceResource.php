@@ -54,7 +54,7 @@ class FinanceResource extends Resource
                             ->step(0.01)
                             ->prefix('RWF '),
                     ])->columns(3),
-                
+
                 Forms\Components\Section::make('Payment Information')
                     ->schema([
                         Forms\Components\TextInput::make('currency')
@@ -75,7 +75,7 @@ class FinanceResource extends Resource
                                 'refunded' => 'Refunded',
                             ]),
                     ])->columns(3),
-                
+
                 Forms\Components\Section::make('Timestamps')
                     ->schema([
                         Forms\Components\DateTimePicker::make('paid_at'),

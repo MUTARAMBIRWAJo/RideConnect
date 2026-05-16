@@ -116,7 +116,7 @@ class RwandaFiftyTopUpSeeder extends Seeder
 
     private function topUpMobileUsers(int $target): void
     {
-        if (!Schema::hasTable('mobile_users')) {
+        if (! Schema::hasTable('mobile_users')) {
             return;
         }
 
@@ -134,7 +134,7 @@ class RwandaFiftyTopUpSeeder extends Seeder
                 'first_name' => $first,
                 'last_name' => $last,
                 'phone' => $this->rwandaPhone($i),
-                'email' => strtolower($first . '.' . $last . ".{$i}@riderw.rw"),
+                'email' => strtolower($first.'.'.$last.".{$i}@riderw.rw"),
                 'password' => Hash::make('password123'),
                 'role' => $role,
                 'profile_photo' => null,
@@ -148,14 +148,14 @@ class RwandaFiftyTopUpSeeder extends Seeder
             }
         }
 
-        if (!empty($rows)) {
+        if (! empty($rows)) {
             DB::table('mobile_users')->insert($rows);
         }
     }
 
     private function topUpManagers(int $target): void
     {
-        if (!Schema::hasTable('managers')) {
+        if (! Schema::hasTable('managers')) {
             return;
         }
 
@@ -169,7 +169,7 @@ class RwandaFiftyTopUpSeeder extends Seeder
             $last = $this->lastNames[array_rand($this->lastNames)];
 
             $rows[] = [
-                'name' => $first . ' ' . $last,
+                'name' => $first.' '.$last,
                 'email' => strtolower("manager.{$i}.{$last}@rideconnect.rw"),
                 'password' => Hash::make('password123'),
                 'role' => $roles[$i % count($roles)],
@@ -178,14 +178,14 @@ class RwandaFiftyTopUpSeeder extends Seeder
             ];
         }
 
-        if (!empty($rows)) {
+        if (! empty($rows)) {
             DB::table('managers')->insert($rows);
         }
     }
 
     private function syncMobileUsersToUsers(): void
     {
-        if (!Schema::hasTable('users') || !Schema::hasTable('mobile_users')) {
+        if (! Schema::hasTable('users') || ! Schema::hasTable('mobile_users')) {
             return;
         }
 
@@ -194,7 +194,7 @@ class RwandaFiftyTopUpSeeder extends Seeder
             DB::table('users')->updateOrInsert(
                 ['email' => $mobileUser->email],
                 [
-                    'name' => trim(($mobileUser->first_name ?? '') . ' ' . ($mobileUser->last_name ?? '')),
+                    'name' => trim(($mobileUser->first_name ?? '').' '.($mobileUser->last_name ?? '')),
                     'password' => $mobileUser->password,
                     'role' => $mobileUser->role,
                     'mobile_user_id' => $mobileUser->id,
@@ -211,7 +211,7 @@ class RwandaFiftyTopUpSeeder extends Seeder
 
     private function syncManagersToUsers(): void
     {
-        if (!Schema::hasTable('users') || !Schema::hasTable('managers')) {
+        if (! Schema::hasTable('users') || ! Schema::hasTable('managers')) {
             return;
         }
 
@@ -237,7 +237,7 @@ class RwandaFiftyTopUpSeeder extends Seeder
 
     private function topUpDrivers(int $target): void
     {
-        if (!Schema::hasTable('drivers') || !Schema::hasTable('users')) {
+        if (! Schema::hasTable('drivers') || ! Schema::hasTable('users')) {
             return;
         }
 
@@ -284,7 +284,7 @@ class RwandaFiftyTopUpSeeder extends Seeder
 
     private function topUpByCloning(string $table, int $target): void
     {
-        if (!Schema::hasTable($table)) {
+        if (! Schema::hasTable($table)) {
             return;
         }
 
@@ -332,6 +332,7 @@ class RwandaFiftyTopUpSeeder extends Seeder
 
             if ($inserted <= 0) {
                 $staleAttempts++;
+
                 continue;
             }
 
@@ -399,7 +400,7 @@ class RwandaFiftyTopUpSeeder extends Seeder
         if (array_key_exists('transaction_id', $row)) {
             if ($table === 'ledger_entries') {
                 $row['transaction_id'] = $this->randomIdFromTable('ledger_transactions') ?? $row['transaction_id'];
-            } elseif (!is_numeric($row['transaction_id'])) {
+            } elseif (! is_numeric($row['transaction_id'])) {
                 $row['transaction_id'] = strtoupper(Str::random(18));
             }
         }
@@ -423,33 +424,33 @@ class RwandaFiftyTopUpSeeder extends Seeder
         }
 
         if (array_key_exists('region_code', $row)) {
-            $row['region_code'] = 'RW-' . str_pad((string) $seq, 3, '0', STR_PAD_LEFT);
+            $row['region_code'] = 'RW-'.str_pad((string) $seq, 3, '0', STR_PAD_LEFT);
         }
 
         if (array_key_exists('provider_code', $row)) {
-            $row['provider_code'] = 'rw_provider_' . $seq;
+            $row['provider_code'] = 'rw_provider_'.$seq;
         }
 
         if (array_key_exists('zone_key', $row)) {
             $district = self::RWANDA_DISTRICTS[array_rand(self::RWANDA_DISTRICTS)];
             $spot = self::RWANDA_HOTSPOTS[array_rand(self::RWANDA_HOTSPOTS)];
-            $row['zone_key'] = strtoupper($district) . ':' . Str::slug($spot, '_');
+            $row['zone_key'] = strtoupper($district).':'.Str::slug($spot, '_');
         }
 
         if (array_key_exists('pickup_location', $row)) {
-            $row['pickup_location'] = self::RWANDA_HOTSPOTS[array_rand(self::RWANDA_HOTSPOTS)] . ', ' . self::RWANDA_DISTRICTS[array_rand(self::RWANDA_DISTRICTS)];
+            $row['pickup_location'] = self::RWANDA_HOTSPOTS[array_rand(self::RWANDA_HOTSPOTS)].', '.self::RWANDA_DISTRICTS[array_rand(self::RWANDA_DISTRICTS)];
         }
 
         if (array_key_exists('dropoff_location', $row)) {
-            $row['dropoff_location'] = self::RWANDA_HOTSPOTS[array_rand(self::RWANDA_HOTSPOTS)] . ', ' . self::RWANDA_DISTRICTS[array_rand(self::RWANDA_DISTRICTS)];
+            $row['dropoff_location'] = self::RWANDA_HOTSPOTS[array_rand(self::RWANDA_HOTSPOTS)].', '.self::RWANDA_DISTRICTS[array_rand(self::RWANDA_DISTRICTS)];
         }
 
         if (array_key_exists('origin_address', $row)) {
-            $row['origin_address'] = self::RWANDA_HOTSPOTS[array_rand(self::RWANDA_HOTSPOTS)] . ', Kigali, Rwanda';
+            $row['origin_address'] = self::RWANDA_HOTSPOTS[array_rand(self::RWANDA_HOTSPOTS)].', Kigali, Rwanda';
         }
 
         if (array_key_exists('destination_address', $row)) {
-            $row['destination_address'] = self::RWANDA_HOTSPOTS[array_rand(self::RWANDA_HOTSPOTS)] . ', Rwanda';
+            $row['destination_address'] = self::RWANDA_HOTSPOTS[array_rand(self::RWANDA_HOTSPOTS)].', Rwanda';
         }
 
         foreach (['pickup_lat', 'dropoff_lat', 'origin_lat', 'destination_lat', 'latitude', 'current_latitude'] as $column) {
@@ -483,7 +484,7 @@ class RwandaFiftyTopUpSeeder extends Seeder
         if ($table === 'driver_payouts') {
             if (array_key_exists('driver_id', $row) && Schema::hasTable('drivers')) {
                 $driverIds = DB::table('drivers')->pluck('id')->all();
-                if (!empty($driverIds)) {
+                if (! empty($driverIds)) {
                     $row['driver_id'] = $driverIds[array_rand($driverIds)];
                 }
             }
@@ -495,13 +496,13 @@ class RwandaFiftyTopUpSeeder extends Seeder
         if ($table === 'platform_commissions') {
             if (array_key_exists('driver_id', $row) && Schema::hasTable('drivers')) {
                 $driverIds = DB::table('drivers')->pluck('id')->all();
-                if (!empty($driverIds)) {
+                if (! empty($driverIds)) {
                     $row['driver_id'] = $driverIds[array_rand($driverIds)];
                 }
             }
             if (array_key_exists('ride_id', $row) && Schema::hasTable('rides')) {
                 $rideIds = DB::table('rides')->pluck('id')->all();
-                if (!empty($rideIds)) {
+                if (! empty($rideIds)) {
                     $row['ride_id'] = $rideIds[array_rand($rideIds)];
                 }
             }
@@ -512,13 +513,13 @@ class RwandaFiftyTopUpSeeder extends Seeder
 
         if ($table === 'driver_earnings' && array_key_exists('driver_id', $row) && Schema::hasTable('mobile_users')) {
             $driverMobileIds = DB::table('mobile_users')->where('role', 'DRIVER')->pluck('id')->all();
-            if (!empty($driverMobileIds)) {
+            if (! empty($driverMobileIds)) {
                 $row['driver_id'] = $driverMobileIds[array_rand($driverMobileIds)];
             }
 
             if (array_key_exists('trip_id', $row) && Schema::hasTable('trips')) {
                 $tripIds = DB::table('trips')->pluck('id')->all();
-                if (!empty($tripIds)) {
+                if (! empty($tripIds)) {
                     $row['trip_id'] = $tripIds[array_rand($tripIds)];
                 }
             }
@@ -526,12 +527,12 @@ class RwandaFiftyTopUpSeeder extends Seeder
 
         if ($table === 'trips' && array_key_exists('driver_id', $row) && Schema::hasTable('drivers')) {
             $driverIds = DB::table('drivers')->pluck('id')->all();
-            if (!empty($driverIds)) {
+            if (! empty($driverIds)) {
                 $row['driver_id'] = $driverIds[array_rand($driverIds)];
             }
             if (array_key_exists('passenger_id', $row) && Schema::hasTable('mobile_users')) {
                 $passengerIds = DB::table('mobile_users')->where('role', 'PASSENGER')->pluck('id')->all();
-                if (!empty($passengerIds)) {
+                if (! empty($passengerIds)) {
                     $row['passenger_id'] = $passengerIds[array_rand($passengerIds)];
                 }
             }
@@ -545,11 +546,11 @@ class RwandaFiftyTopUpSeeder extends Seeder
         }
 
         if (array_key_exists('name', $row) && $table === 'ledger_accounts') {
-            $row['name'] = 'Account ' . $seq;
+            $row['name'] = 'Account '.$seq;
         }
 
         if (array_key_exists('report_name', $row) && $table === 'compliance_reports') {
-            $row['report_name'] = 'Rwanda Compliance Snapshot #' . $seq;
+            $row['report_name'] = 'Rwanda Compliance Snapshot #'.$seq;
         }
     }
 
@@ -560,15 +561,16 @@ class RwandaFiftyTopUpSeeder extends Seeder
             return null;
         }
 
-        $cacheKey = $targetTable . ':' . $column;
-        if (!array_key_exists($cacheKey, $this->usedReferenceIds)) {
+        $cacheKey = $targetTable.':'.$column;
+        if (! array_key_exists($cacheKey, $this->usedReferenceIds)) {
             $this->usedReferenceIds[$cacheKey] = DB::table($targetTable)->pluck($column)->filter()->map(fn ($id) => (int) $id)->all();
         }
 
         $usedMap = array_flip($this->usedReferenceIds[$cacheKey]);
         foreach ($sourcePool as $candidate) {
-            if (!isset($usedMap[$candidate])) {
+            if (! isset($usedMap[$candidate])) {
                 $this->usedReferenceIds[$cacheKey][] = $candidate;
+
                 return $candidate;
             }
         }
@@ -587,7 +589,7 @@ class RwandaFiftyTopUpSeeder extends Seeder
         }
 
         $cacheKey = 'passenger_locations:passenger_id';
-        if (!array_key_exists($cacheKey, $this->usedReferenceIds)) {
+        if (! array_key_exists($cacheKey, $this->usedReferenceIds)) {
             $this->usedReferenceIds[$cacheKey] = DB::table('passenger_locations')
                 ->pluck('passenger_id')
                 ->filter()
@@ -597,8 +599,9 @@ class RwandaFiftyTopUpSeeder extends Seeder
 
         $usedMap = array_flip($this->usedReferenceIds[$cacheKey]);
         foreach ($sourcePool as $candidate) {
-            if (!isset($usedMap[$candidate])) {
+            if (! isset($usedMap[$candidate])) {
                 $this->usedReferenceIds[$cacheKey][] = $candidate;
+
                 return $candidate;
             }
         }
@@ -614,7 +617,7 @@ class RwandaFiftyTopUpSeeder extends Seeder
      */
     private function getTableColumns(string $table): array
     {
-        if (!array_key_exists($table, $this->columnCache)) {
+        if (! array_key_exists($table, $this->columnCache)) {
             $this->columnCache[$table] = Schema::getColumnListing($table);
         }
 
@@ -626,9 +629,9 @@ class RwandaFiftyTopUpSeeder extends Seeder
      */
     private function getIdPool(string $table, ?string $whereColumn = null, mixed $whereValue = null): array
     {
-        $key = $table . '|' . ($whereColumn ?? '') . '|' . (is_scalar($whereValue) ? (string) $whereValue : '');
+        $key = $table.'|'.($whereColumn ?? '').'|'.(is_scalar($whereValue) ? (string) $whereValue : '');
 
-        if (!array_key_exists($key, $this->idPools)) {
+        if (! array_key_exists($key, $this->idPools)) {
             $query = DB::table($table)->select('id');
 
             if ($whereColumn !== null) {
@@ -646,7 +649,7 @@ class RwandaFiftyTopUpSeeder extends Seeder
         // Rwanda mobile prefixes are commonly +25078x and +25079x.
         $prefix = ['+25078', '+25079'][array_rand(['+25078', '+25079'])];
 
-        return $prefix . str_pad((string) (($seq % 10000000) + 1000000), 7, '0', STR_PAD_LEFT);
+        return $prefix.str_pad((string) (($seq % 10000000) + 1000000), 7, '0', STR_PAD_LEFT);
     }
 
     private function kigaliLat(): float
@@ -671,7 +674,7 @@ class RwandaFiftyTopUpSeeder extends Seeder
 
     private function bootstrapAiPricePrediction(): void
     {
-        if (!Schema::hasTable('ai_price_predictions') || DB::table('ai_price_predictions')->exists()) {
+        if (! Schema::hasTable('ai_price_predictions') || DB::table('ai_price_predictions')->exists()) {
             return;
         }
 
@@ -687,7 +690,7 @@ class RwandaFiftyTopUpSeeder extends Seeder
 
     private function bootstrapComplianceReports(): void
     {
-        if (!Schema::hasTable('compliance_reports') || DB::table('compliance_reports')->exists()) {
+        if (! Schema::hasTable('compliance_reports') || DB::table('compliance_reports')->exists()) {
             return;
         }
 
@@ -708,7 +711,7 @@ class RwandaFiftyTopUpSeeder extends Seeder
 
     private function bootstrapDomainEvents(): void
     {
-        if (!Schema::hasTable('domain_events') || DB::table('domain_events')->exists()) {
+        if (! Schema::hasTable('domain_events') || DB::table('domain_events')->exists()) {
             return;
         }
 
@@ -729,7 +732,7 @@ class RwandaFiftyTopUpSeeder extends Seeder
 
     private function bootstrapEventOutbox(): void
     {
-        if (!Schema::hasTable('event_outbox') || DB::table('event_outbox')->exists()) {
+        if (! Schema::hasTable('event_outbox') || DB::table('event_outbox')->exists()) {
             return;
         }
 
@@ -750,12 +753,12 @@ class RwandaFiftyTopUpSeeder extends Seeder
 
     private function bootstrapDriverBehaviorLogs(): void
     {
-        if (!Schema::hasTable('driver_behavior_logs') || DB::table('driver_behavior_logs')->exists()) {
+        if (! Schema::hasTable('driver_behavior_logs') || DB::table('driver_behavior_logs')->exists()) {
             return;
         }
 
         $driverId = DB::table('drivers')->value('id');
-        if (!$driverId) {
+        if (! $driverId) {
             return;
         }
 
@@ -775,12 +778,12 @@ class RwandaFiftyTopUpSeeder extends Seeder
 
     private function bootstrapDriverRatings(): void
     {
-        if (!Schema::hasTable('driver_ratings') || DB::table('driver_ratings')->exists()) {
+        if (! Schema::hasTable('driver_ratings') || DB::table('driver_ratings')->exists()) {
             return;
         }
 
         $driverId = DB::table('drivers')->value('id');
-        if (!$driverId) {
+        if (! $driverId) {
             return;
         }
 
@@ -799,12 +802,12 @@ class RwandaFiftyTopUpSeeder extends Seeder
 
     private function bootstrapDriverStatus(): void
     {
-        if (!Schema::hasTable('driver_status') || DB::table('driver_status')->exists()) {
+        if (! Schema::hasTable('driver_status') || DB::table('driver_status')->exists()) {
             return;
         }
 
         $driverId = DB::table('drivers')->value('id');
-        if (!$driverId) {
+        if (! $driverId) {
             return;
         }
 
@@ -819,7 +822,7 @@ class RwandaFiftyTopUpSeeder extends Seeder
 
     private function bootstrapDwDimensions(): void
     {
-        if (Schema::hasTable('dw_dim_date') && !DB::table('dw_dim_date')->exists()) {
+        if (Schema::hasTable('dw_dim_date') && ! DB::table('dw_dim_date')->exists()) {
             $day = now();
             DB::table('dw_dim_date')->insert([
                 'date_key' => $day->toDateString(),
@@ -835,12 +838,12 @@ class RwandaFiftyTopUpSeeder extends Seeder
             ]);
         }
 
-        if (Schema::hasTable('dw_dim_driver') && !DB::table('dw_dim_driver')->exists()) {
+        if (Schema::hasTable('dw_dim_driver') && ! DB::table('dw_dim_driver')->exists()) {
             $driver = DB::table('drivers')->first();
             if ($driver) {
                 DB::table('dw_dim_driver')->insert([
                     'driver_id' => $driver->id,
-                    'driver_name' => 'Driver ' . $driver->id,
+                    'driver_name' => 'Driver '.$driver->id,
                     'phone' => DB::table('users')->where('id', $driver->user_id)->value('phone'),
                     'vehicle_class' => 'Standard',
                     'region' => 'Kigali',
@@ -854,12 +857,12 @@ class RwandaFiftyTopUpSeeder extends Seeder
             }
         }
 
-        if (Schema::hasTable('dw_dim_passenger') && !DB::table('dw_dim_passenger')->exists()) {
+        if (Schema::hasTable('dw_dim_passenger') && ! DB::table('dw_dim_passenger')->exists()) {
             $passenger = DB::table('mobile_users')->where('role', 'PASSENGER')->first();
             if ($passenger) {
                 DB::table('dw_dim_passenger')->insert([
                     'passenger_id' => $passenger->id,
-                    'passenger_name' => trim(($passenger->first_name ?? '') . ' ' . ($passenger->last_name ?? '')),
+                    'passenger_name' => trim(($passenger->first_name ?? '').' '.($passenger->last_name ?? '')),
                     'phone' => $passenger->phone,
                     'registered_date' => now()->subMonths(4)->toDateString(),
                     'is_current' => true,
@@ -870,7 +873,7 @@ class RwandaFiftyTopUpSeeder extends Seeder
             }
         }
 
-        if (Schema::hasTable('dw_dim_region') && !DB::table('dw_dim_region')->exists()) {
+        if (Schema::hasTable('dw_dim_region') && ! DB::table('dw_dim_region')->exists()) {
             DB::table('dw_dim_region')->insert([
                 'region_code' => 'RW-KGL',
                 'region_name' => 'Kigali',
@@ -888,7 +891,7 @@ class RwandaFiftyTopUpSeeder extends Seeder
         $regionDimId = Schema::hasTable('dw_dim_region') ? DB::table('dw_dim_region')->value('id') : null;
         $providerDimId = Schema::hasTable('dw_dim_payment_provider') ? DB::table('dw_dim_payment_provider')->value('id') : null;
 
-        if (Schema::hasTable('dw_fact_driver_earnings') && !DB::table('dw_fact_driver_earnings')->exists() && $driverDimId) {
+        if (Schema::hasTable('dw_fact_driver_earnings') && ! DB::table('dw_fact_driver_earnings')->exists() && $driverDimId) {
             DB::table('dw_fact_driver_earnings')->insert([
                 'date_key' => $dateKey,
                 'driver_dim_id' => $driverDimId,
@@ -903,7 +906,7 @@ class RwandaFiftyTopUpSeeder extends Seeder
             ]);
         }
 
-        if (Schema::hasTable('dw_fact_commissions') && !DB::table('dw_fact_commissions')->exists()) {
+        if (Schema::hasTable('dw_fact_commissions') && ! DB::table('dw_fact_commissions')->exists()) {
             DB::table('dw_fact_commissions')->insert([
                 'date_key' => $dateKey,
                 'driver_dim_id' => $driverDimId,
@@ -916,7 +919,7 @@ class RwandaFiftyTopUpSeeder extends Seeder
             ]);
         }
 
-        if (Schema::hasTable('dw_fact_rides') && !DB::table('dw_fact_rides')->exists()) {
+        if (Schema::hasTable('dw_fact_rides') && ! DB::table('dw_fact_rides')->exists()) {
             DB::table('dw_fact_rides')->insert([
                 'date_key' => $dateKey,
                 'driver_dim_id' => $driverDimId,
@@ -934,7 +937,7 @@ class RwandaFiftyTopUpSeeder extends Seeder
             ]);
         }
 
-        if (Schema::hasTable('dw_fact_transactions') && !DB::table('dw_fact_transactions')->exists()) {
+        if (Schema::hasTable('dw_fact_transactions') && ! DB::table('dw_fact_transactions')->exists()) {
             DB::table('dw_fact_transactions')->insert([
                 'date_key' => $dateKey,
                 'driver_dim_id' => $driverDimId,
@@ -956,7 +959,7 @@ class RwandaFiftyTopUpSeeder extends Seeder
 
     private function bootstrapFareAudit(): void
     {
-        if (!Schema::hasTable('fare_audit') || DB::table('fare_audit')->exists()) {
+        if (! Schema::hasTable('fare_audit') || DB::table('fare_audit')->exists()) {
             return;
         }
 
@@ -972,7 +975,7 @@ class RwandaFiftyTopUpSeeder extends Seeder
 
     private function bootstrapLedger(): void
     {
-        if (Schema::hasTable('ledger_transactions') && !DB::table('ledger_transactions')->exists()) {
+        if (Schema::hasTable('ledger_transactions') && ! DB::table('ledger_transactions')->exists()) {
             DB::table('ledger_transactions')->insert([
                 'uuid' => (string) Str::uuid(),
                 'description' => 'Seeded Rwanda ledger transaction',
@@ -982,7 +985,7 @@ class RwandaFiftyTopUpSeeder extends Seeder
             ]);
         }
 
-        if (Schema::hasTable('ledger_entries') && !DB::table('ledger_entries')->exists()) {
+        if (Schema::hasTable('ledger_entries') && ! DB::table('ledger_entries')->exists()) {
             $accountId = DB::table('ledger_accounts')->value('id');
             $transactionId = DB::table('ledger_transactions')->value('id');
             if ($accountId && $transactionId) {
@@ -1002,12 +1005,12 @@ class RwandaFiftyTopUpSeeder extends Seeder
 
     private function bootstrapNotifications(): void
     {
-        if (!Schema::hasTable('notifications') || DB::table('notifications')->exists()) {
+        if (! Schema::hasTable('notifications') || DB::table('notifications')->exists()) {
             return;
         }
 
         $userId = DB::table('users')->value('id');
-        if (!$userId) {
+        if (! $userId) {
             return;
         }
 
@@ -1024,7 +1027,7 @@ class RwandaFiftyTopUpSeeder extends Seeder
 
     private function bootstrapRideFeedback(): void
     {
-        if (!Schema::hasTable('ride_feedback') || DB::table('ride_feedback')->exists()) {
+        if (! Schema::hasTable('ride_feedback') || DB::table('ride_feedback')->exists()) {
             return;
         }
 
@@ -1040,7 +1043,7 @@ class RwandaFiftyTopUpSeeder extends Seeder
 
     private function bootstrapRouteCheckpoints(): void
     {
-        if (!Schema::hasTable('route_checkpoints') || DB::table('route_checkpoints')->exists()) {
+        if (! Schema::hasTable('route_checkpoints') || DB::table('route_checkpoints')->exists()) {
             return;
         }
 
@@ -1057,7 +1060,7 @@ class RwandaFiftyTopUpSeeder extends Seeder
 
     private function bootstrapTaxRules(): void
     {
-        if (!Schema::hasTable('tax_rules') || DB::table('tax_rules')->exists()) {
+        if (! Schema::hasTable('tax_rules') || DB::table('tax_rules')->exists()) {
             return;
         }
 

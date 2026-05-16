@@ -15,11 +15,11 @@ return new class extends Migration
             $table->string('two_factor_secret')->nullable()->after('two_factor_enabled');
             $table->timestamp('two_factor_confirmed_at')->nullable()->after('two_factor_secret');
             $table->json('two_factor_backup_codes')->nullable()->after('two_factor_confirmed_at');
-            
+
             // Brute force protection
             $table->integer('mfa_attempts')->default(0)->after('two_factor_backup_codes');
             $table->timestamp('mfa_locked_until')->nullable()->after('mfa_attempts');
-            
+
             // Session security
             $table->string('last_login_ip')->nullable()->after('mfa_locked_until');
             $table->string('last_login_user_agent')->nullable()->after('last_login_ip');

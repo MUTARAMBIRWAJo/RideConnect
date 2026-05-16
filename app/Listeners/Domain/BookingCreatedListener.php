@@ -9,9 +9,7 @@ use Throwable;
 
 class BookingCreatedListener
 {
-    public function __construct(private readonly RealtimeGateway $realtimeGateway)
-    {
-    }
+    public function __construct(private readonly RealtimeGateway $realtimeGateway) {}
 
     public function handle(BookingCreated $event): void
     {

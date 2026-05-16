@@ -19,7 +19,7 @@ class PaymentSeeder extends Seeder
         $userIds = \App\Models\User::orderBy('id')->pluck('id')->toArray();
 
         $payments = [];
-        if (!empty($bookingIds) && !empty($userIds)) {
+        if (! empty($bookingIds) && ! empty($userIds)) {
             $payments[] = [
                 'booking_id' => $bookingIds[0],
                 'user_id' => $userIds[0],
@@ -28,7 +28,7 @@ class PaymentSeeder extends Seeder
                 'driver_amount' => 45.00,
                 'currency' => 'RWF',
                 'payment_method' => 'mobile_money',
-                'transaction_id' => 'TXN-' . uniqid(),
+                'transaction_id' => 'TXN-'.uniqid(),
                 'status' => 'completed',
                 'payment_details' => json_encode(['provider' => 'MTN Mobile Money', 'phone' => '+250788000001']),
                 'paid_at' => now()->subHours(6),
@@ -42,7 +42,7 @@ class PaymentSeeder extends Seeder
                     'driver_amount' => 31.50,
                     'currency' => 'RWF',
                     'payment_method' => 'card',
-                    'transaction_id' => 'TXN-' . uniqid(),
+                    'transaction_id' => 'TXN-'.uniqid(),
                     'status' => 'pending',
                     'payment_details' => json_encode(['card_last4' => '4242', 'brand' => 'Visa']),
                 ];
@@ -56,7 +56,7 @@ class PaymentSeeder extends Seeder
                     'driver_amount' => 18.00,
                     'currency' => 'RWF',
                     'payment_method' => 'mobile_money',
-                    'transaction_id' => 'TXN-' . uniqid(),
+                    'transaction_id' => 'TXN-'.uniqid(),
                     'status' => 'completed',
                     'payment_details' => json_encode(['provider' => 'Airtel Money', 'phone' => '+250782000001']),
                     'paid_at' => now()->subHours(2),

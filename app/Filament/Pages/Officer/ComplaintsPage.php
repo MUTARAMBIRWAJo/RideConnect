@@ -30,7 +30,7 @@ class ComplaintsPage extends Page
         return 'Complaints & Tickets';
     }
 
-    public static function getNavigationIcon(): string | Htmlable | null
+    public static function getNavigationIcon(): string|Htmlable|null
     {
         return 'heroicon-o-exclamation-triangle';
     }
@@ -60,7 +60,7 @@ class ComplaintsPage extends Page
 
     private function loadComplaints(): void
     {
-        if (!Schema::hasTable('tickets')) {
+        if (! Schema::hasTable('tickets')) {
             return;
         }
 
@@ -84,7 +84,7 @@ class ComplaintsPage extends Page
 
     public function resolveComplaint(int $complaintId): void
     {
-        if (!auth()->user()->can('manage tickets')) {
+        if (! auth()->user()->can('manage tickets')) {
             abort(403);
         }
 
@@ -113,7 +113,7 @@ class ComplaintsPage extends Page
 
     public function markReviewed(int $complaintId): void
     {
-        if (!auth()->user()->can('manage tickets')) {
+        if (! auth()->user()->can('manage tickets')) {
             abort(403);
         }
 

@@ -42,7 +42,7 @@ class AIInsightsPage extends Page
         return 'AI Insights';
     }
 
-    public static function getNavigationIcon(): string | Htmlable | null
+    public static function getNavigationIcon(): string|Htmlable|null
     {
         return 'heroicon-o-light-bulb';
     }
@@ -136,7 +136,7 @@ class AIInsightsPage extends Page
                     'timestamp' => now()->toIso8601String(),
                 ];
                 $this->demandPredictionStatus = 'success';
-                
+
                 Log::info('Demand prediction loaded successfully', $this->mlDemandPrediction);
             } else {
                 Log::warning('Invalid demand prediction response', $response);

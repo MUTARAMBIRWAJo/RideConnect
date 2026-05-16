@@ -28,7 +28,7 @@ class RegisterRequest extends FormRequest
             'email' => ['required', 'string', 'email', 'max:255', 'unique:users,email'],
             'password' => ['required', 'string', 'confirmed', Password::defaults()],
             // Only allow passenger and driver via public API
-            'role' => ['required', 'string', 'in:' . implode(',', UserRole::mobileUserRoles())],
+            'role' => ['required', 'string', 'in:'.implode(',', UserRole::mobileUserRoles())],
             'phone' => ['required', 'string', 'max:20'],
         ];
     }
@@ -54,11 +54,11 @@ class RegisterRequest extends FormRequest
         $payload = [];
 
         // Support Flutter/mobile aliases.
-        if (!$this->filled('name') && $this->filled('full_name')) {
+        if (! $this->filled('name') && $this->filled('full_name')) {
             $payload['name'] = $this->input('full_name');
         }
 
-        if (!$this->filled('phone') && $this->filled('phone_number')) {
+        if (! $this->filled('phone') && $this->filled('phone_number')) {
             $payload['phone'] = $this->input('phone_number');
         }
 
@@ -67,7 +67,7 @@ class RegisterRequest extends FormRequest
             $payload['role'] = strtoupper((string) $this->input('role'));
         }
 
-        if (!empty($payload)) {
+        if (! empty($payload)) {
             $this->merge($payload);
         }
     }

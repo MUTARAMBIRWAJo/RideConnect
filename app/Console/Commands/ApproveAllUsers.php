@@ -4,11 +4,11 @@ namespace App\Console\Commands;
 
 use App\Models\User;
 use Illuminate\Console\Command;
-use Illuminate\Support\Facades\DB;
 
 class ApproveAllUsers extends Command
 {
     protected $signature = 'users:approve-all';
+
     protected $description = 'Approve all existing users in the database';
 
     public function handle(): int

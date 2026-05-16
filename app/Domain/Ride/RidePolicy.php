@@ -39,9 +39,6 @@ class RidePolicy
      * Determine if a ride can accept bookings.
      *
      * ONLY SCHEDULED rides can be booked.
-     *
-     * @param Ride $ride
-     * @return bool
      */
     public static function canBook(Ride $ride): bool
     {
@@ -56,9 +53,6 @@ class RidePolicy
      * Determine if a ride can accept trip requests.
      *
      * ONLY ON_DEMAND rides can accept trip requests.
-     *
-     * @param Ride $ride
-     * @return bool
      */
     public static function canRequestTrip(Ride $ride): bool
     {
@@ -74,12 +68,11 @@ class RidePolicy
      * - CAR (ON_DEMAND) → TRIP_ONLY
      * - MOTORCYCLE (ON_DEMAND) → TRIP_ONLY
      *
-     * @param Ride $ride
      * @return string One of: BOOKING_ONLY, TRIP_ONLY, BOTH, NONE
      */
     public static function getAllowedFlow(Ride $ride): string
     {
-        if (!$ride->transport_type || !$ride->travel_mode) {
+        if (! $ride->transport_type || ! $ride->travel_mode) {
             return self::FLOW_NONE;
         }
 
@@ -121,10 +114,6 @@ class RidePolicy
 
     /**
      * Check if a ride has available seats for reservation.
-     *
-     * @param Ride $ride
-     * @param int $seats
-     * @return bool
      */
     public static function canReserveSeats(Ride $ride, int $seats): bool
     {
@@ -142,14 +131,12 @@ class RidePolicy
      *
      * Throws DomainException if booking is not allowed.
      *
-     * @param Ride $ride
-     * @return void
      *
      * @throws DomainException
      */
     public static function assertBookingAllowed(Ride $ride): void
     {
-        if (!self::canBook($ride)) {
+        if (! self::canBook($ride)) {
             throw DomainException::make(
                 'Bookings are only allowed on SCHEDULED rides',
                 'BOOKING_NOT_ALLOWED_FOR_TRAVEL_MODE'
@@ -162,14 +149,12 @@ class RidePolicy
      *
      * Throws DomainException if trip requests are not allowed.
      *
-     * @param Ride $ride
-     * @return void
      *
      * @throws DomainException
      */
     public static function assertTripAllowed(Ride $ride): void
     {
-        if (!self::canRequestTrip($ride)) {
+        if (! self::canRequestTrip($ride)) {
             throw DomainException::make(
                 'Trip requests are only allowed on ON_DEMAND rides',
                 'TRIP_NOT_ALLOWED_FOR_TRAVEL_MODE'
@@ -182,8 +167,6 @@ class RidePolicy
      *
      * BUS rides must always be SCHEDULED and bound to a route.
      *
-     * @param Ride $ride
-     * @return void
      *
      * @throws DomainException
      */
@@ -213,9 +196,6 @@ class RidePolicy
      *
      * Throws DomainException if not enough seats.
      *
-     * @param Ride $ride
-     * @param int $seats
-     * @return void
      *
      * @throws DomainException
      */
@@ -223,7 +203,7 @@ class RidePolicy
     {
         self::assertSeatIntegrity($ride);
 
-        if (!self::canReserveSeats($ride, $seats)) {
+        if (! self::canReserveSeats($ride, $seats)) {
             throw DomainException::make(
                 sprintf(
                     'Insufficient seats. Requested %d but only %d available',
@@ -258,14 +238,12 @@ class RidePolicy
      * - MOTORCYCLE must be ON_DEMAND only
      * - CAR can be either SCHEDULED or ON_DEMAND
      *
-     * @param Ride $ride
-     * @return void
      * @throws DomainException
      */
     public static function assertTransportRules(Ride $ride): void
     {
         // BUS must be SCHEDULED
-        if ($ride->isBus() && !$ride->isScheduled()) {
+        if ($ride->isBus() && ! $ride->isScheduled()) {
             throw DomainException::make(
                 'BUS rides must use SCHEDULED travel mode',
                 'BUS_MUST_BE_SCHEDULED'
@@ -273,7 +251,7 @@ class RidePolicy
         }
 
         // MOTORCYCLE must be ON_DEMAND
-        if ($ride->isMotorcycle() && !$ride->isOnDemand()) {
+        if ($ride->isMotorcycle() && ! $ride->isOnDemand()) {
             throw DomainException::make(
                 'MOTORCYCLE rides must use ON_DEMAND travel mode',
                 'MOTORCYCLE_MUST_BE_ON_DEMAND'
@@ -282,18 +260,18 @@ class RidePolicy
 
         // Validate supported transport types
         $validTransports = [Ride::TRANSPORT_BUS, Ride::TRANSPORT_CAR, Ride::TRANSPORT_MOTORCYCLE];
-        if (!in_array($ride->transport_type, $validTransports, true)) {
+        if (! in_array($ride->transport_type, $validTransports, true)) {
             throw DomainException::make(
-                'Invalid transport type: ' . $ride->transport_type,
+                'Invalid transport type: '.$ride->transport_type,
                 'INVALID_TRANSPORT_TYPE'
             );
         }
 
         // Validate supported travel modes
         $validModes = [Ride::MODE_SCHEDULED, Ride::MODE_ON_DEMAND];
-        if (!in_array($ride->travel_mode, $validModes, true)) {
+        if (! in_array($ride->travel_mode, $validModes, true)) {
             throw DomainException::make(
-                'Invalid travel mode: ' . $ride->travel_mode,
+                'Invalid travel mode: '.$ride->travel_mode,
                 'INVALID_TRAVEL_MODE'
             );
         }
@@ -303,9 +281,6 @@ class RidePolicy
      * Get ride rules as an array for API responses.
      *
      * This is the contract that Flutter consumes to determine allowed actions.
-     *
-     * @param Ride $ride
-     * @return array
      */
     public static function toApiRules(Ride $ride): array
     {
@@ -321,16 +296,14 @@ class RidePolicy
     /**
      * Validate that ride_type is valid.
      *
-     * @param Ride $ride
-     * @return void
      *
      * @throws DomainException
      */
     public static function assertValidRideType(Ride $ride): void
     {
-        if (!in_array($ride->ride_type, [Ride::TYPE_INTERCITY, Ride::TYPE_LOCAL], true)) {
+        if (! in_array($ride->ride_type, [Ride::TYPE_INTERCITY, Ride::TYPE_LOCAL], true)) {
             throw DomainException::make(
-                'Invalid ride type: ' . $ride->ride_type,
+                'Invalid ride type: '.$ride->ride_type,
                 'INVALID_RIDE_TYPE'
             );
         }

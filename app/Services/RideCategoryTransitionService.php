@@ -68,8 +68,8 @@ class RideCategoryTransitionService
         // Ensure required locations are provided
         $pickupLocation = $payload['pickup_address'] ?? $ride->origin_address;
         $dropoffLocation = $payload['dropoff_address'] ?? $ride->destination_address;
-        
-        if (!$pickupLocation || !$dropoffLocation) {
+
+        if (! $pickupLocation || ! $dropoffLocation) {
             throw new \InvalidArgumentException('Pickup and dropoff locations are required for trip creation');
         }
 

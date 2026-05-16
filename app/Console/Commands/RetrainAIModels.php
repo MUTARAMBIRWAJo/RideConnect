@@ -25,12 +25,12 @@ class RetrainAIModels extends Command
             'requested_at' => now()->toIso8601String(),
         ]);
 
-        if (!($result['success'] ?? false)) {
+        if (! ($result['success'] ?? false)) {
             $this->finishTrainingRun($runId, 'failed', [
                 'error' => $result['error'] ?? 'unknown error',
                 'status' => $result['status'] ?? null,
             ]);
-            $this->error('Failed to trigger retraining: ' . ($result['error'] ?? 'unknown error'));
+            $this->error('Failed to trigger retraining: '.($result['error'] ?? 'unknown error'));
 
             return self::FAILURE;
         }

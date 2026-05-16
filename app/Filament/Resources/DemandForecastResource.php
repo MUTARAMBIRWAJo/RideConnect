@@ -3,19 +3,19 @@
 namespace App\Filament\Resources;
 
 use App\Enums\UserRole;
-use Filament\Resources\Resource;
 use App\Filament\Resources\DemandForecastResource\Pages;
-use Filament\Tables;
+use App\Models\Ride;
 use Filament\Forms;
 use Filament\Forms\Form;
-use Filament\Tables\Table;
-use Filament\Tables\Columns\TextColumn;
+use Filament\Resources\Resource;
+use Filament\Tables;
 use Filament\Tables\Columns\Summarizers\Average;
 use Filament\Tables\Columns\Summarizers\Count;
 use Filament\Tables\Columns\Summarizers\Sum;
+use Filament\Tables\Columns\TextColumn;
+use Filament\Tables\Table;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
-use App\Models\Ride;
 
 class DemandForecastResource extends Resource
 {
@@ -94,7 +94,7 @@ class DemandForecastResource extends Resource
                     }),
                 TextColumn::make('price_per_seat')
                     ->label('Avg Ticket Price')
-                    ->formatStateUsing(fn ($state, Ride $record): string => number_format((float) $state, 2) . ' ' . strtoupper((string) ($record->currency ?? 'RWF')))
+                    ->formatStateUsing(fn ($state, Ride $record): string => number_format((float) $state, 2).' '.strtoupper((string) ($record->currency ?? 'RWF')))
                     ->sortable()
                     ->summarize([
                         Average::make()->label('Avg ticket price')->numeric(decimalPlaces: 2),
@@ -102,7 +102,7 @@ class DemandForecastResource extends Resource
                 TextColumn::make('expected_revenue')
                     ->label('Projected Revenue')
                     ->state(fn (Ride $record): float => round(((float) $record->price_per_seat) * (int) $record->bookings_count, 2))
-                    ->formatStateUsing(fn ($state, Ride $record): string => number_format((float) $state, 2) . ' ' . strtoupper((string) ($record->currency ?? 'RWF'))),
+                    ->formatStateUsing(fn ($state, Ride $record): string => number_format((float) $state, 2).' '.strtoupper((string) ($record->currency ?? 'RWF'))),
             ])
             ->filters([
                 Tables\Filters\SelectFilter::make('status')

@@ -4,7 +4,6 @@ namespace Tests\Unit;
 
 use App\Models\TaxRule;
 use App\Modules\Tax\DTOs\TaxBreakdownDTO;
-use App\Modules\Tax\Repositories\TaxRuleRepository;
 use App\Modules\Tax\Services\TaxService;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\TestCase;
@@ -115,8 +114,8 @@ class TaxCalculationTest extends TestCase
     public function test_tax_breakdown_dto_serialises_to_json(): void
     {
         $breakdown = $this->taxService->calculateRideTax(100_000.0, 'RW');
-        $json      = $breakdown->toJson();
-        $decoded   = json_decode($json, true);
+        $json = $breakdown->toJson();
+        $decoded = json_decode($json, true);
 
         $this->assertArrayHasKey('total_tax', $decoded);
         $this->assertArrayHasKey('line_items', $decoded);
@@ -133,37 +132,37 @@ class TaxCalculationTest extends TestCase
 
         TaxRule::insert([
             [
-                'applies_to'     => 'ride',
-                'tax_name'       => 'Value Added Tax',
-                'percentage'     => 18.00,
-                'jurisdiction'   => 'RW',
-                'active'         => true,
+                'applies_to' => 'ride',
+                'tax_name' => 'Value Added Tax',
+                'percentage' => 18.00,
+                'jurisdiction' => 'RW',
+                'active' => true,
                 'effective_from' => '2024-01-01',
-                'effective_until'=> null,
-                'created_at'     => now(),
-                'updated_at'     => now(),
+                'effective_until' => null,
+                'created_at' => now(),
+                'updated_at' => now(),
             ],
             [
-                'applies_to'     => 'commission',
-                'tax_name'       => 'Withholding Tax on Commission',
-                'percentage'     => 15.00,
-                'jurisdiction'   => 'RW',
-                'active'         => true,
+                'applies_to' => 'commission',
+                'tax_name' => 'Withholding Tax on Commission',
+                'percentage' => 15.00,
+                'jurisdiction' => 'RW',
+                'active' => true,
                 'effective_from' => '2024-01-01',
-                'effective_until'=> null,
-                'created_at'     => now(),
-                'updated_at'     => now(),
+                'effective_until' => null,
+                'created_at' => now(),
+                'updated_at' => now(),
             ],
             [
-                'applies_to'     => 'payout',
-                'tax_name'       => 'Withholding Tax on Payout',
-                'percentage'     => 5.00,
-                'jurisdiction'   => 'RW',
-                'active'         => true,
+                'applies_to' => 'payout',
+                'tax_name' => 'Withholding Tax on Payout',
+                'percentage' => 5.00,
+                'jurisdiction' => 'RW',
+                'active' => true,
                 'effective_from' => '2024-01-01',
-                'effective_until'=> null,
-                'created_at'     => now(),
-                'updated_at'     => now(),
+                'effective_until' => null,
+                'created_at' => now(),
+                'updated_at' => now(),
             ],
         ]);
     }

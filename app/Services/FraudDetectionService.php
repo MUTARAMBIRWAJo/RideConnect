@@ -15,11 +15,16 @@ class FraudDetectionService
     // Thresholds
     // -----------------------------------------------------------------------
     const DUPLICATE_RIDE_INTERVAL_MINUTES = 30;
-    const SELF_BOOKING_THRESHOLD          = 3;   // bookings per 7 days
-    const FARE_SPIKE_MULTIPLIER           = 3.0; // >3x average
-    const MIDNIGHT_HOUR_START             = 0;
-    const MIDNIGHT_HOUR_END               = 4;
-    const ACCOUNTANT_RATE_LIMIT_PER_HOUR  = 50;
+
+    const SELF_BOOKING_THRESHOLD = 3;   // bookings per 7 days
+
+    const FARE_SPIKE_MULTIPLIER = 3.0; // >3x average
+
+    const MIDNIGHT_HOUR_START = 0;
+
+    const MIDNIGHT_HOUR_END = 4;
+
+    const ACCOUNTANT_RATE_LIMIT_PER_HOUR = 50;
 
     // -----------------------------------------------------------------------
     // Detection methods
@@ -51,7 +56,7 @@ class FraudDetectionService
         if ($isDuplicate) {
             $this->flag('driver', $driverId, 'Duplicate rides with identical route within 30 minutes', 'medium', [
                 'latest_ride_id' => $latest->id,
-                'detected_at'    => now()->toIso8601String(),
+                'detected_at' => now()->toIso8601String(),
             ]);
         }
 
@@ -71,8 +76,8 @@ class FraudDetectionService
 
         if ($count >= self::SELF_BOOKING_THRESHOLD) {
             $meta = ['passenger_id' => $passengerId, 'driver_id' => $driverId, 'booking_count' => $count];
-            $this->flag('driver',    $driverId,    "Repeated self-booking with passenger #{$passengerId} ({$count}x in 7 days)", 'medium', $meta);
-            $this->flag('passenger', $passengerId, "Repeated self-booking with driver #{$driverId} ({$count}x in 7 days)", 'low',    $meta);
+            $this->flag('driver', $driverId, "Repeated self-booking with passenger #{$passengerId} ({$count}x in 7 days)", 'medium', $meta);
+            $this->flag('passenger', $passengerId, "Repeated self-booking with driver #{$driverId} ({$count}x in 7 days)", 'low', $meta);
 
             return true;
         }
@@ -117,8 +122,8 @@ class FraudDetectionService
 
         if ($hour >= self::MIDNIGHT_HOUR_START && $hour < self::MIDNIGHT_HOUR_END) {
             $this->flag($entityType, $entityId, "Suspicious midnight activity: {$activity}", 'medium', [
-                'hour'        => $hour,
-                'activity'    => $activity,
+                'hour' => $hour,
+                'activity' => $activity,
                 'detected_at' => now()->toIso8601String(),
             ]);
 
@@ -141,9 +146,9 @@ class FraudDetectionService
 
         if ($count >= self::ACCOUNTANT_RATE_LIMIT_PER_HOUR) {
             Log::warning('Accountant payout rate limit exceeded', [
-                'accountant_id'          => $accountantId,
-                'payouts_in_last_hour'   => $count,
-                'limit'                  => self::ACCOUNTANT_RATE_LIMIT_PER_HOUR,
+                'accountant_id' => $accountantId,
+                'payouts_in_last_hour' => $count,
+                'limit' => self::ACCOUNTANT_RATE_LIMIT_PER_HOUR,
             ]);
 
             return true;
@@ -199,17 +204,17 @@ class FraudDetectionService
 
         return FraudFlag::create([
             'entity_type' => $entityType,
-            'entity_id'   => $entityId,
-            'reason'      => $reason,
-            'severity'    => $severity,
-            'resolved'    => false,
-            'metadata'    => $metadata ?: null,
+            'entity_id' => $entityId,
+            'reason' => $reason,
+            'severity' => $severity,
+            'resolved' => false,
+            'metadata' => $metadata ?: null,
         ]);
     }
 
     public function resolve(FraudFlag $flag, int $resolvedBy): FraudFlag
     {
-        $flag->resolved    = true;
+        $flag->resolved = true;
         $flag->resolved_by = $resolvedBy;
         $flag->resolved_at = now();
         $flag->save();

@@ -2,8 +2,8 @@
 
 namespace App\Providers;
 
-use Illuminate\Support\ServiceProvider;
 use App\Services\SupabaseClient;
+use Illuminate\Support\ServiceProvider;
 
 class SupabaseServiceProvider extends ServiceProvider
 {

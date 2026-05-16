@@ -8,7 +8,7 @@ return new class extends Migration
 {
     public function up(): void
     {
-        if (!Schema::hasTable('ride_requests')) {
+        if (! Schema::hasTable('ride_requests')) {
             Schema::create('ride_requests', function (Blueprint $table) {
                 $table->id();
                 $table->foreignId('trip_id')->nullable()->constrained('trips')->nullOnDelete();
@@ -25,7 +25,7 @@ return new class extends Migration
             });
         }
 
-        if (!Schema::hasTable('passenger_locations')) {
+        if (! Schema::hasTable('passenger_locations')) {
             Schema::create('passenger_locations', function (Blueprint $table) {
                 $table->id();
                 $table->foreignId('passenger_id')->constrained('mobile_users')->cascadeOnDelete();
@@ -37,7 +37,7 @@ return new class extends Migration
             });
         }
 
-        if (!Schema::hasTable('ride_events')) {
+        if (! Schema::hasTable('ride_events')) {
             Schema::create('ride_events', function (Blueprint $table) {
                 $table->id();
                 $table->foreignId('trip_id')->nullable()->constrained('trips')->nullOnDelete();
@@ -52,7 +52,7 @@ return new class extends Migration
             });
         }
 
-        if (!Schema::hasTable('ride_cancellations')) {
+        if (! Schema::hasTable('ride_cancellations')) {
             Schema::create('ride_cancellations', function (Blueprint $table) {
                 $table->id();
                 $table->foreignId('trip_id')->nullable()->constrained('trips')->nullOnDelete();
@@ -67,7 +67,7 @@ return new class extends Migration
             });
         }
 
-        if (!Schema::hasTable('traffic_events')) {
+        if (! Schema::hasTable('traffic_events')) {
             Schema::create('traffic_events', function (Blueprint $table) {
                 $table->id();
                 $table->decimal('latitude', 10, 7)->nullable();
@@ -82,7 +82,7 @@ return new class extends Migration
             });
         }
 
-        if (!Schema::hasTable('demand_logs')) {
+        if (! Schema::hasTable('demand_logs')) {
             Schema::create('demand_logs', function (Blueprint $table) {
                 $table->id();
                 $table->foreignId('trip_id')->nullable()->constrained('trips')->nullOnDelete();
@@ -96,7 +96,7 @@ return new class extends Migration
             });
         }
 
-        if (!Schema::hasTable('ai_prediction_logs')) {
+        if (! Schema::hasTable('ai_prediction_logs')) {
             Schema::create('ai_prediction_logs', function (Blueprint $table) {
                 $table->id();
                 $table->string('prediction_type', 60);
@@ -112,7 +112,7 @@ return new class extends Migration
             });
         }
 
-        if (!Schema::hasTable('ai_model_metrics')) {
+        if (! Schema::hasTable('ai_model_metrics')) {
             Schema::create('ai_model_metrics', function (Blueprint $table) {
                 $table->id();
                 $table->string('model_name', 120);

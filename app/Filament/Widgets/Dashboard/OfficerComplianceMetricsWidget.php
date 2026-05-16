@@ -6,13 +6,12 @@ use App\Filament\Support\RoleDashboardConfig;
 use App\Models\Driver;
 use App\Models\Ride;
 use Filament\Widgets\Widget;
-use Illuminate\Support\Facades\DB;
 
 class OfficerComplianceMetricsWidget extends Widget
 {
     protected static string $view = 'filament.widgets.dashboard.officer-compliance-metrics-widget';
 
-    protected int | string | array $columnSpan = [
+    protected int|string|array $columnSpan = [
         'default' => 1,
         'md' => 2,
     ];
@@ -30,6 +29,7 @@ class OfficerComplianceMetricsWidget extends Widget
     public static function canView(): bool
     {
         $user = auth()->user();
+
         return $user && (method_exists($user, 'can') && ($user->can('view rides') || $user->can('manage rides')));
     }
 

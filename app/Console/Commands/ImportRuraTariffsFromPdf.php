@@ -60,7 +60,7 @@ class ImportRuraTariffsFromPdf extends Command
 
         if ($text === '') {
             try {
-                $parser = new Parser();
+                $parser = new Parser;
                 $pdf = $parser->parseFile($path);
                 $text = $pdf->getText();
             } catch (\Throwable $e) {

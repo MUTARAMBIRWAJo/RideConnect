@@ -3,7 +3,6 @@
 namespace App\Services\EventSourcing;
 
 use App\Contracts\EventBusInterface;
-use App\Models\EventOutbox;
 use Illuminate\Support\Facades\Log;
 
 /**
@@ -19,7 +18,7 @@ class EventPublisherService
 {
     public function __construct(
         private readonly EventBusInterface $eventBus,
-        private readonly OutboxService     $outbox,
+        private readonly OutboxService $outbox,
     ) {}
 
     public function publishPending(int $batchSize = 100): array
@@ -40,9 +39,9 @@ class EventPublisherService
                 $results['failed']++;
 
                 Log::warning('EventPublisher: failed to publish outbox record', [
-                    'id'         => $record->id,
+                    'id' => $record->id,
                     'event_type' => $record->event_type,
-                    'error'      => $e->getMessage(),
+                    'error' => $e->getMessage(),
                 ]);
             }
         }

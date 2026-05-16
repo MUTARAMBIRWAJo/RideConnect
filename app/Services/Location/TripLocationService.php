@@ -9,13 +9,11 @@ use Illuminate\Support\Facades\Storage;
 
 class TripLocationService
 {
-    public function __construct(private readonly RealtimeGateway $realtimeGateway)
-    {
-    }
+    public function __construct(private readonly RealtimeGateway $realtimeGateway) {}
 
     private function cacheKey(int $tripId): string
     {
-        return 'trip_location:' . $tripId;
+        return 'trip_location:'.$tripId;
     }
 
     /**
@@ -35,7 +33,7 @@ class TripLocationService
         try {
             Storage::disk('local')->makeDirectory('trip-location-stream');
             Storage::disk('local')->append(
-                'trip-location-stream/' . $trip->id . '.jsonl',
+                'trip-location-stream/'.$trip->id.'.jsonl',
                 json_encode([
                     'trip_id' => $trip->id,
                     'current_lat' => $lat,

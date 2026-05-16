@@ -19,7 +19,7 @@ class ViewUser extends ViewRecord
                     ->label('Approve')
                     ->icon('heroicon-o-check')
                     ->color('success')
-                    ->visible(fn ($record): bool => !$record->is_approved)
+                    ->visible(fn ($record): bool => ! $record->is_approved)
                     ->requiresConfirmation()
                     ->action(function ($record) {
                         $record->update([
@@ -32,7 +32,7 @@ class ViewUser extends ViewRecord
                     ->label('Reject')
                     ->icon('heroicon-o-x-mark')
                     ->color('danger')
-                    ->visible(fn ($record): bool => !$record->is_approved)
+                    ->visible(fn ($record): bool => ! $record->is_approved)
                     ->requiresConfirmation()
                     ->action(function ($record) {
                         $record->update([

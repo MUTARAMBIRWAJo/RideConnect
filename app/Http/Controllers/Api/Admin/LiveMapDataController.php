@@ -40,7 +40,7 @@ class LiveMapDataController extends Controller
                         ->get(['id', 'user_id', 'current_latitude', 'current_longitude', 'status'])
                         ->map(fn (Driver $driver) => [
                             'id' => (int) $driver->id,
-                            'name' => (string) ($driver->user?->name ?? ('Driver #' . $driver->id)),
+                            'name' => (string) ($driver->user?->name ?? ('Driver #'.$driver->id)),
                             'latitude' => (float) $driver->current_latitude,
                             'longitude' => (float) $driver->current_longitude,
                             'status' => strtolower((string) ($driver->status ?? 'offline')),

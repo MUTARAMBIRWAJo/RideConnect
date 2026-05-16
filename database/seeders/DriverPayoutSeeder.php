@@ -21,6 +21,7 @@ class DriverPayoutSeeder extends Seeder
 
         if ($drivers->isEmpty()) {
             $this->command->warn('DriverPayoutSeeder: no drivers found, skipping.');
+
             return;
         }
 
@@ -45,9 +46,9 @@ class DriverPayoutSeeder extends Seeder
             foreach ($drivers as $idx => $driver) {
                 [$income, $rate] = $earningsMap[$idx] ?? [5000.00, 0.08];
                 // Vary amounts slightly by day
-                $income     = round($income * (0.85 + $idx * 0.05 + ($daysAgo % 3) * 0.1), 2);
+                $income = round($income * (0.85 + $idx * 0.05 + ($daysAgo % 3) * 0.1), 2);
                 $commission = round($income * $rate, 2);
-                $payout     = round($income - $commission, 2);
+                $payout = round($income - $commission, 2);
 
                 // Avoid duplicate (driver_id + payout_date unique constraint)
                 if (DriverPayout::where('driver_id', $driver->id)->whereDate('payout_date', $date)->exists()) {
@@ -55,14 +56,14 @@ class DriverPayoutSeeder extends Seeder
                 }
 
                 $payouts[] = DriverPayout::create([
-                    'driver_id'         => $driver->id,
-                    'payout_date'       => $date,
-                    'total_income'      => $income,
+                    'driver_id' => $driver->id,
+                    'payout_date' => $date,
+                    'total_income' => $income,
                     'commission_amount' => $commission,
-                    'payout_amount'     => $payout,
-                    'processed_by'      => $accountantId,
-                    'status'            => 'processed',
-                    'processed_at'      => Carbon::now()->subDays($daysAgo)->setTime(1, 0, 0),
+                    'payout_amount' => $payout,
+                    'processed_by' => $accountantId,
+                    'status' => 'processed',
+                    'processed_at' => Carbon::now()->subDays($daysAgo)->setTime(1, 0, 0),
                 ]);
             }
         }
@@ -70,22 +71,22 @@ class DriverPayoutSeeder extends Seeder
         // One pending payout for today (not yet processed)
         if ($drivers->isNotEmpty()) {
             $driver = $drivers->first();
-            $today  = Carbon::now()->toDateString();
+            $today = Carbon::now()->toDateString();
 
             if (! DriverPayout::where('driver_id', $driver->id)->whereDate('payout_date', $today)->exists()) {
-                $income     = 14500.00;
+                $income = 14500.00;
                 $commission = round($income * 0.08, 2);
-                $payout     = round($income - $commission, 2);
+                $payout = round($income - $commission, 2);
 
                 $payouts[] = DriverPayout::create([
-                    'driver_id'         => $driver->id,
-                    'payout_date'       => $today,
-                    'total_income'      => $income,
+                    'driver_id' => $driver->id,
+                    'payout_date' => $today,
+                    'total_income' => $income,
                     'commission_amount' => $commission,
-                    'payout_amount'     => $payout,
-                    'processed_by'      => null,
-                    'status'            => 'pending',
-                    'processed_at'      => null,
+                    'payout_amount' => $payout,
+                    'processed_by' => null,
+                    'status' => 'pending',
+                    'processed_at' => null,
                 ]);
             }
         }
@@ -98,25 +99,25 @@ class DriverPayoutSeeder extends Seeder
         if ($rideIds->isNotEmpty()) {
             foreach ($payouts as $payoutRecord) {
                 // Verify driver still exists before creating commissions
-                if (!Driver::where('id', $payoutRecord->driver_id)->exists()) {
+                if (! Driver::where('id', $payoutRecord->driver_id)->exists()) {
                     continue;
                 }
-                
+
                 $rideSample = $rideIds->random(min(2, $rideIds->count()));
-                $perRide    = round((float) $payoutRecord->commission_amount / max($rideSample->count(), 1), 2);
-                $date       = Carbon::parse($payoutRecord->payout_date)->toDateString();
+                $perRide = round((float) $payoutRecord->commission_amount / max($rideSample->count(), 1), 2);
+                $date = Carbon::parse($payoutRecord->payout_date)->toDateString();
 
                 foreach ($rideSample as $rideId) {
                     // Verify ride still exists before creating commission
-                    if (!Ride::where('id', $rideId)->exists()) {
+                    if (! Ride::where('id', $rideId)->exists()) {
                         continue;
                     }
-                    
+
                     PlatformCommission::updateOrCreate(
                         [
                             'driver_id' => $payoutRecord->driver_id,
-                            'ride_id'   => $rideId,
-                            'date'      => $date,
+                            'ride_id' => $rideId,
+                            'date' => $date,
                         ],
                         ['commission_amount' => $perRide]
                     );

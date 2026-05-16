@@ -10,11 +10,11 @@ class AIDemandHeatmapWidget extends Widget
 {
     protected static string $view = 'filament.widgets.ai-demand-heatmap-widget';
 
-    protected int | string | array $columnSpan = 1;
+    protected int|string|array $columnSpan = 1;
 
     protected function getViewData(): array
     {
-        if (!Schema::hasTable('demand_logs')) {
+        if (! Schema::hasTable('demand_logs')) {
             return ['zones' => collect()];
         }
 

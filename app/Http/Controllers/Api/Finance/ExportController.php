@@ -118,8 +118,7 @@ class ExportController extends Controller
     {
         $query = Payment::whereBetween('created_at', [$startDate, $endDate])
             ->with(['user', 'booking.ride'])
-            ->orderBy('created_at', 'desc')
-            ;
+            ->orderBy('created_at', 'desc');
 
         $this->applyBookingTypeFilter($query, $bookingType);
 
@@ -168,8 +167,8 @@ class ExportController extends Controller
                 'Date' => $row->date,
                 'Total Revenue' => $row->total_revenue,
                 'Transaction Count' => $row->transaction_count,
-                'Average Transaction' => $row->transaction_count > 0 
-                    ? $row->total_revenue / $row->transaction_count 
+                'Average Transaction' => $row->transaction_count > 0
+                    ? $row->total_revenue / $row->transaction_count
                     : 0,
             ];
         })->toArray();
@@ -276,17 +275,17 @@ class ExportController extends Controller
         }
 
         // Generate CSV content
-        $csv = implode(",", array_keys($data[0])) . "\n";
-        
+        $csv = implode(',', array_keys($data[0]))."\n";
+
         foreach ($data as $row) {
-            $csv .= implode(",", array_map(function ($value) {
-                return is_numeric($value) ? $value : '"' . str_replace('"', '""', $value) . '"';
-            }, $row)) . "\n";
+            $csv .= implode(',', array_map(function ($value) {
+                return is_numeric($value) ? $value : '"'.str_replace('"', '""', $value).'"';
+            }, $row))."\n";
         }
 
         // Store file
-        $filename = $type . '_' . now()->format('Y-m-d_His') . '.csv';
-        $path = 'exports/' . $filename;
+        $filename = $type.'_'.now()->format('Y-m-d_His').'.csv';
+        $path = 'exports/'.$filename;
         Storage::put($path, $csv);
 
         return [
@@ -302,16 +301,16 @@ class ExportController extends Controller
 
     private function generatePdfExport(array $data, string $type): array
     {
-        $filename = $type . '_' . now()->format('Y-m-d_His') . '.pdf';
-        $path = 'exports/' . $filename;
+        $filename = $type.'_'.now()->format('Y-m-d_His').'.pdf';
+        $path = 'exports/'.$filename;
 
-        $headers = !empty($data) ? array_keys($data[0]) : ['Message'];
-        $rows = !empty($data) ? $data : [['Message' => 'No data available for selected filters.']];
+        $headers = ! empty($data) ? array_keys($data[0]) : ['Message'];
+        $rows = ! empty($data) ? $data : [['Message' => 'No data available for selected filters.']];
 
-        $html = '<h2>Finance Export: ' . e($type) . '</h2><table border="1" cellpadding="6" cellspacing="0" width="100%"><thead><tr>';
+        $html = '<h2>Finance Export: '.e($type).'</h2><table border="1" cellpadding="6" cellspacing="0" width="100%"><thead><tr>';
 
         foreach ($headers as $header) {
-            $html .= '<th>' . e((string) $header) . '</th>';
+            $html .= '<th>'.e((string) $header).'</th>';
         }
 
         $html .= '</tr></thead><tbody>';
@@ -319,7 +318,7 @@ class ExportController extends Controller
         foreach ($rows as $row) {
             $html .= '<tr>';
             foreach ($headers as $header) {
-                $html .= '<td>' . e((string) ($row[$header] ?? '')) . '</td>';
+                $html .= '<td>'.e((string) ($row[$header] ?? '')).'</td>';
             }
             $html .= '</tr>';
         }

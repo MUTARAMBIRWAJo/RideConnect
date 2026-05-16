@@ -50,7 +50,7 @@ class OutboxService
     public function fetchPending(int $batchSize = 100): \Illuminate\Database\Eloquent\Collection
     {
         if (! Schema::hasTable('event_outbox')) {
-            return new \Illuminate\Database\Eloquent\Collection();
+            return new \Illuminate\Database\Eloquent\Collection;
         }
 
         return EventOutbox::where('status', 'pending')
@@ -63,7 +63,7 @@ class OutboxService
     public function markPublished(int $id): void
     {
         EventOutbox::where('id', $id)->update([
-            'status'       => 'published',
+            'status' => 'published',
             'published_at' => now(),
         ]);
     }
@@ -71,7 +71,7 @@ class OutboxService
     public function markFailed(int $id, string $error): void
     {
         EventOutbox::where('id', $id)->update([
-            'status'     => 'failed',
+            'status' => 'failed',
             'last_error' => $error,
         ]);
 

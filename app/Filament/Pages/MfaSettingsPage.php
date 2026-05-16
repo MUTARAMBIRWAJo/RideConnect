@@ -3,8 +3,6 @@
 namespace App\Filament\Pages;
 
 use App\Enums\UserRole;
-use App\Http\Controllers\MfaSetupController;
-use Filament\Facades\Filament;
 use Filament\Forms\Components\TextInput;
 use Filament\Forms\Concerns\InteractsWithForms;
 use Filament\Forms\Contracts\HasForms;
@@ -12,7 +10,6 @@ use Filament\Forms\Form;
 use Filament\Notifications\Notification;
 use Filament\Pages\Page;
 use Illuminate\Support\Facades\Auth;
-use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Session;
 
 class MfaSettingsPage extends Page implements HasForms
@@ -96,12 +93,13 @@ class MfaSettingsPage extends Page implements HasForms
     public function setupMfa(): void
     {
         $this->authorizeAccess();
-        
+
         if ($this->hasMfaEnabled) {
             Notification::make()
                 ->title('MFA already enabled')
                 ->warning()
                 ->send();
+
             return;
         }
 
@@ -118,6 +116,7 @@ class MfaSettingsPage extends Page implements HasForms
                 ->body('Please refresh the page and try again.')
                 ->warning()
                 ->send();
+
             return;
         }
 
@@ -130,11 +129,12 @@ class MfaSettingsPage extends Page implements HasForms
                 ->body('Please check the code and try again.')
                 ->warning()
                 ->send();
+
             return;
         }
 
         $backupCodes = collect(range(1, 10))
-            ->map(fn() => str()->random(8))
+            ->map(fn () => str()->random(8))
             ->toArray();
 
         $user->update([

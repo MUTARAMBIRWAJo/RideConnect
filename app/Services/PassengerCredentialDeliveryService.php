@@ -4,8 +4,8 @@ namespace App\Services;
 
 use App\Models\User;
 use Illuminate\Support\Facades\Http;
-use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Mail;
 use RuntimeException;
 use Throwable;
 
@@ -114,7 +114,7 @@ class PassengerCredentialDeliveryService
         }
 
         $this->sendViaTwilio([
-            'To' => 'whatsapp:' . $to,
+            'To' => 'whatsapp:'.$to,
             'From' => $from,
             'Body' => $this->buildMessage($user, $plainPassword),
         ]);
@@ -136,7 +136,7 @@ class PassengerCredentialDeliveryService
         if ($response->failed()) {
             $message = $response->json('message') ?: $response->body();
 
-            throw new RuntimeException('Twilio send failed: ' . $message);
+            throw new RuntimeException('Twilio send failed: '.$message);
         }
     }
 
@@ -158,7 +158,7 @@ class PassengerCredentialDeliveryService
 
         if (! str_starts_with($clean, '+')) {
             $defaultCountryCode = (string) config('services.twilio.default_country_code', '+250');
-            $clean = $defaultCountryCode . ltrim($clean, '0');
+            $clean = $defaultCountryCode.ltrim($clean, '0');
         }
 
         return $forWhatsApp ? str_replace('whatsapp:', '', $clean) : $clean;
@@ -195,7 +195,7 @@ class PassengerCredentialDeliveryService
                 ?? $response->json('message')
                 ?? $response->body();
 
-            throw new RuntimeException('Supabase magic link fallback failed: ' . $message);
+            throw new RuntimeException('Supabase magic link fallback failed: '.$message);
         }
 
         Log::info('Passenger credential delivery fell back to Supabase magic link.', [

@@ -10,9 +10,7 @@ use App\Models\User;
 
 class MobileNotificationService
 {
-    public function __construct(private readonly PushDeliveryBridge $pushDeliveryBridge)
-    {
-    }
+    public function __construct(private readonly PushDeliveryBridge $pushDeliveryBridge) {}
 
     public function sendRideRequestToDriver(Trip $trip, Driver $driver): ?Notification
     {

@@ -4,13 +4,13 @@ namespace App\Http\Controllers;
 
 use App\Enums\UserRole;
 use App\Models\User;
+use Filament\Facades\Filament;
 use Illuminate\Auth\Events\Registered;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Str;
 use Laravel\Socialite\Facades\Socialite;
-use Filament\Facades\Filament;
 
 class GoogleOAuthController extends Controller
 {
@@ -30,7 +30,8 @@ class GoogleOAuthController extends Controller
         try {
             $googleUser = Socialite::driver('google')->user();
         } catch (\Exception $e) {
-            \Log::error('Google OAuth error: ' . $e->getMessage());
+            \Log::error('Google OAuth error: '.$e->getMessage());
+
             return redirect()->route('auth.login')
                 ->with('error', 'Failed to authenticate with Google. Please try again.');
         }
@@ -38,7 +39,7 @@ class GoogleOAuthController extends Controller
         // Find or create user
         $user = User::where('email', $googleUser->getEmail())->first();
 
-        if (!$user) {
+        if (! $user) {
             // Create new user
             $user = User::create([
                 'name' => $googleUser->getName(),
@@ -56,12 +57,12 @@ class GoogleOAuthController extends Controller
                 ->with('info', 'Account created. Please contact administrator for approval.');
         } else {
             // Update existing user with Google ID
-            if (!$user->google_id) {
+            if (! $user->google_id) {
                 $user->update(['google_id' => $googleUser->getId()]);
             }
 
             // Check if approved
-            if (!$user->is_approved && !$user->isManager()) {
+            if (! $user->is_approved && ! $user->isManager()) {
                 return redirect()->route('auth.login')
                     ->with('error', 'Your account is pending approval. Please contact administrator.');
             }
@@ -107,15 +108,15 @@ class GoogleOAuthController extends Controller
     private function redirectAfterLogin(User $user): RedirectResponse
     {
         if ($user->isManager()) {
-            $panelPath = '/' . trim(Filament::getPanel('admin')->getPath(), '/');
-            
+            $panelPath = '/'.trim(Filament::getPanel('admin')->getPath(), '/');
+
             return redirect()->to(match ($user->role?->value) {
                 UserRole::SUPER_ADMIN->value => "{$panelPath}/super-dashboard",
                 UserRole::ADMIN->value => "{$panelPath}/admin-dashboard",
-                UserRole::ACCOUNTANT->value => '/' . trim(Filament::getPanel('accountant')->getPath(), '/'),
-                UserRole::OFFICER->value => '/' . trim(Filament::getPanel('officer')->getPath(), '/'),
+                UserRole::ACCOUNTANT->value => '/'.trim(Filament::getPanel('accountant')->getPath(), '/'),
+                UserRole::OFFICER->value => '/'.trim(Filament::getPanel('officer')->getPath(), '/'),
                 default => "{$panelPath}",
-            })->with('success', 'Welcome back, ' . $user->name . '!');
+            })->with('success', 'Welcome back, '.$user->name.'!');
         }
 
         return redirect()->to('/dashboard')->with('success', 'Welcome back!');

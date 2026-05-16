@@ -9,7 +9,7 @@ class AiInsightsWidget extends Widget
 {
     protected static string $view = 'filament.widgets.super-admin.ai-insights-widget';
 
-    protected int | string | array $columnSpan = 1;
+    protected int|string|array $columnSpan = 1;
 
     protected function getViewData(): array
     {

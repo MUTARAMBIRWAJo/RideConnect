@@ -12,12 +12,17 @@ use Filament\Pages\Page;
 
 class BiDashboard extends Page
 {
-    protected static ?string $navigationIcon  = 'heroicon-o-chart-bar';
+    protected static ?string $navigationIcon = 'heroicon-o-chart-bar';
+
     protected static ?string $navigationLabel = 'Analytics';
+
     protected static ?string $navigationGroup = 'AI & Analytics';
-    protected static ?string $title           = 'Business Intelligence Dashboard';
-    protected static ?int    $navigationSort  = 10;
-    protected static string  $view            = 'filament.pages.bi-dashboard';
+
+    protected static ?string $title = 'Business Intelligence Dashboard';
+
+    protected static ?int $navigationSort = 10;
+
+    protected static string $view = 'filament.pages.bi-dashboard';
 
     public static function canAccess(): bool
     {

@@ -34,8 +34,8 @@ class TripLocationServiceTest extends TestCase
         $this->assertSame(30.06, $current['current_lng']);
         $this->assertSame(['polyline' => 'abc'], $current['route_snapshot']);
 
-        $path = 'trip-location-stream/' . $trip->id . '.jsonl';
+        $path = 'trip-location-stream/'.$trip->id.'.jsonl';
         $this->assertTrue(Storage::disk('local')->exists($path));
-        $this->assertStringContainsString('"trip_id":' . $trip->id, Storage::disk('local')->get($path));
+        $this->assertStringContainsString('"trip_id":'.$trip->id, Storage::disk('local')->get($path));
     }
 }

@@ -6,11 +6,10 @@ declare(strict_types=1);
  * Fails when a Filament navigation group has an icon while one or more
  * resources/pages in that same group also define navigation icons.
  */
-
 $root = dirname(__DIR__);
 
-$panelProviderFiles = glob($root . '/app/Providers/Filament/*PanelProvider.php') ?: [];
-$filamentFiles = iterator_to_array(new RecursiveIteratorIterator(new RecursiveDirectoryIterator($root . '/app/Filament')));
+$panelProviderFiles = glob($root.'/app/Providers/Filament/*PanelProvider.php') ?: [];
+$filamentFiles = iterator_to_array(new RecursiveIteratorIterator(new RecursiveDirectoryIterator($root.'/app/Filament')));
 
 $groupIconsByProvider = [];
 
@@ -18,7 +17,7 @@ foreach ($panelProviderFiles as $providerFile) {
     $content = @file_get_contents($providerFile);
 
     if ($content === false) {
-        fwrite(STDERR, "Unable to read file: {$providerFile}" . PHP_EOL);
+        fwrite(STDERR, "Unable to read file: {$providerFile}".PHP_EOL);
         exit(2);
     }
 
@@ -49,7 +48,7 @@ foreach ($filamentFiles as $fileInfo) {
     $content = @file_get_contents($path);
 
     if ($content === false) {
-        fwrite(STDERR, "Unable to read file: {$path}" . PHP_EOL);
+        fwrite(STDERR, "Unable to read file: {$path}".PHP_EOL);
         exit(2);
     }
 
@@ -93,25 +92,25 @@ foreach ($groupIconsByProvider as $providerFile => $groups) {
 }
 
 if ($violations === []) {
-    echo "PASS: No Filament navigation icon conflicts detected." . PHP_EOL;
+    echo 'PASS: No Filament navigation icon conflicts detected.'.PHP_EOL;
     exit(0);
 }
 
-echo "FAIL: Filament navigation icon conflict(s) detected." . PHP_EOL;
+echo 'FAIL: Filament navigation icon conflict(s) detected.'.PHP_EOL;
 
 echo PHP_EOL;
 foreach ($violations as $violation) {
-    echo "Panel Provider: {$violation['provider']}" . PHP_EOL;
-    echo "Group: {$violation['group']} (group has icon)" . PHP_EOL;
-    echo "Items with icons in same group:" . PHP_EOL;
+    echo "Panel Provider: {$violation['provider']}".PHP_EOL;
+    echo "Group: {$violation['group']} (group has icon)".PHP_EOL;
+    echo 'Items with icons in same group:'.PHP_EOL;
 
     foreach ($violation['items'] as $item) {
-        echo "  - {$item}" . PHP_EOL;
+        echo "  - {$item}".PHP_EOL;
     }
 
     echo PHP_EOL;
 }
 
-echo "Fix by removing icons from either the group or its items." . PHP_EOL;
+echo 'Fix by removing icons from either the group or its items.'.PHP_EOL;
 
 exit(1);

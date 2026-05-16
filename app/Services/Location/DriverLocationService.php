@@ -12,13 +12,13 @@ use Illuminate\Support\Facades\Log;
 class DriverLocationService
 {
     private const ONLINE_TIMEOUT_MINUTES = 5;
+
     private const LOCATION_CACHE_TTL_MINUTES = 10;
 
     public function __construct(
         private readonly RealtimeGateway $realtimeGateway,
         private readonly MlAnomalyDetectionService $anomalyDetectionService,
-    ) {
-    }
+    ) {}
 
     /**
      * Update driver location with real-time data
@@ -104,10 +104,10 @@ class DriverLocationService
      */
     public function getNearbyDrivers(float $latitude, float $longitude, float $radiusKm = 5.0): array
     {
-        $drivers = DriverLocation::selectRaw("
+        $drivers = DriverLocation::selectRaw('
                 driver_locations.*,
                 (6371 * acos(cos(radians(?)) * cos(radians(latitude)) * cos(radians(longitude) - radians(?)) + sin(radians(?)) * sin(radians(latitude)))) AS distance_km
-            ", [$latitude, $longitude, $latitude])
+            ', [$latitude, $longitude, $latitude])
             ->where('is_online', true)
             ->having('distance_km', '<=', $radiusKm)
             ->orderBy('distance_km')

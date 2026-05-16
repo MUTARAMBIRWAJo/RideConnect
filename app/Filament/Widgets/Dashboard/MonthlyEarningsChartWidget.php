@@ -11,7 +11,7 @@ class MonthlyEarningsChartWidget extends ChartWidget
 {
     protected static ?string $heading = 'Monthly Earnings Chart';
 
-    protected int | string | array $columnSpan = 'full';
+    protected int|string|array $columnSpan = 'full';
 
     protected function getPollingInterval(): ?string
     {
@@ -25,7 +25,7 @@ class MonthlyEarningsChartWidget extends ChartWidget
         $labels = collect(range(5, 0))->map(fn (int $offset) => now()->subMonths($offset)->format('M'))->values();
         $labels->push(now()->format('M'));
 
-        if (!$table || !$amountColumn || !Schema::hasColumn($table, 'created_at')) {
+        if (! $table || ! $amountColumn || ! Schema::hasColumn($table, 'created_at')) {
             return [
                 'datasets' => [[
                     'label' => 'Earnings',
@@ -63,7 +63,7 @@ class MonthlyEarningsChartWidget extends ChartWidget
     private function resolveFinanceSource(): array
     {
         foreach (['payments_v2', 'payments'] as $table) {
-            if (!Schema::hasTable($table)) {
+            if (! Schema::hasTable($table)) {
                 continue;
             }
 

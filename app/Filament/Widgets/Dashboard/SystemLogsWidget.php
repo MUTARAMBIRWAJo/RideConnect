@@ -11,7 +11,7 @@ class SystemLogsWidget extends Widget
 {
     protected static string $view = 'filament.widgets.dashboard.system-logs-widget';
 
-    protected int | string | array $columnSpan = 'full';
+    protected int|string|array $columnSpan = 'full';
 
     public static function isLazy(): bool
     {
@@ -25,7 +25,7 @@ class SystemLogsWidget extends Widget
 
     protected function getViewData(): array
     {
-        if (!Schema::hasTable('activity_logs')) {
+        if (! Schema::hasTable('activity_logs')) {
             return ['logs' => collect()];
         }
 

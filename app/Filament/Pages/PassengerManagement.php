@@ -52,7 +52,7 @@ class PassengerManagement extends Page implements HasTable
                     ->state(function (MobileUser $record): string {
                         $count = Trip::query()->where('passenger_id', $record->id)->count();
 
-                        return number_format($count) . ' trips';
+                        return number_format($count).' trips';
                     }),
                 Tables\Columns\TextColumn::make('risk_flag')
                     ->label('Suspicious Behaviour')

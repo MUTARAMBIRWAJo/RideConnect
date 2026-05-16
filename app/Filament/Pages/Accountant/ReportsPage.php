@@ -47,7 +47,7 @@ class ReportsPage extends Page
         return 'Reports & Export';
     }
 
-    public static function getNavigationIcon(): string | Htmlable | null
+    public static function getNavigationIcon(): string|Htmlable|null
     {
         return 'heroicon-o-document-text';
     }
@@ -561,7 +561,7 @@ class ReportsPage extends Page
     }
 
     /**
-     * @param array<int, array<string, scalar|null>> $rows
+     * @param  array<int, array<string, scalar|null>>  $rows
      * @return array<int, string>
      */
     private function resolveHeaders(array $rows): array
@@ -654,9 +654,9 @@ class ReportsPage extends Page
     }
 
     /**
-     * @param array<int, string> $headers
-     * @param array<int, array<string, scalar|null>> $rows
-     * @param array<string, string> $meta
+     * @param  array<int, string>  $headers
+     * @param  array<int, array<string, scalar|null>>  $rows
+     * @param  array<string, string>  $meta
      */
     private function buildCsvContent(array $headers, array $rows, array $meta): string
     {
@@ -707,9 +707,9 @@ class ReportsPage extends Page
     }
 
     /**
-     * @param array<int, string> $headers
-     * @param array<int, array<string, scalar|null>> $rows
-     * @param array<string, string> $meta
+     * @param  array<int, string>  $headers
+     * @param  array<int, array<string, scalar|null>>  $rows
+     * @param  array<string, string>  $meta
      */
     private function buildPdfHtml(array $headers, array $rows, array $meta): string
     {
@@ -783,7 +783,7 @@ class ReportsPage extends Page
     }
 
     /**
-     * @param array{filename:string,file_path:string,disk:string,download_url:string,records:int} $result
+     * @param  array{filename:string,file_path:string,disk:string,download_url:string,records:int}  $result
      */
     private function sendExportNotifications(string $type, string $format, array $result): void
     {

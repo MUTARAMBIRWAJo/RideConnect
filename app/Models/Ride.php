@@ -16,7 +16,7 @@ class Ride extends Model
         parent::boot();
 
         static::creating(function ($ride) {
-            if (!$ride->ride_type) {
+            if (! $ride->ride_type) {
                 $ride->ride_type = self::TYPE_LOCAL;
             }
         });
@@ -28,15 +28,19 @@ class Ride extends Model
 
     // Transport type constants
     const TRANSPORT_BUS = 'BUS';
+
     const TRANSPORT_CAR = 'CAR';
+
     const TRANSPORT_MOTORCYCLE = 'MOTORCYCLE';
 
     // Travel mode constants
     const MODE_SCHEDULED = 'SCHEDULED';
+
     const MODE_ON_DEMAND = 'ON_DEMAND';
 
     // Ride type constants
     const TYPE_INTERCITY = 'INTERCITY';
+
     const TYPE_LOCAL = 'LOCAL';
 
     private const STATUS_MAP = [
@@ -166,8 +170,7 @@ class Ride extends Model
     /**
      * Check if a vehicle type is compatible with this ride's transport type.
      *
-     * @param string|null $vehicleType The vehicle type to check (e.g., 'sedan', 'van', 'motorbike')
-     * @return bool
+     * @param  string|null  $vehicleType  The vehicle type to check (e.g., 'sedan', 'van', 'motorbike')
      */
     public function isVehicleCompatible(?string $vehicleType): bool
     {
@@ -190,18 +193,18 @@ class Ride extends Model
      */
     public function validateTransportRules(): void
     {
-        if (!$this->ride_type) {
+        if (! $this->ride_type) {
             $this->ride_type = self::TYPE_LOCAL;
         }
 
         // Validate ride_type is valid
-        if (!in_array($this->ride_type, [self::TYPE_INTERCITY, self::TYPE_LOCAL], true)) {
+        if (! in_array($this->ride_type, [self::TYPE_INTERCITY, self::TYPE_LOCAL], true)) {
             throw new \InvalidArgumentException("Invalid ride type: {$this->ride_type}");
         }
 
         // BUS must be SCHEDULED
         if ($this->isBus() && ! $this->isScheduled()) {
-            throw new \InvalidArgumentException("BUS must be SCHEDULED");
+            throw new \InvalidArgumentException('BUS must be SCHEDULED');
         }
 
         if ($this->isBus()) {
@@ -214,7 +217,7 @@ class Ride extends Model
 
         // MOTORCYCLE must be ON_DEMAND
         if ($this->isMotorcycle() && ! $this->isOnDemand()) {
-            throw new \InvalidArgumentException("MOTORCYCLE must be ON_DEMAND");
+            throw new \InvalidArgumentException('MOTORCYCLE must be ON_DEMAND');
         }
 
         // CAR can be either SCHEDULED or ON_DEMAND - nothing to do
@@ -244,7 +247,7 @@ class Ride extends Model
 
     public function setRideTypeAttribute($value): void
     {
-        if ($value === null || !in_array($value, [self::TYPE_INTERCITY, self::TYPE_LOCAL], true)) {
+        if ($value === null || ! in_array($value, [self::TYPE_INTERCITY, self::TYPE_LOCAL], true)) {
             $this->attributes['ride_type'] = self::TYPE_LOCAL;
         } else {
             $this->attributes['ride_type'] = $value;

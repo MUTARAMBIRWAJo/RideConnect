@@ -20,13 +20,13 @@ class SeedDatabaseIfMissing extends Command
         $force = (bool) $this->option('force');
         $adoptExisting = filter_var((string) env('DB_SEED_ADOPT_EXISTING', 'true'), FILTER_VALIDATE_BOOL);
 
-        if (!$force && $this->hasMarker($marker)) {
+        if (! $force && $this->hasMarker($marker)) {
             $this->info(sprintf('Seed marker "%s" already exists; skipping database seeding.', $marker));
 
             return self::SUCCESS;
         }
 
-        if (!$force && $adoptExisting && $this->databaseLooksSeeded()) {
+        if (! $force && $adoptExisting && $this->databaseLooksSeeded()) {
             $this->recordMarker($marker, [
                 'mode' => 'adopt-existing',
                 'users' => $this->safeCount('users'),
@@ -64,7 +64,7 @@ class SeedDatabaseIfMissing extends Command
             return self::SUCCESS;
         } catch (\Throwable $e) {
             report($e);
-            $this->error('Database seeding failed: ' . $e->getMessage());
+            $this->error('Database seeding failed: '.$e->getMessage());
 
             return self::FAILURE;
         }
@@ -111,7 +111,7 @@ class SeedDatabaseIfMissing extends Command
     private function databaseLooksSeeded(): bool
     {
         foreach (['users', 'managers', 'mobile_users'] as $table) {
-            if (!Schema::hasTable($table)) {
+            if (! Schema::hasTable($table)) {
                 return false;
             }
         }

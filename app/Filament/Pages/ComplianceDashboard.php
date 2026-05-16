@@ -10,10 +10,8 @@ use App\Modules\Compliance\Services\ComplianceReportService;
 use Filament\Actions\Action;
 use Filament\Forms\Components\DatePicker;
 use Filament\Forms\Components\Select;
-use Filament\Forms\Form;
 use Filament\Notifications\Notification;
 use Filament\Pages\Page;
-use Filament\Tables\Columns\BadgeColumn;
 use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Concerns\InteractsWithTable;
 use Filament\Tables\Contracts\HasTable;
@@ -24,12 +22,17 @@ class ComplianceDashboard extends Page implements HasTable
 {
     use InteractsWithTable;
 
-    protected static ?string $navigationIcon  = 'heroicon-o-document-check';
+    protected static ?string $navigationIcon = 'heroicon-o-document-check';
+
     protected static ?string $navigationLabel = 'Compliance';
+
     protected static ?string $navigationGroup = 'AI & Analytics';
-    protected static ?string $title           = 'Compliance & Regulatory Reports';
-    protected static ?int    $navigationSort  = 11;
-    protected static string  $view            = 'filament.pages.compliance-dashboard';
+
+    protected static ?string $title = 'Compliance & Regulatory Reports';
+
+    protected static ?int $navigationSort = 11;
+
+    protected static string $view = 'filament.pages.compliance-dashboard';
 
     public static function canAccess(): bool
     {
@@ -78,12 +81,12 @@ class ComplianceDashboard extends Page implements HasTable
                 ])
                 ->action(function (array $data): void {
                     /** @var ComplianceReportService $svc */
-                    $svc    = app(ComplianceReportService::class);
-                    $dto    = new ComplianceReportDTO(
-                        reportType:  $data['report_type'],
-                        format:      $data['format'],
-                        periodFrom:  $data['period_from'],
-                        periodTo:    $data['period_to'],
+                    $svc = app(ComplianceReportService::class);
+                    $dto = new ComplianceReportDTO(
+                        reportType: $data['report_type'],
+                        format: $data['format'],
+                        periodFrom: $data['period_from'],
+                        periodTo: $data['period_to'],
                         requestedBy: auth()->id(),
                     );
                     $report = $svc->request($dto);
@@ -111,10 +114,10 @@ class ComplianceDashboard extends Page implements HasTable
                 TextColumn::make('format')->label('Format')->badge(),
                 TextColumn::make('status')->label('Status')->badge()
                     ->color(fn ($state) => match ($state) {
-                        'ready'   => 'success',
-                        'failed'  => 'danger',
+                        'ready' => 'success',
+                        'failed' => 'danger',
                         'pending' => 'warning',
-                        default   => 'gray',
+                        default => 'gray',
                     }),
                 TextColumn::make('period_from')->label('From')->date(),
                 TextColumn::make('period_to')->label('To')->date(),
@@ -128,6 +131,7 @@ class ComplianceDashboard extends Page implements HasTable
                     ->action(function (ComplianceReport $report) {
                         if (! $report->hasFile()) {
                             Notification::make()->danger()->title('File not found')->send();
+
                             return;
                         }
 

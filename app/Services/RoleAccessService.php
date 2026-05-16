@@ -3,13 +3,12 @@
 namespace App\Services;
 
 use App\Enums\UserRole;
-use App\Models\User;
 use App\Models\MobileUser;
-use App\Models\Manager;
+use App\Models\User;
 
 /**
  * Service for handling role-based access control
- * 
+ *
  * Access Rules:
  * - SuperAdmin: Can view all data from the User table
  * - Admin/Accountant/Officer (Managers): Can see their own data AND Mobile Users data
@@ -37,10 +36,9 @@ class RoleAccessService
 
     /**
      * Check if the current user can view specific user data
-     * 
-     * @param User $currentUser The authenticated user
-     * @param User $targetUser The user being viewed
-     * @return bool
+     *
+     * @param  User  $currentUser  The authenticated user
+     * @param  User  $targetUser  The user being viewed
      */
     public function canViewUser(User $currentUser, User $targetUser): bool
     {
@@ -60,10 +58,9 @@ class RoleAccessService
 
     /**
      * Check if the current user can view mobile user data
-     * 
-     * @param User $currentUser The authenticated user
-     * @param MobileUser $targetMobileUser The mobile user being viewed
-     * @return bool
+     *
+     * @param  User  $currentUser  The authenticated user
+     * @param  MobileUser  $targetMobileUser  The mobile user being viewed
      */
     public function canViewMobileUser(User $currentUser, MobileUser $targetMobileUser): bool
     {
@@ -83,7 +80,7 @@ class RoleAccessService
 
     /**
      * Check if the current user can view driver info
-     * 
+     *
      * Rules:
      * - SuperAdmin: Can view all driver info
      * - Managers: Can view all driver info
@@ -103,7 +100,7 @@ class RoleAccessService
         }
 
         // Passengers can only view limited info
-        if ($currentUser->role === UserRole::PASSENGER && !$isFullInfo) {
+        if ($currentUser->role === UserRole::PASSENGER && ! $isFullInfo) {
             return true;
         }
 
@@ -112,15 +109,15 @@ class RoleAccessService
 
     /**
      * Get visible driver fields based on user role
-     * 
-     * @param User $currentUser The authenticated user
+     *
+     * @param  User  $currentUser  The authenticated user
      * @return array Fields that are visible
      */
     public function getVisibleDriverFields(User $currentUser): array
     {
         // Full info for Super Admin, Managers, and Drivers
-        if ($this->canViewAllUsers($currentUser) || 
-            $this->canViewMobileUsers($currentUser) || 
+        if ($this->canViewAllUsers($currentUser) ||
+            $this->canViewMobileUsers($currentUser) ||
             $currentUser->role === UserRole::DRIVER) {
             return ['*']; // All fields
         }
@@ -139,7 +136,7 @@ class RoleAccessService
 
     /**
      * Check if the current user can view passenger info
-     * 
+     *
      * Rules:
      * - SuperAdmin: Can view all passenger info
      * - Managers: Can view all passenger info
@@ -176,8 +173,8 @@ class RoleAccessService
 
     /**
      * Get accessible user IDs for the current user
-     * 
-     * @param User $currentUser The authenticated user
+     *
+     * @param  User  $currentUser  The authenticated user
      * @return array IDs that the user can access
      */
     public function getAccessibleUserIds(User $currentUser): array
@@ -190,6 +187,7 @@ class RoleAccessService
         // Managers can access mobile users and themselves
         if ($this->canViewMobileUsers($currentUser)) {
             $mobileUserIds = MobileUser::pluck('id')->toArray();
+
             return array_merge([$currentUser->id], $mobileUserIds);
         }
 
@@ -199,9 +197,8 @@ class RoleAccessService
 
     /**
      * Filter query based on user role
-     * 
-     * @param \Illuminate\Database\Eloquent\Builder $query
-     * @param User $currentUser
+     *
+     * @param  \Illuminate\Database\Eloquent\Builder  $query
      * @return \Illuminate\Database\Eloquent\Builder
      */
     public function filterUserQuery($query, User $currentUser)
@@ -214,7 +211,7 @@ class RoleAccessService
         // Managers can see mobile users
         if ($this->canViewMobileUsers($currentUser)) {
             return $query->whereIn('role', UserRole::mobileUserRoles())
-                        ->orWhere('id', $currentUser->id);
+                ->orWhere('id', $currentUser->id);
         }
 
         // Mobile Users can only see themselves

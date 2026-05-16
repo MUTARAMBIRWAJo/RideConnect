@@ -11,12 +11,12 @@ return new class extends Migration
      */
     public function up(): void
     {
-        if (!Schema::hasTable('driver_locations')) {
+        if (! Schema::hasTable('driver_locations')) {
             return;
         }
 
         Schema::table('driver_locations', function (Blueprint $table) {
-            if (!Schema::hasColumn('driver_locations', 'updated_at')) {
+            if (! Schema::hasColumn('driver_locations', 'updated_at')) {
                 $table->timestamp('updated_at')->nullable();
             }
         });
@@ -32,7 +32,7 @@ return new class extends Migration
      */
     public function down(): void
     {
-        if (!Schema::hasTable('driver_locations')) {
+        if (! Schema::hasTable('driver_locations')) {
             return;
         }
 

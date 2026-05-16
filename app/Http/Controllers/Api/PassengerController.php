@@ -6,8 +6,8 @@ use App\Http\Controllers\Controller;
 use App\Models\Corridor;
 use App\Models\Driver;
 use App\Models\MobileUser;
-use App\Models\Trip;
 use App\Models\TransportRoute;
+use App\Models\Trip;
 use App\Models\User;
 use App\Services\MobileNotificationService;
 use Illuminate\Http\JsonResponse;
@@ -18,9 +18,7 @@ class PassengerController extends Controller
 {
     private const TICKET_THRESHOLD_HOURS = 6;
 
-    public function __construct(private readonly MobileNotificationService $mobileNotificationService)
-    {
-    }
+    public function __construct(private readonly MobileNotificationService $mobileNotificationService) {}
 
     /**
      * Get passenger profile.
@@ -28,15 +26,15 @@ class PassengerController extends Controller
     public function profile(Request $request): JsonResponse
     {
         $user = $request->user();
-        
+
         // Check if user is a passenger
-        if (!$user->isPassenger()) {
+        if (! $user->isPassenger()) {
             return response()->json([
                 'success' => false,
                 'message' => 'Only passengers can access this resource',
             ], 403);
         }
-        
+
         return response()->json([
             'success' => true,
             'data' => [
@@ -58,22 +56,22 @@ class PassengerController extends Controller
     public function updateProfile(Request $request): JsonResponse
     {
         $user = $request->user();
-        
+
         // Check if user is a passenger
-        if (!$user->isPassenger()) {
+        if (! $user->isPassenger()) {
             return response()->json([
                 'success' => false,
                 'message' => 'Only passengers can access this resource',
             ], 403);
         }
-        
+
         $validated = $request->validate([
             'name' => 'sometimes|string|max:255',
             'phone' => 'sometimes|string|max:20',
         ]);
-        
+
         $user->update($validated);
-        
+
         return response()->json([
             'success' => true,
             'message' => 'Profile updated successfully',
@@ -92,20 +90,20 @@ class PassengerController extends Controller
     public function stats(Request $request): JsonResponse
     {
         $user = $request->user();
-        
+
         // Get booking stats
         $totalBookings = $user->bookings()->count();
         $completedBookings = $user->bookings()->where('status', 'COMPLETED')->count();
         $cancelledBookings = $user->bookings()->where('status', 'CANCELLED')->count();
-        
+
         // Get trip stats
         $totalTrips = $user->tripsAsPassenger()->count();
-        
+
         // Calculate total spent
         $totalSpent = $user->bookings()
             ->where('status', '!=', 'CANCELLED')
             ->sum('total_price');
-        
+
         return response()->json([
             'success' => true,
             'data' => [
@@ -125,23 +123,23 @@ class PassengerController extends Controller
     public function rideHistory(Request $request): JsonResponse
     {
         $user = $request->user();
-        
-        if (!$user->isPassenger()) {
+
+        if (! $user->isPassenger()) {
             return response()->json([
                 'success' => false,
                 'message' => 'Only passengers can access ride history',
             ], 403);
         }
-        
+
         $query = $user->bookings()
             ->with(['ride.driver.user', 'ride.vehicle'])
             ->orderBy('created_at', 'desc');
-        
+
         // Filter by status
         if ($request->has('status')) {
             $query->where('status', $request->status);
         }
-        
+
         // Filter by date range
         if ($request->has('start_date')) {
             $query->whereDate('created_at', '>=', $request->start_date);
@@ -149,13 +147,13 @@ class PassengerController extends Controller
         if ($request->has('end_date')) {
             $query->whereDate('created_at', '<=', $request->end_date);
         }
-        
+
         $perPage = $request->get('per_page', 15);
         $bookings = $query->paginate($perPage);
-        
+
         return response()->json([
             'success' => true,
-            'data' => $bookings->map(fn($booking) => [
+            'data' => $bookings->map(fn ($booking) => [
                 'hours_to_departure' => $booking->ride?->departure_time
                     ? round(now()->diffInMinutes($booking->ride->departure_time, false) / 60, 2)
                     : null,

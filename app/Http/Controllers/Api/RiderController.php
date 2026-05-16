@@ -2,29 +2,24 @@
 
 namespace App\Http\Controllers\Api;
 
-use App\Http\Controllers\Controller;
-use App\Models\Driver;
-use App\Models\Ride;
-use App\Models\Trip;
-use App\Models\Payment;
-use App\Models\DriverDocument;
 use App\Domain\Driver\DriverPolicy;
 use App\Exceptions\DomainException;
+use App\Http\Controllers\Controller;
+use App\Models\Driver;
+use App\Models\DriverDocument;
+use App\Models\Ride;
+use App\Models\Trip;
 use App\Services\MobileNotificationService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\DB;
-use Illuminate\Support\Facades\Storage;
 
 class RiderController extends Controller
 {
-    public function __construct(private readonly MobileNotificationService $mobileNotificationService)
-    {
-    }
+    public function __construct(private readonly MobileNotificationService $mobileNotificationService) {}
 
     /**
      * Update rider availability status.
-        * PUT /api/v1/driver/status
+     * PUT /api/v1/driver/status
      */
     public function updateStatus(Request $request): JsonResponse
     {
@@ -46,7 +41,7 @@ class RiderController extends Controller
 
         $driver = $user->driver;
 
-        if (!$driver) {
+        if (! $driver) {
             return response()->json([
                 'success' => false,
                 'message' => 'Driver profile not found',
@@ -90,7 +85,7 @@ class RiderController extends Controller
 
         $driver = $user->driver;
 
-        if (!$driver) {
+        if (! $driver) {
             return response()->json([
                 'success' => false,
                 'message' => 'Driver profile not found',
@@ -110,7 +105,7 @@ class RiderController extends Controller
 
         return response()->json([
             'success' => true,
-            'data' => $requests->map(fn($trip) => [
+            'data' => $requests->map(fn ($trip) => [
                 'id' => $trip->id,
                 'passenger' => [
                     'id' => $trip->passenger?->user?->id,
@@ -149,7 +144,7 @@ class RiderController extends Controller
 
         $driver = $user->driver;
 
-        if (!$driver) {
+        if (! $driver) {
             return response()->json([
                 'success' => false,
                 'message' => 'Driver profile not found',
@@ -280,7 +275,7 @@ class RiderController extends Controller
 
         $driver = $user->driver;
 
-        if (!$driver) {
+        if (! $driver) {
             return response()->json([
                 'success' => false,
                 'message' => 'Driver profile not found',
@@ -298,7 +293,7 @@ class RiderController extends Controller
 
         $trip = Trip::where('driver_id', $driver->id)->findOrFail($id);
 
-        if (!in_array($trip->status, ['ACCEPTED', 'STARTED'])) {
+        if (! in_array($trip->status, ['ACCEPTED', 'STARTED'])) {
             return response()->json([
                 'success' => false,
                 'message' => 'Cannot complete this trip in current status',
@@ -353,7 +348,7 @@ class RiderController extends Controller
 
         $driver = $user->driver;
 
-        if (!$driver) {
+        if (! $driver) {
             return response()->json([
                 'success' => false,
                 'message' => 'Driver profile not found',
@@ -399,7 +394,7 @@ class RiderController extends Controller
                 'average_fare' => round($averageFare, 2),
                 'today_earnings' => $todayEarnings,
                 'pending_payments' => $pendingPayments,
-                    'currency' => 'RWF',
+                'currency' => 'RWF',
             ],
         ]);
     }
@@ -421,7 +416,7 @@ class RiderController extends Controller
 
         $driver = $user->driver;
 
-        if (!$driver) {
+        if (! $driver) {
             return response()->json([
                 'success' => false,
                 'message' => 'Driver profile not found',
@@ -476,7 +471,7 @@ class RiderController extends Controller
 
         $driver = $user->driver;
 
-        if (!$driver) {
+        if (! $driver) {
             return response()->json([
                 'success' => false,
                 'message' => 'Driver profile not found',
@@ -491,7 +486,7 @@ class RiderController extends Controller
         ]);
 
         // Store document
-        $path = $request->file('document')->store('driver_documents/' . $driver->id, 'public');
+        $path = $request->file('document')->store('driver_documents/'.$driver->id, 'public');
 
         $document = DriverDocument::create([
             'driver_id' => $driver->id,
@@ -531,7 +526,7 @@ class RiderController extends Controller
 
         $driver = $user->driver;
 
-        if (!$driver) {
+        if (! $driver) {
             return response()->json([
                 'success' => false,
                 'message' => 'Driver profile not found',
@@ -544,7 +539,7 @@ class RiderController extends Controller
 
         return response()->json([
             'success' => true,
-            'data' => $documents->map(fn($doc) => [
+            'data' => $documents->map(fn ($doc) => [
                 'id' => $doc->id,
                 'document_type' => $doc->document_type,
                 'status' => $doc->status,

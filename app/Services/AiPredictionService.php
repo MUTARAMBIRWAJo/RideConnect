@@ -9,27 +9,29 @@ use Illuminate\Support\Facades\Log;
 class AiPredictionService
 {
     private $client;
+
     private $apiKey;
+
     private $baseUrl;
 
     public function __construct()
     {
         // Use the deployed ML service URL first, but tolerate stale cached config values.
-        $configuredUrl = config('services.ml_service.url') 
+        $configuredUrl = config('services.ml_service.url')
             ?: config('services.ai_service.url', 'https://ml-service-j72g.onrender.com');
 
-        if (empty($configuredUrl) || !str_contains($configuredUrl, 'ml-service-j72g.onrender.com')) {
+        if (empty($configuredUrl) || ! str_contains($configuredUrl, 'ml-service-j72g.onrender.com')) {
             $configuredUrl = 'https://ml-service-j72g.onrender.com';
         }
 
         $this->baseUrl = $configuredUrl;
-        $this->apiKey = config('services.ml_service.api_key') 
+        $this->apiKey = config('services.ml_service.api_key')
             ?: config('services.ai_service.key');
-        
+
         $this->client = new Client([
             'base_uri' => rtrim($this->baseUrl, '/'),
-            'timeout'  => config('services.ml_service.timeout', 10.0),
-            'verify'   => false, // Allow self-signed certs for development
+            'timeout' => config('services.ml_service.timeout', 10.0),
+            'verify' => false, // Allow self-signed certs for development
         ]);
     }
 
@@ -59,7 +61,7 @@ class AiPredictionService
 
     /**
      * Predict demand for a location
-     * 
+     *
      * Request format:
      * {
      *   "latitude": -1.9441,
@@ -67,7 +69,7 @@ class AiPredictionService
      *   "hour": 14,
      *   "day_of_week": 2
      * }
-     * 
+     *
      * Response format:
      * {
      *   "demand_level": 0.75,
@@ -88,11 +90,11 @@ class AiPredictionService
             'hour' => (int) ($payload['hour'] ?? $payload['time_of_day'] ?? now()->hour),
             'day_of_week' => (int) ($payload['day_of_week'] ?? now()->dayOfWeek),
         ]);
-        
+
         Log::debug('ML service demand prediction response', [
             'response' => $response,
         ]);
-        
+
         return $response;
     }
 
@@ -106,7 +108,7 @@ class AiPredictionService
 
     /**
      * Match driver to ride
-     * 
+     *
      * Request format:
      * {
      *   "ride_request": {...},
@@ -126,9 +128,9 @@ class AiPredictionService
         try {
             $response = $this->client->get('/health');
             $data = json_decode($response->getBody()->getContents(), true);
-            
+
             Log::info('ML service health check successful', $data);
-            
+
             return [
                 'success' => true,
                 'status' => 'healthy',
@@ -139,7 +141,7 @@ class AiPredictionService
                 'error' => $e->getMessage(),
                 'url' => $this->baseUrl,
             ]);
-            
+
             return [
                 'success' => false,
                 'status' => 'unhealthy',
@@ -159,11 +161,11 @@ class AiPredictionService
                 'Content-Type' => 'application/json',
             ];
 
-            if (!empty($this->apiKey)) {
+            if (! empty($this->apiKey)) {
                 $headers['X-API-Key'] = $this->apiKey;
             }
 
-            Log::debug("ML Service POST Request", [
+            Log::debug('ML Service POST Request', [
                 'uri' => $uri,
                 'baseUrl' => $this->baseUrl,
                 'payload' => $payload,
@@ -173,34 +175,34 @@ class AiPredictionService
                 'headers' => $headers,
                 'json' => $payload,
             ]);
-            
+
             $body = json_decode($response->getBody()->getContents(), true);
-            
-            Log::debug("ML Service POST Response", [
+
+            Log::debug('ML Service POST Response', [
                 'uri' => $uri,
                 'status' => $response->getStatusCode(),
                 'body' => $body,
             ]);
-            
+
             return $body;
         } catch (RequestException $e) {
             $error_message = $e->getMessage();
             $status_code = $e->getResponse()?->getStatusCode() ?? 502;
-            
+
             try {
                 $error_body = json_decode($e->getResponse()?->getBody(), true);
                 $error_message = $error_body['detail'] ?? $error_message;
             } catch (\Exception $parseError) {
                 // Response body is not JSON
             }
-            
+
             Log::error('ML Service error', [
                 'uri' => $uri,
                 'status' => $status_code,
                 'error' => $error_message,
                 'exception' => $e->getMessage(),
             ]);
-            
+
             return [
                 'success' => false,
                 'error' => $error_message,

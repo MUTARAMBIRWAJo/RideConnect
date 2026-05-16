@@ -8,10 +8,15 @@ use App\Models\Trip;
 class TripStateMachine
 {
     public const REQUESTED = 'REQUESTED';
+
     public const MATCHED = 'MATCHED';
+
     public const ACCEPTED = 'ACCEPTED';
+
     public const STARTED = 'STARTED';
+
     public const COMPLETED = 'COMPLETED';
+
     public const CANCELLED = 'CANCELLED';
 
     /**
@@ -47,7 +52,7 @@ class TripStateMachine
 
     public static function assertTransition(string $from, string $to): void
     {
-        if (!self::canTransition($from, $to)) {
+        if (! self::canTransition($from, $to)) {
             throw DomainException::make(
                 sprintf('Invalid trip state transition: %s -> %s', self::normalize($from), self::normalize($to)),
                 'INVALID_TRIP_STATE_TRANSITION'

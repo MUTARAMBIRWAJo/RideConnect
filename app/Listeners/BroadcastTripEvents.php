@@ -12,25 +12,26 @@ use Throwable;
 
 class BroadcastTripEvents
 {
-    public function __construct(private readonly RealtimeGateway $realtimeGateway)
-    {
-    }
+    public function __construct(private readonly RealtimeGateway $realtimeGateway) {}
 
     public function handle(object $event): void
     {
         try {
             if ($event instanceof TripMatched) {
                 $this->handleTripMatched($event);
+
                 return;
             }
 
             if ($event instanceof TripStarted) {
                 $this->handleTripStarted($event);
+
                 return;
             }
 
             if ($event instanceof TripCompleted) {
                 $this->handleTripCompleted($event);
+
                 return;
             }
         } catch (Throwable $throwable) {

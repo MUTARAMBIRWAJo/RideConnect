@@ -16,7 +16,7 @@ class TripFactory extends Factory
     public function definition(): array
     {
         $requestedAt = $this->faker->dateTimeBetween('-7 days', 'now');
-        
+
         return [
             'passenger_id' => MobileUser::factory(),
             'driver_id' => null,
@@ -52,6 +52,7 @@ class TripFactory extends Factory
     public function pending(): static
     {
         $requestedAt = now();
+
         return $this->state(fn (array $attributes) => [
             'status' => 'pending',
             'requested_at' => $requestedAt,
@@ -68,6 +69,7 @@ class TripFactory extends Factory
     public function inProgress(): static
     {
         $requestedAt = now()->subHours(1);
+
         return $this->state(fn (array $attributes) => [
             'status' => 'in_progress',
             'requested_at' => $requestedAt,
@@ -84,6 +86,7 @@ class TripFactory extends Factory
     public function cancelled(): static
     {
         $requestedAt = now()->subHours(2);
+
         return $this->state(fn (array $attributes) => [
             'status' => 'cancelled',
             'requested_at' => $requestedAt,

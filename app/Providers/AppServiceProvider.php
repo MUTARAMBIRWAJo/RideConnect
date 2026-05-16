@@ -2,39 +2,37 @@
 
 namespace App\Providers;
 
-use App\Models\Trip;
-use App\Observers\TripObserver;
-
-use App\Models\User;
-use App\Models\MobileUser;
-use App\Models\Manager;
-use App\Models\Ride;
-use App\Policies\UserPolicy;
-use App\Policies\MobileUserPolicy;
-use App\Policies\ManagerPolicy;
-use App\Policies\RidePolicy;
-use App\Policies\TripPolicy;
-use App\Policies\RolePolicy;
-use App\Policies\PermissionPolicy;
-use App\Policies\DriverPayoutPolicy;
-use App\Policies\FraudFlagPolicy;
-use App\Policies\LedgerPolicy;
+use App\Auth\SafeEloquentUserProvider;
 use App\Domain\Core\DomainEventRegistry;
-use App\Services\RoleAccessService;
-use Illuminate\Support\ServiceProvider;
-use Illuminate\Support\Facades\Gate;
-use Illuminate\Support\Facades\Auth;
-use Illuminate\Support\Facades\Event;
-use Spatie\Permission\Models\Permission;
-use Spatie\Permission\Models\Role;
 use App\Models\DriverPayout;
 use App\Models\FraudFlag;
 use App\Models\LedgerEntry;
+use App\Models\Manager;
+use App\Models\MobileUser;
+use App\Models\Ride;
+use App\Models\Trip;
+use App\Models\User;
+use App\Observers\TripObserver;
+use App\Policies\DriverPayoutPolicy;
+use App\Policies\FraudFlagPolicy;
+use App\Policies\LedgerPolicy;
+use App\Policies\ManagerPolicy;
+use App\Policies\MobileUserPolicy;
+use App\Policies\PermissionPolicy;
+use App\Policies\RidePolicy;
+use App\Policies\RolePolicy;
+use App\Policies\TripPolicy;
+use App\Policies\UserPolicy;
+use App\Services\RoleAccessService;
+use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Event;
+use Illuminate\Support\Facades\Gate;
 use Illuminate\Support\Facades\URL;
-
+use Illuminate\Support\ServiceProvider;
+use Spatie\Permission\Models\Permission;
 // Register SafeEloquentUserProvider class
-use App\Auth\SafeEloquentUserProvider;
+use Spatie\Permission\Models\Role;
 
 class AppServiceProvider extends ServiceProvider
 {
@@ -45,7 +43,7 @@ class AppServiceProvider extends ServiceProvider
     {
         // Register the RoleAccessService as a singleton
         $this->app->singleton(RoleAccessService::class, function ($app) {
-            return new RoleAccessService();
+            return new RoleAccessService;
         });
     }
 

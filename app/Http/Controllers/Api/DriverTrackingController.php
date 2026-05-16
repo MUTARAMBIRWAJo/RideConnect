@@ -25,7 +25,7 @@ class DriverTrackingController extends Controller
     {
         $location = $this->driverLocationService->getCurrentLocation($driverId);
 
-        if (!$location) {
+        if (! $location) {
             return response()->json([
                 'success' => false,
                 'message' => 'Driver location not available',
@@ -56,7 +56,7 @@ class DriverTrackingController extends Controller
     {
         $trip = Trip::with('driver')->findOrFail($tripId);
 
-        if (!$trip->driver) {
+        if (! $trip->driver) {
             return response()->json([
                 'success' => false,
                 'message' => 'Trip has no assigned driver',
@@ -65,7 +65,7 @@ class DriverTrackingController extends Controller
 
         $location = $this->driverLocationService->getCurrentLocation($trip->driver->id);
 
-        if (!$location) {
+        if (! $location) {
             return response()->json([
                 'success' => false,
                 'message' => 'Driver location not available',

@@ -32,7 +32,7 @@ class TransactionsPage extends Page
         return 'Transactions';
     }
 
-    public static function getNavigationIcon(): string | Htmlable | null
+    public static function getNavigationIcon(): string|Htmlable|null
     {
         return 'heroicon-o-banknotes';
     }
@@ -62,7 +62,7 @@ class TransactionsPage extends Page
 
     private function loadTransactions(): void
     {
-        if (!Schema::hasTable('payments')) {
+        if (! Schema::hasTable('payments')) {
             return;
         }
 
@@ -83,12 +83,13 @@ class TransactionsPage extends Page
             ->map(function ($row): array {
                 $row = (array) $row;
                 $row['has_mismatch'] = abs(($row['estimated_fare'] ?? 0) - ($row['actual_fare'] ?? 0)) > 0.01;
+
                 return $row;
             })
             ->all();
 
         $this->totalTransactions = count($this->transactions);
-        $this->matchedCount = collect($this->transactions)->filter(fn ($t) => !($t['has_mismatch'] ?? false))->count();
+        $this->matchedCount = collect($this->transactions)->filter(fn ($t) => ! ($t['has_mismatch'] ?? false))->count();
         $this->mismatchedCount = $this->totalTransactions - $this->matchedCount;
         $this->totalMismatchAmount = collect($this->transactions)
             ->filter(fn ($t) => $t['has_mismatch'] ?? false)
@@ -98,7 +99,7 @@ class TransactionsPage extends Page
 
     public function reviewTransaction(int $transactionId): void
     {
-        if (!auth()->user()->can('view finances')) {
+        if (! auth()->user()->can('view finances')) {
             abort(403);
         }
 

@@ -23,12 +23,11 @@ class ProcessDailySettlementJob implements ShouldQueue
 {
     use Dispatchable, InteractsWithQueue, Queueable, SerializesModels;
 
-    public int $tries   = 3;
+    public int $tries = 3;
+
     public int $backoff = 300; // 5 minutes between retries
 
-    public function __construct(public readonly string $settlementDate)
-    {
-    }
+    public function __construct(public readonly string $settlementDate) {}
 
     public function handle(
         DriverEarningService $earningService,
@@ -39,10 +38,11 @@ class ProcessDailySettlementJob implements ShouldQueue
 
         if (! Schema::hasTable('driver_payouts')) {
             Log::warning('ProcessDailySettlementJob skipped: driver_payouts table missing. Run migrations first.');
+
             return;
         }
 
-        Log::info("Daily settlement started", ['date' => $date]);
+        Log::info('Daily settlement started', ['date' => $date]);
 
         $drivers = Driver::query()
             ->with('user')
@@ -51,7 +51,7 @@ class ProcessDailySettlementJob implements ShouldQueue
 
         $settled = 0;
         $skipped = 0;
-        $failed  = 0;
+        $failed = 0;
 
         foreach ($drivers as $driver) {
             try {
@@ -59,13 +59,13 @@ class ProcessDailySettlementJob implements ShouldQueue
             } catch (Throwable $e) {
                 $failed++;
                 Log::error("Settlement failed for driver #{$driver->id}", [
-                    'date'  => $date,
+                    'date' => $date,
                     'error' => $e->getMessage(),
                 ]);
             }
         }
 
-        Log::info("Daily settlement complete", compact('date', 'settled', 'skipped', 'failed'));
+        Log::info('Daily settlement complete', compact('date', 'settled', 'skipped', 'failed'));
     }
 
     private function settleDriver(
@@ -95,14 +95,14 @@ class ProcessDailySettlementJob implements ShouldQueue
         DB::transaction(function () use ($driver, $income, $date, $ledgerService, $walletService) {
             // Create payout record (automated — no processed_by)
             $payout = DriverPayout::create([
-                'driver_id'         => $driver->id,
-                'payout_date'       => $date,
-                'total_income'      => $income['total_driver_income'],
+                'driver_id' => $driver->id,
+                'payout_date' => $date,
+                'total_income' => $income['total_driver_income'],
                 'commission_amount' => $income['commission'],
-                'payout_amount'     => $income['payout_amount'],
-                'processed_by'      => null,
-                'status'            => 'processed',
-                'processed_at'      => now(),
+                'payout_amount' => $income['payout_amount'],
+                'processed_by' => null,
+                'status' => 'processed',
+                'processed_at' => now(),
             ]);
 
             // Double-entry: escrow → driver wallet + platform revenue
@@ -132,10 +132,10 @@ class ProcessDailySettlementJob implements ShouldQueue
         });
 
         Log::info("Settled driver #{$driver->id}", [
-            'date'           => $date,
-            'total_income'   => $income['total_driver_income'],
-            'commission'     => $income['commission'],
-            'payout_amount'  => $income['payout_amount'],
+            'date' => $date,
+            'total_income' => $income['total_driver_income'],
+            'commission' => $income['commission'],
+            'payout_amount' => $income['payout_amount'],
         ]);
 
         return true;
@@ -143,7 +143,7 @@ class ProcessDailySettlementJob implements ShouldQueue
 
     private function storeCommissionRecords(int $driverId, array $income, string $date): void
     {
-        $rideIds         = $income['ride_ids'] ?? [];
+        $rideIds = $income['ride_ids'] ?? [];
         $totalCommission = $income['commission'] ?? 0.0;
 
         if (empty($rideIds) || $totalCommission <= 0) {
@@ -162,8 +162,8 @@ class ProcessDailySettlementJob implements ShouldQueue
 
     public function failed(Throwable $exception): void
     {
-        Log::critical("ProcessDailySettlementJob permanently failed", [
-            'date'  => $this->settlementDate,
+        Log::critical('ProcessDailySettlementJob permanently failed', [
+            'date' => $this->settlementDate,
             'error' => $exception->getMessage(),
         ]);
     }

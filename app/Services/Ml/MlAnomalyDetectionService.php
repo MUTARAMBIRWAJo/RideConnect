@@ -14,14 +14,16 @@ use Throwable;
 class MlAnomalyDetectionService
 {
     private const SPEED_SPIKE_KMH = 100.0;
+
     private const ACCELERATION_SPIKE_MS2 = 5.0;
+
     private const HEADING_SPIKE_DEGREES = 120.0;
+
     private const ROUTE_DEVIATION_METERS = 500.0;
+
     private const IDLE_SECONDS = 1200;
 
-    public function __construct(private readonly MlService $mlService)
-    {
-    }
+    public function __construct(private readonly MlService $mlService) {}
 
     public function inspectLocationUpdate(
         int $driverId,

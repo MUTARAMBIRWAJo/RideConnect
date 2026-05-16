@@ -16,11 +16,10 @@ class DriverRankerService
     public function __construct(
         private readonly HttpFactory $http,
         private readonly MlPredictionLogger $predictionLogger,
-    ) {
-    }
+    ) {}
 
     /**
-     * @param Collection<int, Driver> $drivers
+     * @param  Collection<int, Driver>  $drivers
      * @return array{driver: Driver|null, score: float|null, version: string|null, source: string}
      */
     public function chooseBestDriver(Trip $trip, Ride $ride, Collection $drivers): array
@@ -127,7 +126,7 @@ class DriverRankerService
     }
 
     /**
-     * @param Collection<int, Driver> $drivers
+     * @param  Collection<int, Driver>  $drivers
      * @return array{driver: Driver|null, score: float|null, version: string|null, source: string}
      */
     public function fallbackRank(Collection $drivers, string $source = 'fallback'): array
@@ -146,7 +145,7 @@ class DriverRankerService
     }
 
     /**
-     * @param Collection<int, Driver> $drivers
+     * @param  Collection<int, Driver>  $drivers
      */
     private function buildPayload(Trip $trip, Collection $drivers): array
     {

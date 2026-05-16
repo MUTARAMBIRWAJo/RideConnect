@@ -54,13 +54,13 @@ class SettingsController extends Controller
     public function toggleMaintenance(Request $request)
     {
         $settings = Cache::get('system_settings', []);
-        $settings['maintenance_mode'] = !$settings['maintenance_mode'];
+        $settings['maintenance_mode'] = ! $settings['maintenance_mode'];
         Cache::put('system_settings', $settings, now()->addHours(24));
 
         return response()->json([
             'success' => true,
             'maintenance_mode' => $settings['maintenance_mode'],
-            'message' => $settings['maintenance_mode'] ? 'Maintenance mode enabled' : 'Maintenance mode disabled'
+            'message' => $settings['maintenance_mode'] ? 'Maintenance mode enabled' : 'Maintenance mode disabled',
         ]);
     }
 }

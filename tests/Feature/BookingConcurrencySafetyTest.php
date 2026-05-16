@@ -6,7 +6,6 @@ use App\Models\Booking;
 use App\Models\Ride;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
-use Illuminate\Support\Facades\DB;
 use Tests\TestCase;
 
 class BookingConcurrencySafetyTest extends TestCase

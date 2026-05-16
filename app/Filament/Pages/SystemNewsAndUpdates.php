@@ -2,7 +2,6 @@
 
 namespace App\Filament\Pages;
 
-use App\Enums\UserRole;
 use App\Models\SystemNewsArticle;
 use Filament\Pages\Page;
 use Illuminate\Contracts\Support\Htmlable;
@@ -42,7 +41,7 @@ class SystemNewsAndUpdates extends Page
         return 'News & Updates';
     }
 
-    public static function getNavigationIcon(): string | Htmlable | null
+    public static function getNavigationIcon(): string|Htmlable|null
     {
         return 'heroicon-o-newspaper';
     }

@@ -17,12 +17,12 @@ class UserApprovalController extends Controller
     public function pendingView(): \Illuminate\View\View
     {
         $currentUser = Auth::guard('admin')->user();
-        
+
         $query = User::where('is_approved', false)
             ->orderBy('created_at', 'desc');
 
         // If not superadmin, only show mobile app users (passengers and drivers)
-        if (!$currentUser->role || !$currentUser->role->isSuperAdmin()) {
+        if (! $currentUser->role || ! $currentUser->role->isSuperAdmin()) {
             $query->whereIn('role', [
                 UserRole::PASSENGER,
                 UserRole::DRIVER,
@@ -40,11 +40,11 @@ class UserApprovalController extends Controller
     public function indexView(): \Illuminate\View\View
     {
         $currentUser = Auth::guard('admin')->user();
-        
+
         $query = User::orderBy('created_at', 'desc');
 
         // If not superadmin, only show mobile app users
-        if (!$currentUser->role || !$currentUser->role->isSuperAdmin()) {
+        if (! $currentUser->role || ! $currentUser->role->isSuperAdmin()) {
             $query->whereIn('role', [
                 UserRole::PASSENGER,
                 UserRole::DRIVER,
@@ -58,19 +58,19 @@ class UserApprovalController extends Controller
 
     /**
      * Get pending users for approval.
-     * 
+     *
      * - SuperAdmin can see all pending users (managers, passengers, drivers)
      * - Admin can only see mobile app users (passengers and drivers)
      */
     public function pending(Request $request): JsonResponse
     {
         $currentUser = Auth::guard('admin')->user();
-        
+
         $query = User::where('is_approved', false)
             ->orderBy('created_at', 'desc');
 
         // If not superadmin, only show mobile app users (passengers and drivers)
-        if (!$currentUser->role || !$currentUser->role->isSuperAdmin()) {
+        if (! $currentUser->role || ! $currentUser->role->isSuperAdmin()) {
             $query->whereIn('role', [
                 UserRole::PASSENGER->value,
                 UserRole::DRIVER->value,
@@ -96,7 +96,7 @@ class UserApprovalController extends Controller
 
     /**
      * Approve a user.
-     * 
+     *
      * - SuperAdmin can approve all users
      * - Admin can only approve mobile app users (passengers and drivers)
      */
@@ -110,9 +110,9 @@ class UserApprovalController extends Controller
         $user = User::findOrFail($id);
 
         // Check permissions
-        if (!$currentUser->role || !$currentUser->role->isSuperAdmin()) {
+        if (! $currentUser->role || ! $currentUser->role->isSuperAdmin()) {
             // Admin can only approve mobile app users
-            if (!in_array($user->role?->value, [
+            if (! in_array($user->role?->value, [
                 UserRole::PASSENGER->value,
                 UserRole::DRIVER->value,
             ])) {
@@ -154,9 +154,9 @@ class UserApprovalController extends Controller
         $user = User::findOrFail($id);
 
         // Check permissions
-        if (!$currentUser->role || !$currentUser->role->isSuperAdmin()) {
+        if (! $currentUser->role || ! $currentUser->role->isSuperAdmin()) {
             // Admin can only reject mobile app users
-            if (!in_array($user->role?->value, [
+            if (! in_array($user->role?->value, [
                 UserRole::PASSENGER->value,
                 UserRole::DRIVER->value,
             ])) {
@@ -182,12 +182,12 @@ class UserApprovalController extends Controller
     public function index(Request $request): JsonResponse
     {
         $currentUser = Auth::guard('admin')->user();
-        
+
         $query = User::where('is_approved', true)
             ->orderBy('approved_at', 'desc');
 
         // If not superadmin, only show mobile app users
-        if (!$currentUser->role || !$currentUser->role->isSuperAdmin()) {
+        if (! $currentUser->role || ! $currentUser->role->isSuperAdmin()) {
             $query->whereIn('role', [
                 UserRole::PASSENGER->value,
                 UserRole::DRIVER->value,

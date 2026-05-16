@@ -8,9 +8,7 @@ use Illuminate\Http\JsonResponse;
 
 class DemandHeatmapController extends Controller
 {
-    public function __construct(private readonly DemandPredictionService $demandPredictionService)
-    {
-    }
+    public function __construct(private readonly DemandPredictionService $demandPredictionService) {}
 
     public function index(): JsonResponse
     {

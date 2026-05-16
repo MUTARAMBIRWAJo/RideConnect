@@ -20,8 +20,8 @@ use Illuminate\Support\Facades\Log;
 class EventDispatcherService
 {
     public function __construct(
-        private readonly EventBusInterface    $eventBus,
-        private readonly OutboxService        $outbox,
+        private readonly EventBusInterface $eventBus,
+        private readonly OutboxService $outbox,
     ) {}
 
     /**
@@ -40,9 +40,9 @@ class EventDispatcherService
         event($event);
 
         Log::debug('Domain event dispatched', [
-            'event_type'     => $event->eventType(),
-            'event_id'       => $event->eventId,
-            'aggregate_id'   => $event->aggregateId(),
+            'event_type' => $event->eventType(),
+            'event_id' => $event->eventId,
+            'aggregate_id' => $event->aggregateId(),
             'aggregate_type' => $event->aggregateType(),
         ]);
     }
@@ -94,19 +94,19 @@ class EventDispatcherService
 
     private function persistDomainEvent(DomainEvent $event): void
     {
-        $payload     = $event->toPayload();
+        $payload = $event->toPayload();
         $payloadJson = json_encode($payload, JSON_THROW_ON_ERROR);
 
         DomainEventModel::create([
-            'event_id'       => $event->eventId,
-            'event_type'     => $event->eventType(),
-            'aggregate_id'   => $event->aggregateId(),
+            'event_id' => $event->eventId,
+            'event_type' => $event->eventType(),
+            'aggregate_id' => $event->aggregateId(),
             'aggregate_type' => $event->aggregateType(),
-            'payload'        => $payload,
-            'version'        => $event->version,
-            'occurred_at'    => $event->occurredAt,
-            'processed'      => false,
-            'payload_hash'   => hash('sha256', $payloadJson),
+            'payload' => $payload,
+            'version' => $event->version,
+            'occurred_at' => $event->occurredAt,
+            'processed' => false,
+            'payload_hash' => hash('sha256', $payloadJson),
         ]);
     }
 }

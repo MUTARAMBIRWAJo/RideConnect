@@ -19,7 +19,6 @@ class SafeEloquentUserProvider extends EloquentUserProvider
      * Return null on database errors instead of throwing.
      *
      * @param  mixed  $identifier
-     * @return \Illuminate\Contracts\Auth\Authenticatable|null
      */
     public function retrieveById($identifier): ?Authenticatable
     {
@@ -51,9 +50,6 @@ class SafeEloquentUserProvider extends EloquentUserProvider
      * Retrieve a user by the given credentials.
      * This method is used by Auth::attempt(), so it must be safe against
      * transient DB outages (timeouts, network errors).
-     *
-     * @param  array  $credentials
-     * @return \Illuminate\Contracts\Auth\Authenticatable|null
      */
     public function retrieveByCredentials(array $credentials): ?Authenticatable
     {
@@ -63,9 +59,11 @@ class SafeEloquentUserProvider extends EloquentUserProvider
             return parent::retrieveByCredentials($credentials);
         } catch (QueryException|PDOException $e) {
             $this->credentialsLookupDbFailure = true;
+
             return null;
         } catch (\Exception $e) {
             $this->credentialsLookupDbFailure = true;
+
             return null;
         }
     }

@@ -10,7 +10,7 @@ class DailyCommissionChartWidget extends ChartWidget
 {
     protected static ?string $heading = 'Daily Commission (Last 30 Days)';
 
-    protected int | string | array $columnSpan = 'full';
+    protected int|string|array $columnSpan = 'full';
 
     protected function getData(): array
     {
@@ -29,7 +29,7 @@ class DailyCommissionChartWidget extends ChartWidget
         $labels = [];
         $values = [];
         for ($i = 29; $i >= 0; $i--) {
-            $day      = now()->subDays($i)->toDateString();
+            $day = now()->subDays($i)->toDateString();
             $labels[] = now()->subDays($i)->format('M d');
             $values[] = round((float) ($rows[$day] ?? 0), 2);
         }
@@ -37,12 +37,12 @@ class DailyCommissionChartWidget extends ChartWidget
         return [
             'datasets' => [
                 [
-                    'label'           => 'Commission (RWF)',
-                    'data'            => $values,
-                    'borderColor'     => '#f59e0b',
+                    'label' => 'Commission (RWF)',
+                    'data' => $values,
+                    'borderColor' => '#f59e0b',
                     'backgroundColor' => 'rgba(245, 158, 11, 0.15)',
-                    'fill'            => true,
-                    'tension'         => 0.3,
+                    'fill' => true,
+                    'tension' => 0.3,
                 ],
             ],
             'labels' => $labels,
@@ -58,7 +58,7 @@ class DailyCommissionChartWidget extends ChartWidget
     {
         return [
             'datasets' => [['label' => 'Commission (RWF)', 'data' => array_fill(0, 30, 0)]],
-            'labels'   => array_map(fn ($i) => now()->subDays(29 - $i)->format('M d'), range(0, 29)),
+            'labels' => array_map(fn ($i) => now()->subDays(29 - $i)->format('M d'), range(0, 29)),
         ];
     }
 }

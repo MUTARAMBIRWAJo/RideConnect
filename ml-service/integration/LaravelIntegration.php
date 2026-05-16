@@ -1,4 +1,5 @@
 <?php
+
 namespace RideConnect\Integration;
 
 use GuzzleHttp\Client;
@@ -15,8 +16,9 @@ class LaravelIntegration
     public function matchDrivers(array $rideRequest, array $candidates): array
     {
         $resp = $this->client->post('/api/predict/match-driver', [
-            'json' => ['ride_request' => $rideRequest, 'candidate_drivers' => $candidates]
+            'json' => ['ride_request' => $rideRequest, 'candidate_drivers' => $candidates],
         ]);
-        return json_decode((string)$resp->getBody(), true);
+
+        return json_decode((string) $resp->getBody(), true);
     }
 }

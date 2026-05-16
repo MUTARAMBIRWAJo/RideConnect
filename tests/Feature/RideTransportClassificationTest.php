@@ -39,10 +39,10 @@ class RideTransportClassificationTest extends TestCase
         ]);
 
         $response->assertStatus(422)
-                ->assertJson([
-                    'success' => false,
-                    'message' => 'Bookings are only allowed on SCHEDULED rides',
-                ]);
+            ->assertJson([
+                'success' => false,
+                'message' => 'Bookings are only allowed on SCHEDULED rides',
+            ]);
     }
 
     /** @test */
@@ -73,10 +73,10 @@ class RideTransportClassificationTest extends TestCase
         ]);
 
         $response->assertStatus(201)
-                ->assertJson([
-                    'success' => true,
-                    'message' => 'Booking created successfully',
-                ]);
+            ->assertJson([
+                'success' => true,
+                'message' => 'Booking created successfully',
+            ]);
 
         $this->assertDatabaseHas('bookings', [
             'user_id' => $user->id,
@@ -108,10 +108,10 @@ class RideTransportClassificationTest extends TestCase
         ]);
 
         $response->assertStatus(201)
-                ->assertJson([
-                    'success' => true,
-                    'message' => 'Ride request sent to driver',
-                ]);
+            ->assertJson([
+                'success' => true,
+                'message' => 'Ride request sent to driver',
+            ]);
 
         $this->assertDatabaseHas('trips', [
             'passenger_id' => $user->mobile_user_id,
@@ -149,10 +149,10 @@ class RideTransportClassificationTest extends TestCase
         ]);
 
         $response->assertStatus(201)
-                ->assertJson([
-                    'success' => true,
-                    'message' => 'Trip created from booking successfully',
-                ]);
+            ->assertJson([
+                'success' => true,
+                'message' => 'Trip created from booking successfully',
+            ]);
 
         $this->assertDatabaseHas('trips', [
             'booking_id' => $booking->id,
@@ -247,14 +247,14 @@ class RideTransportClassificationTest extends TestCase
     private function createRouteId(): int
     {
         $zoneId = \Illuminate\Support\Facades\DB::table('zones')->insertGetId([
-            'name' => 'Route Zone ' . uniqid(),
-            'code' => 'RZ' . substr(uniqid(), -6),
+            'name' => 'Route Zone '.uniqid(),
+            'code' => 'RZ'.substr(uniqid(), -6),
             'created_at' => now(),
             'updated_at' => now(),
         ]);
 
         $corridor = \App\Models\Corridor::query()->create([
-            'code' => 'C' . substr(uniqid(), -6),
+            'code' => 'C'.substr(uniqid(), -6),
             'name' => 'Route Corridor',
             'kinyarwanda_name' => 'Route Corridor',
             'start_zone_id' => $zoneId,
@@ -265,7 +265,7 @@ class RideTransportClassificationTest extends TestCase
 
         return \App\Models\TransportRoute::query()->create([
             'corridor_id' => $corridor->id,
-            'route_code' => 'R' . substr(uniqid(), -6),
+            'route_code' => 'R'.substr(uniqid(), -6),
             'name' => 'Test Route',
             'origin' => 'Origin',
             'destination' => 'Destination',

@@ -16,18 +16,19 @@ class FraudFlagSeeder extends Seeder
 
     public function run(): void
     {
-        $drivers    = Driver::take(3)->get();
+        $drivers = Driver::take(3)->get();
         $passengers = MobileUser::take(3)->get();
 
         if ($drivers->isEmpty()) {
             $this->command->warn('FraudFlagSeeder: no drivers found, skipping.');
+
             return;
         }
 
         // Resolver — first SUPER_ADMIN user
         $superAdminId = User::where('role', 'SUPER_ADMIN')->value('id');
 
-        $now   = Carbon::now();
+        $now = Carbon::now();
         $count = 0;
 
         // ------------------------------------------------------------------
@@ -36,14 +37,14 @@ class FraudFlagSeeder extends Seeder
         if ($drivers->first()) {
             FraudFlag::create([
                 'entity_type' => 'driver',
-                'entity_id'   => $drivers[0]->id,
-                'reason'      => 'Duplicate ride detected: same pickup/drop-off within 25 minutes.',
-                'severity'    => 'high',
-                'resolved'    => false,
-                'metadata'    => [
-                    'detected_at'    => $now->subHours(3)->toIso8601String(),
+                'entity_id' => $drivers[0]->id,
+                'reason' => 'Duplicate ride detected: same pickup/drop-off within 25 minutes.',
+                'severity' => 'high',
+                'resolved' => false,
+                'metadata' => [
+                    'detected_at' => $now->subHours(3)->toIso8601String(),
                     'fare_amount_rwf' => 12000,
-                    'ride_count'     => 2,
+                    'ride_count' => 2,
                     'window_minutes' => 25,
                 ],
             ]);
@@ -56,17 +57,17 @@ class FraudFlagSeeder extends Seeder
         if ($drivers->first()) {
             FraudFlag::create([
                 'entity_type' => 'driver',
-                'entity_id'   => $drivers[0]->id,
-                'reason'      => 'Fare amount 4.2× 30-day average (avg: 8,500 RWF, fare: 35,700 RWF).',
-                'severity'    => 'high',
-                'resolved'    => true,
+                'entity_id' => $drivers[0]->id,
+                'reason' => 'Fare amount 4.2× 30-day average (avg: 8,500 RWF, fare: 35,700 RWF).',
+                'severity' => 'high',
+                'resolved' => true,
                 'resolved_by' => $superAdminId,
                 'resolved_at' => $now->subDays(1)->setTime(14, 30),
-                'metadata'    => [
-                    'detected_at'     => $now->subDays(2)->toIso8601String(),
-                    'fare_amount_rwf'  => 35700,
-                    'avg_fare_rwf'    => 8500,
-                    'multiplier'      => 4.2,
+                'metadata' => [
+                    'detected_at' => $now->subDays(2)->toIso8601String(),
+                    'fare_amount_rwf' => 35700,
+                    'avg_fare_rwf' => 8500,
+                    'multiplier' => 4.2,
                     'resolution_note' => 'Verified: long-distance airport transfer. Cleared.',
                 ],
             ]);
@@ -79,15 +80,15 @@ class FraudFlagSeeder extends Seeder
         if (isset($drivers[1]) && $passengers->isNotEmpty()) {
             FraudFlag::create([
                 'entity_type' => 'driver',
-                'entity_id'   => $drivers[1]->id,
-                'reason'      => 'Possible self-booking: 4 rides with the same passenger in 7 days.',
-                'severity'    => 'medium',
-                'resolved'    => false,
-                'metadata'    => [
-                    'detected_at'   => $now->subHours(18)->toIso8601String(),
-                    'passenger_id'  => $passengers->first()->id,
+                'entity_id' => $drivers[1]->id,
+                'reason' => 'Possible self-booking: 4 rides with the same passenger in 7 days.',
+                'severity' => 'medium',
+                'resolved' => false,
+                'metadata' => [
+                    'detected_at' => $now->subHours(18)->toIso8601String(),
+                    'passenger_id' => $passengers->first()->id,
                     'booking_count' => 4,
-                    'window_days'   => 7,
+                    'window_days' => 7,
                 ],
             ]);
             $count++;
@@ -99,16 +100,16 @@ class FraudFlagSeeder extends Seeder
         if (isset($drivers[1])) {
             FraudFlag::create([
                 'entity_type' => 'driver',
-                'entity_id'   => $drivers[1]->id,
-                'reason'      => 'Suspicious midnight activity: 3 completed rides between 01:00–03:00.',
-                'severity'    => 'medium',
-                'resolved'    => true,
+                'entity_id' => $drivers[1]->id,
+                'reason' => 'Suspicious midnight activity: 3 completed rides between 01:00–03:00.',
+                'severity' => 'medium',
+                'resolved' => true,
                 'resolved_by' => $superAdminId,
                 'resolved_at' => $now->subDays(3)->setTime(9, 15),
-                'metadata'    => [
+                'metadata' => [
                     'detected_at' => $now->subDays(4)->toIso8601String(),
-                    'ride_count'  => 3,
-                    'window'      => '01:00–03:00',
+                    'ride_count' => 3,
+                    'window' => '01:00–03:00',
                     'total_fare_rwf' => 27000,
                 ],
             ]);
@@ -121,14 +122,14 @@ class FraudFlagSeeder extends Seeder
         if (isset($drivers[2])) {
             FraudFlag::create([
                 'entity_type' => 'driver',
-                'entity_id'   => $drivers[2]->id,
-                'reason'      => 'Payout rate limit approaching: 42/50 payouts processed this hour.',
-                'severity'    => 'low',
-                'resolved'    => false,
-                'metadata'    => [
-                    'detected_at'    => $now->subMinutes(45)->toIso8601String(),
-                    'payout_count'   => 42,
-                    'rate_limit'     => 50,
+                'entity_id' => $drivers[2]->id,
+                'reason' => 'Payout rate limit approaching: 42/50 payouts processed this hour.',
+                'severity' => 'low',
+                'resolved' => false,
+                'metadata' => [
+                    'detected_at' => $now->subMinutes(45)->toIso8601String(),
+                    'payout_count' => 42,
+                    'rate_limit' => 50,
                     'window_minutes' => 60,
                 ],
             ]);
@@ -141,15 +142,15 @@ class FraudFlagSeeder extends Seeder
         if ($passengers->count() >= 2) {
             FraudFlag::create([
                 'entity_type' => 'passenger',
-                'entity_id'   => $passengers[1]->id,
-                'reason'      => 'Multiple payment reversals in 14 days (3 chargebacks, total 45,000 RWF).',
-                'severity'    => 'medium',
-                'resolved'    => false,
-                'metadata'    => [
-                    'detected_at'      => $now->subDays(2)->toIso8601String(),
+                'entity_id' => $passengers[1]->id,
+                'reason' => 'Multiple payment reversals in 14 days (3 chargebacks, total 45,000 RWF).',
+                'severity' => 'medium',
+                'resolved' => false,
+                'metadata' => [
+                    'detected_at' => $now->subDays(2)->toIso8601String(),
                     'chargeback_count' => 3,
                     'total_amount_rwf' => 45000,
-                    'window_days'      => 14,
+                    'window_days' => 14,
                 ],
             ]);
             $count++;
@@ -160,16 +161,16 @@ class FraudFlagSeeder extends Seeder
         // ------------------------------------------------------------------
         FraudFlag::create([
             'entity_type' => 'transaction',
-            'entity_id'   => 1001,   // synthetic payment reference
-            'reason'      => 'Duplicate webhook event_id received for payment ref TXN-RW-1001 (possible replay attack).',
-            'severity'    => 'high',
-            'resolved'    => true,
+            'entity_id' => 1001,   // synthetic payment reference
+            'reason' => 'Duplicate webhook event_id received for payment ref TXN-RW-1001 (possible replay attack).',
+            'severity' => 'high',
+            'resolved' => true,
             'resolved_by' => $superAdminId,
             'resolved_at' => $now->subDays(5)->setTime(11, 0),
-            'metadata'    => [
-                'detected_at'     => $now->subDays(5)->toIso8601String(),
-                'event_id'        => 'evt_stripe_rw_test_duplicate_001',
-                'amount_rwf'      => 18500,
+            'metadata' => [
+                'detected_at' => $now->subDays(5)->toIso8601String(),
+                'event_id' => 'evt_stripe_rw_test_duplicate_001',
+                'amount_rwf' => 18500,
                 'resolution_note' => 'Confirmed replay. Payment not double-processed. Webhook blocked.',
             ],
         ]);

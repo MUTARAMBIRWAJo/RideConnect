@@ -7,7 +7,6 @@ use App\Models\LedgerAccount;
 use App\Modules\Tax\Contracts\TaxRuleRepositoryInterface;
 use App\Modules\Tax\DTOs\TaxBreakdownDTO;
 use App\Services\LedgerService;
-use Illuminate\Support\Facades\DB;
 
 /**
  * TaxService — Dynamic tax computation engine.
@@ -24,7 +23,7 @@ class TaxService
 {
     public function __construct(
         private readonly TaxRuleRepositoryInterface $taxRuleRepo,
-        private readonly LedgerService              $ledgerService,
+        private readonly LedgerService $ledgerService,
     ) {}
 
     /**
@@ -70,14 +69,14 @@ class TaxService
 
         if ($taxAccount) {
             $totalTaxCollected = (float) $taxAccount->entries()
-                ->whereBetween('created_at', [$fromDate . ' 00:00:00', $toDate . ' 23:59:59'])
+                ->whereBetween('created_at', [$fromDate.' 00:00:00', $toDate.' 23:59:59'])
                 ->sum('credit');
         }
 
         return [
-            'period'              => "{$fromDate} – {$toDate}",
-            'jurisdiction'        => $jurisdiction,
-            'rules_applied'       => $rules->pluck('tax_name')->toArray(),
+            'period' => "{$fromDate} – {$toDate}",
+            'jurisdiction' => $jurisdiction,
+            'rules_applied' => $rules->pluck('tax_name')->toArray(),
             'total_tax_collected' => $totalTaxCollected,
             'tax_account_balance' => $taxAccount ? (float) $taxAccount->getRunningBalance() : 0.0,
         ];
@@ -95,17 +94,19 @@ class TaxService
         string $referenceType,
         ?int $createdBy = null
     ): void {
-        if ($breakdown->totalTax <= 0) return;
+        if ($breakdown->totalTax <= 0) {
+            return;
+        }
 
         // Resolve source account based on what the tax applies to
         $sourceAccountName = match ($breakdown->appliesTo) {
             'commission' => LedgerService::REVENUE_ACCOUNT,
-            'ride'       => LedgerService::ESCROW_ACCOUNT,
-            default      => LedgerService::REVENUE_ACCOUNT,
+            'ride' => LedgerService::ESCROW_ACCOUNT,
+            default => LedgerService::REVENUE_ACCOUNT,
         };
 
         $sourceAccount = $this->ledgerService->getPlatformAccount($sourceAccountName);
-        $taxAccount    = \App\Models\LedgerAccount::firstOrCreate(
+        $taxAccount = \App\Models\LedgerAccount::firstOrCreate(
             ['name' => 'Tax Payable', 'owner_type' => 'platform'],
             ['type' => 'liability', 'currency' => 'RWF', 'is_active' => true]
         );
@@ -116,21 +117,21 @@ class TaxService
             "Tax withheld on {$breakdown->appliesTo}: {$breakdown->totalTax} RWF",
             [
                 array_merge(['account_id' => $sourceAccount->id, 'debit' => $breakdown->totalTax, 'credit' => 0, 'description' => "Tax deduction ({$breakdown->appliesTo})"], $ref),
-                array_merge(['account_id' => $taxAccount->id,    'debit' => 0, 'credit' => $breakdown->totalTax, 'description' => "Tax payable credit"], $ref),
+                array_merge(['account_id' => $taxAccount->id,    'debit' => 0, 'credit' => $breakdown->totalTax, 'description' => 'Tax payable credit'], $ref),
             ],
             $createdBy
         );
 
         event(new TaxComputed(
-            referenceId:   $referenceId,
+            referenceId: $referenceId,
             referenceType: $referenceType,
-            appliesTo:     $breakdown->appliesTo,
-            grossAmount:   $breakdown->grossAmount,
-            taxAmount:     $breakdown->totalTax,
-            netAmount:     $breakdown->netAmount,
-            jurisdiction:  $breakdown->jurisdiction,
-            lineItems:     $breakdown->lineItems,
-            currency:      'RWF',
+            appliesTo: $breakdown->appliesTo,
+            grossAmount: $breakdown->grossAmount,
+            taxAmount: $breakdown->totalTax,
+            netAmount: $breakdown->netAmount,
+            jurisdiction: $breakdown->jurisdiction,
+            lineItems: $breakdown->lineItems,
+            currency: 'RWF',
         ));
     }
 
@@ -138,8 +139,8 @@ class TaxService
 
     private function compute(float $grossAmount, string $appliesTo, string $jurisdiction): TaxBreakdownDTO
     {
-        $rules     = $this->taxRuleRepo->getActiveRulesFor($appliesTo, $jurisdiction);
-        $totalTax  = 0.0;
+        $rules = $this->taxRuleRepo->getActiveRulesFor($appliesTo, $jurisdiction);
+        $totalTax = 0.0;
         $lineItems = [];
 
         foreach ($rules as $rule) {
@@ -147,23 +148,23 @@ class TaxService
             $totalTax += $taxAmount;
 
             $lineItems[] = [
-                'tax_code'     => $this->taxCodeFor($rule->applies_to),
-                'rule_name'    => $rule->tax_name,
-                'percentage'   => $rule->percentage,
+                'tax_code' => $this->taxCodeFor($rule->applies_to),
+                'rule_name' => $rule->tax_name,
+                'percentage' => $rule->percentage,
                 'gross_amount' => $grossAmount,
-                'tax_amount'   => $taxAmount,
-                'amount'       => $taxAmount,
+                'tax_amount' => $taxAmount,
+                'amount' => $taxAmount,
                 'jurisdiction' => $jurisdiction,
             ];
         }
 
         return new TaxBreakdownDTO(
-            grossAmount:  $grossAmount,
-            appliesTo:    $appliesTo,
+            grossAmount: $grossAmount,
+            appliesTo: $appliesTo,
             jurisdiction: $jurisdiction,
-            totalTax:     round($totalTax, 2),
-            netAmount:    round($grossAmount - $totalTax, 2),
-            lineItems:    $lineItems,
+            totalTax: round($totalTax, 2),
+            netAmount: round($grossAmount - $totalTax, 2),
+            lineItems: $lineItems,
         );
     }
 

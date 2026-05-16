@@ -16,8 +16,11 @@ class DriverApiTest extends TestCase
     use RefreshDatabase;
 
     private MobileUser $driverMobileUser;
+
     private User $driverUser;
+
     private Driver $driver;
+
     private Vehicle $vehicle;
 
     protected function setUp(): void

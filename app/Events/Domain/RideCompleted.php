@@ -10,9 +10,9 @@ class RideCompleted extends DomainEvent
 
     public function __construct(
         public readonly string $rideId,
-        public readonly int    $driverId,
-        public readonly int    $passengerId,
-        public readonly float  $fareAmount,
+        public readonly int $driverId,
+        public readonly int $passengerId,
+        public readonly float $fareAmount,
         public readonly string $currency = 'RWF',
         ?string $completedAt = null,
     ) {
@@ -21,17 +21,24 @@ class RideCompleted extends DomainEvent
         parent::__construct();
     }
 
-    public function aggregateId(): string   { return $this->rideId; }
-    public function aggregateType(): string { return 'ride'; }
+    public function aggregateId(): string
+    {
+        return $this->rideId;
+    }
+
+    public function aggregateType(): string
+    {
+        return 'ride';
+    }
 
     public function toPayload(): array
     {
         return [
-            'ride_id'      => $this->rideId,
-            'driver_id'    => $this->driverId,
+            'ride_id' => $this->rideId,
+            'driver_id' => $this->driverId,
             'passenger_id' => $this->passengerId,
-            'fare_amount'  => $this->fareAmount,
-            'currency'     => $this->currency,
+            'fare_amount' => $this->fareAmount,
+            'currency' => $this->currency,
             'completed_at' => $this->completedAt,
         ];
     }

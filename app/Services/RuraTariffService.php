@@ -2,8 +2,8 @@
 
 namespace App\Services;
 
-use App\Models\RuraTariff;
 use App\Helpers\RuraHelper;
+use App\Models\RuraTariff;
 
 class RuraTariffService
 {
@@ -19,11 +19,11 @@ class RuraTariffService
     ): ?array {
         $corridorNorm = RuraHelper::norm($corridor ?? '');
 
-        if ($routeCode !== null && trim((string)$routeCode) !== '') {
-            $codeNorm = RuraHelper::norm((string)$routeCode);
+        if ($routeCode !== null && trim((string) $routeCode) !== '') {
+            $codeNorm = RuraHelper::norm((string) $routeCode);
             $row = RuraTariff::query()
                 ->whereRaw('UPPER(route_code) = ?', [$codeNorm])
-                ->when($corridorNorm, fn($q) => $q->whereRaw('UPPER(corridor) = ?', [$corridorNorm]))
+                ->when($corridorNorm, fn ($q) => $q->whereRaw('UPPER(corridor) = ?', [$corridorNorm]))
                 ->first();
             if ($row) {
                 return $row->toArray() + ['source' => 'rura_official'];
@@ -34,7 +34,7 @@ class RuraTariffService
             $o = RuraHelper::norm($originStop);
             $d = RuraHelper::norm($destinationStop);
             $rows = RuraTariff::query()
-                ->when($corridorNorm, fn($q) => $q->whereRaw('UPPER(corridor) = ?', [$corridorNorm]))
+                ->when($corridorNorm, fn ($q) => $q->whereRaw('UPPER(corridor) = ?', [$corridorNorm]))
                 ->get();
             foreach ($rows as $row) {
                 $rowO = RuraHelper::norm($row->origin_stop);
@@ -44,6 +44,7 @@ class RuraTariffService
                 }
             }
         }
+
         return null;
     }
 }

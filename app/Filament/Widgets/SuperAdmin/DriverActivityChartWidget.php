@@ -9,7 +9,7 @@ class DriverActivityChartWidget extends ChartWidget
 {
     protected static ?string $heading = 'Driver Activity (12h)';
 
-    protected int | string | array $columnSpan = 1;
+    protected int|string|array $columnSpan = 1;
 
     protected function getData(): array
     {

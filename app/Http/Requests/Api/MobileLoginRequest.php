@@ -34,15 +34,15 @@ class MobileLoginRequest extends FormRequest
         $payload = [];
 
         // Backward compatibility with old payload shape.
-        if (!$this->filled('login') && $this->filled('email')) {
+        if (! $this->filled('login') && $this->filled('email')) {
             $payload['login'] = $this->input('email');
         }
 
-        if (!$this->filled('login') && $this->filled('phone')) {
+        if (! $this->filled('login') && $this->filled('phone')) {
             $payload['login'] = $this->input('phone');
         }
 
-        if (!empty($payload)) {
+        if (! empty($payload)) {
             $this->merge($payload);
         }
     }

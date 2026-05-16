@@ -2,10 +2,7 @@
 
 namespace Tests\Feature;
 
-use App\Enums\UserRole;
 use App\Models\ComplianceReport;
-use App\Models\Manager;
-use App\Models\TaxRule;
 use App\Models\User;
 use App\Modules\Compliance\DTOs\ComplianceReportDTO;
 use App\Modules\Compliance\Services\ComplianceReportService;
@@ -27,6 +24,7 @@ class ComplianceReportTest extends TestCase
     use RefreshDatabase;
 
     private ComplianceReportService $service;
+
     private User $generator;
 
     protected function setUp(): void
@@ -46,10 +44,10 @@ class ComplianceReportTest extends TestCase
     public function test_requesting_report_creates_pending_record(): void
     {
         $dto = new ComplianceReportDTO(
-            reportType:  'daily_ride_summary',
-            format:      'csv',
-            periodStart:  '2025-01-01',
-            periodEnd:    '2025-01-31',
+            reportType: 'daily_ride_summary',
+            format: 'csv',
+            periodStart: '2025-01-01',
+            periodEnd: '2025-01-31',
             generatedBy: $this->generator->id,
         );
 
@@ -68,11 +66,11 @@ class ComplianceReportTest extends TestCase
     public function test_csv_report_generates_and_marks_ready(): void
     {
         $report = ComplianceReport::create([
-            'report_type'  => 'commission_breakdown',
-            'format'       => 'csv',
-            'period_from'  => '2025-01-01',
-            'period_to'    => '2025-01-31',
-            'status'       => 'pending',
+            'report_type' => 'commission_breakdown',
+            'format' => 'csv',
+            'period_from' => '2025-01-01',
+            'period_to' => '2025-01-31',
+            'status' => 'pending',
             'requested_by' => $this->generator->id,
         ]);
 
@@ -87,11 +85,11 @@ class ComplianceReportTest extends TestCase
     public function test_csv_report_file_is_valid_utf8(): void
     {
         $report = ComplianceReport::create([
-            'report_type'  => 'daily_ride_summary',
-            'format'       => 'csv',
-            'period_from'  => '2025-01-01',
-            'period_to'    => '2025-01-31',
-            'status'       => 'pending',
+            'report_type' => 'daily_ride_summary',
+            'format' => 'csv',
+            'period_from' => '2025-01-01',
+            'period_to' => '2025-01-31',
+            'status' => 'pending',
             'requested_by' => $this->generator->id,
         ]);
 
@@ -109,11 +107,11 @@ class ComplianceReportTest extends TestCase
     public function test_json_report_generates_valid_json(): void
     {
         $report = ComplianceReport::create([
-            'report_type'  => 'fraud_incident_report',
-            'format'       => 'json',
+            'report_type' => 'fraud_incident_report',
+            'format' => 'json',
             'period_start' => '2025-01-01',
-            'period_end'   => '2025-01-31',
-            'status'       => 'pending',
+            'period_end' => '2025-01-31',
+            'status' => 'pending',
             'generated_by' => $this->generator->id,
         ]);
 
@@ -137,11 +135,11 @@ class ComplianceReportTest extends TestCase
     public function test_generated_report_stores_row_count_in_summary(): void
     {
         $report = ComplianceReport::create([
-            'report_type'  => 'refund_report',
-            'format'       => 'json',
-            'period_from'  => '2025-01-01',
-            'period_to'    => '2025-01-31',
-            'status'       => 'pending',
+            'report_type' => 'refund_report',
+            'format' => 'json',
+            'period_from' => '2025-01-01',
+            'period_to' => '2025-01-31',
+            'status' => 'pending',
             'requested_by' => $this->generator->id,
         ]);
 
@@ -159,11 +157,11 @@ class ComplianceReportTest extends TestCase
     public function test_unknown_report_type_marks_status_as_failed(): void
     {
         $report = ComplianceReport::forceCreate([
-            'report_type'  => 'invalid_type',
-            'format'       => 'csv',
+            'report_type' => 'invalid_type',
+            'format' => 'csv',
             'period_start' => '2025-01-01',
-            'period_end'   => '2025-01-31',
-            'status'       => 'pending',
+            'period_end' => '2025-01-31',
+            'status' => 'pending',
             'generated_by' => $this->generator->id,
         ]);
 

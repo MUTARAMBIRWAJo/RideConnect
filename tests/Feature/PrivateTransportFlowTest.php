@@ -20,10 +20,15 @@ class PrivateTransportFlowTest extends TestCase
     use RefreshDatabase;
 
     private MobileUser $passenger;
+
     private User $passengerUser;
+
     private Driver $carDriver;
+
     private Vehicle $carVehicle;
+
     private Driver $motorcycleDriver;
+
     private Vehicle $motorcycleVehicle;
 
     protected function setUp(): void

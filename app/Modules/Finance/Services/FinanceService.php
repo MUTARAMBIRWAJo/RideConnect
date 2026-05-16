@@ -23,11 +23,11 @@ use Illuminate\Support\Facades\DB;
 class FinanceService
 {
     public function __construct(
-        private readonly LedgerService           $ledgerService,
-        private readonly WalletService           $walletService,
+        private readonly LedgerService $ledgerService,
+        private readonly WalletService $walletService,
         private readonly LedgerRepositoryInterface $ledgerRepo,
         private readonly PaymentRepositoryInterface $paymentRepo,
-        private readonly EventDispatcherService  $eventDispatcher,
+        private readonly EventDispatcherService $eventDispatcher,
     ) {}
 
     /**
@@ -56,22 +56,22 @@ class FinanceService
 
             // Emit domain events within same transaction (outbox)
             $this->eventDispatcher->dispatch(new PaymentCaptured(
-                paymentId:             $payment->id,
-                bookingId:             (int) $payment->booking_id,
-                userId:                (int) $payment->user_id,
-                amount:                (float) $payment->amount,
-                currency:              'RWF',
-                provider:              $dto->provider,
+                paymentId: $payment->id,
+                bookingId: (int) $payment->booking_id,
+                userId: (int) $payment->user_id,
+                amount: (float) $payment->amount,
+                currency: 'RWF',
+                provider: $dto->provider,
                 providerTransactionId: $dto->providerTransactionId ?? '',
-                capturedAt:            now()->toIso8601String(),
+                capturedAt: now()->toIso8601String(),
             ));
 
             if ($driverId) {
                 $this->eventDispatcher->dispatch(new EscrowCredited(
-                    paymentId:  $payment->id,
-                    driverId:   $driverId,
-                    amount:     $driverShare,
-                    currency:   'RWF',
+                    paymentId: $payment->id,
+                    driverId: $driverId,
+                    amount: $driverShare,
+                    currency: 'RWF',
                     creditedAt: now()->toIso8601String(),
                 ));
             }

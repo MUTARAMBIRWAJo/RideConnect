@@ -148,7 +148,7 @@ class ZoneCorridorSeeder extends Seeder
         $a = $this->normalizeStop($origin);
         $b = $this->normalizeStop($destination);
 
-        return $a <= $b ? $a . '|' . $b : $b . '|' . $a;
+        return $a <= $b ? $a.'|'.$b : $b.'|'.$a;
     }
 
     private function normalizeStop(string $value): string

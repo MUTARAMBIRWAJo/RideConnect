@@ -9,7 +9,7 @@ use Illuminate\Support\Facades\Schema;
 
 class CommissionOverviewWidget extends StatsOverviewWidget
 {
-    protected int | string | array $columnSpan = 'full';
+    protected int|string|array $columnSpan = 'full';
 
     protected function getStats(): array
     {
@@ -34,16 +34,16 @@ class CommissionOverviewWidget extends StatsOverviewWidget
         $all = (float) PlatformCommission::query()->sum('commission_amount');
 
         return [
-            Stat::make('Total Commission Today', 'RWF ' . number_format($today, 2))
+            Stat::make('Total Commission Today', 'RWF '.number_format($today, 2))
                 ->description('Current day retained commission')
                 ->color('success'),
-            Stat::make('Total Commission This Week', 'RWF ' . number_format($week, 2))
+            Stat::make('Total Commission This Week', 'RWF '.number_format($week, 2))
                 ->description('Week-to-date commission')
                 ->color('info'),
-            Stat::make('Total Commission This Month', 'RWF ' . number_format($month, 2))
+            Stat::make('Total Commission This Month', 'RWF '.number_format($month, 2))
                 ->description('Month-to-date commission')
                 ->color('warning'),
-            Stat::make('Total Commission All Time', 'RWF ' . number_format($all, 2))
+            Stat::make('Total Commission All Time', 'RWF '.number_format($all, 2))
                 ->description('Lifetime retained commission')
                 ->color('primary'),
         ];

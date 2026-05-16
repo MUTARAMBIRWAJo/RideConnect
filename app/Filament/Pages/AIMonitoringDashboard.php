@@ -10,6 +10,7 @@ use Illuminate\Contracts\Support\Htmlable;
 class AIMonitoringDashboard extends \Filament\Pages\Dashboard
 {
     use HandlesRoleDashboards, HasFiltersForm;
+
     protected static ?string $navigationGroup = 'Dashboards';
 
     protected static ?int $navigationSort = 2;
@@ -21,7 +22,7 @@ class AIMonitoringDashboard extends \Filament\Pages\Dashboard
         return 'AI Monitoring Dashboard';
     }
 
-    public static function getNavigationIcon(): string | Htmlable | null
+    public static function getNavigationIcon(): string|Htmlable|null
     {
         return 'heroicon-o-cpu-chip';
     }
@@ -63,7 +64,7 @@ class AIMonitoringDashboard extends \Filament\Pages\Dashboard
         ];
     }
 
-    public function getColumns(): int | array
+    public function getColumns(): int|array
     {
         return [
             'md' => 2,

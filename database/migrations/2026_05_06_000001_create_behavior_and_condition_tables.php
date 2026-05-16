@@ -8,7 +8,7 @@ return new class extends Migration
 {
     public function up(): void
     {
-        if (!Schema::hasTable('driver_behaviors')) {
+        if (! Schema::hasTable('driver_behaviors')) {
             Schema::create('driver_behaviors', function (Blueprint $table) {
                 $table->id();
                 $table->foreignId('driver_id')->nullable()->constrained('drivers')->nullOnDelete();
@@ -27,7 +27,7 @@ return new class extends Migration
             });
         }
 
-        if (!Schema::hasTable('passenger_behaviors')) {
+        if (! Schema::hasTable('passenger_behaviors')) {
             Schema::create('passenger_behaviors', function (Blueprint $table) {
                 $table->id();
                 $table->foreignId('passenger_id')->nullable()->constrained('mobile_users')->nullOnDelete();
@@ -44,7 +44,7 @@ return new class extends Migration
             });
         }
 
-        if (!Schema::hasTable('route_states')) {
+        if (! Schema::hasTable('route_states')) {
             Schema::create('route_states', function (Blueprint $table) {
                 $table->id();
                 $table->foreignId('trip_id')->nullable()->constrained('trips')->nullOnDelete();
@@ -65,7 +65,7 @@ return new class extends Migration
             });
         }
 
-        if (!Schema::hasTable('weather_conditions')) {
+        if (! Schema::hasTable('weather_conditions')) {
             Schema::create('weather_conditions', function (Blueprint $table) {
                 $table->id();
                 $table->foreignId('trip_id')->nullable()->constrained('trips')->nullOnDelete();
@@ -87,19 +87,19 @@ return new class extends Migration
 
         if (Schema::hasTable('trips')) {
             Schema::table('trips', function (Blueprint $table) {
-                if (!Schema::hasColumn('trips', 'driver_behavior_id')) {
+                if (! Schema::hasColumn('trips', 'driver_behavior_id')) {
                     $table->foreignId('driver_behavior_id')->nullable()->constrained('driver_behaviors')->nullOnDelete();
                 }
 
-                if (!Schema::hasColumn('trips', 'passenger_behavior_id')) {
+                if (! Schema::hasColumn('trips', 'passenger_behavior_id')) {
                     $table->foreignId('passenger_behavior_id')->nullable()->constrained('passenger_behaviors')->nullOnDelete();
                 }
 
-                if (!Schema::hasColumn('trips', 'route_state_id')) {
+                if (! Schema::hasColumn('trips', 'route_state_id')) {
                     $table->foreignId('route_state_id')->nullable()->constrained('route_states')->nullOnDelete();
                 }
 
-                if (!Schema::hasColumn('trips', 'weather_condition_id')) {
+                if (! Schema::hasColumn('trips', 'weather_condition_id')) {
                     $table->foreignId('weather_condition_id')->nullable()->constrained('weather_conditions')->nullOnDelete();
                 }
             });

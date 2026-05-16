@@ -51,7 +51,7 @@ class SuperDashboard extends BaseDashboard
         return 'Super Dashboard';
     }
 
-    public static function getNavigationIcon(): string | Htmlable | null
+    public static function getNavigationIcon(): string|Htmlable|null
     {
         return 'heroicon-o-shield-check';
     }
@@ -125,6 +125,7 @@ class SuperDashboard extends BaseDashboard
     {
         if (! Schema::hasTable('drivers') || ! Schema::hasColumn('drivers', 'status')) {
             $this->driverApprovalPreview = 0;
+
             return;
         }
 
@@ -149,6 +150,7 @@ class SuperDashboard extends BaseDashboard
                 ->body('Please provide a reason for this bulk approval action.')
                 ->warning()
                 ->send();
+
             return;
         }
 
@@ -183,6 +185,7 @@ class SuperDashboard extends BaseDashboard
     {
         if (! Schema::hasTable('users') || ! Schema::hasColumn('users', 'is_approved')) {
             $this->userApprovalPreview = 0;
+
             return;
         }
 
@@ -207,6 +210,7 @@ class SuperDashboard extends BaseDashboard
                 ->body('Please provide a reason for this bulk approval action.')
                 ->warning()
                 ->send();
+
             return;
         }
 
@@ -354,7 +358,7 @@ class SuperDashboard extends BaseDashboard
         ]);
     }
 
-    public function getColumns(): int | string | array
+    public function getColumns(): int|string|array
     {
         return [
             'default' => 1,

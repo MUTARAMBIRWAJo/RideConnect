@@ -2,7 +2,6 @@
 
 namespace App\Http\Middleware;
 
-use App\Enums\UserRole;
 use Closure;
 use Illuminate\Http\Request;
 use Symfony\Component\HttpFoundation\Response;
@@ -19,18 +18,18 @@ class RoleMiddleware
         $user = $request->user();
 
         // Check if user is authenticated
-        if (!$user) {
+        if (! $user) {
             return response()->json([
                 'success' => false,
-                'message' => 'Unauthenticated'
+                'message' => 'Unauthenticated',
             ], 401);
         }
 
         // Check if user has a role
-        if (!$user->role) {
+        if (! $user->role) {
             return response()->json([
                 'success' => false,
-                'message' => 'User role not found'
+                'message' => 'User role not found',
             ], 403);
         }
 
@@ -43,14 +42,14 @@ class RoleMiddleware
         $userRoleValue = strtoupper($user->role->value ?? '');
 
         // Check if user's role is in the allowed roles
-        if (!in_array($userRoleValue, $normalizedRoles)) {
+        if (! in_array($userRoleValue, $normalizedRoles)) {
             return response()->json([
                 'success' => false,
                 'message' => 'You do not have permission to access this resource',
                 'debug' => [
                     'user_role' => $userRoleValue,
-                    'required_roles' => $normalizedRoles
-                ]
+                    'required_roles' => $normalizedRoles,
+                ],
             ], 403);
         }
 
@@ -62,7 +61,7 @@ class RoleMiddleware
      */
     public function hasAnyRole($user, array $roles): bool
     {
-        if (!$user || !$user->role) {
+        if (! $user || ! $user->role) {
             return false;
         }
 
@@ -77,7 +76,7 @@ class RoleMiddleware
      */
     public function hasAllRoles($user, array $roles): bool
     {
-        if (!$user || !$user->role) {
+        if (! $user || ! $user->role) {
             return false;
         }
 

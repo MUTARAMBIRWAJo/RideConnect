@@ -119,7 +119,7 @@ class Trip extends Model
     protected static function booting(): void
     {
         static::creating(function (Trip $trip) {
-            if (!$trip->pickup_location || !$trip->dropoff_location) {
+            if (! $trip->pickup_location || ! $trip->dropoff_location) {
                 throw new \InvalidArgumentException('Pickup and dropoff locations are required for all trips');
             }
         });
@@ -131,12 +131,12 @@ class Trip extends Model
      */
     public function validateForExecution(): void
     {
-        if (!$this->pickup_location || !$this->dropoff_location) {
-            throw new \InvalidArgumentException("Trip must have valid pickup and dropoff locations");
+        if (! $this->pickup_location || ! $this->dropoff_location) {
+            throw new \InvalidArgumentException('Trip must have valid pickup and dropoff locations');
         }
 
-        if (!$this->passenger_id) {
-            throw new \InvalidArgumentException("Trip must have a passenger");
+        if (! $this->passenger_id) {
+            throw new \InvalidArgumentException('Trip must have a passenger');
         }
     }
 }

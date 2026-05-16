@@ -20,13 +20,13 @@ class DriverFactory extends Factory
             $mobileUser = MobileUser::query()->find($driver->id);
 
             if (! $mobileUser) {
-                $mobileUser = new MobileUser();
+                $mobileUser = new MobileUser;
                 $mobileUser->forceFill([
                     'id' => $driver->id,
                     'first_name' => 'Driver',
                     'last_name' => (string) $driver->id,
-                    'email' => $driver->user?->email ?? 'driver' . $driver->id . '@example.test',
-                    'phone' => $driver->user?->phone ?? '+2507' . str_pad((string) $driver->id, 8, '0', STR_PAD_LEFT),
+                    'email' => $driver->user?->email ?? 'driver'.$driver->id.'@example.test',
+                    'phone' => $driver->user?->phone ?? '+2507'.str_pad((string) $driver->id, 8, '0', STR_PAD_LEFT),
                     'password' => bcrypt('password'),
                     'role' => 'DRIVER',
                     'is_verified' => true,

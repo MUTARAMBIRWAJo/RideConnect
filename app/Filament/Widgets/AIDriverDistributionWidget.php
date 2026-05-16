@@ -10,11 +10,11 @@ class AIDriverDistributionWidget extends Widget
 {
     protected static string $view = 'filament.widgets.ai-driver-distribution-widget';
 
-    protected int | string | array $columnSpan = 1;
+    protected int|string|array $columnSpan = 1;
 
     protected function getViewData(): array
     {
-        if (!Schema::hasTable('driver_locations')) {
+        if (! Schema::hasTable('driver_locations')) {
             return ['distribution' => collect()];
         }
 

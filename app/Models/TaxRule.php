@@ -23,10 +23,10 @@ class TaxRule extends Model
     ];
 
     protected $casts = [
-        'percentage'     => 'float',
-        'active'         => 'boolean',
+        'percentage' => 'float',
+        'active' => 'boolean',
         'effective_from' => 'date',
-        'effective_until'=> 'date',
+        'effective_until' => 'date',
     ];
 
     public function creator(): BelongsTo

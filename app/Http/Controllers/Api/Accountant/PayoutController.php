@@ -21,8 +21,7 @@ class PayoutController extends Controller
     public function __construct(
         private readonly DriverEarningService $earningService,
         private readonly AccountantPayoutService $payoutService,
-    ) {
-    }
+    ) {}
 
     public function dailyEarnings(Request $request): JsonResponse
     {
@@ -179,7 +178,7 @@ class PayoutController extends Controller
             ];
         });
 
-        $filename = 'driver-daily-earnings-' . $date . '.csv';
+        $filename = 'driver-daily-earnings-'.$date.'.csv';
 
         return response()->streamDownload(function () use ($rows) {
             $handle = fopen('php://output', 'wb');

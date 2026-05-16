@@ -15,7 +15,8 @@ class DomainGuardTest extends TestCase
     {
         $this->expectException(DomainException::class);
 
-        (new class {
+        (new class
+        {
             public function run(): void
             {
                 $ride = (object) ['travel_mode' => 'SCHEDULED'];

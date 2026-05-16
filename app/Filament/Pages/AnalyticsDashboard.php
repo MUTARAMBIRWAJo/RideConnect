@@ -26,7 +26,7 @@ class AnalyticsDashboard extends BaseDashboard
         return 'Analytics Dashboard';
     }
 
-    public static function getNavigationIcon(): string | Htmlable | null
+    public static function getNavigationIcon(): string|Htmlable|null
     {
         return 'heroicon-o-chart-bar-square';
     }
@@ -47,7 +47,7 @@ class AnalyticsDashboard extends BaseDashboard
         ];
     }
 
-    public function getColumns(): int | string | array
+    public function getColumns(): int|string|array
     {
         return [
             'default' => 1,

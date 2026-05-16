@@ -2,9 +2,7 @@
 
 namespace Tests\Unit;
 
-use App\Events\Domain\DomainEvent;
 use App\Events\Domain\RideCompleted;
-use App\Events\Domain\PaymentCaptured;
 use App\Models\DomainEvent as DomainEventModel;
 use App\Services\EventSourcing\EventDispatcherService;
 use Illuminate\Foundation\Testing\RefreshDatabase;
@@ -39,37 +37,37 @@ class EventReplayTest extends TestCase
     public function test_domain_event_is_persisted_to_table(): void
     {
         $rideId = Str::uuid()->toString();
-        $event  = new RideCompleted(
-            rideId:      $rideId,
-            driverId:    1,
+        $event = new RideCompleted(
+            rideId: $rideId,
+            driverId: 1,
             passengerId: 2,
-            fareAmount:  25_000.0,
+            fareAmount: 25_000.0,
         );
 
         $this->dispatcher->dispatch($event);
 
         $this->assertDatabaseHas('domain_events', [
-            'aggregate_id'   => $rideId,
+            'aggregate_id' => $rideId,
             'aggregate_type' => 'ride',
-            'event_type'     => 'ride_completed',
+            'event_type' => 'ride_completed',
         ]);
     }
 
     public function test_event_outbox_record_created_alongside_event(): void
     {
         $rideId = Str::uuid()->toString();
-        $event  = new RideCompleted(
-            rideId:      $rideId,
-            driverId:    1,
+        $event = new RideCompleted(
+            rideId: $rideId,
+            driverId: 1,
             passengerId: 2,
-            fareAmount:  10_000.0,
+            fareAmount: 10_000.0,
         );
 
         $this->dispatcher->dispatch($event);
 
         $this->assertDatabaseHas('event_outbox', [
             'event_type' => 'ride_completed',
-            'status'     => 'pending',
+            'status' => 'pending',
         ]);
     }
 
@@ -80,7 +78,7 @@ class EventReplayTest extends TestCase
     public function test_domain_event_payload_cannot_be_updated(): void
     {
         $rideId = Str::uuid()->toString();
-        $event  = new RideCompleted($rideId, 1, 2, 25_000.0);
+        $event = new RideCompleted($rideId, 1, 2, 25_000.0);
         $this->dispatcher->dispatch($event);
 
         /** @var DomainEventModel $model */
@@ -93,7 +91,7 @@ class EventReplayTest extends TestCase
     public function test_domain_event_cannot_be_deleted(): void
     {
         $rideId = Str::uuid()->toString();
-        $event  = new RideCompleted($rideId, 1, 2, 25_000.0);
+        $event = new RideCompleted($rideId, 1, 2, 25_000.0);
         $this->dispatcher->dispatch($event);
 
         /** @var DomainEventModel $model */
@@ -135,7 +133,7 @@ class EventReplayTest extends TestCase
             $this->dispatcher->dispatch(new RideCompleted($rideId, 1, 2, 10_000.0 * $i));
         }
 
-        $allEvents  = $this->dispatcher->replay('ride', $rideId);
+        $allEvents = $this->dispatcher->replay('ride', $rideId);
         $fourthVersion = $allEvents->get(3)?->version ?? 4;
 
         $filtered = $this->dispatcher->replay('ride', $rideId, $fourthVersion + 1);

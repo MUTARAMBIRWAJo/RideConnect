@@ -14,7 +14,7 @@ use Spatie\Permission\Traits\HasRoles;
 class User extends Authenticatable implements FilamentUser
 {
     /** @use HasFactory<\Database\Factories\UserFactory> */
-    use HasApiTokens, HasFactory, Notifiable, HasRoles;
+    use HasApiTokens, HasFactory, HasRoles, Notifiable;
 
     protected string $guard_name = 'web';
 
@@ -239,9 +239,10 @@ class User extends Authenticatable implements FilamentUser
      */
     public function isMfaLocked(): bool
     {
-        if (!$this->mfa_locked_until) {
+        if (! $this->mfa_locked_until) {
             return false;
         }
+
         return now()->lessThan($this->mfa_locked_until);
     }
 
@@ -251,7 +252,7 @@ class User extends Authenticatable implements FilamentUser
     public function incrementMfaAttempts(): void
     {
         $this->increment('mfa_attempts');
-        
+
         if ($this->mfa_attempts >= 5) {
             $this->update([
                 'mfa_locked_until' => now()->addMinutes(10),

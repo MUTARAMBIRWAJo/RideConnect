@@ -9,9 +9,7 @@ use Illuminate\Http\Request;
 
 class AIController extends Controller
 {
-    public function __construct(private readonly RideAIService $rideAIService)
-    {
-    }
+    public function __construct(private readonly RideAIService $rideAIService) {}
 
     public function matchDriver(Request $request): JsonResponse
     {
@@ -166,7 +164,7 @@ class AIController extends Controller
 
     private function respond(array $result): JsonResponse
     {
-        if (!($result['success'] ?? false)) {
+        if (! ($result['success'] ?? false)) {
             return response()->json([
                 'success' => false,
                 'error' => $result['error'] ?? 'AI service call failed',

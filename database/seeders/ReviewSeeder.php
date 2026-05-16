@@ -21,7 +21,7 @@ class ReviewSeeder extends Seeder
         $rideIds = \App\Models\Ride::orderBy('id')->pluck('id')->toArray();
 
         $reviews = [];
-        if (!empty($bookingIds) && !empty($userIds) && !empty($driverIds) && !empty($rideIds)) {
+        if (! empty($bookingIds) && ! empty($userIds) && ! empty($driverIds) && ! empty($rideIds)) {
             $reviews[] = [
                 'booking_id' => $bookingIds[0],
                 'user_id' => $userIds[0],

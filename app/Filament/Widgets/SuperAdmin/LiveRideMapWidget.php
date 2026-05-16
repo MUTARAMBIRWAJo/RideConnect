@@ -8,7 +8,7 @@ class LiveRideMapWidget extends Widget
 {
     protected static string $view = 'filament.widgets.super-admin.live-ride-map-widget';
 
-    protected int | string | array $columnSpan = 'full';
+    protected int|string|array $columnSpan = 'full';
 
     protected static bool $isLazy = false;
 

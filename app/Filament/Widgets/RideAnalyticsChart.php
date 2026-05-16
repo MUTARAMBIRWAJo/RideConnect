@@ -9,7 +9,7 @@ class RideAnalyticsChart extends ChartWidget
 {
     protected static ?string $heading = 'Ride Activity (Last 7 Days)';
 
-    protected int | string | array $columnSpan = [
+    protected int|string|array $columnSpan = [
         'default' => 1,
         'md' => 1,
     ];

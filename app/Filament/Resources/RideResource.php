@@ -48,7 +48,7 @@ class RideResource extends Resource
                             ->limit(10)
                             ->get()
                             ->mapWithKeys(function (Driver $driver): array {
-                                $label = trim(($driver->user?->name ?? 'Driver #' . $driver->id) . ' - ' . ($driver->license_plate ?? 'No plate'));
+                                $label = trim(($driver->user?->name ?? 'Driver #'.$driver->id).' - '.($driver->license_plate ?? 'No plate'));
 
                                 return [$driver->id => $label];
                             })
@@ -60,7 +60,7 @@ class RideResource extends Resource
                             return null;
                         }
 
-                        return trim(($driver->user?->name ?? 'Driver #' . $driver->id) . ' - ' . ($driver->license_plate ?? 'No plate'));
+                        return trim(($driver->user?->name ?? 'Driver #'.$driver->id).' - '.($driver->license_plate ?? 'No plate'));
                     })
                     ->required(),
                 Forms\Components\Select::make('vehicle_id')
@@ -90,7 +90,7 @@ class RideResource extends Resource
                         ->orderBy('code')
                         ->get()
                         ->mapWithKeys(fn (Corridor $corridor): array => [
-                            $corridor->id => trim('Corridor ' . ($corridor->code ?? $corridor->id) . ' - ' . $corridor->name),
+                            $corridor->id => trim('Corridor '.($corridor->code ?? $corridor->id).' - '.$corridor->name),
                         ])
                         ->all())
                     ->searchable()
@@ -212,7 +212,9 @@ class RideResource extends Resource
                         $destLng = $get('destination_lng');
                         $vehicleType = $get('vehicle_type') ?? 'car';
                         $rideType = $get('ride_type') ?? 'local';
-                        if (!$originLat || !$originLng || !$destLat || !$destLng) return null;
+                        if (! $originLat || ! $originLng || ! $destLat || ! $destLng) {
+                            return null;
+                        }
                         $zoneService = app(\App\Services\RuraZoneService::class);
                         $tariffService = app(\App\Services\RuraTariffService::class);
                         $originZone = $zoneService->getZoneForCoordinates((float) $originLat, (float) $originLng);
@@ -220,12 +222,13 @@ class RideResource extends Resource
                         $tariffRow = $tariffService->lookupTariff(null, $originZone, $destinationZone, null);
                         $legalFare = is_array($tariffRow) ? (float) ($tariffRow['fare_rwf'] ?? 0) : 0;
                         if ($legalFare > 0) {
-                            return 'RURA Legal Fare per seat: RWF ' . number_format($legalFare, 2);
+                            return 'RURA Legal Fare per seat: RWF '.number_format($legalFare, 2);
                         }
+
                         return 'No RURA tariff found for this route.';
                     })
                     ->validationMessages([
-                        'rura_compliance' => 'Entered fare does not match RURA legal tariff for this route.'
+                        'rura_compliance' => 'Entered fare does not match RURA legal tariff for this route.',
                     ])
                     ->rule(function ($get) {
                         // Validate against RURA tariff
@@ -236,7 +239,9 @@ class RideResource extends Resource
                         $vehicleType = $get('vehicle_type') ?? 'car';
                         $rideType = $get('ride_type') ?? 'local';
                         $entered = $get('price_per_seat');
-                        if (!$originLat || !$originLng || !$destLat || !$destLng || !$entered) return null;
+                        if (! $originLat || ! $originLng || ! $destLat || ! $destLng || ! $entered) {
+                            return null;
+                        }
                         $zoneService = app(\App\Services\RuraZoneService::class);
                         $tariffService = app(\App\Services\RuraTariffService::class);
                         $originZone = $zoneService->getZoneForCoordinates((float) $originLat, (float) $originLng);
@@ -246,6 +251,7 @@ class RideResource extends Resource
                         if ($legalFare > 0) {
                             return abs(((float) $entered) - $legalFare) < 0.01 ? null : 'rura_compliance';
                         }
+
                         return null;
                     }),
                 Forms\Components\TextInput::make('currency')
@@ -296,7 +302,7 @@ class RideResource extends Resource
                     ->sortable(),
                 Tables\Columns\BadgeColumn::make('corridor.code')
                     ->label('Corridor')
-                    ->getStateUsing(fn (Ride $record): ?string => $record->corridor?->code ? 'Corridor ' . $record->corridor->code : null)
+                    ->getStateUsing(fn (Ride $record): ?string => $record->corridor?->code ? 'Corridor '.$record->corridor->code : null)
                     ->colors([
                         'default' => 'gray',
                     ]),

@@ -23,19 +23,19 @@ class DomainEvent extends Model
     ];
 
     protected $casts = [
-        'payload'      => 'array',
-        'occurred_at'  => 'datetime',
-        'processed'    => 'boolean',
+        'payload' => 'array',
+        'occurred_at' => 'datetime',
+        'processed' => 'boolean',
         'processed_at' => 'datetime',
-        'version'      => 'integer',
-        'retry_count'  => 'integer',
+        'version' => 'integer',
+        'retry_count' => 'integer',
     ];
 
     // Domain events are append-only; prevent mutation of core fields
     public function update(array $attributes = [], array $options = []): bool
     {
         $mutable = ['processed', 'processed_at', 'processor_id', 'retry_count', 'last_error'];
-        $keys    = array_keys($attributes);
+        $keys = array_keys($attributes);
 
         foreach ($keys as $key) {
             if (! in_array($key, $mutable, true)) {
@@ -46,7 +46,7 @@ class DomainEvent extends Model
         return parent::update($attributes, $options);
     }
 
-    public function delete(): bool|null
+    public function delete(): ?bool
     {
         throw new \RuntimeException('domain_events rows are immutable and cannot be deleted.');
     }

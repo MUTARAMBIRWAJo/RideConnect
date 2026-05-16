@@ -7,9 +7,7 @@ use Illuminate\Support\Facades\Cache;
 
 class AiDashboardService
 {
-    public function __construct(private readonly HttpFactory $http)
-    {
-    }
+    public function __construct(private readonly HttpFactory $http) {}
 
     /**
      * @return array<int, array{zone: string, level: string, score: float}>
@@ -140,7 +138,8 @@ class AiDashboardService
 
     /**
      * @template T
-     * @param T $fallback
+     *
+     * @param  T  $fallback
      * @return T
      */
     private function remember(string $key, int $seconds, callable $callback, mixed $fallback): mixed

@@ -1,10 +1,10 @@
 <?php
 
+use App\Jobs\CleanupStaleDriverLocations;
+use App\Jobs\NightlyWarehouseEtlJob;
+use App\Jobs\PollDemandPredictionsJob;
 use App\Jobs\ProcessDailySettlementJob;
 use App\Jobs\ProcessOutboxJob;
-use App\Jobs\NightlyWarehouseEtlJob;
-use App\Jobs\CleanupStaleDriverLocations;
-use App\Jobs\PollDemandPredictionsJob;
 use Carbon\Carbon;
 use Illuminate\Foundation\Inspiring;
 use Illuminate\Support\Facades\Artisan;
@@ -31,7 +31,7 @@ Schedule::job(new ProcessDailySettlementJob(Carbon::yesterday()->toDateString())
     ->name('daily-settlement');
 
 // Process transactional outbox every minute (publish domain events to broker).
-Schedule::job(new ProcessOutboxJob())
+Schedule::job(new ProcessOutboxJob)
     ->everyMinute()
     ->onOneServer()
     ->name('process-outbox');
@@ -54,14 +54,14 @@ Schedule::command('ai:retrain-models')
     ->name('ai-retrain-models');
 
 // Poll production demand forecasts for key Kigali zones.
-Schedule::job(new PollDemandPredictionsJob())
+Schedule::job(new PollDemandPredictionsJob)
     ->everyFiveMinutes()
     ->withoutOverlapping()
     ->onOneServer()
     ->name('poll-ml-demand-predictions');
 
 // Clean up stale driver locations every 5 minutes
-Schedule::job(new CleanupStaleDriverLocations())
+Schedule::job(new CleanupStaleDriverLocations)
     ->everyFiveMinutes()
     ->name('cleanup-stale-driver-locations');
 

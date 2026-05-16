@@ -13,18 +13,18 @@ return new class extends Migration
     {
         Schema::table('users', function (Blueprint $table) {
             $table->enum('role', [
-                'SUPER_ADMIN', 
-                'ADMIN', 
-                'ACCOUNTANT', 
-                'OFFICER', 
-                'DRIVER', 
-                'PASSENGER'
+                'SUPER_ADMIN',
+                'ADMIN',
+                'ACCOUNTANT',
+                'OFFICER',
+                'DRIVER',
+                'PASSENGER',
             ])->default('PASSENGER')->after('email');
-            
+
             // Add reference columns for linking to mobile_users or managers
             $table->unsignedBigInteger('mobile_user_id')->nullable()->after('role');
             $table->unsignedBigInteger('manager_id')->nullable()->after('mobile_user_id');
-            
+
             // Add other useful columns
             $table->string('phone')->nullable()->after('manager_id');
             $table->string('profile_photo')->nullable()->after('phone');
@@ -44,7 +44,7 @@ return new class extends Migration
                 'manager_id',
                 'phone',
                 'profile_photo',
-                'is_verified'
+                'is_verified',
             ]);
         });
     }

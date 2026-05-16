@@ -32,8 +32,9 @@ class NightlyWarehouseEtlJob implements ShouldQueue
 {
     use Dispatchable, InteractsWithQueue, Queueable, SerializesModels;
 
-    public int    $tries   = 3;
-    public int    $backoff = 600; // 10-minute retry backoff
+    public int $tries = 3;
+
+    public int $backoff = 600; // 10-minute retry backoff
 
     public function __construct(
         public readonly string $targetDate,
@@ -45,6 +46,7 @@ class NightlyWarehouseEtlJob implements ShouldQueue
     {
         if (! Schema::hasTable('dw_fact_transactions')) {
             Log::warning('NightlyWarehouseEtlJob: warehouse tables not yet created. Run migrations first.');
+
             return;
         }
 
@@ -67,9 +69,9 @@ class NightlyWarehouseEtlJob implements ShouldQueue
             Log::info("NightlyWarehouseEtlJob: ETL complete for {$this->targetDate}", ['batch_id' => $batchId]);
         } catch (\Throwable $e) {
             Log::critical('NightlyWarehouseEtlJob: ETL failed', [
-                'date'     => $this->targetDate,
+                'date' => $this->targetDate,
                 'batch_id' => $batchId,
-                'error'    => $e->getMessage(),
+                'error' => $e->getMessage(),
             ]);
             throw $e;
         }
@@ -78,7 +80,7 @@ class NightlyWarehouseEtlJob implements ShouldQueue
     public function failed(\Throwable $e): void
     {
         Log::critical('NightlyWarehouseEtlJob permanently failed', [
-            'date'  => $this->targetDate,
+            'date' => $this->targetDate,
             'error' => $e->getMessage(),
         ]);
     }
@@ -92,15 +94,15 @@ class NightlyWarehouseEtlJob implements ShouldQueue
         DB::table('dw_dim_date')->updateOrInsert(
             ['date_key' => $date],
             [
-                'year'        => $d->year,
-                'month'       => $d->month,
-                'day'         => $d->day,
+                'year' => $d->year,
+                'month' => $d->month,
+                'day' => $d->day,
                 'day_of_week' => $d->dayOfWeek,
-                'quarter'     => $d->quarter,
-                'month_name'  => $d->format('F'),
-                'day_name'    => $d->format('l'),
-                'is_weekend'  => $d->isWeekend(),
-                'is_holiday'  => false, // Pluggable: integrate RWA holiday calendar
+                'quarter' => $d->quarter,
+                'month_name' => $d->format('F'),
+                'day_name' => $d->format('l'),
+                'is_weekend' => $d->isWeekend(),
+                'is_holiday' => false, // Pluggable: integrate RWA holiday calendar
             ]
         );
     }
@@ -111,7 +113,7 @@ class NightlyWarehouseEtlJob implements ShouldQueue
             ->join('users as u', 'u.id', '=', 'd.user_id')
             ->orderBy('d.id')
             ->select('d.id', 'u.name', 'u.phone', 'd.created_at')
-            ->chunkById(200, function ($drivers) use ($batchId) {
+            ->chunkById(200, function ($drivers) {
                 foreach ($drivers as $driver) {
                     // Check if already in dim with same name
                     $existing = DB::table('dw_dim_driver')
@@ -121,15 +123,15 @@ class NightlyWarehouseEtlJob implements ShouldQueue
 
                     if (! $existing) {
                         DB::table('dw_dim_driver')->insert([
-                            'driver_id'      => $driver->id,
-                            'driver_name'    => $driver->name,
-                            'phone'          => $driver->phone,
-                            'joined_date'    => Carbon::parse($driver->created_at)->toDateString(),
-                            'is_active'      => true,
-                            'is_current'     => true,
+                            'driver_id' => $driver->id,
+                            'driver_name' => $driver->name,
+                            'phone' => $driver->phone,
+                            'joined_date' => Carbon::parse($driver->created_at)->toDateString(),
+                            'is_active' => true,
+                            'is_current' => true,
                             'effective_from' => Carbon::parse($driver->created_at)->toDateString(),
-                            'created_at'     => now(),
-                            'updated_at'     => now(),
+                            'created_at' => now(),
+                            'updated_at' => now(),
                         ]);
                     }
                 }
@@ -144,14 +146,14 @@ class NightlyWarehouseEtlJob implements ShouldQueue
                 foreach ($passengers as $p) {
                     if (! DB::table('dw_dim_passenger')->where('passenger_id', $p->id)->where('is_current', true)->exists()) {
                         DB::table('dw_dim_passenger')->insert([
-                            'passenger_id'   => $p->id,
-                            'passenger_name' => trim($p->first_name . ' ' . $p->last_name),
-                            'phone'          => $p->phone,
-                            'registered_date'=> Carbon::parse($p->created_at)->toDateString(),
-                            'is_current'     => true,
+                            'passenger_id' => $p->id,
+                            'passenger_name' => trim($p->first_name.' '.$p->last_name),
+                            'phone' => $p->phone,
+                            'registered_date' => Carbon::parse($p->created_at)->toDateString(),
+                            'is_current' => true,
                             'effective_from' => Carbon::parse($p->created_at)->toDateString(),
-                            'created_at'     => now(),
-                            'updated_at'     => now(),
+                            'created_at' => now(),
+                            'updated_at' => now(),
                         ]);
                     }
                 }
@@ -168,6 +170,7 @@ class NightlyWarehouseEtlJob implements ShouldQueue
 
         if ($alreadyLoaded) {
             Log::info("NightlyWarehouseEtlJob: fact_transactions already loaded for {$date}, skipping.");
+
             return;
         }
 
@@ -182,23 +185,25 @@ class NightlyWarehouseEtlJob implements ShouldQueue
                 $insert = [];
                 foreach ($rows as $row) {
                     $commission = round($row->credit * 0.08, 2);
-                    $payout     = round($row->credit * 0.92, 2);
+                    $payout = round($row->credit * 0.92, 2);
 
                     $insert[] = [
-                        'date_key'              => $date,
+                        'date_key' => $date,
                         'ledger_transaction_id' => $row->id,
-                        'transaction_type'      => 'payment',
-                        'gross_amount'          => $row->credit,
-                        'commission_amount'     => $commission,
-                        'driver_payout'         => $payout,
-                        'tax_amount'            => 0.00,
-                        'net_platform_revenue'  => $commission,
-                        'currency'              => 'RWF',
-                        'etl_batch_id'          => $batchId,
-                        'etl_loaded_at'         => now(),
+                        'transaction_type' => 'payment',
+                        'gross_amount' => $row->credit,
+                        'commission_amount' => $commission,
+                        'driver_payout' => $payout,
+                        'tax_amount' => 0.00,
+                        'net_platform_revenue' => $commission,
+                        'currency' => 'RWF',
+                        'etl_batch_id' => $batchId,
+                        'etl_loaded_at' => now(),
                     ];
                 }
-                if ($insert) DB::table('dw_fact_transactions')->insert($insert);
+                if ($insert) {
+                    DB::table('dw_fact_transactions')->insert($insert);
+                }
             }, 'lt.id');
     }
 
@@ -208,25 +213,27 @@ class NightlyWarehouseEtlJob implements ShouldQueue
             ->whereDate('updated_at', $date)
             ->where('status', 'completed')
             ->chunkById(500, function ($rides) use ($date, $batchId) {
-                $dimDriverMap    = DB::table('dw_dim_driver')->where('is_current', true)->pluck('id', 'driver_id');
+                $dimDriverMap = DB::table('dw_dim_driver')->where('is_current', true)->pluck('id', 'driver_id');
                 $dimPassengerMap = DB::table('dw_dim_passenger')->where('is_current', true)->pluck('id', 'passenger_id');
 
                 $insert = [];
                 foreach ($rides as $ride) {
                     $insert[] = [
-                        'date_key'         => $date,
-                        'driver_dim_id'    => $dimDriverMap[$ride->driver_id] ?? null,
-                        'source_ride_id'   => $ride->id,
-                        'ride_status'      => $ride->status,
-                        'fare_amount'      => $ride->fare_amount ?? 0,
-                        'distance_km'      => $ride->distance_km ?? 0,
+                        'date_key' => $date,
+                        'driver_dim_id' => $dimDriverMap[$ride->driver_id] ?? null,
+                        'source_ride_id' => $ride->id,
+                        'ride_status' => $ride->status,
+                        'fare_amount' => $ride->fare_amount ?? 0,
+                        'distance_km' => $ride->distance_km ?? 0,
                         'duration_minutes' => $ride->duration_minutes ?? 0,
                         'surge_multiplier' => 1.00,
-                        'etl_batch_id'     => $batchId,
-                        'etl_loaded_at'    => now(),
+                        'etl_batch_id' => $batchId,
+                        'etl_loaded_at' => now(),
                     ];
                 }
-                if ($insert) DB::table('dw_fact_rides')->insert($insert);
+                if ($insert) {
+                    DB::table('dw_fact_rides')->insert($insert);
+                }
             }, 'id');
     }
 
@@ -241,16 +248,16 @@ class NightlyWarehouseEtlJob implements ShouldQueue
                 $insert = [];
                 foreach ($payouts as $p) {
                     $insert[] = [
-                        'date_key'            => $date,
-                        'driver_dim_id'       => $dimDriverMap[$p->driver_id] ?? null,
-                        'total_rides'         => 0, // Could join ride count
-                        'gross_earnings'      => $p->total_income,
+                        'date_key' => $date,
+                        'driver_dim_id' => $dimDriverMap[$p->driver_id] ?? null,
+                        'total_rides' => 0, // Could join ride count
+                        'gross_earnings' => $p->total_income,
                         'commission_deducted' => $p->commission_amount,
-                        'tax_withheld'        => 0.00,
-                        'net_payout'          => $p->payout_amount,
-                        'avg_ride_fare'       => 0.00,
-                        'etl_batch_id'        => $batchId,
-                        'etl_loaded_at'       => now(),
+                        'tax_withheld' => 0.00,
+                        'net_payout' => $p->payout_amount,
+                        'avg_ride_fare' => 0.00,
+                        'etl_batch_id' => $batchId,
+                        'etl_loaded_at' => now(),
                     ];
                 }
                 if ($insert) {
@@ -272,14 +279,14 @@ class NightlyWarehouseEtlJob implements ShouldQueue
                 $insert = [];
                 foreach ($commissions as $c) {
                     $insert[] = [
-                        'date_key'              => $date,
-                        'driver_dim_id'         => $dimDriverMap[$c->driver_id] ?? null,
-                        'total_commission'      => $c->commission_amount,
-                        'tax_on_commission'     => round($c->commission_amount * 0.15, 2),
-                        'net_commission'        => round($c->commission_amount * 0.85, 2),
-                        'transaction_count'     => 1,
-                        'etl_batch_id'          => $batchId,
-                        'etl_loaded_at'         => now(),
+                        'date_key' => $date,
+                        'driver_dim_id' => $dimDriverMap[$c->driver_id] ?? null,
+                        'total_commission' => $c->commission_amount,
+                        'tax_on_commission' => round($c->commission_amount * 0.15, 2),
+                        'net_commission' => round($c->commission_amount * 0.85, 2),
+                        'transaction_count' => 1,
+                        'etl_batch_id' => $batchId,
+                        'etl_loaded_at' => now(),
                     ];
                 }
                 if ($insert) {

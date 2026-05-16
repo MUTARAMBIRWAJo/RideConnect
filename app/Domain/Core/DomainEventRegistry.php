@@ -7,9 +7,9 @@ use App\Events\Domain\RideCreated;
 use App\Events\Domain\TripCompleted;
 use App\Events\Domain\TripMatched;
 use App\Events\Domain\TripStarted;
+use App\Listeners\BroadcastTripEvents;
 use App\Listeners\Domain\BookingCreatedListener;
 use App\Listeners\Domain\RideCreatedListener;
-use App\Listeners\BroadcastTripEvents;
 
 class DomainEventRegistry
 {

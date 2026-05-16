@@ -17,12 +17,12 @@ use Illuminate\Support\Facades\Redis;
 class ReportingService
 {
     private const CACHE_TTL = [
-        'revenue_today'      => 60,      // 1 minute (live)
-        'commission_trend'   => 300,     // 5 minutes
+        'revenue_today' => 60,      // 1 minute (live)
+        'commission_trend' => 300,     // 5 minutes
         'driver_performance' => 300,
-        'fraud_risk'         => 120,
-        'monthly_growth'     => 3600,    // 1 hour
-        'driver_rankings'    => 600,     // 10 minutes
+        'fraud_risk' => 120,
+        'monthly_growth' => 3600,    // 1 hour
+        'driver_rankings' => 600,     // 10 minutes
     ];
 
     public function __construct(
@@ -44,7 +44,8 @@ class ReportingService
 
         return Cache::remember($cacheKey, self::CACHE_TTL['commission_trend'], function () use ($days) {
             $from = now()->subDays($days)->toDateString();
-            $to   = now()->toDateString();
+            $to = now()->toDateString();
+
             return $this->reportingRepo->getCommissionBreakdown($from, $to);
         });
     }
@@ -55,7 +56,8 @@ class ReportingService
 
         return Cache::remember($cacheKey, self::CACHE_TTL['driver_performance'], function () use ($days) {
             $from = now()->subDays($days)->toDateString();
-            $to   = now()->toDateString();
+            $to = now()->toDateString();
+
             return $this->reportingRepo->getDriverEarningsSummary($from, $to);
         });
     }
@@ -64,7 +66,8 @@ class ReportingService
     {
         return Cache::remember('bi:fraud_risk', self::CACHE_TTL['fraud_risk'], function () {
             $from = now()->subDays(30)->toDateString();
-            $to   = now()->toDateString();
+            $to = now()->toDateString();
+
             return $this->reportingRepo->getFraudIncidentReport($from, $to);
         });
     }
@@ -105,11 +108,13 @@ class ReportingService
 
         // Pattern-clear with Redis
         try {
-            $redis   = Redis::connection();
-            $prefix  = config('cache.prefix');
+            $redis = Redis::connection();
+            $prefix = config('cache.prefix');
             $pattern = "{$prefix}bi:commission_trend:*";
-            $keys    = $redis->keys($pattern);
-            if ($keys) $redis->del($keys);
+            $keys = $redis->keys($pattern);
+            if ($keys) {
+                $redis->del($keys);
+            }
         } catch (\Throwable) {
             // Redis unavailable — skip pattern clear gracefully
         }
@@ -117,23 +122,23 @@ class ReportingService
 
     public function buildReportSummary(string $from, string $to): ReportSummaryDTO
     {
-        $revenue    = $this->reportingRepo->getDailyRevenueSummary($to);
+        $revenue = $this->reportingRepo->getDailyRevenueSummary($to);
         $commission = $this->reportingRepo->getCommissionBreakdown($from, $to);
-        $tax        = $this->reportingRepo->getTaxPayableSummary($from, $to);
+        $tax = $this->reportingRepo->getTaxPayableSummary($from, $to);
 
         $totalCommission = array_sum(array_column($commission, 'commission'));
-        $totalTax        = array_sum(array_column($tax, 'tax_collected'));
+        $totalTax = array_sum(array_column($tax, 'tax_collected'));
 
         return new ReportSummaryDTO(
-            reportType:        'combined',
-            period:            "{$from} – {$to}",
-            totalRevenue:      $revenue['total_gross'] ?? 0,
-            totalCommission:   $totalCommission,
-            totalTax:          $totalTax,
-            totalPayouts:      $revenue['total_driver_payout'] ?? 0,
+            reportType: 'combined',
+            period: "{$from} – {$to}",
+            totalRevenue: $revenue['total_gross'] ?? 0,
+            totalCommission: $totalCommission,
+            totalTax: $totalTax,
+            totalPayouts: $revenue['total_driver_payout'] ?? 0,
             totalTransactions: $revenue['transaction_count'] ?? 0,
-            totalRides:        0,
-            breakdown:         compact('commission', 'tax'),
+            totalRides: 0,
+            breakdown: compact('commission', 'tax'),
         );
     }
 }

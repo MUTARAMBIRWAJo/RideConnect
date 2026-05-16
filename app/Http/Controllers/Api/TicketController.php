@@ -91,7 +91,7 @@ class TicketController extends Controller
 
         return response()->json([
             'success' => true,
-            'data' => $tickets->map(fn($ticket) => [
+            'data' => $tickets->map(fn ($ticket) => [
                 'id' => $ticket->id,
                 'title' => $ticket->title,
                 'description' => $ticket->description,
@@ -121,9 +121,9 @@ class TicketController extends Controller
         $ticket = Ticket::findOrFail($id);
 
         // Check authorization
-        if (!$user->isSuperAdmin() && 
-            $user->role !== 'ADMIN' && 
-            $user->role !== 'OFFICER' && 
+        if (! $user->isSuperAdmin() &&
+            $user->role !== 'ADMIN' &&
+            $user->role !== 'OFFICER' &&
             $ticket->user_id !== $user->id) {
             return response()->json([
                 'success' => false,
@@ -163,8 +163,8 @@ class TicketController extends Controller
         $ticket = Ticket::findOrFail($id);
 
         // Check authorization - only admins/officers can update
-        if (!$user->isSuperAdmin() && 
-            $user->role !== 'ADMIN' && 
+        if (! $user->isSuperAdmin() &&
+            $user->role !== 'ADMIN' &&
             $user->role !== 'OFFICER') {
             return response()->json([
                 'success' => false,
@@ -216,8 +216,8 @@ class TicketController extends Controller
         $ticket = Ticket::findOrFail($id);
 
         // Check authorization
-        if (!$user->isSuperAdmin() && 
-            $user->role !== 'ADMIN' && 
+        if (! $user->isSuperAdmin() &&
+            $user->role !== 'ADMIN' &&
             $ticket->user_id !== $user->id) {
             return response()->json([
                 'success' => false,
@@ -242,8 +242,8 @@ class TicketController extends Controller
         $user = $request->user();
 
         // Check authorization
-        if (!$user->isSuperAdmin() && 
-            $user->role !== 'ADMIN' && 
+        if (! $user->isSuperAdmin() &&
+            $user->role !== 'ADMIN' &&
             $user->role !== 'OFFICER') {
             return response()->json([
                 'success' => false,

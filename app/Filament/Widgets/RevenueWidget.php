@@ -13,14 +13,14 @@ class RevenueWidget extends BaseWidget
 {
     protected static ?string $heading = 'Recent Payments';
 
-    protected int | string | array $columnSpan = [
+    protected int|string|array $columnSpan = [
         'default' => 1,
         'md' => 1,
     ];
 
     public static function canView(): bool
     {
-        return Schema::hasTable((new Payment())->getTable());
+        return Schema::hasTable((new Payment)->getTable());
     }
 
     protected function getPollingInterval(): ?string

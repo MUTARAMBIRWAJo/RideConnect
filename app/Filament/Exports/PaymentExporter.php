@@ -38,7 +38,7 @@ class PaymentExporter extends Exporter
         $failedRowsCount = $export->getFailedRowsCount();
 
         if ($failedRowsCount > 0) {
-            $body .= ' ' . number_format($failedRowsCount) . ' row(s) failed to export.';
+            $body .= ' '.number_format($failedRowsCount).' row(s) failed to export.';
         }
 
         return $body;

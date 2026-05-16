@@ -7,6 +7,7 @@ use App\Domain\Ride\RidePolicy;
 use App\Domain\Trip\TripStateMachine;
 use App\Events\Domain\TripMatched;
 use App\Exceptions\DomainException;
+use App\Http\Controllers\Controller;
 use App\Models\Booking;
 use App\Models\Ride;
 use App\Models\Trip;
@@ -16,7 +17,6 @@ use App\Services\MobileNotificationService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Validator;
-use App\Http\Controllers\Controller;
 
 /**
  * MobilePassengerController handles mobile app APIs for passengers.
@@ -97,7 +97,7 @@ class MobilePassengerController extends Controller
 
         $user = $request->user();
 
-        if (!$user->is_approved) {
+        if (! $user->is_approved) {
             return response()->json([
                 'status' => 'error',
                 'type' => 'DOMAIN_ERROR',
@@ -165,7 +165,7 @@ class MobilePassengerController extends Controller
 
         $user = $request->user();
 
-        if (!$user->is_approved) {
+        if (! $user->is_approved) {
             return response()->json([
                 'status' => 'error',
                 'type' => 'DOMAIN_ERROR',
@@ -262,7 +262,7 @@ class MobilePassengerController extends Controller
             ->orderBy('created_at', 'desc')
             ->first();
 
-        if (!$trip) {
+        if (! $trip) {
             return response()->json([
                 'status' => 'success',
                 'data' => null,

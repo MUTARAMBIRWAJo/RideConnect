@@ -25,25 +25,25 @@ class CommissionTodayWidget extends BaseWidget
     {
         /** @var ReportingService $reporting */
         $reporting = app(ReportingService::class);
-        $today     = $reporting->getRevenueSummaryToday();
-        $trend     = $reporting->getCommissionTrend(7);
+        $today = $reporting->getRevenueSummaryToday();
+        $trend = $reporting->getCommissionTrend(7);
 
-        $commission   = $today['total_commission'] ?? 0;
-        $avgDaily     = count($trend) > 0
+        $commission = $today['total_commission'] ?? 0;
+        $avgDaily = count($trend) > 0
             ? array_sum(array_column($trend, 'commission')) / count($trend)
             : 0;
-        $trend7       = $avgDaily > 0
+        $trend7 = $avgDaily > 0
             ? (($commission - $avgDaily) / $avgDaily * 100)
             : 0;
-        $trendLabel   = ($trend7 >= 0 ? '+' : '') . number_format($trend7, 1) . '% vs 7d avg';
+        $trendLabel = ($trend7 >= 0 ? '+' : '').number_format($trend7, 1).'% vs 7d avg';
 
         return [
-            Stat::make('Commission Today', 'RWF ' . number_format($commission))
+            Stat::make('Commission Today', 'RWF '.number_format($commission))
                 ->description($trendLabel)
                 ->color($trend7 >= 0 ? 'success' : 'warning')
                 ->icon('heroicon-o-currency-dollar'),
 
-            Stat::make('Avg Daily Commission (7d)', 'RWF ' . number_format($avgDaily))
+            Stat::make('Avg Daily Commission (7d)', 'RWF '.number_format($avgDaily))
                 ->description('7-day rolling average')
                 ->color('primary')
                 ->icon('heroicon-o-chart-bar'),

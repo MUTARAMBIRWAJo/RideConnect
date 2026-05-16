@@ -7,9 +7,7 @@ use Illuminate\Support\Facades\Log;
 
 class RealtimeGateway
 {
-    public function __construct(private readonly SupabaseClient $supabaseClient)
-    {
-    }
+    public function __construct(private readonly SupabaseClient $supabaseClient) {}
 
     public function broadcast(string $channel, string $event, array $payload): void
     {

@@ -3,13 +3,11 @@
 namespace App\Filament\Resources;
 
 use App\Domain\Ride\RidePolicy;
-use App\Enums\UserRole;
 use App\Filament\Resources\TripResource\Pages;
 use App\Models\Booking;
 use App\Models\Driver;
-use App\Models\Ride;
 use App\Models\MobileUser;
-use App\Models\User;
+use App\Models\Ride;
 use App\Models\Trip;
 use App\Services\PassengerRegistrationService;
 use App\Services\RuraTariffService;
@@ -60,7 +58,7 @@ class TripResource extends Resource
                             ->required()
                             ->options(function (callable $get): array {
                                 $transportType = $get('transport_type');
-                                
+
                                 return Ride::query()
                                     ->when($transportType, function (EloquentBuilder $query, $type): EloquentBuilder {
                                         return $query->where('transport_type', $type);
@@ -165,7 +163,7 @@ class TripResource extends Resource
                                 '#%d | %s %s | %s',
                                 $record->id,
                                 $record->pickup_address ?? 'Pickup',
-                                $record->dropoff_address ? ('-> ' . $record->dropoff_address) : '',
+                                $record->dropoff_address ? ('-> '.$record->dropoff_address) : '',
                                 $record->status ?? 'PENDING'
                             ))
                             ->searchable()
@@ -203,7 +201,7 @@ class TripResource extends Resource
                                     ->limit(10)
                                     ->get()
                                     ->mapWithKeys(fn (MobileUser $record): array => [
-                                        $record->id => trim($record->full_name . ' | ' . $record->phone),
+                                        $record->id => trim($record->full_name.' | '.$record->phone),
                                     ])
                                     ->all();
                             })
@@ -265,7 +263,8 @@ class TripResource extends Resource
                                     ->limit(10)
                                     ->get()
                                     ->mapWithKeys(function (Driver $driver): array {
-                                        $label = trim(($driver->user?->name ?? 'Driver #' . $driver->id) . ' - ' . ($driver->license_plate ?? 'No plate'));
+                                        $label = trim(($driver->user?->name ?? 'Driver #'.$driver->id).' - '.($driver->license_plate ?? 'No plate'));
+
                                         return [$driver->id => $label];
                                     })
                                     ->all();
@@ -275,7 +274,8 @@ class TripResource extends Resource
                                 if (! $driver) {
                                     return null;
                                 }
-                                return trim(($driver->user?->name ?? 'Driver #' . $driver->id) . ' - ' . ($driver->license_plate ?? 'No plate'));
+
+                                return trim(($driver->user?->name ?? 'Driver #'.$driver->id).' - '.($driver->license_plate ?? 'No plate'));
                             }),
                         Forms\Components\Placeholder::make('driver_summary')
                             ->label('Driver Information')
@@ -296,7 +296,7 @@ class TripResource extends Resource
 
                                 return sprintf(
                                     'Auto-assigned driver: %s • Plate: %s',
-                                    $ride->driver->user?->name ?? 'Driver #' . $ride->driver->id,
+                                    $ride->driver->user?->name ?? 'Driver #'.$ride->driver->id,
                                     $ride->driver->license_plate ?? 'Unknown'
                                 );
                             })
@@ -318,7 +318,7 @@ class TripResource extends Resource
                             ->dehydrated(false)
                             ->live()
                             ->afterStateUpdated(function ($state, callable $set): void {
-                                $point = config('ride.map_points.' . (string) $state);
+                                $point = config('ride.map_points.'.(string) $state);
 
                                 if (! is_array($point)) {
                                     return;
@@ -355,7 +355,7 @@ class TripResource extends Resource
                             ->dehydrated(false)
                             ->live()
                             ->afterStateUpdated(function ($state, callable $set): void {
-                                $point = config('ride.map_points.' . (string) $state);
+                                $point = config('ride.map_points.'.(string) $state);
 
                                 if (! is_array($point)) {
                                     return;
@@ -393,7 +393,7 @@ class TripResource extends Resource
                             ])
                             ->required(),
                     ])->columns(2),
-                
+
                 Forms\Components\Section::make('Timing')
                     ->schema([
                         Forms\Components\DateTimePicker::make('requested_at'),

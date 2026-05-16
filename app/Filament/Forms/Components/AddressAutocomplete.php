@@ -9,32 +9,40 @@ class AddressAutocomplete extends Field
     protected string $view = 'filament.forms.components.address-autocomplete';
 
     protected string $addressField = 'pickup_address';
+
     protected string $latField = 'pickup_lat';
+
     protected string $lngField = 'pickup_lng';
+
     protected string $label = 'Pickup Location';
+
     protected string $placeholder = 'Enter address...';
 
     public function addressField(string $field): static
     {
         $this->addressField = $field;
+
         return $this;
     }
 
     public function latField(string $field): static
     {
         $this->latField = $field;
+
         return $this;
     }
 
     public function lngField(string $field): static
     {
         $this->lngField = $field;
+
         return $this;
     }
 
     public function placeholder(string $placeholder): static
     {
         $this->placeholder = $placeholder;
+
         return $this;
     }
 

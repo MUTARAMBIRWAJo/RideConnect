@@ -7,7 +7,7 @@ use Filament\Pages\Page;
 class OfficerCreateBookingTrip extends Page
 {
     protected static ?string $navigationLabel = 'Create Booking/Trip';
-    
+
     protected static string $view = 'filament.pages.officer-create-booking-trip';
 
     protected static ?string $title = 'Create Booking or Trip for Passenger';

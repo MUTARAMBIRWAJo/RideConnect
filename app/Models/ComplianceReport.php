@@ -28,19 +28,19 @@ class ComplianceReport extends Model
     ];
 
     protected $casts = [
-        'period_start'  => 'date',
-        'period_end'    => 'date',
-        'summary_data'  => 'array',
-        'metadata'      => 'array',
-        'generated_at'  => 'datetime',
+        'period_start' => 'date',
+        'period_end' => 'date',
+        'summary_data' => 'array',
+        'metadata' => 'array',
+        'generated_at' => 'datetime',
     ];
 
     public const TYPES = [
-        'daily_ride_summary'    => 'Daily Ride Summary',
-        'driver_earnings'       => 'Driver Earnings Summary',
-        'commission_breakdown'  => 'Commission Breakdown',
-        'tax_payable_summary'   => 'Tax Payable Summary',
-        'refund_report'         => 'Refund Report',
+        'daily_ride_summary' => 'Daily Ride Summary',
+        'driver_earnings' => 'Driver Earnings Summary',
+        'commission_breakdown' => 'Commission Breakdown',
+        'tax_payable_summary' => 'Tax Payable Summary',
+        'refund_report' => 'Refund Report',
         'fraud_incident_report' => 'Fraud Incident Report',
     ];
 

@@ -6,7 +6,6 @@ use App\Models\Driver;
 use App\Models\DriverBehavior;
 use App\Models\PassengerBehavior;
 use App\Models\Trip;
-use Illuminate\Support\Facades\Schema;
 
 /**
  * MatchingEngine calculates a compatibility score using live driver, passenger,
@@ -61,7 +60,7 @@ class MatchingEngine
 
     private function getDistancePenalty(Trip $trip): float
     {
-        if (!$trip->routeState) {
+        if (! $trip->routeState) {
             return 0.5;
         }
 
@@ -76,7 +75,7 @@ class MatchingEngine
     {
         $driver = Driver::query()->find($driverId);
 
-        if (!$driver) {
+        if (! $driver) {
             return 0.5;
         }
 
@@ -89,7 +88,7 @@ class MatchingEngine
     {
         $behavior = DriverBehavior::query()->where('driver_id', $driverId)->latest('created_at')->first();
 
-        if (!$behavior) {
+        if (! $behavior) {
             return 0.6;
         }
 
@@ -101,13 +100,13 @@ class MatchingEngine
         $mobileUser = $trip->passenger;
         $userId = $mobileUser?->user?->id;
 
-        if (!$userId) {
+        if (! $userId) {
             return 0.5;
         }
 
         $behavior = PassengerBehavior::query()->where('user_id', $userId)->latest('created_at')->first();
 
-        if (!$behavior) {
+        if (! $behavior) {
             return 0.5;
         }
 
@@ -118,7 +117,7 @@ class MatchingEngine
     {
         $routeState = $trip->routeState;
 
-        if (!$routeState) {
+        if (! $routeState) {
             return 0.5;
         }
 
@@ -147,7 +146,7 @@ class MatchingEngine
     {
         $weatherCondition = $trip->weatherCondition;
 
-        if (!$weatherCondition) {
+        if (! $weatherCondition) {
             return 0.5;
         }
 

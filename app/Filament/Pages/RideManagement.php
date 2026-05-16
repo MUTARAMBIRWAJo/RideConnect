@@ -80,7 +80,7 @@ class RideManagement extends Page implements HasTable
                     ->icon('heroicon-o-x-circle')
                     ->color('danger')
                     ->requiresConfirmation()
-                    ->visible(fn (Ride $record): bool => !in_array(strtolower((string) $record->status), ['cancelled', 'completed'], true))
+                    ->visible(fn (Ride $record): bool => ! in_array(strtolower((string) $record->status), ['cancelled', 'completed'], true))
                     ->action(function (Ride $record): void {
                         $record->update(['status' => 'CANCELLED']);
 

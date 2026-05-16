@@ -24,7 +24,7 @@ class PulsarEventBus implements EventBusInterface
 
         Log::info('PulsarEventBus: event published (stub)', [
             'event_id' => $event['event_id'],
-            'topic'    => $topic,
+            'topic' => $topic,
         ]);
 
         // Actual Pulsar client integration:
@@ -49,11 +49,13 @@ class PulsarEventBus implements EventBusInterface
 
     private function resolveTopic(string $eventType, ?string $explicitTopic): string
     {
-        if ($explicitTopic) return $explicitTopic;
+        if ($explicitTopic) {
+            return $explicitTopic;
+        }
 
-        $tenant    = config('event_bus.pulsar.tenant', 'rideconnect');
+        $tenant = config('event_bus.pulsar.tenant', 'rideconnect');
         $namespace = config('event_bus.pulsar.namespace', 'finance');
-        $kebab     = strtolower((string) preg_replace('/(?<!^)[A-Z]/', '-$0', $eventType));
+        $kebab = strtolower((string) preg_replace('/(?<!^)[A-Z]/', '-$0', $eventType));
 
         return "persistent://{$tenant}/{$namespace}/{$kebab}";
     }

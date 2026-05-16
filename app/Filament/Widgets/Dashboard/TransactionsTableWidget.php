@@ -11,7 +11,7 @@ class TransactionsTableWidget extends Widget
 {
     protected static string $view = 'filament.widgets.dashboard.transactions-table-widget';
 
-    protected int | string | array $columnSpan = 'full';
+    protected int|string|array $columnSpan = 'full';
 
     protected function getPollingInterval(): ?string
     {
@@ -22,7 +22,7 @@ class TransactionsTableWidget extends Widget
     {
         [$table, $amountColumn] = $this->resolveFinanceSource();
 
-        if (!$table || !$amountColumn) {
+        if (! $table || ! $amountColumn) {
             return ['transactions' => collect()];
         }
 
@@ -41,7 +41,7 @@ class TransactionsTableWidget extends Widget
     private function resolveFinanceSource(): array
     {
         foreach (['payments_v2', 'payments'] as $table) {
-            if (!Schema::hasTable($table)) {
+            if (! Schema::hasTable($table)) {
                 continue;
             }
 

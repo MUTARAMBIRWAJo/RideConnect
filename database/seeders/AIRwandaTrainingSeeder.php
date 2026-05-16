@@ -37,7 +37,7 @@ class AIRwandaTrainingSeeder extends Seeder
 
     public function run(): void
     {
-        if (!Schema::hasTable('mobile_users')) {
+        if (! Schema::hasTable('mobile_users')) {
             return;
         }
 
@@ -76,14 +76,14 @@ class AIRwandaTrainingSeeder extends Seeder
             $requestTime = now()->subMinutes(random_int(15, 60 * 24 * 30));
             $pickup = $this->pickHotspot();
             $dropoff = $this->pickDifferentHotspot($pickup['name']);
-            $zoneKey = strtoupper($pickup['district']) . ':' . $this->slugify($pickup['name']);
+            $zoneKey = strtoupper($pickup['district']).':'.$this->slugify($pickup['name']);
             $status = $this->pickStatus();
 
             $passengerId = $passengerIds[array_rand($passengerIds)];
             $driverId = $status === 'pending' ? null : $driverIds[array_rand($driverIds)];
             $matchedDriverId = $status === 'pending'
                 ? null
-                : (!empty($driverProfileIds)
+                : (! empty($driverProfileIds)
                     ? $driverProfileIds[array_rand($driverProfileIds)]
                     : null);
             $tripId = empty($tripIds) ? null : $tripIds[array_rand($tripIds)];
@@ -380,6 +380,7 @@ class AIRwandaTrainingSeeder extends Seeder
     private function jitter(float $base, float $maxOffset): float
     {
         $offset = (random_int(-1000, 1000) / 1000) * $maxOffset;
+
         return round($base + $offset, 7);
     }
 
@@ -387,12 +388,13 @@ class AIRwandaTrainingSeeder extends Seeder
     {
         $slug = strtolower($value);
         $slug = preg_replace('/[^a-z0-9]+/', '_', $slug);
+
         return trim((string) $slug, '_');
     }
 
     private function chunkInsert(string $table, array $rows, int $chunkSize = 250): void
     {
-        if (empty($rows) || !Schema::hasTable($table)) {
+        if (empty($rows) || ! Schema::hasTable($table)) {
             return;
         }
 
@@ -414,23 +416,23 @@ class AIRwandaTrainingSeeder extends Seeder
 
         return array_values(array_filter(array_map(function (array $row) use ($table, $columns): array {
             if ($table === 'ride_requests') {
-                if (!isset($columns['request_time']) && isset($columns['requested_at']) && array_key_exists('request_time', $row)) {
+                if (! isset($columns['request_time']) && isset($columns['requested_at']) && array_key_exists('request_time', $row)) {
                     $row['requested_at'] = $row['request_time'];
                     unset($row['request_time']);
                 }
 
-                if (!isset($columns['driver_id']) && isset($columns['matched_driver_id']) && array_key_exists('driver_id', $row)) {
+                if (! isset($columns['driver_id']) && isset($columns['matched_driver_id']) && array_key_exists('driver_id', $row)) {
                     $row['matched_driver_id'] = $row['driver_id'];
                     unset($row['driver_id']);
                 }
             }
 
-            if ($table === 'driver_locations' && !isset($columns['updated_at']) && isset($columns['recorded_at']) && array_key_exists('updated_at', $row)) {
+            if ($table === 'driver_locations' && ! isset($columns['updated_at']) && isset($columns['recorded_at']) && array_key_exists('updated_at', $row)) {
                 $row['recorded_at'] = $row['updated_at'];
             }
 
             return array_intersect_key($row, $columns);
-        }, $rows), static fn (array $row): bool => !empty($row)));
+        }, $rows), static fn (array $row): bool => ! empty($row)));
     }
 
     /**
@@ -438,23 +440,23 @@ class AIRwandaTrainingSeeder extends Seeder
      */
     private function syncPgsqlSequence(string $table): void
     {
-        if (DB::getDriverName() !== 'pgsql' || !Schema::hasColumn($table, 'id')) {
+        if (DB::getDriverName() !== 'pgsql' || ! Schema::hasColumn($table, 'id')) {
             return;
         }
 
-        $sequence = DB::selectOne("SELECT pg_get_serial_sequence('" . $table . "', 'id') AS seq");
+        $sequence = DB::selectOne("SELECT pg_get_serial_sequence('".$table."', 'id') AS seq");
         $sequenceName = $sequence?->seq ?? null;
 
-        if (!is_string($sequenceName) || $sequenceName === '') {
+        if (! is_string($sequenceName) || $sequenceName === '') {
             return;
         }
 
-        DB::statement("SELECT setval('" . $sequenceName . "', COALESCE((SELECT MAX(id) FROM \"" . $table . "\"), 0) + 1, false)");
+        DB::statement("SELECT setval('".$sequenceName."', COALESCE((SELECT MAX(id) FROM \"".$table.'"), 0) + 1, false)');
     }
 
     private function getTableColumns(string $table): array
     {
-        if (!array_key_exists($table, $this->tableColumnsCache)) {
+        if (! array_key_exists($table, $this->tableColumnsCache)) {
             $this->tableColumnsCache[$table] = Schema::getColumnListing($table);
         }
 

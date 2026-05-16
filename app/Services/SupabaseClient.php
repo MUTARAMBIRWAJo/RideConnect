@@ -2,13 +2,15 @@
 
 namespace App\Services;
 
-use Illuminate\Support\Facades\Http;
 use Illuminate\Http\Client\Response;
+use Illuminate\Support\Facades\Http;
 
 class SupabaseClient
 {
     protected string $url;
+
     protected string $key;
+
     protected ?string $serviceRoleKey;
 
     public function __construct(string $url, string $key, ?string $serviceRoleKey = null)
@@ -40,7 +42,7 @@ class SupabaseClient
     protected function withAuth(?string $serviceRoleKey = null): array
     {
         return [
-            'Authorization' => 'Bearer ' . ($serviceRoleKey ?? $this->key),
+            'Authorization' => 'Bearer '.($serviceRoleKey ?? $this->key),
             'apikey' => $this->key,
             'Content-Type' => 'application/json',
         ];
@@ -242,7 +244,7 @@ class SupabaseClient
         $url = "{$this->url}/realtime/v1/broadcast";
 
         return Http::withHeaders([
-            'Authorization' => 'Bearer ' . ($this->serviceRoleKey ?? $this->key),
+            'Authorization' => 'Bearer '.($this->serviceRoleKey ?? $this->key),
             'apikey' => $this->key,
             'Content-Type' => 'application/json',
         ])->post($url, [

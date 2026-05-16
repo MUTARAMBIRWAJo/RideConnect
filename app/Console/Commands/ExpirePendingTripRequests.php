@@ -17,8 +17,7 @@ class ExpirePendingTripRequests extends Command
     public function handle(
         MobileNotificationService $mobileNotificationService,
         DriverAssignmentService $driverAssignmentService,
-    ): int
-    {
+    ): int {
         $minutes = max(1, (int) $this->option('minutes'));
         $cutoff = now()->subMinutes($minutes);
         $expiredCount = 0;
@@ -49,6 +48,7 @@ class ExpirePendingTripRequests extends Command
                             }
 
                             $reassignedCount++;
+
                             continue;
                         }
                     }

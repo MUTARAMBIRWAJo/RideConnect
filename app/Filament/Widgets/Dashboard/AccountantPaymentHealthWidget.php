@@ -10,7 +10,7 @@ use Illuminate\Support\Facades\Schema;
 
 class AccountantPaymentHealthWidget extends StatsOverviewWidget
 {
-    protected int | string | array $columnSpan = 'full';
+    protected int|string|array $columnSpan = 'full';
 
     public static function isLazy(): bool
     {
@@ -59,10 +59,10 @@ class AccountantPaymentHealthWidget extends StatsOverviewWidget
             Stat::make('Failed Payments (24h)', number_format($failedCount))
                 ->description('Last 24 hours')
                 ->color('danger'),
-            Stat::make('Success Rate', number_format($successRate, 2) . '%')
+            Stat::make('Success Rate', number_format($successRate, 2).'%')
                 ->description('Payment reliability')
                 ->color('info'),
-            Stat::make('Volume (24h)', 'RWF ' . number_format($successVolume, 0))
+            Stat::make('Volume (24h)', 'RWF '.number_format($successVolume, 0))
                 ->description('Successful amount')
                 ->color('primary'),
         ];

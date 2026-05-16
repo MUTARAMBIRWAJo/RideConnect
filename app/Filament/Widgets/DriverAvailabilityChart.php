@@ -3,15 +3,15 @@
 namespace App\Filament\Widgets;
 
 use App\Filament\Support\RoleDashboardConfig;
-use Filament\Widgets\Widget;
 use App\Models\Driver;
+use Filament\Widgets\Widget;
 use Illuminate\Support\Facades\Schema;
 
 class DriverAvailabilityChart extends Widget
 {
     protected static string $view = 'filament.widgets.driver-availability-chart';
 
-    protected int | string | array $columnSpan = [
+    protected int|string|array $columnSpan = [
         'md' => 1,
         'xl' => 1,
     ];

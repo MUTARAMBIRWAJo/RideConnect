@@ -9,7 +9,6 @@ use Filament\Forms\Form;
 use Filament\Resources\Resource;
 use Filament\Tables;
 use Filament\Tables\Table;
-use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
 use Spatie\Permission\Models\Role;
 
@@ -83,7 +82,7 @@ class RoleResource extends Resource
             ->bulkActions([
                 Tables\Actions\BulkActionGroup::make([
                     Tables\Actions\DeleteBulkAction::make()
-                        ->visible(fn (): bool => static::canDelete(new Role())),
+                        ->visible(fn (): bool => static::canDelete(new Role)),
                 ]),
             ])
             ->emptyStateActions([
@@ -128,7 +127,7 @@ class RoleResource extends Resource
 
     private static function isSuperAdmin($user): bool
     {
-        if (!$user) {
+        if (! $user) {
             return false;
         }
 

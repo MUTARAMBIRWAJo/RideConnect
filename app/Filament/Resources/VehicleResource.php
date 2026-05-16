@@ -56,7 +56,7 @@ class VehicleResource extends Resource
                         Forms\Components\TextInput::make('vin')
                             ->maxLength(50),
                     ])->columns(3),
-                
+
                 Forms\Components\Section::make('Capacity & Status')
                     ->schema([
                         Forms\Components\TextInput::make('seats')
@@ -79,7 +79,7 @@ class VehicleResource extends Resource
                             ])
                             ->default('available'),
                     ])->columns(3),
-                
+
                 Forms\Components\Section::make('Features')
                     ->schema([
                         Forms\Components\Checkbox::make('air_conditioning'),

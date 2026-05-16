@@ -25,7 +25,7 @@ return new class extends Migration
         Schema::table('trips', function (Blueprint $table) {
             $table->foreignId('ride_id')->nullable()->after('id')->constrained('rides')->nullOnDelete();
         });
-        
+
         // Backfill links for legacy rows using nearest matching ride by driver and route.
         $trips = DB::table('trips')
             ->whereNull('ride_id')

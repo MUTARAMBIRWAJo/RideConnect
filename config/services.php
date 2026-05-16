@@ -57,7 +57,7 @@ return [
     | STRIPE_WEBHOOK_SECRET  — signing secret (whsec_...) from Stripe Dashboard
     */
     'stripe' => [
-        'api_key'        => env('STRIPE_API_KEY'),
+        'api_key' => env('STRIPE_API_KEY'),
         'webhook_secret' => env('STRIPE_WEBHOOK_SECRET'),
     ],
 
@@ -70,12 +70,12 @@ return [
     | MTN_BASE_URL  — sandbox: https://sandbox.momodeveloper.mtn.com
     */
     'mtn' => [
-        'callback_api_key'          => env('MTN_CALLBACK_API_KEY'),
-        'api_user'                   => env('MTN_API_USER'),
-        'api_key'                    => env('MTN_API_KEY'),
-        'collection_primary_key'     => env('MTN_COLLECTION_PRIMARY_KEY'),
-        'base_url'                   => env('MTN_BASE_URL', 'https://sandbox.momodeveloper.mtn.com'),
-        'currency'                   => env('MTN_CURRENCY', 'RWF'),
+        'callback_api_key' => env('MTN_CALLBACK_API_KEY'),
+        'api_user' => env('MTN_API_USER'),
+        'api_key' => env('MTN_API_KEY'),
+        'collection_primary_key' => env('MTN_COLLECTION_PRIMARY_KEY'),
+        'base_url' => env('MTN_BASE_URL', 'https://sandbox.momodeveloper.mtn.com'),
+        'currency' => env('MTN_CURRENCY', 'RWF'),
     ],
 
     'google_maps' => [

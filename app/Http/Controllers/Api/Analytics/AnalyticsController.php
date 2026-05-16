@@ -21,10 +21,10 @@ class AnalyticsController extends Controller
     {
         return response()->json([
             'success' => true,
-            'data'    => [
-                'today'          => $this->reportingService->getRevenueSummaryToday(),
+            'data' => [
+                'today' => $this->reportingService->getRevenueSummaryToday(),
                 'monthly_growth' => $this->reportingService->getMonthlyGrowth(),
-                'currency'       => 'RWF',
+                'currency' => 'RWF',
             ],
         ]);
     }
@@ -39,8 +39,8 @@ class AnalyticsController extends Controller
 
         return response()->json([
             'success' => true,
-            'data'    => [
-                'rankings'    => $this->reportingService->getDriverRankings(),
+            'data' => [
+                'rankings' => $this->reportingService->getDriverRankings(),
                 'performance' => $this->reportingService->getDriverPerformance($days),
                 'period_days' => $days,
             ],
@@ -57,7 +57,7 @@ class AnalyticsController extends Controller
 
         return response()->json([
             'success' => true,
-            'data'    => $this->reportingService->getCommissionTrend($days),
+            'data' => $this->reportingService->getCommissionTrend($days),
         ]);
     }
 
@@ -68,7 +68,7 @@ class AnalyticsController extends Controller
     {
         return response()->json([
             'success' => true,
-            'data'    => $this->reportingService->getFraudRisk(),
+            'data' => $this->reportingService->getFraudRisk(),
         ]);
     }
 }

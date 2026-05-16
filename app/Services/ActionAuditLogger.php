@@ -9,26 +9,26 @@ use Illuminate\Support\Facades\Schema;
 class ActionAuditLogger
 {
     /**
-     * @param array<string, mixed> $context
+     * @param  array<string, mixed>  $context
      */
     public function log(string $action, string $description, array $context = []): void
     {
-        if (!Schema::hasTable('activity_logs')) {
+        if (! Schema::hasTable('activity_logs')) {
             return;
         }
 
         $user = Auth::user();
-        if (!$user) {
+        if (! $user) {
             return;
         }
 
         $managerId = $user->manager_id ?? null;
 
-        if (!$managerId && Schema::hasTable('managers') && isset($user->email)) {
+        if (! $managerId && Schema::hasTable('managers') && isset($user->email)) {
             $managerId = DB::table('managers')->where('email', $user->email)->value('id');
         }
 
-        if (!$managerId) {
+        if (! $managerId) {
             return;
         }
 

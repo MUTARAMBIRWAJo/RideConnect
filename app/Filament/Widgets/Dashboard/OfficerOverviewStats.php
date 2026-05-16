@@ -11,7 +11,7 @@ use Illuminate\Support\Facades\Schema;
 
 class OfficerOverviewStats extends StatsOverviewWidget
 {
-    protected int | string | array $columnSpan = 'full';
+    protected int|string|array $columnSpan = 'full';
 
     protected function getStats(): array
     {
@@ -32,7 +32,7 @@ class OfficerOverviewStats extends StatsOverviewWidget
             Stat::make('Drivers Online', number_format($driversOnline))
                 ->description('Available for assignments')
                 ->color('success'),
-            Stat::make('Demand Forecast', number_format($demandForecast) . ' avg/day')
+            Stat::make('Demand Forecast', number_format($demandForecast).' avg/day')
                 ->description('7-day rolling estimate')
                 ->color('info'),
         ];

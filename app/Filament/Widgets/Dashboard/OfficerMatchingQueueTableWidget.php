@@ -13,7 +13,7 @@ class OfficerMatchingQueueTableWidget extends Widget
 {
     protected static string $view = 'filament.widgets.dashboard.officer-matching-queue-table-widget';
 
-    protected int | string | array $columnSpan = 'full';
+    protected int|string|array $columnSpan = 'full';
 
     protected function getPollingInterval(): ?string
     {
@@ -29,7 +29,7 @@ class OfficerMatchingQueueTableWidget extends Widget
     {
         $user = auth()->user();
 
-        if (!$user) {
+        if (! $user) {
             return false;
         }
 

@@ -8,7 +8,6 @@ use App\Models\LedgerAccount;
 use App\Models\LedgerEntry;
 use Filament\Forms\Form;
 use Filament\Resources\Resource;
-use Filament\Tables;
 use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Filters\Filter;
 use Filament\Tables\Filters\SelectFilter;
@@ -20,10 +19,13 @@ class LedgerEntryResource extends Resource
 {
     protected static ?string $model = LedgerEntry::class;
 
-    protected static ?string $navigationIcon  = 'heroicon-o-book-open';
+    protected static ?string $navigationIcon = 'heroicon-o-book-open';
+
     protected static ?string $navigationLabel = 'Ledger Viewer';
+
     protected static ?string $navigationGroup = 'Finance';
-    protected static ?int    $navigationSort  = 10;
+
+    protected static ?int $navigationSort = 10;
 
     // -----------------------------------------------------------------------
     // Access control
@@ -32,12 +34,24 @@ class LedgerEntryResource extends Resource
     public static function canViewAny(): bool
     {
         $user = auth()->user();
+
         return $user && in_array($user->role, [UserRole::SUPER_ADMIN, UserRole::ACCOUNTANT]);
     }
 
-    public static function canCreate(): bool   { return false; }
-    public static function canEdit($record): bool   { return false; }
-    public static function canDelete($record): bool { return false; }
+    public static function canCreate(): bool
+    {
+        return false;
+    }
+
+    public static function canEdit($record): bool
+    {
+        return false;
+    }
+
+    public static function canDelete($record): bool
+    {
+        return false;
+    }
 
     // -----------------------------------------------------------------------
     // Table
@@ -83,11 +97,11 @@ class LedgerEntryResource extends Resource
                     ->label('Type')
                     ->badge()
                     ->color(fn (string $state) => match ($state) {
-                        'asset'     => 'success',
+                        'asset' => 'success',
                         'liability' => 'warning',
-                        'revenue'   => 'info',
-                        'expense'   => 'danger',
-                        default     => 'gray',
+                        'revenue' => 'info',
+                        'expense' => 'danger',
+                        default => 'gray',
                     }),
 
                 TextColumn::make('debit')
@@ -106,12 +120,12 @@ class LedgerEntryResource extends Resource
                     ->label('Reference')
                     ->badge()
                     ->color(fn (?string $state) => match ($state) {
-                        'payout'     => 'success',
-                        'payment'    => 'info',
-                        'refund'     => 'danger',
-                        'webhook'    => 'warning',
+                        'payout' => 'success',
+                        'payment' => 'info',
+                        'refund' => 'danger',
+                        'webhook' => 'warning',
                         'adjustment' => 'gray',
-                        default      => 'gray',
+                        default => 'gray',
                     }),
 
                 TextColumn::make('reference_id')
@@ -127,24 +141,23 @@ class LedgerEntryResource extends Resource
             ->filters([
                 SelectFilter::make('reference_type')
                     ->options([
-                        'payment'    => 'Payment',
-                        'payout'     => 'Payout',
-                        'refund'     => 'Refund',
+                        'payment' => 'Payment',
+                        'payout' => 'Payout',
+                        'refund' => 'Refund',
                         'adjustment' => 'Adjustment',
-                        'webhook'    => 'Webhook',
+                        'webhook' => 'Webhook',
                     ])
                     ->label('Reference Type'),
 
                 SelectFilter::make('account_type')
                     ->label('Account Type')
                     ->options([
-                        'asset'     => 'Asset',
+                        'asset' => 'Asset',
                         'liability' => 'Liability',
-                        'revenue'   => 'Revenue',
-                        'expense'   => 'Expense',
+                        'revenue' => 'Revenue',
+                        'expense' => 'Expense',
                     ])
-                    ->query(fn (Builder $query, array $data) =>
-                        $data['value']
+                    ->query(fn (Builder $query, array $data) => $data['value']
                             ? $query->whereHas('account', fn ($q) => $q->where('type', $data['value']))
                             : $query
                     ),
@@ -156,7 +169,7 @@ class LedgerEntryResource extends Resource
                     ])
                     ->query(fn (Builder $query, array $data) => $query
                         ->when($data['from'], fn ($q) => $q->whereDate('created_at', '>=', $data['from']))
-                        ->when($data['to'],   fn ($q) => $q->whereDate('created_at', '<=', $data['to']))
+                        ->when($data['to'], fn ($q) => $q->whereDate('created_at', '<=', $data['to']))
                     ),
 
                 SelectFilter::make('driver_account')
@@ -168,8 +181,7 @@ class LedgerEntryResource extends Resource
                             ->toArray()
                         : []
                     )
-                    ->query(fn (Builder $query, array $data) =>
-                        $data['value']
+                    ->query(fn (Builder $query, array $data) => $data['value']
                             ? $query->where('account_id', $data['value'])
                             : $query
                     ),

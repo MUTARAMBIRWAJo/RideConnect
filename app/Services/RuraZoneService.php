@@ -36,6 +36,7 @@ class RuraZoneService
                 return $zone['name'];
             }
         }
+
         // Fallback: nearest zone (not implemented for brevity)
         return 'Other';
     }

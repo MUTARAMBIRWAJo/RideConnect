@@ -46,7 +46,7 @@ class FinancialDashboard extends Page
         return 'Dashboard';
     }
 
-    public static function getNavigationIcon(): string | Htmlable | null
+    public static function getNavigationIcon(): string|Htmlable|null
     {
         return 'heroicon-o-home';
     }
@@ -86,7 +86,7 @@ class FinancialDashboard extends Page
             return;
         }
 
-        if (!Schema::hasTable('payments')) {
+        if (! Schema::hasTable('payments')) {
             return;
         }
 
@@ -131,7 +131,7 @@ class FinancialDashboard extends Page
             return;
         }
 
-        if (!Schema::hasTable('driver_payouts')) {
+        if (! Schema::hasTable('driver_payouts')) {
             return;
         }
 
@@ -190,7 +190,7 @@ class FinancialDashboard extends Page
 
     private function resolveTotalRevenue(): float
     {
-        if (!Schema::hasTable('payments') || !Schema::hasColumn('payments', 'amount')) {
+        if (! Schema::hasTable('payments') || ! Schema::hasColumn('payments', 'amount')) {
             return 0.0;
         }
 
@@ -202,7 +202,7 @@ class FinancialDashboard extends Page
 
     private function resolveMonthlyRevenue(): float
     {
-        if (!Schema::hasTable('payments') || !Schema::hasColumn('payments', 'amount')) {
+        if (! Schema::hasTable('payments') || ! Schema::hasColumn('payments', 'amount')) {
             return 0.0;
         }
 
@@ -216,7 +216,7 @@ class FinancialDashboard extends Page
 
     private function resolveSuccessfulPayments24h(): int
     {
-        if (!Schema::hasTable('payments') || !Schema::hasColumn('payments', 'status')) {
+        if (! Schema::hasTable('payments') || ! Schema::hasColumn('payments', 'status')) {
             return 0;
         }
 
@@ -229,7 +229,7 @@ class FinancialDashboard extends Page
 
     private function resolveFailedPayments24h(): int
     {
-        if (!Schema::hasTable('payments') || !Schema::hasColumn('payments', 'status')) {
+        if (! Schema::hasTable('payments') || ! Schema::hasColumn('payments', 'status')) {
             return 0;
         }
 
@@ -241,7 +241,7 @@ class FinancialDashboard extends Page
 
     private function resolvePendingPayouts(): int
     {
-        if (!Schema::hasTable('driver_payouts') || !Schema::hasColumn('driver_payouts', 'status')) {
+        if (! Schema::hasTable('driver_payouts') || ! Schema::hasColumn('driver_payouts', 'status')) {
             return 0;
         }
 
@@ -252,7 +252,7 @@ class FinancialDashboard extends Page
 
     private function resolvePendingPayoutAmount(): float
     {
-        if (!Schema::hasTable('driver_payouts') || !Schema::hasColumn('driver_payouts', 'amount')) {
+        if (! Schema::hasTable('driver_payouts') || ! Schema::hasColumn('driver_payouts', 'amount')) {
             return 0.0;
         }
 
@@ -263,7 +263,7 @@ class FinancialDashboard extends Page
 
     private function resolveCommissionToday(): float
     {
-        if (!Schema::hasTable('payments') || !Schema::hasColumn('payments', 'commission_amount')) {
+        if (! Schema::hasTable('payments') || ! Schema::hasColumn('payments', 'commission_amount')) {
             return 0.0;
         }
 
@@ -274,7 +274,7 @@ class FinancialDashboard extends Page
 
     private function resolvePaymentRetryQueueCount(): int
     {
-        if (!Schema::hasTable('payments') || !Schema::hasColumn('payments', 'retry_count')) {
+        if (! Schema::hasTable('payments') || ! Schema::hasColumn('payments', 'retry_count')) {
             return 0;
         }
 
@@ -287,7 +287,7 @@ class FinancialDashboard extends Page
     /** @return array<int, array<string, mixed>> */
     private function resolveRecentPayments(): array
     {
-        if (!Schema::hasTable('payments')) {
+        if (! Schema::hasTable('payments')) {
             return [];
         }
 
@@ -312,7 +312,7 @@ class FinancialDashboard extends Page
     /** @return array<int, array<string, mixed>> */
     private function resolveFailedPayments(): array
     {
-        if (!Schema::hasTable('payments') || !Schema::hasColumn('payments', 'status')) {
+        if (! Schema::hasTable('payments') || ! Schema::hasColumn('payments', 'status')) {
             return [];
         }
 
@@ -338,7 +338,7 @@ class FinancialDashboard extends Page
     /** @return array<int, array<string, mixed>> */
     private function resolvePendingPayoutRows(): array
     {
-        if (!Schema::hasTable('driver_payouts')) {
+        if (! Schema::hasTable('driver_payouts')) {
             return [];
         }
 

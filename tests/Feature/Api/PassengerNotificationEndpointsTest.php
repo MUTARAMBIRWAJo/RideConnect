@@ -69,7 +69,7 @@ class PassengerNotificationEndpointsTest extends TestCase
         $mobilePassenger = MobileUser::create([
             'first_name' => 'Passenger',
             'last_name' => 'One',
-            'phone' => '+25078' . random_int(1000000, 9999999),
+            'phone' => '+25078'.random_int(1000000, 9999999),
             'email' => "passenger.one.{$suffix}@example.com",
             'password' => 'password123',
             'role' => UserRole::PASSENGER->value,
@@ -90,8 +90,8 @@ class PassengerNotificationEndpointsTest extends TestCase
 
         $driver = Driver::create([
             'user_id' => $driverUser->id,
-            'license_number' => 'DL-PN-' . random_int(2000, 9999),
-            'license_plate' => 'RAA-' . random_int(200, 999) . '-' . chr(random_int(65, 90)),
+            'license_number' => 'DL-PN-'.random_int(2000, 9999),
+            'license_plate' => 'RAA-'.random_int(200, 999).'-'.chr(random_int(65, 90)),
             'status' => 'approved',
             'availability_status' => 'online',
             'current_latitude' => -1.9441,
@@ -159,7 +159,7 @@ class PassengerNotificationEndpointsTest extends TestCase
             ->assertStatus(200)
             ->assertJsonPath('data.0.id', $notification->id);
 
-        $this->putJson('/api/v1/notifications/' . $notification->id . '/read')
+        $this->putJson('/api/v1/notifications/'.$notification->id.'/read')
             ->assertStatus(200);
 
         $this->assertDatabaseHas('user_notifications', [
@@ -274,14 +274,14 @@ class PassengerNotificationEndpointsTest extends TestCase
 
         Sanctum::actingAs($user, ['*']);
 
-        $this->deleteJson('/api/v1/notifications/' . $pending->id)
+        $this->deleteJson('/api/v1/notifications/'.$pending->id)
             ->assertStatus(422)
             ->assertJsonPath('success', false)
             ->assertJsonPath('error_code', 'notification_not_actioned');
 
         $this->assertDatabaseHas('user_notifications', ['id' => $pending->id]);
 
-        $this->deleteJson('/api/v1/notifications/' . $actioned->id)
+        $this->deleteJson('/api/v1/notifications/'.$actioned->id)
             ->assertStatus(200)
             ->assertJsonPath('success', true);
 

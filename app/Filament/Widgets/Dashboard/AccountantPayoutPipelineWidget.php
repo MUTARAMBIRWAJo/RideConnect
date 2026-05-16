@@ -10,7 +10,7 @@ use Illuminate\Support\Facades\Schema;
 
 class AccountantPayoutPipelineWidget extends StatsOverviewWidget
 {
-    protected int | string | array $columnSpan = 'full';
+    protected int|string|array $columnSpan = 'full';
 
     public static function isLazy(): bool
     {

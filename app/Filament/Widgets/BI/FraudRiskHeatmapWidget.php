@@ -9,6 +9,7 @@ use Filament\Widgets\ChartWidget;
 class FraudRiskHeatmapWidget extends ChartWidget
 {
     protected static ?string $heading = 'Fraud Risk by Severity';
+
     protected static ?int $sort = 5;
 
     public static function isLazy(): bool
@@ -25,7 +26,7 @@ class FraudRiskHeatmapWidget extends ChartWidget
     {
         /** @var ReportingService $reporting */
         $reporting = app(ReportingService::class);
-        $risk      = $reporting->getFraudRisk();
+        $risk = $reporting->getFraudRisk();
 
         $bySeverity = $risk['by_severity'] ?? [];
 
@@ -34,9 +35,9 @@ class FraudRiskHeatmapWidget extends ChartWidget
         $colors = [];
 
         $palette = [
-            'low'      => '#22c55e',
-            'medium'   => '#f59e0b',
-            'high'     => '#ef4444',
+            'low' => '#22c55e',
+            'medium' => '#f59e0b',
+            'high' => '#ef4444',
             'critical' => '#7c3aed',
         ];
 
@@ -49,8 +50,8 @@ class FraudRiskHeatmapWidget extends ChartWidget
         return [
             'datasets' => [
                 [
-                    'label'           => 'Fraud Flags',
-                    'data'            => $counts,
+                    'label' => 'Fraud Flags',
+                    'data' => $counts,
                     'backgroundColor' => $colors,
                 ],
             ],

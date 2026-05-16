@@ -5,15 +5,14 @@ namespace Tests\Feature;
 use App\Events\Domain\TripCompleted;
 use App\Events\Domain\TripMatched;
 use App\Events\Domain\TripStarted;
-use App\Models\Trip;
-use App\Models\MobileUser;
 use App\Models\Driver;
+use App\Models\MobileUser;
+use App\Models\Trip;
 use App\Services\Location\TripLocationService;
 use Illuminate\Foundation\Testing\RefreshDatabase;
-use Illuminate\Support\Facades\Config;
-use Illuminate\Support\Facades\Event;
-use Illuminate\Support\Facades\Http;
 use Illuminate\Http\Client\Request;
+use Illuminate\Support\Facades\Config;
+use Illuminate\Support\Facades\Http;
 use Tests\TestCase;
 
 class RealtimeBroadcastTest extends TestCase

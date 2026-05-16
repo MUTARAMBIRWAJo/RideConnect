@@ -22,7 +22,7 @@ class NotificationSeeder extends Seeder
         $reviewIds = \App\Models\Review::orderBy('id')->pluck('id')->toArray();
 
         $notifications = [];
-        if (!empty($userIds) && !empty($bookingIds) && !empty($rideIds)) {
+        if (! empty($userIds) && ! empty($bookingIds) && ! empty($rideIds)) {
             $notifications[] = [
                 'user_id' => $userIds[0],
                 'type' => 'booking_confirmed',
@@ -32,7 +32,7 @@ class NotificationSeeder extends Seeder
                 'is_read' => true,
                 'read_at' => now()->subHours(12),
             ];
-            if (!empty($paymentIds)) {
+            if (! empty($paymentIds)) {
                 $notifications[] = [
                     'user_id' => $userIds[0],
                     'type' => 'payment_received',

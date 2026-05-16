@@ -17,53 +17,53 @@ class LedgerAccountSeeder extends Seeder
         // -----------------------------------------------------------------------
         $platformAccounts = [
             [
-                'name'       => 'Platform Escrow',
-                'type'       => 'liability',
+                'name' => 'Platform Escrow',
+                'type' => 'liability',
                 'owner_type' => 'platform',
-                'owner_id'   => null,
-                'currency'   => 'RWF',
-                'is_active'  => true,
+                'owner_id' => null,
+                'currency' => 'RWF',
+                'is_active' => true,
             ],
             [
-                'name'       => 'Platform Revenue',
-                'type'       => 'revenue',
+                'name' => 'Platform Revenue',
+                'type' => 'revenue',
                 'owner_type' => 'platform',
-                'owner_id'   => null,
-                'currency'   => 'RWF',
-                'is_active'  => true,
+                'owner_id' => null,
+                'currency' => 'RWF',
+                'is_active' => true,
             ],
             [
-                'name'       => 'Stripe Clearing',
-                'type'       => 'asset',
+                'name' => 'Stripe Clearing',
+                'type' => 'asset',
                 'owner_type' => 'platform',
-                'owner_id'   => null,
-                'currency'   => 'RWF',
-                'is_active'  => true,
+                'owner_id' => null,
+                'currency' => 'RWF',
+                'is_active' => true,
             ],
             [
-                'name'       => 'MTN Mobile Money Clearing',
-                'type'       => 'asset',
+                'name' => 'MTN Mobile Money Clearing',
+                'type' => 'asset',
                 'owner_type' => 'platform',
-                'owner_id'   => null,
-                'currency'   => 'RWF',
-                'is_active'  => true,
+                'owner_id' => null,
+                'currency' => 'RWF',
+                'is_active' => true,
             ],
             [
-                'name'       => 'Platform Bank',
-                'type'       => 'asset',
+                'name' => 'Platform Bank',
+                'type' => 'asset',
                 'owner_type' => 'platform',
-                'owner_id'   => null,
-                'currency'   => 'RWF',
-                'is_active'  => true,
+                'owner_id' => null,
+                'currency' => 'RWF',
+                'is_active' => true,
             ],
         ];
 
         foreach ($platformAccounts as $account) {
             LedgerAccount::firstOrCreate(
                 [
-                    'name'       => $account['name'],
+                    'name' => $account['name'],
                     'owner_type' => $account['owner_type'],
-                    'owner_id'   => $account['owner_id'],
+                    'owner_id' => $account['owner_id'],
                 ],
                 $account
             );
@@ -77,13 +77,13 @@ class LedgerAccountSeeder extends Seeder
         foreach ($driverIds as $driverId) {
             LedgerAccount::firstOrCreate(
                 [
-                    'name'       => 'Driver Wallet',
+                    'name' => 'Driver Wallet',
                     'owner_type' => 'driver',
-                    'owner_id'   => $driverId,
+                    'owner_id' => $driverId,
                 ],
                 [
-                    'type'      => 'liability',
-                    'currency'  => 'RWF',
+                    'type' => 'liability',
+                    'currency' => 'RWF',
                     'is_active' => true,
                 ]
             );
@@ -97,18 +97,18 @@ class LedgerAccountSeeder extends Seeder
         foreach ($passengerIds as $userId) {
             LedgerAccount::firstOrCreate(
                 [
-                    'name'       => 'Passenger Wallet',
+                    'name' => 'Passenger Wallet',
                     'owner_type' => 'passenger',
-                    'owner_id'   => $userId,
+                    'owner_id' => $userId,
                 ],
                 [
-                    'type'      => 'liability',
-                    'currency'  => 'RWF',
+                    'type' => 'liability',
+                    'currency' => 'RWF',
                     'is_active' => true,
                 ]
             );
         }
 
-        $this->command->info('LedgerAccountSeeder: seeded ' . LedgerAccount::count() . ' accounts.');
+        $this->command->info('LedgerAccountSeeder: seeded '.LedgerAccount::count().' accounts.');
     }
 }

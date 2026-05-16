@@ -6,7 +6,6 @@ use App\Models\LedgerAccount;
 use App\Models\LedgerEntry;
 use App\Models\LedgerTransaction;
 use App\Modules\Finance\Contracts\LedgerRepositoryInterface;
-use Illuminate\Support\Facades\DB;
 
 class LedgerRepository implements LedgerRepositoryInterface
 {
@@ -14,7 +13,7 @@ class LedgerRepository implements LedgerRepositoryInterface
     {
         return LedgerTransaction::create([
             'description' => $description,
-            'created_by'  => $createdBy,
+            'created_by' => $createdBy,
         ]);
     }
 
@@ -31,7 +30,9 @@ class LedgerRepository implements LedgerRepositoryInterface
     public function getAccountBalance(int $accountId): float
     {
         $account = LedgerAccount::find($accountId);
-        if (! $account) return 0.0;
+        if (! $account) {
+            return 0.0;
+        }
 
         return (float) $account->getRunningBalance();
     }
@@ -56,15 +57,21 @@ class LedgerRepository implements LedgerRepositoryInterface
             ->where('owner_type', 'platform')
             ->first();
 
-        if (! $revenue) return 0.0;
+        if (! $revenue) {
+            return 0.0;
+        }
 
         $query = LedgerEntry::where('account_id', $revenue->id);
 
-        if ($from) $query->whereDate('created_at', '>=', $from->format('Y-m-d'));
-        if ($to)   $query->whereDate('created_at', '<=', $to->format('Y-m-d'));
+        if ($from) {
+            $query->whereDate('created_at', '>=', $from->format('Y-m-d'));
+        }
+        if ($to) {
+            $query->whereDate('created_at', '<=', $to->format('Y-m-d'));
+        }
 
         $credit = (float) $query->sum('credit');
-        $debit  = (float) $query->sum('debit');
+        $debit = (float) $query->sum('debit');
 
         return $credit - $debit;
     }

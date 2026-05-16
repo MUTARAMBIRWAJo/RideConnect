@@ -59,8 +59,8 @@ class CreateTestUsers extends Seeder
 
             // Insert or update user
             $userId = DB::table('users')->where('email', $email)->value('id');
-            
-            if (!$userId) {
+
+            if (! $userId) {
                 $userId = DB::table('users')->insertGetId([
                     'email' => $email,
                     'name' => $userData['name'],

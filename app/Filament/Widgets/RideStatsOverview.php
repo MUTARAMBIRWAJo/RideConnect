@@ -3,16 +3,16 @@
 namespace App\Filament\Widgets;
 
 use App\Filament\Support\RoleDashboardConfig;
-use Filament\Widgets\Widget;
-use App\Models\Ride;
 use App\Models\Driver;
+use App\Models\Ride;
+use Filament\Widgets\Widget;
 use Illuminate\Support\Facades\Schema;
 
 class RideStatsOverview extends Widget
 {
     protected static string $view = 'filament.widgets.ride-stats-overview';
 
-    protected int | string | array $columnSpan = 'full';
+    protected int|string|array $columnSpan = 'full';
 
     public static function isLazy(): bool
     {
@@ -57,7 +57,7 @@ class RideStatsOverview extends Widget
             $avgWait = Ride::whereNotNull('accepted_at')
                 ->whereNotNull('requested_at')
                 ->get()
-                ->map(fn($r) => optional($r->accepted_at)->diffInMinutes($r->requested_at) ?? 0)
+                ->map(fn ($r) => optional($r->accepted_at)->diffInMinutes($r->requested_at) ?? 0)
                 ->avg() ?: null;
         } catch (\Throwable $e) {
             $avgWait = null;

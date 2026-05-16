@@ -108,7 +108,7 @@ class ListLedgerEntries extends ListRecords
     {
         $entries = $this->getFilteredTableQuery()->with(['account', 'transaction'])->get();
 
-        $filename = 'ledger-entries-' . now()->format('Y-m-d') . '.csv';
+        $filename = 'ledger-entries-'.now()->format('Y-m-d').'.csv';
 
         return response()->streamDownload(function () use ($entries) {
             $handle = fopen('php://output', 'wb');

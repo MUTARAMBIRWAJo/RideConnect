@@ -19,7 +19,7 @@ class Dashboard extends \Filament\Pages\Dashboard
         $panel = Filament::getCurrentPanel();
         $user = auth()->user();
 
-        if (!$user) {
+        if (! $user) {
             abort(403);
         }
 
@@ -27,7 +27,7 @@ class Dashboard extends \Filament\Pages\Dashboard
         $roleValue = static::resolveUserRoleValue($user);
 
         // Fallback for accounts managed only through Spatie roles.
-        if (!$roleValue) {
+        if (! $roleValue) {
             $roleValue = match (true) {
                 static::userHasRole($user, 'Super_admin', UserRole::SUPER_ADMIN) => UserRole::SUPER_ADMIN->value,
                 static::userHasRole($user, 'Admin', UserRole::ADMIN) => UserRole::ADMIN->value,
@@ -49,7 +49,7 @@ class Dashboard extends \Filament\Pages\Dashboard
             default => null,
         };
 
-        if (!$targetRoute) {
+        if (! $targetRoute) {
             abort(403);
         }
 

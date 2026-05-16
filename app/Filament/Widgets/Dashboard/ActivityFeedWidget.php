@@ -13,7 +13,7 @@ class ActivityFeedWidget extends Widget
 {
     protected static string $view = 'filament.widgets.dashboard.activity-feed-widget';
 
-    protected int | string | array $columnSpan = [
+    protected int|string|array $columnSpan = [
         'default' => 1,
         'md' => 1,
         'xl' => 1,
@@ -47,8 +47,8 @@ class ActivityFeedWidget extends Widget
                 ->limit(5)
                 ->get()
                 ->map(fn ($ride) => [
-                    'title' => 'Ride #' . $ride->id,
-                    'description' => 'Status: ' . ($ride->status ?? 'unknown'),
+                    'title' => 'Ride #'.$ride->id,
+                    'description' => 'Status: '.($ride->status ?? 'unknown'),
                     'time' => $ride->created_at ? Carbon::parse($ride->created_at)->diffForHumans() : 'just now',
                 ]);
 
@@ -62,8 +62,8 @@ class ActivityFeedWidget extends Widget
                 ->limit(5)
                 ->get()
                 ->map(fn ($booking) => [
-                    'title' => 'Booking #' . $booking->id,
-                    'description' => 'Status: ' . ($booking->status ?? 'unknown'),
+                    'title' => 'Booking #'.$booking->id,
+                    'description' => 'Status: '.($booking->status ?? 'unknown'),
                     'time' => $booking->created_at ? Carbon::parse($booking->created_at)->diffForHumans() : 'just now',
                 ]);
 

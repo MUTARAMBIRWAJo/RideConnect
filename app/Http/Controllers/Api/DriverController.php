@@ -20,24 +20,24 @@ class DriverController extends Controller
     public function profile(Request $request): JsonResponse
     {
         $user = $request->user();
-        
+
         // Check if user is a driver
-        if (!$user->isDriver()) {
+        if (! $user->isDriver()) {
             return response()->json([
                 'success' => false,
                 'message' => 'Only drivers can access this resource',
             ], 403);
         }
-        
+
         $driver = $user->driver;
-        
-        if (!$driver) {
+
+        if (! $driver) {
             return response()->json([
                 'success' => false,
                 'message' => 'Driver profile not found',
             ], 404);
         }
-        
+
         return response()->json([
             'success' => true,
             'data' => [
@@ -65,22 +65,22 @@ class DriverController extends Controller
     public function updateProfile(Request $request): JsonResponse
     {
         $user = $request->user();
-        
+
         // Check if user is a driver
-        if (!$user->isDriver()) {
+        if (! $user->isDriver()) {
             return response()->json([
                 'success' => false,
                 'message' => 'Only drivers can access this resource',
             ], 403);
         }
-        
+
         $validated = $request->validate([
             'name' => 'sometimes|string|max:255',
             'phone' => 'sometimes|string|max:20',
         ]);
-        
+
         $user->update($validated);
-        
+
         return response()->json([
             'success' => true,
             'message' => 'Profile updated successfully',
@@ -99,30 +99,30 @@ class DriverController extends Controller
     public function stats(Request $request): JsonResponse
     {
         $user = $request->user();
-        
+
         // Check if user is a driver
-        if (!$user->isDriver()) {
+        if (! $user->isDriver()) {
             return response()->json([
                 'success' => false,
                 'message' => 'Only drivers can access this resource',
             ], 403);
         }
-        
+
         $driver = $user->driver;
-        
-        if (!$driver) {
+
+        if (! $driver) {
             return response()->json([
                 'success' => false,
                 'message' => 'Driver profile not found',
             ], 404);
         }
-        
+
         // Get ride stats
         $totalRides = Ride::where('driver_id', $driver->id)->count();
         $activeRides = Ride::where('driver_id', $driver->id)
             ->where('status', 'ACTIVE')
             ->count();
-        
+
         // Get booking stats for driver's rides
         $rideIds = Ride::where('driver_id', $driver->id)->pluck('id');
         $bookingsQuery = Booking::whereIn('ride_id', $rideIds)->whereHas('ride');
@@ -144,18 +144,18 @@ class DriverController extends Controller
         $completedBookings = (clone $bookingsQuery)
             ->where('status', 'CONFIRMED')
             ->count();
-        
+
         // Get trip stats
         $totalTrips = Trip::where('driver_id', $driver->id)->count();
         $completedTrips = Trip::where('driver_id', $driver->id)
             ->where('status', 'COMPLETED')
             ->count();
-        
+
         // Calculate total earnings
         $totalEarnings = (clone $bookingsQuery)
             ->where('status', 'CONFIRMED')
             ->sum('total_price');
-        
+
         return response()->json([
             'success' => true,
             'data' => [
@@ -179,33 +179,33 @@ class DriverController extends Controller
     public function bookings(Request $request): JsonResponse
     {
         $user = $request->user();
-        
+
         // Check if user is a driver
-        if (!$user->isDriver()) {
+        if (! $user->isDriver()) {
             return response()->json([
                 'success' => false,
                 'message' => 'Only drivers can access this resource',
             ], 403);
         }
-        
+
         $driver = $user->driver;
-        
-        if (!$driver) {
+
+        if (! $driver) {
             return response()->json([
                 'success' => false,
                 'message' => 'Driver profile not found',
             ], 404);
         }
-        
+
         $rideIds = Ride::where('driver_id', $driver->id)->pluck('id');
-        
+
         $query = Booking::whereIn('ride_id', $rideIds);
-        
+
         // Filter by status
         if ($request->has('status')) {
             $query->where('status', $request->status);
         }
-        
+
         $bookings = $query->with(['ride', 'user'])->orderBy('created_at', 'desc')->get();
 
         if ($request->filled('type')) {
@@ -214,10 +214,10 @@ class DriverController extends Controller
                 return $this->resolveTravelType($booking) === $requestedType;
             })->values();
         }
-        
+
         return response()->json([
             'success' => true,
-            'data' => $bookings->map(fn($booking) => [
+            'data' => $bookings->map(fn ($booking) => [
                 'id' => $booking->id,
                 'ride' => [
                     'id' => $booking->ride->id,
@@ -298,36 +298,36 @@ class DriverController extends Controller
     public function myTrips(Request $request): JsonResponse
     {
         $user = $request->user();
-        
+
         // Check if user is a driver
-        if (!$user->isDriver()) {
+        if (! $user->isDriver()) {
             return response()->json([
                 'success' => false,
                 'message' => 'Only drivers can access this resource',
             ], 403);
         }
-        
+
         $driver = $user->driver;
-        
-        if (!$driver) {
+
+        if (! $driver) {
             return response()->json([
                 'success' => false,
                 'message' => 'Driver profile not found',
             ], 404);
         }
-        
+
         $query = Trip::where('driver_id', $driver->id);
-        
+
         // Filter by status
         if ($request->has('status')) {
             $query->where('status', $request->status);
         }
-        
+
         $trips = $query->with(['passenger.user'])->orderBy('created_at', 'desc')->get();
-        
+
         return response()->json([
             'success' => true,
-            'data' => $trips->map(fn($trip) => [
+            'data' => $trips->map(fn ($trip) => [
                 'id' => $trip->id,
                 'passenger' => [
                     'id' => $trip->passenger?->user?->id,

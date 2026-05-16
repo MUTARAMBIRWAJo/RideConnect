@@ -3,7 +3,6 @@
 namespace Database\Seeders;
 
 use App\Models\SystemNewsArticle;
-use Illuminate\Database\Console\Seeds\WithoutModelEvents;
 use Illuminate\Database\Seeder;
 
 class SystemNewsArticleSeeder extends Seeder
@@ -112,4 +111,3 @@ class SystemNewsArticleSeeder extends Seeder
         }
     }
 }
-

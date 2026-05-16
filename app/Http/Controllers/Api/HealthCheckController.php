@@ -2,13 +2,11 @@
 
 namespace App\Http\Controllers\Api;
 
-use App\Modules\Finance\Services\FinanceService;
-use App\Modules\Reporting\Services\ReportingService;
-use App\Modules\Settlement\Services\SettlementService;
 use App\Http\Controllers\Controller;
+use App\Modules\Reporting\Services\ReportingService;
 use Illuminate\Http\JsonResponse;
-use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Cache;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Queue;
 
 class HealthCheckController extends Controller
@@ -30,16 +28,16 @@ class HealthCheckController extends Controller
             DB::select('SELECT 1');
             $checks['database'] = 'ok';
         } catch (\Throwable $e) {
-            $checks['database'] = 'error: ' . $e->getMessage();
+            $checks['database'] = 'error: '.$e->getMessage();
             $healthy = false;
         }
 
         // Ledger accounts present
         try {
             $count = DB::table('ledger_accounts')->count();
-            $checks['ledger_accounts'] = $count > 0 ? 'ok (count: ' . $count . ')' : 'warning: no accounts seeded';
+            $checks['ledger_accounts'] = $count > 0 ? 'ok (count: '.$count.')' : 'warning: no accounts seeded';
         } catch (\Throwable $e) {
-            $checks['ledger_accounts'] = 'error: ' . $e->getMessage();
+            $checks['ledger_accounts'] = 'error: '.$e->getMessage();
             $healthy = false;
         }
 
@@ -48,16 +46,16 @@ class HealthCheckController extends Controller
             $pending = DB::table('event_outbox')->where('status', 'pending')->count();
             $checks['outbox_pending'] = $pending;
             if ($pending > 1000) {
-                $checks['outbox_warning'] = 'high outbox depth: ' . $pending;
+                $checks['outbox_warning'] = 'high outbox depth: '.$pending;
             }
         } catch (\Throwable $e) {
-            $checks['outbox_pending'] = 'error: ' . $e->getMessage();
+            $checks['outbox_pending'] = 'error: '.$e->getMessage();
         }
 
         return response()->json([
-            'module'  => 'finance',
-            'status'  => $healthy ? 'healthy' : 'degraded',
-            'checks'  => $checks,
+            'module' => 'finance',
+            'status' => $healthy ? 'healthy' : 'degraded',
+            'checks' => $checks,
             'timestamp' => now()->toISOString(),
         ], $healthy ? 200 : 503);
     }
@@ -77,7 +75,7 @@ class HealthCheckController extends Controller
                 ->count();
             $checks['recent_payouts_24h'] = $recent;
         } catch (\Throwable $e) {
-            $checks['driver_payouts'] = 'error: ' . $e->getMessage();
+            $checks['driver_payouts'] = 'error: '.$e->getMessage();
             $healthy = false;
         }
 
@@ -92,14 +90,14 @@ class HealthCheckController extends Controller
                 $checks['wallet_warning'] = 'negative pending balances detected';
             }
         } catch (\Throwable $e) {
-            $checks['wallets'] = 'error: ' . $e->getMessage();
+            $checks['wallets'] = 'error: '.$e->getMessage();
             $healthy = false;
         }
 
         return response()->json([
-            'module'  => 'settlement',
-            'status'  => $healthy ? 'healthy' : 'degraded',
-            'checks'  => $checks,
+            'module' => 'settlement',
+            'status' => $healthy ? 'healthy' : 'degraded',
+            'checks' => $checks,
             'timestamp' => now()->toISOString(),
         ], $healthy ? 200 : 503);
     }
@@ -117,9 +115,9 @@ class HealthCheckController extends Controller
         foreach ($views as $view) {
             try {
                 $count = DB::selectOne("SELECT COUNT(*) AS cnt FROM {$view}");
-                $checks["view_{$view}"] = 'ok (rows: ' . $count->cnt . ')';
+                $checks["view_{$view}"] = 'ok (rows: '.$count->cnt.')';
             } catch (\Throwable $e) {
-                $checks["view_{$view}"] = 'error: ' . $e->getMessage();
+                $checks["view_{$view}"] = 'error: '.$e->getMessage();
                 $healthy = false;
             }
         }
@@ -133,7 +131,7 @@ class HealthCheckController extends Controller
                 $checks['etl_warning'] = 'ETL may be stale (>26h since last load)';
             }
         } catch (\Throwable $e) {
-            $checks['last_etl_load'] = 'error: ' . $e->getMessage();
+            $checks['last_etl_load'] = 'error: '.$e->getMessage();
         }
 
         // Cache connectivity
@@ -141,13 +139,13 @@ class HealthCheckController extends Controller
             Cache::put('_health_check', true, 5);
             $checks['redis_cache'] = Cache::get('_health_check') ? 'ok' : 'miss';
         } catch (\Throwable $e) {
-            $checks['redis_cache'] = 'error: ' . $e->getMessage();
+            $checks['redis_cache'] = 'error: '.$e->getMessage();
         }
 
         return response()->json([
-            'module'  => 'warehouse',
-            'status'  => $healthy ? 'healthy' : 'degraded',
-            'checks'  => $checks,
+            'module' => 'warehouse',
+            'status' => $healthy ? 'healthy' : 'degraded',
+            'checks' => $checks,
             'timestamp' => now()->toISOString(),
         ], $healthy ? 200 : 503);
     }

@@ -29,7 +29,7 @@ class DemandPredictionService
 
         $buckets = $recentTrips
             ->groupBy(function (Trip $trip) {
-                return round((float) $trip->pickup_lat, 3) . ':' . round((float) $trip->pickup_lng, 3);
+                return round((float) $trip->pickup_lat, 3).':'.round((float) $trip->pickup_lng, 3);
             })
             ->map(function (Collection $group) {
                 $first = $group->first();

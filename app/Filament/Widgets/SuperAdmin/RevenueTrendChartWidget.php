@@ -9,7 +9,7 @@ class RevenueTrendChartWidget extends ChartWidget
 {
     protected static ?string $heading = 'Revenue Trend (7 Days)';
 
-    protected int | string | array $columnSpan = 1;
+    protected int|string|array $columnSpan = 1;
 
     protected function getData(): array
     {

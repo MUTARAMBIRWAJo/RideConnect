@@ -17,18 +17,22 @@ class LedgerService
     // -----------------------------------------------------------------------
     // Platform account canonical names
     // -----------------------------------------------------------------------
-    const ESCROW_ACCOUNT  = 'Platform Escrow';
+    const ESCROW_ACCOUNT = 'Platform Escrow';
+
     const REVENUE_ACCOUNT = 'Platform Revenue';
+
     const STRIPE_CLEARING = 'Stripe Clearing';
-    const MTN_CLEARING    = 'MTN Mobile Money Clearing';
-    const BANK_ACCOUNT    = 'Platform Bank';
+
+    const MTN_CLEARING = 'MTN Mobile Money Clearing';
+
+    const BANK_ACCOUNT = 'Platform Bank';
 
     private const PLATFORM_ACCOUNT_TYPES = [
-        self::ESCROW_ACCOUNT  => 'liability',
+        self::ESCROW_ACCOUNT => 'liability',
         self::REVENUE_ACCOUNT => 'revenue',
         self::STRIPE_CLEARING => 'asset',
-        self::MTN_CLEARING    => 'asset',
-        self::BANK_ACCOUNT    => 'asset',
+        self::MTN_CLEARING => 'asset',
+        self::BANK_ACCOUNT => 'asset',
     ];
 
     // -----------------------------------------------------------------------
@@ -44,8 +48,8 @@ class LedgerService
         return LedgerAccount::firstOrCreate(
             ['name' => $name, 'owner_type' => 'platform', 'owner_id' => null],
             [
-                'type'      => self::PLATFORM_ACCOUNT_TYPES[$name],
-                'currency'  => 'RWF',
+                'type' => self::PLATFORM_ACCOUNT_TYPES[$name],
+                'currency' => 'RWF',
                 'is_active' => true,
             ]
         );
@@ -82,7 +86,7 @@ class LedgerService
             throw new RuntimeException('A ledger transaction requires at least 2 entries.');
         }
 
-        $totalDebit  = array_sum(array_column($entries, 'debit'));
+        $totalDebit = array_sum(array_column($entries, 'debit'));
         $totalCredit = array_sum(array_column($entries, 'credit'));
 
         if (abs($totalDebit - $totalCredit) > 0.001) {
@@ -97,26 +101,26 @@ class LedgerService
         return DB::transaction(function () use ($description, $entries, $createdBy, $totalDebit) {
             $transaction = LedgerTransaction::create([
                 'description' => $description,
-                'created_by'  => $createdBy,
+                'created_by' => $createdBy,
             ]);
 
             foreach ($entries as $entry) {
                 LedgerEntry::create([
-                    'account_id'     => $entry['account_id'],
+                    'account_id' => $entry['account_id'],
                     'transaction_id' => $transaction->id,
-                    'debit'          => $entry['debit'] ?? 0,
-                    'credit'         => $entry['credit'] ?? 0,
+                    'debit' => $entry['debit'] ?? 0,
+                    'credit' => $entry['credit'] ?? 0,
                     'reference_type' => $entry['reference_type'] ?? null,
-                    'reference_id'   => $entry['reference_id'] ?? null,
-                    'description'    => $entry['description'] ?? null,
+                    'reference_id' => $entry['reference_id'] ?? null,
+                    'description' => $entry['description'] ?? null,
                 ]);
             }
 
             Log::info('Ledger transaction recorded', [
-                'txn_id'      => $transaction->id,
-                'uuid'        => $transaction->uuid,
+                'txn_id' => $transaction->id,
+                'uuid' => $transaction->uuid,
                 'description' => $description,
-                'total'       => $totalDebit,
+                'total' => $totalDebit,
             ]);
 
             return $transaction;
@@ -137,13 +141,13 @@ class LedgerService
      */
     public function recordPaymentReceived(Payment $payment, string $provider = 'stripe'): LedgerTransaction
     {
-        $clearingName    = $provider === 'mtn_momo' ? self::MTN_CLEARING : self::STRIPE_CLEARING;
+        $clearingName = $provider === 'mtn_momo' ? self::MTN_CLEARING : self::STRIPE_CLEARING;
         $clearingAccount = $this->getPlatformAccount($clearingName);
-        $passengerAcct   = $this->getPassengerAccount((int) $payment->user_id);
-        $escrowAcct      = $this->getPlatformAccount(self::ESCROW_ACCOUNT);
+        $passengerAcct = $this->getPassengerAccount((int) $payment->user_id);
+        $escrowAcct = $this->getPlatformAccount(self::ESCROW_ACCOUNT);
 
         $amount = (float) $payment->amount;
-        $ref    = ['reference_type' => 'payment', 'reference_id' => $payment->id];
+        $ref = ['reference_type' => 'payment', 'reference_id' => $payment->id];
 
         return $this->record(
             "Payment received via {$provider} for booking #{$payment->booking_id}",
@@ -173,8 +177,8 @@ class LedgerService
         int $referenceId,
         ?int $createdBy = null
     ): LedgerTransaction {
-        $escrowAcct  = $this->getPlatformAccount(self::ESCROW_ACCOUNT);
-        $driverAcct  = $this->getDriverAccount($driverId);
+        $escrowAcct = $this->getPlatformAccount(self::ESCROW_ACCOUNT);
+        $driverAcct = $this->getDriverAccount($driverId);
         $revenueAcct = $this->getPlatformAccount(self::REVENUE_ACCOUNT);
 
         $ref = ['reference_type' => $referenceType, 'reference_id' => $referenceId];
@@ -199,16 +203,16 @@ class LedgerService
     public function recordPayout(DriverPayout $payout): LedgerTransaction
     {
         $driverAcct = $this->getDriverAccount((int) $payout->driver_id);
-        $bankAcct   = $this->getPlatformAccount(self::BANK_ACCOUNT);
-        $amount     = (float) $payout->payout_amount;
+        $bankAcct = $this->getPlatformAccount(self::BANK_ACCOUNT);
+        $amount = (float) $payout->payout_amount;
 
         $ref = ['reference_type' => 'payout', 'reference_id' => $payout->id];
 
         return $this->record(
             "Payout disbursement driver #{$payout->driver_id} for {$payout->payout_date}",
             [
-                array_merge(['account_id' => $driverAcct->id, 'debit' => $amount, 'credit' => 0,      'description' => "Driver payout debit"], $ref),
-                array_merge(['account_id' => $bankAcct->id,   'debit' => 0,       'credit' => $amount, 'description' => "Disbursement to driver"], $ref),
+                array_merge(['account_id' => $driverAcct->id, 'debit' => $amount, 'credit' => 0,      'description' => 'Driver payout debit'], $ref),
+                array_merge(['account_id' => $bankAcct->id,   'debit' => 0,       'credit' => $amount, 'description' => 'Disbursement to driver'], $ref),
             ],
             $payout->processed_by
         );
@@ -222,19 +226,19 @@ class LedgerService
      */
     public function recordRefund(Payment $payment, ?int $processedBy = null): LedgerTransaction
     {
-        $clearingName  = ($payment->payment_provider === 'mtn_momo') ? self::MTN_CLEARING : self::STRIPE_CLEARING;
-        $clearingAcct  = $this->getPlatformAccount($clearingName);
+        $clearingName = ($payment->payment_provider === 'mtn_momo') ? self::MTN_CLEARING : self::STRIPE_CLEARING;
+        $clearingAcct = $this->getPlatformAccount($clearingName);
         $passengerAcct = $this->getPassengerAccount((int) $payment->user_id);
-        $escrowAcct    = $this->getPlatformAccount(self::ESCROW_ACCOUNT);
+        $escrowAcct = $this->getPlatformAccount(self::ESCROW_ACCOUNT);
 
         $amount = (float) $payment->amount;
-        $ref    = ['reference_type' => 'refund', 'reference_id' => $payment->id];
+        $ref = ['reference_type' => 'refund', 'reference_id' => $payment->id];
 
         return $this->record(
             "Refund payment #{$payment->id} booking #{$payment->booking_id}",
             [
-                array_merge(['account_id' => $escrowAcct->id,    'debit' => $amount, 'credit' => 0,      'description' => "Release from escrow for refund"], $ref),
-                array_merge(['account_id' => $clearingAcct->id,  'debit' => 0,       'credit' => $amount, 'description' => "Refund disbursement via clearing"], $ref),
+                array_merge(['account_id' => $escrowAcct->id,    'debit' => $amount, 'credit' => 0,      'description' => 'Release from escrow for refund'], $ref),
+                array_merge(['account_id' => $clearingAcct->id,  'debit' => 0,       'credit' => $amount, 'description' => 'Refund disbursement via clearing'], $ref),
             ],
             $processedBy
         );
@@ -246,13 +250,13 @@ class LedgerService
 
     public function getAccountBalance(LedgerAccount $account): float
     {
-        $debit  = (float) $account->entries()->sum('debit');
+        $debit = (float) $account->entries()->sum('debit');
         $credit = (float) $account->entries()->sum('credit');
 
         return match ($account->type) {
-            'asset', 'expense'     => $debit - $credit,
+            'asset', 'expense' => $debit - $credit,
             'liability', 'revenue' => $credit - $debit,
-            default                => $debit - $credit,
+            default => $debit - $credit,
         };
     }
 

@@ -79,7 +79,7 @@ class SmokeDashboardAccessTest extends TestCase
                 $this->assertSame(
                     $expected,
                     $dashboard::canView(),
-                    "Role {$role} should " . ($expected ? '' : 'not ') . "access {$dashboard}"
+                    "Role {$role} should ".($expected ? '' : 'not ')."access {$dashboard}"
                 );
             }
 

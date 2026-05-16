@@ -81,9 +81,9 @@ class OperationalDashboardService
     public function ridesPerHour(): array
     {
         return $this->remember('dashboard.charts.rides_per_hour', 120, function (): array {
-            $labels = collect(range(0, 23))->map(fn (int $hour): string => str_pad((string) $hour, 2, '0', STR_PAD_LEFT) . ':00');
+            $labels = collect(range(0, 23))->map(fn (int $hour): string => str_pad((string) $hour, 2, '0', STR_PAD_LEFT).':00');
 
-            if (!Schema::hasTable('rides') || !Schema::hasColumn('rides', 'created_at')) {
+            if (! Schema::hasTable('rides') || ! Schema::hasColumn('rides', 'created_at')) {
                 return ['labels' => $labels->all(), 'data' => array_fill(0, 24, 0)];
             }
 
@@ -113,12 +113,12 @@ class OperationalDashboardService
             $labels = collect(range($days - 1, 0))->map(fn (int $offset): string => now()->subDays($offset)->format('M d'));
             $labels->push(now()->format('M d'));
 
-            if (!$table || !$amountColumn || !Schema::hasColumn($table, 'created_at')) {
+            if (! $table || ! $amountColumn || ! Schema::hasColumn($table, 'created_at')) {
                 return ['labels' => $labels->all(), 'data' => array_fill(0, $labels->count(), 0)];
             }
 
             $rows = DB::table($table)
-                ->selectRaw('DATE(created_at) as day, SUM(' . $amountColumn . ') as total')
+                ->selectRaw('DATE(created_at) as day, SUM('.$amountColumn.') as total')
                 ->where('created_at', '>=', now()->subDays($days - 1)->startOfDay())
                 ->groupBy('day')
                 ->orderBy('day')
@@ -150,7 +150,7 @@ class OperationalDashboardService
             $start = now()->subHours($hours - 1)->startOfHour();
             $labels = collect(range(0, $hours - 1))->map(fn (int $index): string => $start->copy()->addHours($index)->format('H:i'));
 
-            if (!Schema::hasTable('driver_locations') || !Schema::hasColumn('driver_locations', 'updated_at')) {
+            if (! Schema::hasTable('driver_locations') || ! Schema::hasColumn('driver_locations', 'updated_at')) {
                 return ['labels' => $labels->all(), 'data' => array_fill(0, $hours, 0)];
             }
 
@@ -257,14 +257,11 @@ class OperationalDashboardService
         }, []);
     }
 
-    /**
-     * @return float
-     */
     private function resolveRevenueToday(): float
     {
         [$table, $amountColumn] = $this->resolvePaymentsSource();
 
-        if (!$table || !$amountColumn || !Schema::hasColumn($table, 'created_at')) {
+        if (! $table || ! $amountColumn || ! Schema::hasColumn($table, 'created_at')) {
             return 0.0;
         }
 
@@ -279,7 +276,7 @@ class OperationalDashboardService
     private function resolvePaymentsSource(): array
     {
         foreach (['payments_v2', 'payments'] as $table) {
-            if (!Schema::hasTable($table)) {
+            if (! Schema::hasTable($table)) {
                 continue;
             }
 
@@ -295,7 +292,8 @@ class OperationalDashboardService
 
     /**
      * @template T
-     * @param T $fallback
+     *
+     * @param  T  $fallback
      * @return T
      */
     private function remember(string $key, int $seconds, callable $callback, mixed $fallback): mixed

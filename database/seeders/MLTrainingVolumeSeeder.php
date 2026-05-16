@@ -15,13 +15,21 @@ class MLTrainingVolumeSeeder extends Seeder
     use WithoutModelEvents;
 
     private const TARGET_PASSENGERS = 700;
+
     private const TARGET_DRIVER_MOBILE_USERS = 360;
+
     private const TARGET_DRIVERS = 320;
+
     private const TARGET_VEHICLES = 320;
+
     private const TARGET_RIDES = 1000;
+
     private const TARGET_BOOKINGS = 1000;
+
     private const TARGET_PAYMENTS = 900;
+
     private const TARGET_TRIPS = 1000;
+
     private const TARGET_REVIEWS = 500;
 
     /**
@@ -74,8 +82,8 @@ class MLTrainingVolumeSeeder extends Seeder
             $mobileRows[] = [
                 'first_name' => $firstName,
                 'last_name' => $lastName,
-                'phone' => '+25079' . str_pad((string) random_int(1000000, 9999999), 7, '0', STR_PAD_LEFT),
-                'email' => strtolower('passenger_' . Str::uuid() . '@example.com'),
+                'phone' => '+25079'.str_pad((string) random_int(1000000, 9999999), 7, '0', STR_PAD_LEFT),
+                'email' => strtolower('passenger_'.Str::uuid().'@example.com'),
                 'password' => $password,
                 'role' => 'PASSENGER',
                 'profile_photo' => null,
@@ -94,8 +102,8 @@ class MLTrainingVolumeSeeder extends Seeder
             $mobileRows[] = [
                 'first_name' => $firstName,
                 'last_name' => $lastName,
-                'phone' => '+25078' . str_pad((string) random_int(1000000, 9999999), 7, '0', STR_PAD_LEFT),
-                'email' => strtolower('driver_' . Str::uuid() . '@example.com'),
+                'phone' => '+25078'.str_pad((string) random_int(1000000, 9999999), 7, '0', STR_PAD_LEFT),
+                'email' => strtolower('driver_'.Str::uuid().'@example.com'),
                 'password' => $password,
                 'role' => 'DRIVER',
                 'profile_photo' => null,
@@ -105,7 +113,7 @@ class MLTrainingVolumeSeeder extends Seeder
             ];
         }
 
-        if (!empty($mobileRows)) {
+        if (! empty($mobileRows)) {
             foreach (array_chunk($mobileRows, 500) as $chunk) {
                 DB::table('mobile_users')->insert($chunk);
             }
@@ -126,7 +134,7 @@ class MLTrainingVolumeSeeder extends Seeder
             $isDriver = $mobileUser->role === 'DRIVER';
 
             $userRows[] = [
-                'name' => trim($mobileUser->first_name . ' ' . $mobileUser->last_name),
+                'name' => trim($mobileUser->first_name.' '.$mobileUser->last_name),
                 'email' => $mobileUser->email,
                 'role' => $mobileUser->role,
                 'mobile_user_id' => $mobileUser->id,
@@ -175,8 +183,8 @@ class MLTrainingVolumeSeeder extends Seeder
         foreach ($candidateUsers as $index => $user) {
             $rows[] = [
                 'user_id' => $user->id,
-                'license_number' => 'DL-' . now()->format('Y') . '-' . str_pad((string) ($user->id + 1000), 8, '0', STR_PAD_LEFT),
-                'license_plate' => 'RA' . strtoupper(Str::random(2)) . '-' . str_pad((string) random_int(100, 999), 3, '0', STR_PAD_LEFT),
+                'license_number' => 'DL-'.now()->format('Y').'-'.str_pad((string) ($user->id + 1000), 8, '0', STR_PAD_LEFT),
+                'license_plate' => 'RA'.strtoupper(Str::random(2)).'-'.str_pad((string) random_int(100, 999), 3, '0', STR_PAD_LEFT),
                 'status' => random_int(1, 100) <= 94 ? 'approved' : 'pending',
                 'total_rides' => random_int(0, 700),
                 'rating' => round($faker->randomFloat(2, 3.4, 5.0), 2),
@@ -288,10 +296,10 @@ class MLTrainingVolumeSeeder extends Seeder
             $row = [
                 'driver_id' => $driverIds[array_rand($driverIds)],
                 'vehicle_id' => $vehicleIds[array_rand($vehicleIds)],
-                'origin_address' => $origin['name'] . ', Rwanda',
+                'origin_address' => $origin['name'].', Rwanda',
                 'origin_lat' => $this->jitter($origin['lat'], 0.0070),
                 'origin_lng' => $this->jitter($origin['lng'], 0.0070),
-                'destination_address' => $destination['name'] . ', Rwanda',
+                'destination_address' => $destination['name'].', Rwanda',
                 'destination_lat' => $this->jitter($destination['lat'], 0.0070),
                 'destination_lng' => $this->jitter($destination['lng'], 0.0070),
                 'departure_time' => $departure,
@@ -450,7 +458,7 @@ class MLTrainingVolumeSeeder extends Seeder
                 : ($booking->status === 'cancelled' ? 'failed' : 'pending');
 
             $paidAt = $status === 'completed' ? Carbon::parse($booking->created_at)->addMinutes(random_int(2, 90)) : null;
-            $transactionId = 'TXN-' . strtoupper(Str::random(14));
+            $transactionId = 'TXN-'.strtoupper(Str::random(14));
 
             $row = [
                 'booking_id' => $booking->id,
@@ -472,8 +480,8 @@ class MLTrainingVolumeSeeder extends Seeder
 
             if ($hasProviderFields) {
                 $row['payment_provider'] = $providers[array_rand($providers)];
-                $row['provider_transaction_id'] = 'PROV-' . strtoupper(Str::random(18));
-                $row['webhook_event_id'] = 'WH-' . strtoupper(Str::random(20));
+                $row['provider_transaction_id'] = 'PROV-'.strtoupper(Str::random(18));
+                $row['webhook_event_id'] = 'WH-'.strtoupper(Str::random(20));
                 $row['verification_status'] = $status === 'completed' ? 'verified' : 'pending';
             }
 
@@ -519,8 +527,8 @@ class MLTrainingVolumeSeeder extends Seeder
             $rows[] = [
                 'passenger_id' => $passengerIds[array_rand($passengerIds)],
                 'driver_id' => $status === 'PENDING' ? null : $driverIds[array_rand($driverIds)],
-                'pickup_location' => $pickup['name'] . ', Rwanda',
-                'dropoff_location' => $dropoff['name'] . ', Rwanda',
+                'pickup_location' => $pickup['name'].', Rwanda',
+                'dropoff_location' => $dropoff['name'].', Rwanda',
                 'pickup_lat' => $this->jitter($pickup['lat'], 0.0075),
                 'pickup_lng' => $this->jitter($pickup['lng'], 0.0075),
                 'dropoff_lat' => $this->jitter($dropoff['lat'], 0.0075),

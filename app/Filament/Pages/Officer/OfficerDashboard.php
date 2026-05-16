@@ -15,11 +15,17 @@ class OfficerDashboard extends Page
     protected static string $view = 'filament.pages.officer.dashboard';
 
     public int $activeRidesCount = 0;
+
     public int $pendingBookingsCount = 0;
+
     public int $openTicketsCount = 0;
+
     public int $onlineDriversCount = 0;
+
     public int $overdueBookingsCount = 0;
+
     public int $highPriorityTicketsCount = 0;
+
     public int $cancelledRidesTodayCount = 0;
 
     /** @var array<int, array<string, mixed>> */
@@ -39,7 +45,7 @@ class OfficerDashboard extends Page
         return 'Dashboard';
     }
 
-    public static function getNavigationIcon(): string | Htmlable | null
+    public static function getNavigationIcon(): string|Htmlable|null
     {
         return 'heroicon-o-home';
     }
@@ -80,7 +86,7 @@ class OfficerDashboard extends Page
 
     private function resolveActiveRidesCount(): int
     {
-        if (!Schema::hasTable('rides') || !Schema::hasColumn('rides', 'status')) {
+        if (! Schema::hasTable('rides') || ! Schema::hasColumn('rides', 'status')) {
             return 0;
         }
 
@@ -91,7 +97,7 @@ class OfficerDashboard extends Page
 
     private function resolvePendingBookingsCount(): int
     {
-        if (!Schema::hasTable('bookings') || !Schema::hasColumn('bookings', 'status')) {
+        if (! Schema::hasTable('bookings') || ! Schema::hasColumn('bookings', 'status')) {
             return 0;
         }
 
@@ -102,7 +108,7 @@ class OfficerDashboard extends Page
 
     private function resolveOpenTicketsCount(): int
     {
-        if (!Schema::hasTable('tickets') || !Schema::hasColumn('tickets', 'status')) {
+        if (! Schema::hasTable('tickets') || ! Schema::hasColumn('tickets', 'status')) {
             return 0;
         }
 
@@ -113,7 +119,7 @@ class OfficerDashboard extends Page
 
     private function resolveOnlineDriversCount(): int
     {
-        if (!Schema::hasTable('drivers')) {
+        if (! Schema::hasTable('drivers')) {
             return 0;
         }
 
@@ -126,7 +132,7 @@ class OfficerDashboard extends Page
 
     private function resolveOverdueBookingsCount(): int
     {
-        if (!Schema::hasTable('bookings') || !Schema::hasColumn('bookings', 'status') || !Schema::hasColumn('bookings', 'created_at')) {
+        if (! Schema::hasTable('bookings') || ! Schema::hasColumn('bookings', 'status') || ! Schema::hasColumn('bookings', 'created_at')) {
             return 0;
         }
 
@@ -138,7 +144,7 @@ class OfficerDashboard extends Page
 
     private function resolveHighPriorityTicketsCount(): int
     {
-        if (!Schema::hasTable('tickets') || !Schema::hasColumn('tickets', 'status') || !Schema::hasColumn('tickets', 'priority')) {
+        if (! Schema::hasTable('tickets') || ! Schema::hasColumn('tickets', 'status') || ! Schema::hasColumn('tickets', 'priority')) {
             return 0;
         }
 
@@ -150,7 +156,7 @@ class OfficerDashboard extends Page
 
     private function resolveCancelledRidesTodayCount(): int
     {
-        if (!Schema::hasTable('rides') || !Schema::hasColumn('rides', 'status')) {
+        if (! Schema::hasTable('rides') || ! Schema::hasColumn('rides', 'status')) {
             return 0;
         }
 
@@ -169,7 +175,7 @@ class OfficerDashboard extends Page
     /** @return array<int, array<string, mixed>> */
     private function resolveRecentBookings(): array
     {
-        if (!Schema::hasTable('bookings')) {
+        if (! Schema::hasTable('bookings')) {
             return [];
         }
 
@@ -194,7 +200,7 @@ class OfficerDashboard extends Page
     /** @return array<int, array<string, mixed>> */
     private function resolveRecentTickets(): array
     {
-        if (!Schema::hasTable('tickets')) {
+        if (! Schema::hasTable('tickets')) {
             return [];
         }
 
@@ -219,7 +225,7 @@ class OfficerDashboard extends Page
     /** @return array<int, array<string, mixed>> */
     private function resolveEscalationTickets(): array
     {
-        if (!Schema::hasTable('tickets') || !Schema::hasColumn('tickets', 'status')) {
+        if (! Schema::hasTable('tickets') || ! Schema::hasColumn('tickets', 'status')) {
             return [];
         }
 
@@ -251,7 +257,7 @@ class OfficerDashboard extends Page
     /** @return array<int, array<string, mixed>> */
     private function resolveUnassignedRides(): array
     {
-        if (!Schema::hasTable('rides') || !Schema::hasColumn('rides', 'status')) {
+        if (! Schema::hasTable('rides') || ! Schema::hasColumn('rides', 'status')) {
             return [];
         }
 

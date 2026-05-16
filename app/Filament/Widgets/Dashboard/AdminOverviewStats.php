@@ -11,7 +11,7 @@ use Illuminate\Support\Facades\Schema;
 
 class AdminOverviewStats extends StatsOverviewWidget
 {
-    protected int | string | array $columnSpan = 'full';
+    protected int|string|array $columnSpan = 'full';
 
     protected function getStats(): array
     {
@@ -47,7 +47,7 @@ class AdminOverviewStats extends StatsOverviewWidget
             Stat::make('Open Tickets', number_format($ticketOverview))
                 ->description('Pending support workload')
                 ->color('info'),
-            Stat::make('Completion Rate', $performance . '%')
+            Stat::make('Completion Rate', $performance.'%')
                 ->description('Completed rides ratio')
                 ->color('gray'),
         ];

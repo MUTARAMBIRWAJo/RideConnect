@@ -17,7 +17,7 @@ class RideFactory extends Factory
     public function definition(): array
     {
         $departureTime = $this->faker->dateTimeBetween('+1 day', '+30 days');
-        
+
         return [
             'driver_id' => Driver::factory(),
             'vehicle_id' => Vehicle::factory(),
@@ -63,6 +63,7 @@ class RideFactory extends Factory
     public function cancelled(): static
     {
         $now = now();
+
         return $this->state(fn (array $attributes) => [
             'status' => 'cancelled',
             'cancelled_at' => $now,

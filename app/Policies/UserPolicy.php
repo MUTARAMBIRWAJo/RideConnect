@@ -17,7 +17,7 @@ class UserPolicy
      */
     public function viewAny(User $user): bool
     {
-        return $user->role === UserRole::SUPER_ADMIN || 
+        return $user->role === UserRole::SUPER_ADMIN ||
                ($user->role && $user->role->isManager());
     }
 

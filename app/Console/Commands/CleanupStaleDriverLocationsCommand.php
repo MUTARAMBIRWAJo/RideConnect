@@ -31,7 +31,7 @@ class CleanupStaleDriverLocationsCommand extends Command
 
         if ($this->option('force')) {
             // Run synchronously
-            $job = new CleanupStaleDriverLocations();
+            $job = new CleanupStaleDriverLocations;
             $job->handle($locationService);
 
             $this->info('Cleanup completed synchronously.');

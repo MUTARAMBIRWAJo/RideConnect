@@ -2,8 +2,8 @@
 
 namespace Database\Seeders;
 
-use App\Models\DriverWallet;
 use App\Models\Driver;
+use App\Models\DriverWallet;
 use Illuminate\Database\Console\Seeds\WithoutModelEvents;
 use Illuminate\Database\Seeder;
 
@@ -31,13 +31,13 @@ class DriverWalletSeeder extends Seeder
             DriverWallet::updateOrCreate(
                 ['driver_id' => $driverId],
                 [
-                    'total_earned'               => $earned,
-                    'total_paid'                 => $paid,
+                    'total_earned' => $earned,
+                    'total_paid' => $paid,
                     'total_commission_generated' => $commission,
-                    'current_balance'            => round($earned - $paid, 2),
-                    'available_balance'          => $available,
-                    'pending_balance'            => $pending,
-                    'frozen_balance'             => $frozen,
+                    'current_balance' => round($earned - $paid, 2),
+                    'available_balance' => $available,
+                    'pending_balance' => $pending,
+                    'frozen_balance' => $frozen,
                 ]
             );
         }
@@ -48,17 +48,17 @@ class DriverWalletSeeder extends Seeder
             DriverWallet::firstOrCreate(
                 ['driver_id' => $driver->id],
                 [
-                    'total_earned'               => 0,
-                    'total_paid'                 => 0,
+                    'total_earned' => 0,
+                    'total_paid' => 0,
                     'total_commission_generated' => 0,
-                    'current_balance'            => 0,
-                    'available_balance'          => 0,
-                    'pending_balance'            => 0,
-                    'frozen_balance'             => 0,
+                    'current_balance' => 0,
+                    'available_balance' => 0,
+                    'pending_balance' => 0,
+                    'frozen_balance' => 0,
                 ]
             );
         });
 
-        $this->command->info('DriverWalletSeeder: seeded ' . DriverWallet::count() . ' wallets (RWF).');
+        $this->command->info('DriverWalletSeeder: seeded '.DriverWallet::count().' wallets (RWF).');
     }
 }

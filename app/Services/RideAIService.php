@@ -19,8 +19,7 @@ class RideAIService
         private readonly HttpFactory $http,
         private readonly MlPredictionLogger $predictionLogger,
         private readonly DemandHeuristicModelV1 $demandModel,
-    ) {
-    }
+    ) {}
 
     public function matchDriver(array $payload): array
     {
@@ -76,7 +75,7 @@ class RideAIService
 
         $result = $this->postJson('/predict-price', $request, 'surge_pricing', $payload);
 
-        if (!($result['success'] ?? false)) {
+        if (! ($result['success'] ?? false)) {
             return $result;
         }
 
@@ -293,7 +292,7 @@ class RideAIService
             tripId: isset($requestPayload['trip_id']) ? (int) $requestPayload['trip_id'] : null,
         );
 
-        if (!Schema::hasTable('ai_prediction_logs')) {
+        if (! Schema::hasTable('ai_prediction_logs')) {
             return;
         }
 

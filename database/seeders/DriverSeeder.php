@@ -42,8 +42,8 @@ class DriverSeeder extends Seeder
                 Driver::updateOrCreate(
                     ['user_id' => $user->id],
                     [
-                        'license_number' => $licenseNumbers[$index] ?? 'DL-' . date('Y') . '-' . str_pad($index + 1, 3, '0', STR_PAD_LEFT),
-                        'license_plate' => $licensePlates[$index] ?? 'RAC-' . str_pad($index + 1, 3, '0', STR_PAD_LEFT) . '-A',
+                        'license_number' => $licenseNumbers[$index] ?? 'DL-'.date('Y').'-'.str_pad($index + 1, 3, '0', STR_PAD_LEFT),
+                        'license_plate' => $licensePlates[$index] ?? 'RAC-'.str_pad($index + 1, 3, '0', STR_PAD_LEFT).'-A',
                         'status' => 'approved',
                         'total_rides' => $totalRides[$index] ?? 0,
                         'rating' => $ratings[$index] ?? 0.00,

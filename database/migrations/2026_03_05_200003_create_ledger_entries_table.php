@@ -50,17 +50,17 @@ return new class extends Migration
                 \$\$ LANGUAGE plpgsql
             ");
 
-            DB::statement("
+            DB::statement('
                 CREATE TRIGGER trg_ledger_entry_no_update
                 BEFORE UPDATE ON ledger_entries
                 FOR EACH ROW EXECUTE FUNCTION prevent_ledger_entry_modification()
-            ");
+            ');
 
-            DB::statement("
+            DB::statement('
                 CREATE TRIGGER trg_ledger_entry_no_delete
                 BEFORE DELETE ON ledger_entries
                 FOR EACH ROW EXECUTE FUNCTION prevent_ledger_entry_modification()
-            ");
+            ');
         }
     }
 

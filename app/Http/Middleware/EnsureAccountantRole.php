@@ -10,7 +10,7 @@ class EnsureAccountantRole
 {
     public function handle(Request $request, Closure $next)
     {
-        if (!auth()->check()) {
+        if (! auth()->check()) {
             return redirect()->route('filament.auth.login');
         }
 

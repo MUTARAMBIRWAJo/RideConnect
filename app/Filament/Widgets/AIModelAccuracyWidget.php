@@ -10,11 +10,11 @@ class AIModelAccuracyWidget extends Widget
 {
     protected static string $view = 'filament.widgets.ai-model-accuracy-widget';
 
-    protected int | string | array $columnSpan = 'full';
+    protected int|string|array $columnSpan = 'full';
 
     protected function getViewData(): array
     {
-        if (!Schema::hasTable('ai_model_metrics')) {
+        if (! Schema::hasTable('ai_model_metrics')) {
             return ['metrics' => collect()];
         }
 
@@ -23,7 +23,7 @@ class AIModelAccuracyWidget extends Widget
             ->orderByDesc('evaluated_at')
             ->limit(40)
             ->get()
-            ->groupBy(fn ($row) => $row->model_name . ':' . $row->metric_name)
+            ->groupBy(fn ($row) => $row->model_name.':'.$row->metric_name)
             ->map(fn ($rows) => $rows->first())
             ->values();
 

@@ -40,7 +40,7 @@ return [
             'driver' => 'session',
             'provider' => 'users',
         ],
-        
+
         // Admin guard for backend manager authentication (session-based)
         'admin' => [
             'driver' => 'session',

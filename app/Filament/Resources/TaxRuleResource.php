@@ -12,18 +12,21 @@ use Filament\Forms\Components\Toggle;
 use Filament\Forms\Form;
 use Filament\Resources\Resource;
 use Filament\Tables;
-use Filament\Tables\Columns\BadgeColumn;
 use Filament\Tables\Columns\IconColumn;
 use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Table;
 
 class TaxRuleResource extends Resource
 {
-    protected static ?string $model          = TaxRule::class;
+    protected static ?string $model = TaxRule::class;
+
     protected static ?string $navigationIcon = 'heroicon-o-receipt-percent';
+
     protected static ?string $navigationGroup = 'System';
-    protected static ?string $label          = 'Tax Rule';
-    protected static ?int    $navigationSort = 20;
+
+    protected static ?string $label = 'Tax Rule';
+
+    protected static ?int $navigationSort = 20;
 
     public static function canAccess(): bool
     {
@@ -36,9 +39,9 @@ class TaxRuleResource extends Resource
             Select::make('applies_to')
                 ->label('Applies To')
                 ->options([
-                    'ride'       => 'Ride Fare',
+                    'ride' => 'Ride Fare',
                     'commission' => 'Commission',
-                    'payout'     => 'Driver Payout',
+                    'payout' => 'Driver Payout',
                 ])
                 ->required(),
 
@@ -89,7 +92,7 @@ class TaxRuleResource extends Resource
                 TextColumn::make('applies_to')->label('Applies To')->badge(),
                 TextColumn::make('rate')
                     ->label('Rate')
-                    ->formatStateUsing(fn ($state) => $state . '%'),
+                    ->formatStateUsing(fn ($state) => $state.'%'),
                 TextColumn::make('jurisdiction')->label('Jurisdiction'),
                 IconColumn::make('is_active')->label('Active')->boolean(),
                 TextColumn::make('effective_from')->label('From')->date(),
@@ -98,9 +101,9 @@ class TaxRuleResource extends Resource
             ->filters([
                 Tables\Filters\SelectFilter::make('applies_to')
                     ->options([
-                        'ride'       => 'Ride',
+                        'ride' => 'Ride',
                         'commission' => 'Commission',
-                        'payout'     => 'Payout',
+                        'payout' => 'Payout',
                     ]),
                 Tables\Filters\TernaryFilter::make('is_active')->label('Active'),
             ])
@@ -119,9 +122,9 @@ class TaxRuleResource extends Resource
     public static function getPages(): array
     {
         return [
-            'index'  => Pages\ListTaxRules::route('/'),
+            'index' => Pages\ListTaxRules::route('/'),
             'create' => Pages\CreateTaxRule::route('/create'),
-            'edit'   => Pages\EditTaxRule::route('/{record}/edit'),
+            'edit' => Pages\EditTaxRule::route('/{record}/edit'),
         ];
     }
 }

@@ -2,7 +2,6 @@
 
 namespace Tests\Feature;
 
-use App\Models\Booking;
 use App\Models\Driver;
 use App\Models\MobileUser;
 use App\Models\Ride;
@@ -17,8 +16,11 @@ class PassengerApiTest extends TestCase
     use RefreshDatabase;
 
     private MobileUser $passenger;
+
     private User $passengerUser;
+
     private Driver $carDriver;
+
     private Vehicle $carVehicle;
 
     protected function setUp(): void

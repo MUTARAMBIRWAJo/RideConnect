@@ -21,13 +21,13 @@ class DriverWallet extends Model
     ];
 
     protected $casts = [
-        'total_earned'               => 'decimal:2',
-        'total_paid'                 => 'decimal:2',
+        'total_earned' => 'decimal:2',
+        'total_paid' => 'decimal:2',
         'total_commission_generated' => 'decimal:2',
-        'current_balance'            => 'decimal:2',
-        'available_balance'          => 'decimal:2',
-        'pending_balance'            => 'decimal:2',
-        'frozen_balance'             => 'decimal:2',
+        'current_balance' => 'decimal:2',
+        'available_balance' => 'decimal:2',
+        'pending_balance' => 'decimal:2',
+        'frozen_balance' => 'decimal:2',
     ];
 
     public function driver()

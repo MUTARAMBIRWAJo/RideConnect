@@ -21,7 +21,7 @@ class AdminDashboard extends BaseDashboard
         return 'Admin Dashboard';
     }
 
-    public static function getNavigationIcon(): string | Htmlable | null
+    public static function getNavigationIcon(): string|Htmlable|null
     {
         return 'heroicon-o-cog-8-tooth';
     }

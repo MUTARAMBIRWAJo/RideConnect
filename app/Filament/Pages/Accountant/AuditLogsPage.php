@@ -26,7 +26,7 @@ class AuditLogsPage extends Page
         return 'Audit Logs';
     }
 
-    public static function getNavigationIcon(): string | Htmlable | null
+    public static function getNavigationIcon(): string|Htmlable|null
     {
         return 'heroicon-o-list-bullet';
     }
@@ -70,7 +70,7 @@ class AuditLogsPage extends Page
                     'activity_logs.id',
                     DB::raw("COALESCE(activity_logs.action, 'system.event') as action"),
                     DB::raw("COALESCE(activity_logs.description, '') as description"),
-                    DB::raw("COALESCE(activity_logs.created_at, NOW()) as created_at"),
+                    DB::raw('COALESCE(activity_logs.created_at, NOW()) as created_at'),
                     $actorExpression,
                 ])
                 ->latest('activity_logs.id')

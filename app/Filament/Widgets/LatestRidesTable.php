@@ -2,15 +2,14 @@
 
 namespace App\Filament\Widgets;
 
-use Filament\Widgets\Widget;
 use App\Models\Ride;
-use Illuminate\Support\Str;
+use Filament\Widgets\Widget;
 
 class LatestRidesTable extends Widget
 {
     protected static string $view = 'filament.widgets.latest-rides-table';
 
-    protected int | string | array $columnSpan = 'full';
+    protected int|string|array $columnSpan = 'full';
 
     protected function getViewData(): array
     {

@@ -6,7 +6,6 @@ use App\Enums\UserRole;
 use App\Filament\Pages\Concerns\HandlesRoleDashboards;
 use App\Filament\Support\RoleDashboardConfig;
 use Filament\Pages\Dashboard\Concerns\HasFiltersForm;
-use Illuminate\Contracts\Support\Htmlable;
 
 abstract class BaseDashboard extends \Filament\Pages\Dashboard
 {
@@ -51,7 +50,7 @@ abstract class BaseDashboard extends \Filament\Pages\Dashboard
         return RoleDashboardConfig::visibleWidgetsForRole(static::dashboardRoleValue());
     }
 
-    public function getColumns(): int | string | array
+    public function getColumns(): int|string|array
     {
         return RoleDashboardConfig::columnsForRole(static::dashboardRoleValue());
     }

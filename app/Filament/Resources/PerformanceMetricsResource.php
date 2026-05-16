@@ -3,18 +3,18 @@
 namespace App\Filament\Resources;
 
 use App\Enums\UserRole;
-use Filament\Resources\Resource;
 use App\Filament\Resources\PerformanceMetricsResource\Pages;
-use Filament\Tables;
+use App\Models\Trip;
+use Carbon\Carbon;
 use Filament\Forms;
 use Filament\Forms\Form;
-use Filament\Tables\Table;
-use Filament\Tables\Columns\TextColumn;
+use Filament\Resources\Resource;
+use Filament\Tables;
 use Filament\Tables\Columns\Summarizers\Average;
 use Filament\Tables\Columns\Summarizers\Count;
 use Filament\Tables\Columns\Summarizers\Sum;
-use App\Models\Trip;
-use Carbon\Carbon;
+use Filament\Tables\Columns\TextColumn;
+use Filament\Tables\Table;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
 
@@ -73,7 +73,7 @@ class PerformanceMetricsResource extends Resource
                 TextColumn::make('response_time_minutes')
                     ->label('Response Time')
                     ->state(function (Trip $record): ?int {
-                        if (!$record->requested_at || !$record->started_at) {
+                        if (! $record->requested_at || ! $record->started_at) {
                             return null;
                         }
 
@@ -83,7 +83,7 @@ class PerformanceMetricsResource extends Resource
                 TextColumn::make('trip_duration_minutes')
                     ->label('Trip Duration')
                     ->state(function (Trip $record): ?int {
-                        if (!$record->started_at || !$record->completed_at) {
+                        if (! $record->started_at || ! $record->completed_at) {
                             return null;
                         }
 

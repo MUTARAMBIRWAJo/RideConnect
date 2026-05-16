@@ -4,10 +4,11 @@ namespace App\Http\Controllers\Api;
 
 use App\Domain\Driver\DriverPolicy;
 use App\Domain\Trip\TripStateMachine;
+use App\Events\Domain\TripCompleted;
 use App\Events\Domain\TripMatched;
 use App\Events\Domain\TripStarted;
-use App\Events\Domain\TripCompleted;
 use App\Exceptions\DomainException;
+use App\Http\Controllers\Controller;
 use App\Models\Driver;
 use App\Models\Trip;
 use App\Services\Location\DriverLocationService;
@@ -16,9 +17,8 @@ use App\Services\MobileNotificationService;
 use App\Services\TransportMappingService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Validator;
 use Illuminate\Support\Facades\DB;
-use App\Http\Controllers\Controller;
+use Illuminate\Support\Facades\Validator;
 
 /**
  * MobileDriverController handles mobile app APIs for drivers.
@@ -27,13 +27,12 @@ use App\Http\Controllers\Controller;
  */
 class MobileDriverController extends Controller
 {
-public function __construct(
+    public function __construct(
         private readonly TripLocationService $tripLocationService,
         private readonly DriverLocationService $driverLocationService,
         private readonly TransportMappingService $transportMappingService,
         private readonly MobileNotificationService $mobileNotificationService,
-    ) {
-    }
+    ) {}
 
     /**
      * POST /api/mobile/driver/status
@@ -44,7 +43,7 @@ public function __construct(
         $user = $request->user();
         $driver = $user->driver;
 
-        if (!$driver) {
+        if (! $driver) {
             return response()->json([
                 'status' => 'error',
                 'type' => 'DOMAIN_ERROR',
@@ -90,7 +89,7 @@ public function __construct(
         $user = $request->user();
         $driver = $user->driver;
 
-        if (!$driver) {
+        if (! $driver) {
             return response()->json([
                 'status' => 'error',
                 'type' => 'DOMAIN_ERROR',
@@ -126,7 +125,7 @@ public function __construct(
         if ($driverLat && $driverLng) {
             // Simple distance filter - within 10km
             $query->whereRaw(
-                "(6371 * acos(cos(radians(?)) * cos(radians(pickup_lat)) * cos(radians(pickup_lng) - radians(?)) + sin(radians(?)) * sin(radians(pickup_lat)))) <= 10",
+                '(6371 * acos(cos(radians(?)) * cos(radians(pickup_lat)) * cos(radians(pickup_lng) - radians(?)) + sin(radians(?)) * sin(radians(pickup_lat)))) <= 10',
                 [$driverLat, $driverLng, $driverLat]
             );
         }
@@ -180,7 +179,7 @@ public function __construct(
         $user = request()->user();
         $driver = $user->driver;
 
-        if (!$driver) {
+        if (! $driver) {
             return response()->json([
                 'status' => 'error',
                 'message' => 'Driver profile not found. Please complete driver registration.',
@@ -193,7 +192,7 @@ public function __construct(
             ->where('id', $id)
             ->first();
 
-        if (!$trip) {
+        if (! $trip) {
             return response()->json([
                 'status' => 'error',
                 'message' => 'This trip request is no longer available.',
@@ -202,7 +201,7 @@ public function __construct(
 
         // Step 2: Check if trip is in correct status to accept
         if ($trip->status !== 'PENDING') {
-            $message = match($trip->status) {
+            $message = match ($trip->status) {
                 'ACCEPTED', 'STARTED', 'COMPLETED' => 'This trip has already been accepted by another driver.',
                 'CANCELLED' => 'This trip request has been cancelled.',
                 default => 'This trip is no longer available.'
@@ -233,7 +232,7 @@ public function __construct(
             ], 422);
         }
 
-// Step 5: Atomically assign driver and transition state
+        // Step 5: Atomically assign driver and transition state
         // Use database transaction to prevent race conditions
         try {
             $trip = Trip::query()
@@ -243,16 +242,16 @@ public function __construct(
                 ->lockForUpdate()  // Lock row for atomic update
                 ->firstOrFail();
 
-             $trip->driver_id = $driver->id;
-             $trip->status = TripStateMachine::ACCEPTED;
-             $trip->accepted_at = now();
-             $trip->save();
+            $trip->driver_id = $driver->id;
+            $trip->status = TripStateMachine::ACCEPTED;
+            $trip->accepted_at = now();
+            $trip->save();
 
-             event(new TripMatched((int) $trip->id, (int) $driver->id));
+            event(new TripMatched((int) $trip->id, (int) $driver->id));
 
-             $this->mobileNotificationService->sendRideAcceptedToPassenger($trip->fresh(), $driver);
+            $this->mobileNotificationService->sendRideAcceptedToPassenger($trip->fresh(), $driver);
 
-             return response()->json([
+            return response()->json([
                 'status' => 'success',
                 'message' => 'Trip accepted successfully. Please proceed to pickup location.',
                 'data' => [
@@ -280,7 +279,7 @@ public function __construct(
         $user = request()->user();
         $driver = $user->driver;
 
-        if (!$driver) {
+        if (! $driver) {
             return response()->json([
                 'status' => 'error',
                 'message' => 'Driver profile not found. Please complete driver registration.',
@@ -290,7 +289,7 @@ public function __construct(
         // Check if trip exists and is still pending
         $trip = Trip::query()->where('id', $id)->first();
 
-        if (!$trip) {
+        if (! $trip) {
             return response()->json([
                 'status' => 'error',
                 'message' => 'This trip request is no longer available.',
@@ -334,7 +333,7 @@ public function __construct(
         $user = $request->user();
         $driver = $user->driver;
 
-        if (!$driver) {
+        if (! $driver) {
             return response()->json([
                 'status' => 'error',
                 'type' => 'DOMAIN_ERROR',
@@ -366,7 +365,7 @@ public function __construct(
             ->whereIn('status', ['ACCEPTED', 'STARTED'])
             ->first();
 
-        if (!$trip) {
+        if (! $trip) {
             return response()->json([
                 'status' => 'error',
                 'type' => 'DOMAIN_ERROR',
@@ -400,7 +399,7 @@ public function __construct(
         $user = $request->user();
         $driver = $user->driver;
 
-        if (!$driver) {
+        if (! $driver) {
             return response()->json([
                 'status' => 'error',
                 'type' => 'DOMAIN_ERROR',
@@ -467,7 +466,7 @@ public function __construct(
         $user = request()->user();
         $driver = $user->driver;
 
-        if (!$driver) {
+        if (! $driver) {
             return response()->json([
                 'status' => 'error',
                 'type' => 'DOMAIN_ERROR',
@@ -515,7 +514,7 @@ public function __construct(
         $user = request()->user();
         $driver = $user->driver;
 
-        if (!$driver) {
+        if (! $driver) {
             return response()->json([
                 'status' => 'error',
                 'type' => 'DOMAIN_ERROR',
@@ -563,7 +562,7 @@ public function __construct(
         $user = request()->user();
         $driver = $user->driver;
 
-        if (!$driver) {
+        if (! $driver) {
             return response()->json([
                 'status' => 'error',
                 'type' => 'DOMAIN_ERROR',

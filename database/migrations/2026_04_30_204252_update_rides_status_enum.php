@@ -1,9 +1,7 @@
 <?php
 
 use Illuminate\Database\Migrations\Migration;
-use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Support\Facades\DB;
-use Illuminate\Support\Facades\Schema;
 
 return new class extends Migration
 {
@@ -19,7 +17,7 @@ return new class extends Migration
             return;
         }
 
-        DB::statement("ALTER TABLE rides DROP CONSTRAINT IF EXISTS rides_status_check");
+        DB::statement('ALTER TABLE rides DROP CONSTRAINT IF EXISTS rides_status_check');
         DB::statement("ALTER TABLE rides ADD CONSTRAINT rides_status_check CHECK (status IN ('scheduled', 'in_progress', 'completed', 'cancelled', 'published'))");
     }
 
@@ -35,7 +33,7 @@ return new class extends Migration
             return;
         }
 
-        DB::statement("ALTER TABLE rides DROP CONSTRAINT IF EXISTS rides_status_check");
+        DB::statement('ALTER TABLE rides DROP CONSTRAINT IF EXISTS rides_status_check');
         DB::statement("ALTER TABLE rides ADD CONSTRAINT rides_status_check CHECK (status IN ('scheduled', 'in_progress', 'completed', 'cancelled'))");
     }
 };

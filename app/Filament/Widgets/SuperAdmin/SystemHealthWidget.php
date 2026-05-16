@@ -2,17 +2,17 @@
 
 namespace App\Filament\Widgets\SuperAdmin;
 
+use Filament\Widgets\Widget;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Schema;
-use Filament\Widgets\Widget;
 
 class SystemHealthWidget extends Widget
 {
     protected static string $view = 'filament.widgets.super-admin.system-health-widget';
 
-    protected int | string | array $columnSpan = 'full';
+    protected int|string|array $columnSpan = 'full';
 
     protected function getViewData(): array
     {
@@ -43,13 +43,13 @@ class SystemHealthWidget extends Widget
     {
         try {
             $url = rtrim((string) config('services.ai_service.url', 'https://rideconnect-ai.onrender.com'), '/');
-            $response = Http::timeout((int) config('services.ai_service.timeout', 8))->get($url . '/health');
+            $response = Http::timeout((int) config('services.ai_service.timeout', 8))->get($url.'/health');
 
             if ($response->successful()) {
                 return ['status' => 'ok', 'message' => 'AI service reachable'];
             }
 
-            return ['status' => 'warn', 'message' => 'AI health check returned ' . $response->status()];
+            return ['status' => 'warn', 'message' => 'AI health check returned '.$response->status()];
         } catch (\Throwable $e) {
             report($e);
 
@@ -85,7 +85,7 @@ class SystemHealthWidget extends Widget
     private function checkQueue(): array
     {
         try {
-            if (!Schema::hasTable('jobs')) {
+            if (! Schema::hasTable('jobs')) {
                 return ['status' => 'warn', 'message' => 'Jobs table not found'];
             }
 

@@ -45,7 +45,7 @@ class PaymentV2Seeder extends Seeder
                     'status' => $paymentStatus,
                     'transaction_reference' => $paymentStatus === 'PENDING'
                         ? null
-                        : 'TXN-' . Str::upper(Str::random(12)),
+                        : 'TXN-'.Str::upper(Str::random(12)),
                     'paid_at' => $paymentStatus === 'PENDING' ? null : now()->subDays((int) $trip->id % 21),
                     'created_at' => $trip->created_at ?? now(),
                     'updated_at' => $trip->updated_at ?? now(),

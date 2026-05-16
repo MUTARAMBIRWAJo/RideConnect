@@ -52,7 +52,7 @@ class AdvancedGoogleMaps extends Page
         return 'Advanced Maps & Analytics';
     }
 
-    public static function getNavigationIcon(): string | Htmlable | null
+    public static function getNavigationIcon(): string|Htmlable|null
     {
         return 'heroicon-o-map';
     }
@@ -142,7 +142,7 @@ class AdvancedGoogleMaps extends Page
                 ->pluck('origin_address')
                 ->toArray();
 
-            if (!empty($zones)) {
+            if (! empty($zones)) {
                 return array_filter($zones);
             }
         }
@@ -159,7 +159,7 @@ class AdvancedGoogleMaps extends Page
                 ->pluck('zone')
                 ->toArray();
 
-            if (!empty($zones)) {
+            if (! empty($zones)) {
                 return array_filter($zones);
             }
         }
@@ -184,7 +184,8 @@ class AdvancedGoogleMaps extends Page
             if ($avgWaitSeconds !== null) {
                 $minutes = (int) ($avgWaitSeconds / 60);
                 $seconds = (int) ($avgWaitSeconds % 60);
-                return $minutes . 'm ' . $seconds . 's';
+
+                return $minutes.'m '.$seconds.'s';
             }
         }
 
@@ -199,7 +200,8 @@ class AdvancedGoogleMaps extends Page
             if ($avgWaitSeconds !== null) {
                 $minutes = (int) ($avgWaitSeconds / 60);
                 $seconds = (int) ($avgWaitSeconds % 60);
-                return $minutes . 'm ' . $seconds . 's';
+
+                return $minutes.'m '.$seconds.'s';
             }
         }
 

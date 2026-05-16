@@ -27,6 +27,7 @@ class KafkaEventBus implements EventBusInterface
     {
         if (! extension_loaded('rdkafka')) {
             Log::warning('KafkaEventBus: rdkafka extension not loaded. Events will be dropped.');
+
             return;
         }
         $this->producer = $this->buildProducer();
@@ -34,9 +35,11 @@ class KafkaEventBus implements EventBusInterface
 
     public function publish(array $event): void
     {
-        if (! $this->producer) return;
+        if (! $this->producer) {
+            return;
+        }
 
-        $topic  = $event['topic'] ?? $this->resolveTopic($event['event_type']);
+        $topic = $event['topic'] ?? $this->resolveTopic($event['event_type']);
         $handle = $this->producer->newTopic($topic);
 
         $handle->produce(
@@ -50,8 +53,8 @@ class KafkaEventBus implements EventBusInterface
         $this->producer->flush(1000);
 
         Log::info('KafkaEventBus: event published', [
-            'event_id'  => $event['event_id'],
-            'topic'     => $topic,
+            'event_id' => $event['event_id'],
+            'topic' => $topic,
         ]);
     }
 
@@ -70,17 +73,17 @@ class KafkaEventBus implements EventBusInterface
 
     private function buildProducer(): \RdKafka\Producer
     {
-        $conf = new \RdKafka\Conf();
+        $conf = new \RdKafka\Conf;
         $conf->set('metadata.broker.list', (string) config('event_bus.kafka.broker', 'kafka:9092'));
-        $conf->set('security.protocol',    (string) config('event_bus.kafka.security_protocol', 'PLAINTEXT'));
+        $conf->set('security.protocol', (string) config('event_bus.kafka.security_protocol', 'PLAINTEXT'));
 
         $saslUser = config('event_bus.kafka.sasl_username');
         $saslPass = config('event_bus.kafka.sasl_password');
 
         if ($saslUser && $saslPass) {
-            $conf->set('sasl.mechanisms',  'PLAIN');
-            $conf->set('sasl.username',    (string) $saslUser);
-            $conf->set('sasl.password',    (string) $saslPass);
+            $conf->set('sasl.mechanisms', 'PLAIN');
+            $conf->set('sasl.username', (string) $saslUser);
+            $conf->set('sasl.password', (string) $saslPass);
         }
 
         return new \RdKafka\Producer($conf);
@@ -89,6 +92,7 @@ class KafkaEventBus implements EventBusInterface
     private function resolveTopic(string $eventType): string
     {
         $kebab = strtolower((string) preg_replace('/(?<!^)[A-Z]/', '-$0', $eventType));
+
         return "rideconnect.finance.{$kebab}";
     }
 }

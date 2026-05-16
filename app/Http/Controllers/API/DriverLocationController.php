@@ -3,7 +3,6 @@
 namespace App\Http\Controllers\API;
 
 use App\Http\Controllers\Controller;
-use App\Models\DriverLocation;
 use App\Services\AITrainingDataLogger;
 use App\Services\Location\DriverLocationService;
 use Illuminate\Http\JsonResponse;
@@ -14,8 +13,7 @@ class DriverLocationController extends Controller
     public function __construct(
         private readonly AITrainingDataLogger $trainingDataLogger,
         private readonly DriverLocationService $locationService
-    ) {
-    }
+    ) {}
 
     public function update(Request $request): JsonResponse
     {
@@ -73,7 +71,7 @@ class DriverLocationController extends Controller
     {
         $location = $this->locationService->getCurrentLocation($driverId);
 
-        if (!$location) {
+        if (! $location) {
             return response()->json([
                 'success' => false,
                 'message' => 'Driver location not found',

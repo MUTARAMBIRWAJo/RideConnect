@@ -55,7 +55,7 @@ class TripCreationTest extends TestCase
         $driverUser = User::factory()->create(['is_approved' => true, 'role' => 'DRIVER']);
         $driverMobileUser = MobileUser::factory()->create(['email' => $driverUser->email, 'role' => 'DRIVER']);
         $driverUser->update(['mobile_user_id' => $driverMobileUser->id]);
-        
+
         $driver = Driver::factory()->create(['user_id' => $driverUser->id, 'status' => 'approved']);
         $vehicle = Vehicle::factory()->create(['driver_id' => $driver->id, 'is_active' => true]);
 

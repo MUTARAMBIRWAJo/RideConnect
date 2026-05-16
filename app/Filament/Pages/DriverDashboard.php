@@ -19,7 +19,7 @@ class DriverDashboard extends BaseDashboard
         return 'Driver Dashboard';
     }
 
-    public static function getNavigationIcon(): string | Htmlable | null
+    public static function getNavigationIcon(): string|Htmlable|null
     {
         return 'heroicon-o-truck';
     }

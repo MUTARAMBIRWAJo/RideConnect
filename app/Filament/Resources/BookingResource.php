@@ -14,8 +14,8 @@ use Filament\Forms\Form;
 use Filament\Resources\Resource;
 use Filament\Tables;
 use Filament\Tables\Table;
-use Illuminate\Database\Eloquent\Builder as EloquentBuilder;
 use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Database\Eloquent\Builder as EloquentBuilder;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\SoftDeletingScope;
 
@@ -111,7 +111,7 @@ class BookingResource extends Resource
                     ->required()
                     ->options(function (callable $get): array {
                         $transportType = $get('transport_type');
-                        
+
                         return Ride::query()
                             ->when($transportType, function (EloquentBuilder $query, $type): EloquentBuilder {
                                 return $query->where('transport_type', $type);
@@ -125,7 +125,7 @@ class BookingResource extends Resource
                                     $ride->origin_address ?? 'Unknown',
                                     $ride->destination_address ?? 'Unknown',
                                     $ride->transport_type,
-                                    number_format((float) $ride->price_per_seat, 0) . ' ' . ($ride->currency ?? 'RWF')
+                                    number_format((float) $ride->price_per_seat, 0).' '.($ride->currency ?? 'RWF')
                                 ),
                             ])
                             ->all();
@@ -182,9 +182,13 @@ class BookingResource extends Resource
                         // Suggest legal fare using RuraTariffService
                         $rideId = $get('ride_id');
                         $seats = $get('seats_booked') ?: 1;
-                        if (!$rideId) return null;
+                        if (! $rideId) {
+                            return null;
+                        }
                         $ride = \App\Models\Ride::find($rideId);
-                        if (!$ride) return null;
+                        if (! $ride) {
+                            return null;
+                        }
                         $origin = ['lat' => $ride->origin_lat, 'lng' => $ride->origin_lng];
                         $destination = ['lat' => $ride->destination_lat, 'lng' => $ride->destination_lng];
                         $zoneService = app(\App\Services\RuraZoneService::class);
@@ -195,21 +199,27 @@ class BookingResource extends Resource
                         $legalFare = is_array($tariffRow) ? (float) ($tariffRow['fare_rwf'] ?? 0) : 0;
                         if ($legalFare > 0) {
                             $totalLegal = $legalFare * $seats;
-                            return 'RURA Legal Fare: RWF ' . number_format($totalLegal, 2);
+
+                            return 'RURA Legal Fare: RWF '.number_format($totalLegal, 2);
                         }
+
                         return 'No RURA tariff found for this route.';
                     })
                     ->validationMessages([
-                        'rura_compliance' => 'Entered fare does not match RURA legal tariff for this route.'
+                        'rura_compliance' => 'Entered fare does not match RURA legal tariff for this route.',
                     ])
                     ->rule(function ($get) {
                         // Validate against RURA tariff
                         $rideId = $get('ride_id');
                         $seats = $get('seats_booked') ?: 1;
                         $entered = $get('total_price');
-                        if (!$rideId || !$entered) return null;
+                        if (! $rideId || ! $entered) {
+                            return null;
+                        }
                         $ride = \App\Models\Ride::find($rideId);
-                        if (!$ride) return null;
+                        if (! $ride) {
+                            return null;
+                        }
                         $origin = ['lat' => $ride->origin_lat, 'lng' => $ride->origin_lng];
                         $destination = ['lat' => $ride->destination_lat, 'lng' => $ride->destination_lng];
                         $zoneService = app(\App\Services\RuraZoneService::class);
@@ -220,8 +230,10 @@ class BookingResource extends Resource
                         $legalFare = is_array($tariffRow) ? (float) ($tariffRow['fare_rwf'] ?? 0) : 0;
                         if ($legalFare > 0) {
                             $totalLegal = $legalFare * $seats;
+
                             return abs(((float) $entered) - $totalLegal) < 0.01 ? null : 'rura_compliance';
                         }
+
                         return null;
                     }),
                 Forms\Components\TextInput::make('currency')
@@ -246,7 +258,7 @@ class BookingResource extends Resource
                     ->live()
                     ->dehydrated(false)
                     ->afterStateUpdated(function ($state, callable $set): void {
-                        $point = config('ride.map_points.' . (string) $state);
+                        $point = config('ride.map_points.'.(string) $state);
 
                         if (! is_array($point)) {
                             return;
@@ -280,7 +292,7 @@ class BookingResource extends Resource
                     ->live()
                     ->dehydrated(false)
                     ->afterStateUpdated(function ($state, callable $set): void {
-                        $point = config('ride.map_points.' . (string) $state);
+                        $point = config('ride.map_points.'.(string) $state);
 
                         if (! is_array($point)) {
                             return;
@@ -390,7 +402,8 @@ class BookingResource extends Resource
                         ->visible(fn (): bool => auth()->user()?->isManager() ?? false)
                         ->action(function (Booking $record) {
                             $pdf = app(\App\Services\BookingReceiptDeliveryService::class)->generatePdfBinary($record);
-                            return response()->streamDownload(fn () => print($pdf), "booking-receipt-{$record->id}.pdf");
+
+                            return response()->streamDownload(fn () => print ($pdf), "booking-receipt-{$record->id}.pdf");
                         }),
 
                     Tables\Actions\Action::make('email_receipt')

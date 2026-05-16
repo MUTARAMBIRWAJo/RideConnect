@@ -4,7 +4,6 @@ namespace App\Filament\Resources;
 
 use App\Enums\UserRole;
 use App\Filament\Resources\UserResource\Pages;
-use App\Filament\Resources\UserResource\RelationManagers;
 use App\Models\User;
 use Filament\Forms;
 use Filament\Forms\Form;
@@ -55,7 +54,7 @@ class UserResource extends Resource
                             ->tel()
                             ->maxLength(20),
                     ])->columns(3),
-                
+
                 Forms\Components\Section::make('Authentication')
                     ->schema([
                         Forms\Components\TextInput::make('password')
@@ -79,7 +78,7 @@ class UserResource extends Resource
                             ->disabled(function (?User $record): bool {
                                 $actor = auth()->user();
 
-                                if (!$actor || !$record) {
+                                if (! $actor || ! $record) {
                                     return false;
                                 }
 
@@ -94,7 +93,7 @@ class UserResource extends Resource
                                 return $actorIsAdmin && $recordIsSuperAdmin;
                             }),
                     ]),
-                
+
                 Forms\Components\Section::make('Approval Status')
                     ->schema([
                         Forms\Components\Toggle::make('is_approved')
@@ -117,7 +116,7 @@ class UserResource extends Resource
             ->columns([
                 Tables\Columns\ImageColumn::make('profile_photo')
                     ->circular()
-                    ->defaultImageUrl(fn () => 'https://ui-avatars.com/api/?name=' . urlencode('User') . '&background=random'),
+                    ->defaultImageUrl(fn () => 'https://ui-avatars.com/api/?name='.urlencode('User').'&background=random'),
                 Tables\Columns\TextColumn::make('name')
                     ->searchable()
                     ->sortable()
@@ -194,7 +193,7 @@ class UserResource extends Resource
                         ->label('Approve')
                         ->icon('heroicon-o-check')
                         ->color('success')
-                        ->visible(fn (User $record): bool => !$record->is_approved)
+                        ->visible(fn (User $record): bool => ! $record->is_approved)
                         ->requiresConfirmation()
                         ->action(function (User $record) {
                             $record->update([
@@ -207,7 +206,7 @@ class UserResource extends Resource
                         ->label('Reject')
                         ->icon('heroicon-o-x-mark')
                         ->color('danger')
-                        ->visible(fn (User $record): bool => !$record->is_approved)
+                        ->visible(fn (User $record): bool => ! $record->is_approved)
                         ->requiresConfirmation()
                         ->action(function (User $record) {
                             $record->update([
@@ -287,7 +286,7 @@ class UserResource extends Resource
             return true;
         }
 
-        if (!$user || !$user->can('edit users')) {
+        if (! $user || ! $user->can('edit users')) {
             return false;
         }
 
@@ -314,7 +313,7 @@ class UserResource extends Resource
             return true;
         }
 
-        if (!$user || !$user->can('delete users')) {
+        if (! $user || ! $user->can('delete users')) {
             return false;
         }
 
@@ -335,7 +334,7 @@ class UserResource extends Resource
 
     protected static function isSuperAdmin(?User $user): bool
     {
-        if (!$user) {
+        if (! $user) {
             return false;
         }
 
@@ -347,7 +346,6 @@ class UserResource extends Resource
             ? ($user->hasRole('Super_admin') || $user->hasRole('SUPER_ADMIN'))
             : false;
     }
-
 
     public static function getPages(): array
     {

@@ -14,15 +14,20 @@ use Illuminate\Support\Facades\Storage;
 
 class ComplianceReportResource extends Resource
 {
-    protected static ?string $model          = ComplianceReport::class;
+    protected static ?string $model = ComplianceReport::class;
+
     protected static ?string $navigationIcon = 'heroicon-o-document-text';
+
     protected static ?string $navigationGroup = 'AI & Analytics';
-    protected static ?string $label          = 'Compliance Report';
-    protected static ?int    $navigationSort = 12;
+
+    protected static ?string $label = 'Compliance Report';
+
+    protected static ?int $navigationSort = 12;
 
     public static function canAccess(): bool
     {
         $user = auth()->user();
+
         return $user?->hasAnyRole([
             UserRole::SUPER_ADMIN->value,
             UserRole::ACCOUNTANT->value,
@@ -51,10 +56,10 @@ class ComplianceReportResource extends Resource
                 TextColumn::make('format')->label('Format')->badge(),
                 TextColumn::make('status')->label('Status')->badge()
                     ->color(fn ($state) => match ($state) {
-                        'ready'   => 'success',
-                        'failed'  => 'danger',
+                        'ready' => 'success',
+                        'failed' => 'danger',
                         'pending' => 'warning',
-                        default   => 'gray',
+                        default => 'gray',
                     }),
                 TextColumn::make('period_from')->label('Period From')->date(),
                 TextColumn::make('period_to')->label('Period To')->date(),
@@ -75,6 +80,7 @@ class ComplianceReportResource extends Resource
                         if (! $record->hasFile()) {
                             return;
                         }
+
                         return Storage::disk('local')->download($record->file_path);
                     }),
             ])

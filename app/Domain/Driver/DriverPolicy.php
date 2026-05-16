@@ -24,16 +24,12 @@ class DriverPolicy
      * - Driver has at least one vehicle
      * - Vehicle type is compatible with ride transport type
      * - Trip is in PENDING state
-     *
-     * @param Driver $driver
-     * @param Trip $trip
-     * @return bool
      */
     public static function canAcceptTrip(Driver $driver, Trip $trip): bool
     {
         // Driver must have a vehicle
         $vehicle = $driver->vehicles()->first();
-        if (!$vehicle) {
+        if (! $vehicle) {
             return false;
         }
 
@@ -44,7 +40,7 @@ class DriverPolicy
 
         // Trip must have an associated ride
         $ride = $trip->ride;
-        if (!$ride) {
+        if (! $ride) {
             return false;
         }
 
@@ -60,9 +56,6 @@ class DriverPolicy
      *
      * Throws DomainException if validation fails.
      *
-     * @param Driver $driver
-     * @param Trip $trip
-     * @return void
      *
      * @throws DomainException
      */
@@ -70,7 +63,7 @@ class DriverPolicy
     {
         // Check if driver has a vehicle
         $vehicle = $driver->vehicles()->first();
-        if (!$vehicle) {
+        if (! $vehicle) {
             throw DomainException::make(
                 'Driver must have at least one vehicle to accept trips',
                 'NO_VEHICLE_FOUND'
@@ -87,7 +80,7 @@ class DriverPolicy
 
         // Check if trip has a ride
         $ride = $trip->ride;
-        if (!$ride) {
+        if (! $ride) {
             throw DomainException::make(
                 'Trip must be associated with a ride',
                 'NO_RIDE_FOUND'
@@ -95,7 +88,7 @@ class DriverPolicy
         }
 
         // Check vehicle compatibility
-        if (!TransportMappingService::isCompatible($vehicle->vehicle_type, $ride->transport_type)) {
+        if (! TransportMappingService::isCompatible($vehicle->vehicle_type, $ride->transport_type)) {
             throw DomainException::make(
                 'Vehicle type not compatible with ride transport type',
                 'VEHICLE_TYPE_INCOMPATIBLE'
@@ -105,9 +98,6 @@ class DriverPolicy
 
     /**
      * Check if a driver is currently online and available.
-     *
-     * @param Driver $driver
-     * @return bool
      */
     public static function isAvailable(Driver $driver): bool
     {
@@ -117,14 +107,12 @@ class DriverPolicy
     /**
      * Assert that a driver is available.
      *
-     * @param Driver $driver
-     * @return void
      *
      * @throws DomainException
      */
     public static function assertAvailable(Driver $driver): void
     {
-        if (!self::isAvailable($driver)) {
+        if (! self::isAvailable($driver)) {
             throw DomainException::make(
                 'Driver must be online to accept trips',
                 'DRIVER_NOT_AVAILABLE'
@@ -134,10 +122,6 @@ class DriverPolicy
 
     /**
      * Check if a driver owns a trip (is assigned as the driver).
-     *
-     * @param Driver $driver
-     * @param Trip $trip
-     * @return bool
      */
     public static function ownTrip(Driver $driver, Trip $trip): bool
     {
@@ -147,15 +131,12 @@ class DriverPolicy
     /**
      * Assert that a driver owns a trip.
      *
-     * @param Driver $driver
-     * @param Trip $trip
-     * @return void
      *
      * @throws DomainException
      */
     public static function assertOwnTrip(Driver $driver, Trip $trip): void
     {
-        if (!self::ownTrip($driver, $trip)) {
+        if (! self::ownTrip($driver, $trip)) {
             throw DomainException::make(
                 'This trip is not assigned to you',
                 'TRIP_NOT_OWNED_BY_DRIVER'

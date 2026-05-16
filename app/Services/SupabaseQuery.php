@@ -7,13 +7,21 @@ use Illuminate\Http\Client\Response;
 class SupabaseQuery
 {
     protected SupabaseClient $client;
+
     protected string $table;
+
     protected array $select = ['*'];
+
     protected array $filters = [];
+
     protected ?string $orderBy = null;
+
     protected string $orderDirection = 'asc';
+
     protected ?int $limit = null;
+
     protected ?int $offset = null;
+
     protected bool $useServiceRole = false;
 
     public function __construct(SupabaseClient $client, string $table)
@@ -28,6 +36,7 @@ class SupabaseQuery
     public function select(array $columns): self
     {
         $this->select = $columns;
+
         return $this;
     }
 
@@ -42,6 +51,7 @@ class SupabaseQuery
         }
 
         $this->filters[] = "{$column}={$operator}.{$value}";
+
         return $this;
     }
 
@@ -51,6 +61,7 @@ class SupabaseQuery
     public function whereNot(string $column, mixed $value): self
     {
         $this->filters[] = "{$column}=neq.{$value}";
+
         return $this;
     }
 
@@ -60,6 +71,7 @@ class SupabaseQuery
     public function whereGreaterThan(string $column, mixed $value): self
     {
         $this->filters[] = "{$column}=gt.{$value}";
+
         return $this;
     }
 
@@ -69,6 +81,7 @@ class SupabaseQuery
     public function whereGreaterThanOrEqual(string $column, mixed $value): self
     {
         $this->filters[] = "{$column}=gte.{$value}";
+
         return $this;
     }
 
@@ -78,6 +91,7 @@ class SupabaseQuery
     public function whereLessThan(string $column, mixed $value): self
     {
         $this->filters[] = "{$column}=lt.{$value}";
+
         return $this;
     }
 
@@ -87,6 +101,7 @@ class SupabaseQuery
     public function whereLessThanOrEqual(string $column, mixed $value): self
     {
         $this->filters[] = "{$column}=lte.{$value}";
+
         return $this;
     }
 
@@ -96,6 +111,7 @@ class SupabaseQuery
     public function whereLike(string $column, string $pattern): self
     {
         $this->filters[] = "{$column}=like.{$pattern}";
+
         return $this;
     }
 
@@ -105,6 +121,7 @@ class SupabaseQuery
     public function whereILike(string $column, string $pattern): self
     {
         $this->filters[] = "{$column}=ilike.{$pattern}";
+
         return $this;
     }
 
@@ -115,6 +132,7 @@ class SupabaseQuery
     {
         $valuesStr = implode(',', $values);
         $this->filters[] = "{$column}=in.({$valuesStr})";
+
         return $this;
     }
 
@@ -124,6 +142,7 @@ class SupabaseQuery
     public function whereNull(string $column): self
     {
         $this->filters[] = "{$column}=is.null";
+
         return $this;
     }
 
@@ -133,6 +152,7 @@ class SupabaseQuery
     public function whereNotNull(string $column): self
     {
         $this->filters[] = "{$column}=not.is.null";
+
         return $this;
     }
 
@@ -143,6 +163,7 @@ class SupabaseQuery
     {
         $this->orderBy = $column;
         $this->orderDirection = $direction;
+
         return $this;
     }
 
@@ -152,6 +173,7 @@ class SupabaseQuery
     public function limit(int $limit): self
     {
         $this->limit = $limit;
+
         return $this;
     }
 
@@ -161,6 +183,7 @@ class SupabaseQuery
     public function offset(int $offset): self
     {
         $this->offset = $offset;
+
         return $this;
     }
 
@@ -170,6 +193,7 @@ class SupabaseQuery
     public function useServiceRole(): self
     {
         $this->useServiceRole = true;
+
         return $this;
     }
 
@@ -181,10 +205,10 @@ class SupabaseQuery
         $queryParams = [];
 
         // Select
-        $queryParams[] = 'select=' . implode(',', $this->select);
+        $queryParams[] = 'select='.implode(',', $this->select);
 
         // Filters
-        if (!empty($this->filters)) {
+        if (! empty($this->filters)) {
             $queryParams[] = implode('&', $this->filters);
         }
 
@@ -234,6 +258,7 @@ class SupabaseQuery
     public function find($id): ?array
     {
         $this->filters = ["id=eq.{$id}"];
+
         return $this->first();
     }
 
@@ -245,7 +270,7 @@ class SupabaseQuery
         $this->select = ['count'];
         $response = $this->get();
         $range = $response->header('Content-Range');
-        
+
         if ($range) {
             $parts = explode('/', $range);
             if (count($parts) === 2) {
@@ -271,7 +296,7 @@ class SupabaseQuery
     {
         $total = $this->count();
         $this->limit($perPage)->offset(($page - 1) * $perPage);
-        
+
         return [
             'data' => $this->get()->json(),
             'current_page' => $page,

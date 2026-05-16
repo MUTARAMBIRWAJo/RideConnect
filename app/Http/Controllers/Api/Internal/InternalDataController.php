@@ -14,9 +14,7 @@ use Illuminate\Validation\ValidationException;
 
 class InternalDataController extends Controller
 {
-    public function __construct(private readonly TripConditionService $conditionService)
-    {
-    }
+    public function __construct(private readonly TripConditionService $conditionService) {}
 
     public function driverBehavior(int $driverId): JsonResponse
     {
@@ -25,7 +23,7 @@ class InternalDataController extends Controller
             ->orderByDesc('created_at')
             ->first();
 
-        if (!$behavior) {
+        if (! $behavior) {
             return response()->json([
                 'success' => false,
                 'message' => 'Driver behavior not found',
@@ -46,7 +44,7 @@ class InternalDataController extends Controller
             ->orderByDesc('created_at')
             ->first();
 
-        if (!$behavior) {
+        if (! $behavior) {
             return response()->json([
                 'success' => false,
                 'message' => 'Passenger behavior not found',

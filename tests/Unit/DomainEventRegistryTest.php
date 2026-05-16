@@ -24,7 +24,7 @@ class DomainEventRegistryTest extends TestCase
         $this->assertArrayHasKey(TripCompleted::class, $listeners);
 
         foreach ($listeners as $eventClass => $eventListeners) {
-            $this->assertNotEmpty($eventListeners, $eventClass . ' should have at least one listener');
+            $this->assertNotEmpty($eventListeners, $eventClass.' should have at least one listener');
         }
     }
 }

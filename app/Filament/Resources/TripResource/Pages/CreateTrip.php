@@ -17,8 +17,7 @@ class CreateTrip extends CreateRecord
     {
         return [
             CreateAction::make()
-                ->disabled(fn (): bool =>
-                    ! data_get($this->form->getRawState(), 'pickup_lat') ||
+                ->disabled(fn (): bool => ! data_get($this->form->getRawState(), 'pickup_lat') ||
                     ! data_get($this->form->getRawState(), 'pickup_lng') ||
                     ! data_get($this->form->getRawState(), 'dropoff_lat') ||
                     ! data_get($this->form->getRawState(), 'dropoff_lng') ||

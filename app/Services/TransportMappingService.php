@@ -34,12 +34,11 @@ class TransportMappingService
      * Convert vehicle type to transport type constant.
      * Returns null if vehicle type is not recognized.
      *
-     * @param string|null $vehicleType
      * @return string|null One of: BUS, CAR, MOTORCYCLE or null
      */
     public static function toTransportType(?string $vehicleType): ?string
     {
-        if (!$vehicleType) {
+        if (! $vehicleType) {
             return null;
         }
 
@@ -50,14 +49,10 @@ class TransportMappingService
 
     /**
      * Check if a vehicle type is compatible with a specific transport type.
-     *
-     * @param string|null $vehicleType
-     * @param string|null $transportType
-     * @return bool
      */
     public static function isCompatible(?string $vehicleType, ?string $transportType): bool
     {
-        if (!$vehicleType || !$transportType) {
+        if (! $vehicleType || ! $transportType) {
             return false;
         }
 
@@ -69,9 +64,6 @@ class TransportMappingService
     /**
      * Normalize a vehicle type string for lookup.
      * Converts to lowercase and trims whitespace.
-     *
-     * @param string $vehicleType
-     * @return string
      */
     public static function normalize(string $vehicleType): string
     {
@@ -81,7 +73,7 @@ class TransportMappingService
     /**
      * Get all vehicle types that map to a given transport type.
      *
-     * @param string $transportType One of: BUS, CAR, MOTORCYCLE
+     * @param  string  $transportType  One of: BUS, CAR, MOTORCYCLE
      * @return array<string>
      */
     public static function getVehicleTypesFor(string $transportType): array
@@ -89,7 +81,7 @@ class TransportMappingService
         return array_keys(
             array_filter(
                 self::$vehicleToTransportMap,
-                fn($value) => $value === $transportType
+                fn ($value) => $value === $transportType
             )
         );
     }

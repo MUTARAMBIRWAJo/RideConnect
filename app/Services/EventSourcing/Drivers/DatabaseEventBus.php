@@ -19,12 +19,12 @@ class DatabaseEventBus implements EventBusInterface
     {
         DomainEventModel::where('event_id', $event['event_id'])
             ->update([
-                'processed'    => true,
+                'processed' => true,
                 'processed_at' => now(),
             ]);
 
         Log::info('DatabaseEventBus: event marked processed', [
-            'event_id'   => $event['event_id'],
+            'event_id' => $event['event_id'],
             'event_type' => $event['event_type'],
         ]);
     }

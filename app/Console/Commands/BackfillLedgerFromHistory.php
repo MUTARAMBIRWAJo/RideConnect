@@ -17,17 +17,17 @@ class BackfillLedgerFromHistory extends Command
     public function handle(LedgerService $ledgerService): int
     {
         $execute = (bool) $this->option('execute');
-        $chunk   = max(1, (int) $this->option('chunk'));
+        $chunk = max(1, (int) $this->option('chunk'));
 
-        $this->info('Ledger backfill mode: ' . ($execute ? 'EXECUTE' : 'DRY-RUN'));
+        $this->info('Ledger backfill mode: '.($execute ? 'EXECUTE' : 'DRY-RUN'));
 
         $paymentCandidates = 0;
         $paymentBackfilled = 0;
-        $paymentFailed     = 0;
+        $paymentFailed = 0;
 
         $payoutCandidates = 0;
         $payoutBackfilled = 0;
-        $payoutFailed     = 0;
+        $payoutFailed = 0;
 
         Payment::query()
             ->whereIn('status', ['COMPLETED', 'completed'])
@@ -115,14 +115,14 @@ class BackfillLedgerFromHistory extends Command
             });
 
         $this->newLine();
-        $this->line('Payments needing ledger: ' . $paymentCandidates);
-        $this->line('Payouts needing ledger: ' . $payoutCandidates);
+        $this->line('Payments needing ledger: '.$paymentCandidates);
+        $this->line('Payouts needing ledger: '.$payoutCandidates);
 
         if ($execute) {
-            $this->line('Payments backfilled: ' . $paymentBackfilled);
-            $this->line('Payouts backfilled: ' . $payoutBackfilled);
-            $this->line('Payment failures: ' . $paymentFailed);
-            $this->line('Payout failures: ' . $payoutFailed);
+            $this->line('Payments backfilled: '.$paymentBackfilled);
+            $this->line('Payouts backfilled: '.$payoutBackfilled);
+            $this->line('Payment failures: '.$paymentFailed);
+            $this->line('Payout failures: '.$payoutFailed);
         } else {
             $this->comment('Dry-run only. Re-run with --execute to write ledger transactions.');
         }

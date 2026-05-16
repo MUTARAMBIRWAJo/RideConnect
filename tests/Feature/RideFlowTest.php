@@ -2,7 +2,6 @@
 
 namespace Tests\Feature;
 
-use App\Models\Booking;
 use App\Models\Ride;
 use App\Models\Trip;
 use App\Models\User;
@@ -72,7 +71,7 @@ class RideFlowTest extends TestCase
         // Register temporary route to exercise TripController::accept
         \Illuminate\Support\Facades\Route::put('/test/trips/{id}/accept', [\App\Http\Controllers\Api\TripController::class, 'accept']);
 
-        $this->actingAs($driverUser)->putJson('/test/trips/' . $trip->id . '/accept')
+        $this->actingAs($driverUser)->putJson('/test/trips/'.$trip->id.'/accept')
             ->assertStatus(422);
     }
 
@@ -126,7 +125,7 @@ class RideFlowTest extends TestCase
         // Register temporary route
         \Illuminate\Support\Facades\Route::put('/test/trips/{id}/accept', [\App\Http\Controllers\Api\TripController::class, 'accept']);
 
-        $response = $this->actingAs($driverUser)->putJson('/test/trips/' . $trip->id . '/accept');
+        $response = $this->actingAs($driverUser)->putJson('/test/trips/'.$trip->id.'/accept');
         $response->assertStatus(200);
         $response->assertJson(['success' => true]);
     }
@@ -162,7 +161,7 @@ class RideFlowTest extends TestCase
         // Register temporary route
         \Illuminate\Support\Facades\Route::put('/test/trips/{id}/accept', [\App\Http\Controllers\Api\TripController::class, 'accept']);
 
-        $response = $this->actingAs($driverUser)->putJson('/test/trips/' . $trip->id . '/accept');
+        $response = $this->actingAs($driverUser)->putJson('/test/trips/'.$trip->id.'/accept');
         $response->assertStatus(200);
         $response->assertJson(['success' => true]);
     }
@@ -180,5 +179,3 @@ class RideFlowTest extends TestCase
         $this->assertFalse($ride->isVehicleCompatible('motorbike'));
     }
 }
-
-

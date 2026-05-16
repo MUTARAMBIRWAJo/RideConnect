@@ -2,15 +2,15 @@
 
 namespace App\Services;
 
-use App\Models\DriverBehavior;
 use App\Models\Booking;
+use App\Models\DriverBehavior;
 use App\Models\MobileUser;
 use App\Models\PassengerBehavior;
-use App\Models\RouteState;
 use App\Models\Review;
+use App\Models\RouteState;
+use App\Models\TransportRoute;
 use App\Models\Trip;
 use App\Models\WeatherCondition;
-use App\Models\TransportRoute;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Schema;
 
@@ -18,7 +18,7 @@ class TripConditionService
 {
     public function captureSnapshot(Trip $trip): Trip
     {
-        if (!Schema::hasTable('trips')) {
+        if (! Schema::hasTable('trips')) {
             return $trip;
         }
 
@@ -90,7 +90,7 @@ class TripConditionService
 
     private function createRouteState(Trip $trip): ?RouteState
     {
-        if (!Schema::hasTable('route_states')) {
+        if (! Schema::hasTable('route_states')) {
             return null;
         }
 
@@ -124,7 +124,7 @@ class TripConditionService
 
     private function createWeatherCondition(Trip $trip): ?WeatherCondition
     {
-        if (!Schema::hasTable('weather_conditions')) {
+        if (! Schema::hasTable('weather_conditions')) {
             return null;
         }
 
@@ -137,7 +137,7 @@ class TripConditionService
 
     private function createDriverBehavior(Trip $trip): ?DriverBehavior
     {
-        if (!$trip->driver_id || !Schema::hasTable('driver_behaviors')) {
+        if (! $trip->driver_id || ! Schema::hasTable('driver_behaviors')) {
             return null;
         }
 
@@ -197,7 +197,7 @@ class TripConditionService
 
     private function createPassengerBehavior(Trip $trip): ?PassengerBehavior
     {
-        if (!$trip->passenger_id || !Schema::hasTable('passenger_behaviors')) {
+        if (! $trip->passenger_id || ! Schema::hasTable('passenger_behaviors')) {
             return null;
         }
 
@@ -262,11 +262,11 @@ class TripConditionService
         $trafficLevel = $historicalCount > 0 ? (int) max(1, min(5, round($historicalCount / 5))) : 3;
         $averageSpeed = $this->calculateAverageSpeed($historicalTrips);
         $incidentFlag = $historicalCount > 0 ? ((int) (Trip::query()
-                ->when($routeId, fn ($query) => $query->whereHas('ride', fn ($rideQuery) => $rideQuery->where('route_id', $routeId)))
-                ->where(function ($query) {
-                    $query->where('status', 'CANCELLED')->orWhereNotNull('rejected_at');
-                })
-                ->count()) > max(1, (int) round($historicalCount * 0.25))) : null;
+            ->when($routeId, fn ($query) => $query->whereHas('ride', fn ($rideQuery) => $rideQuery->where('route_id', $routeId)))
+            ->where(function ($query) {
+                $query->where('status', 'CANCELLED')->orWhereNotNull('rejected_at');
+            })
+            ->count()) > max(1, (int) round($historicalCount * 0.25))) : null;
 
         return [
             'traffic_level' => $trafficLevel,
@@ -283,7 +283,7 @@ class TripConditionService
     {
         $durations = $historicalTrips
             ->map(function (Trip $trip) {
-                if (!$trip->actual_distance || !$trip->started_at || !$trip->completed_at) {
+                if (! $trip->actual_distance || ! $trip->started_at || ! $trip->completed_at) {
                     return null;
                 }
 
@@ -293,7 +293,7 @@ class TripConditionService
                     return null;
                 }
 
-                return ((float) $trip->actual_distance / ($minutes / 60));
+                return (float) $trip->actual_distance / ($minutes / 60);
             })
             ->filter();
 
@@ -340,7 +340,7 @@ class TripConditionService
 
     private function calculateEtaDeviationMinutes(Trip $trip, ?RouteState $routeState): ?int
     {
-        if (!$routeState?->estimated_duration_min || !$trip->started_at || !$trip->completed_at) {
+        if (! $routeState?->estimated_duration_min || ! $trip->started_at || ! $trip->completed_at) {
             return null;
         }
 
@@ -362,7 +362,7 @@ class TripConditionService
 
     private function getNearestTrafficEvent(float $lat, float $lng): array
     {
-        if (!Schema::hasTable('traffic_events')) {
+        if (! Schema::hasTable('traffic_events')) {
             return [];
         }
 
@@ -371,11 +371,11 @@ class TripConditionService
             ->whereNotNull('longitude');
 
         $query->whereBetween('latitude', [$lat - 0.08, $lat + 0.08])
-              ->whereBetween('longitude', [$lng - 0.08, $lng + 0.08]);
+            ->whereBetween('longitude', [$lng - 0.08, $lng + 0.08]);
 
         $event = $query->orderByDesc('event_time')->first();
 
-        if (!$event) {
+        if (! $event) {
             return [];
         }
 

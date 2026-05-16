@@ -45,9 +45,9 @@ class FinanceServiceProvider extends ServiceProvider
         // -----------------------------------------------------------------------
         $this->app->singleton(EventBusInterface::class, function ($app) {
             return match (config('event_bus.driver', 'database')) {
-                'kafka'  => new KafkaEventBus(),
-                'pulsar' => new PulsarEventBus(),
-                default  => new DatabaseEventBus(),
+                'kafka' => new KafkaEventBus,
+                'pulsar' => new PulsarEventBus,
+                default => new DatabaseEventBus,
             };
         });
 

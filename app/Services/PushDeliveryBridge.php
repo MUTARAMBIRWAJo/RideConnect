@@ -56,7 +56,7 @@ class PushDeliveryBridge
         ];
 
         Http::withHeaders([
-            'Authorization' => 'key=' . $serverKey,
+            'Authorization' => 'key='.$serverKey,
             'Content-Type' => 'application/json',
         ])->post('https://fcm.googleapis.com/fcm/send', $payload);
     }
@@ -95,7 +95,7 @@ class PushDeliveryBridge
         ];
 
         Http::withHeaders([
-            'authorization' => 'bearer ' . $jwt,
+            'authorization' => 'bearer '.$jwt,
             'apns-topic' => $bundleId,
             'apns-push-type' => 'alert',
             'apns-priority' => '10',
@@ -117,7 +117,7 @@ class PushDeliveryBridge
         ]));
 
         $privateKeyPem = str_replace('\\n', "\n", $privateKey);
-        $signatureInput = $header . '.' . $payload;
+        $signatureInput = $header.'.'.$payload;
 
         $signature = '';
         $signed = openssl_sign($signatureInput, $signature, $privateKeyPem, 'sha256');
@@ -127,7 +127,7 @@ class PushDeliveryBridge
             return null;
         }
 
-        return $signatureInput . '.' . $this->base64UrlEncode($signature);
+        return $signatureInput.'.'.$this->base64UrlEncode($signature);
     }
 
     private function base64UrlEncode(string $data): string

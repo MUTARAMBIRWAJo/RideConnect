@@ -38,4 +38,3 @@ class SystemNewsArticle extends Model
         return $query->orderBy('published_at', 'desc');
     }
 }
-

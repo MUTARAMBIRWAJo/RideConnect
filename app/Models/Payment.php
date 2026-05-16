@@ -33,12 +33,12 @@ class Payment extends Model
     ];
 
     protected $casts = [
-        'amount'        => 'decimal:2',
-        'platform_fee'  => 'decimal:2',
+        'amount' => 'decimal:2',
+        'platform_fee' => 'decimal:2',
         'driver_amount' => 'decimal:2',
-        'metadata'      => 'array',
-        'paid_at'       => 'datetime',
-        'refunded_at'   => 'datetime',
+        'metadata' => 'array',
+        'paid_at' => 'datetime',
+        'refunded_at' => 'datetime',
     ];
 
     public function trip()

@@ -9,7 +9,7 @@ use Filament\Widgets\StatsOverviewWidget\Stat;
 
 class KpiOverviewWidget extends StatsOverviewWidget
 {
-    protected int | string | array $columnSpan = 'full';
+    protected int|string|array $columnSpan = 'full';
 
     protected function getStats(): array
     {
@@ -31,11 +31,11 @@ class KpiOverviewWidget extends StatsOverviewWidget
                 ->description('Pending, accepted, or started')
                 ->color('warning'),
 
-            Stat::make('Revenue Today', 'RWF ' . number_format((float) ($metrics['revenue_today'] ?? 0), 2))
+            Stat::make('Revenue Today', 'RWF '.number_format((float) ($metrics['revenue_today'] ?? 0), 2))
                 ->description('Payments recorded today')
                 ->color('success'),
 
-            Stat::make('Cancellation Rate', number_format((float) ($metrics['cancellation_rate'] ?? 0), 2) . '%')
+            Stat::make('Cancellation Rate', number_format((float) ($metrics['cancellation_rate'] ?? 0), 2).'%')
                 ->description('Cancelled trips vs total trips today')
                 ->color('danger'),
 

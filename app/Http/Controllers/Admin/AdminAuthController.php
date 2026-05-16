@@ -24,7 +24,7 @@ class AdminAuthController extends Controller
 
     /**
      * Handle admin login.
-     * 
+     *
      * Only admin, officer, and superadmin roles are allowed.
      */
     public function login(Request $request): RedirectResponse
@@ -39,22 +39,22 @@ class AdminAuthController extends Controller
         // Attempt to authenticate with admin guard
         if (Auth::guard('admin')->attempt($credentials, $request->remember)) {
             $request->session()->regenerate();
-            
+
             // Check user role after authentication
             $user = Auth::guard('admin')->user();
-            
+
             // Verify the user has a manager role
-            if (!$user->role || !$user->role->isManager()) {
+            if (! $user->role || ! $user->role->isManager()) {
                 Auth::guard('admin')->logout();
                 $request->session()->invalidate();
                 $request->session()->regenerateToken();
-                
+
                 throw ValidationException::withMessages([
                     'email' => ['Unauthorized: Only admin, officer, and superadmin roles can access the backend.'],
                 ]);
             }
 
-            return redirect()->intended(route('admin.dashboard'))->with('success', 'Welcome back, ' . $user->name . '!');
+            return redirect()->intended(route('admin.dashboard'))->with('success', 'Welcome back, '.$user->name.'!');
         }
 
         throw ValidationException::withMessages([
@@ -97,7 +97,7 @@ class AdminAuthController extends Controller
 
         // Verify the current user is a superadmin
         $currentUser = Auth::guard('admin')->user();
-        if (!$currentUser || !$currentUser->isSuperAdmin()) {
+        if (! $currentUser || ! $currentUser->isSuperAdmin()) {
             throw ValidationException::withMessages([
                 'email' => ['Only superadmin can create manager accounts.'],
             ]);
@@ -105,10 +105,10 @@ class AdminAuthController extends Controller
 
         // Default role is OFFICER if not specified
         $role = $request->input('role', 'officer');
-        
+
         // Validate role
-        $validRoles = array_map(fn($role) => $role->value, UserRole::managerRoles());
-        if (!in_array(strtoupper($role), $validRoles)) {
+        $validRoles = array_map(fn ($role) => $role->value, UserRole::managerRoles());
+        if (! in_array(strtoupper($role), $validRoles)) {
             $role = 'OFFICER';
         }
 

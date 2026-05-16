@@ -8,9 +8,7 @@ use App\Models\DriverPayout;
 use App\Services\AccountantPayoutService;
 use App\Services\DriverEarningService;
 use Carbon\Carbon;
-use Filament\Actions;
 use Filament\Forms\Components\DatePicker;
-use Filament\Forms\Components\Select;
 use Filament\Notifications\Notification;
 use Filament\Pages\Page;
 use Filament\Tables;
@@ -64,14 +62,14 @@ class DriverDailyEarnings extends Page implements HasTable
                     ->sortable(),
                 Tables\Columns\TextColumn::make('total_income')
                     ->label('Total Income')
-                    ->state(fn (Driver $record): string => 'RWF ' . number_format((float) $this->incomeFor($record)['total_driver_income'], 2))
+                    ->state(fn (Driver $record): string => 'RWF '.number_format((float) $this->incomeFor($record)['total_driver_income'], 2))
                     ->sortable(false),
                 Tables\Columns\TextColumn::make('commission')
                     ->label('Commission (8%)')
-                    ->state(fn (Driver $record): string => 'RWF ' . number_format((float) $this->incomeFor($record)['commission'], 2)),
+                    ->state(fn (Driver $record): string => 'RWF '.number_format((float) $this->incomeFor($record)['commission'], 2)),
                 Tables\Columns\TextColumn::make('net_payout')
                     ->label('Net Payout (92%)')
-                    ->state(fn (Driver $record): string => 'RWF ' . number_format((float) $this->incomeFor($record)['payout_amount'], 2)),
+                    ->state(fn (Driver $record): string => 'RWF '.number_format((float) $this->incomeFor($record)['payout_amount'], 2)),
                 Tables\Columns\TextColumn::make('payout_status')
                     ->label('Status')
                     ->badge()
@@ -90,7 +88,7 @@ class DriverDailyEarnings extends Page implements HasTable
                             return null;
                         }
 
-                        return 'Date: ' . Carbon::parse($data['date'])->toDateString();
+                        return 'Date: '.Carbon::parse($data['date'])->toDateString();
                     })
                     ->query(function (Builder $query, array $data): Builder {
                         if (! empty($data['date'])) {
@@ -191,7 +189,7 @@ class DriverDailyEarnings extends Page implements HasTable
 
                             Notification::make()
                                 ->title('Bulk payout processed')
-                                ->body('Total payout sent: RWF ' . number_format($totalPayout, 2))
+                                ->body('Total payout sent: RWF '.number_format($totalPayout, 2))
                                 ->success()
                                 ->send();
                         } catch (Throwable $e) {
@@ -228,7 +226,7 @@ class DriverDailyEarnings extends Page implements HasTable
 
     private function incomeFor(Driver $driver): array
     {
-        $key = $driver->id . '|' . $this->selectedDate;
+        $key = $driver->id.'|'.$this->selectedDate;
 
         if (! isset($this->incomeCache[$key])) {
             $this->incomeCache[$key] = app(DriverEarningService::class)
@@ -240,7 +238,7 @@ class DriverDailyEarnings extends Page implements HasTable
 
     private function payoutFor(Driver $driver): ?DriverPayout
     {
-        $key = $driver->id . '|' . $this->selectedDate;
+        $key = $driver->id.'|'.$this->selectedDate;
 
         if (! array_key_exists($key, $this->payoutCache)) {
             $this->payoutCache[$key] = DriverPayout::query()
@@ -278,6 +276,6 @@ class DriverDailyEarnings extends Page implements HasTable
             }
 
             fclose($handle);
-        }, 'driver-daily-earnings-' . $date . '.csv', ['Content-Type' => 'text/csv']);
+        }, 'driver-daily-earnings-'.$date.'.csv', ['Content-Type' => 'text/csv']);
     }
 }

@@ -10,7 +10,7 @@ class FinancialMatrixWidget extends Widget
 {
     protected static string $view = 'filament.widgets.dashboard.financial-matrix-widget';
 
-    protected int | string | array $columnSpan = [
+    protected int|string|array $columnSpan = [
         'default' => 1,
         'md' => 2,
         'xl' => 2,

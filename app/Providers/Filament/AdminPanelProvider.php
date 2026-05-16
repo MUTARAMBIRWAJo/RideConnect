@@ -2,33 +2,23 @@
 
 namespace App\Providers\Filament;
 
-use App\Filament\Pages\MfaSettingsPage;
 use App\Filament\Pages\Auth\RedirectToUnifiedLogin;
 use App\Filament\Pages\Dashboard;
-use App\Filament\Resources\BookingResource;
-use App\Filament\Resources\DriverResource;
-use App\Filament\Resources\FinanceResource;
-use App\Filament\Resources\RideResource;
-use App\Filament\Resources\TicketResource;
-use App\Filament\Resources\TripResource;
-use App\Filament\Resources\UserResource;
-use App\Filament\Resources\VehicleResource;
+use App\Filament\Pages\MfaSettingsPage;
 use Filament\Http\Middleware\Authenticate;
 use Filament\Http\Middleware\DisableBladeIconComponents;
 use Filament\Http\Middleware\DispatchServingFilamentEvent;
+use Filament\Navigation\NavigationGroup;
 use Filament\Panel;
 use Filament\PanelProvider;
-use Filament\Support\Colors\Color;
 use Filament\View\PanelsRenderHook;
-use Filament\Navigation\NavigationGroup;
-use Filament\Widgets;
-use Illuminate\Support\Facades\Blade;
 use Illuminate\Cookie\Middleware\AddQueuedCookiesToResponse;
 use Illuminate\Cookie\Middleware\EncryptCookies;
 use Illuminate\Foundation\Http\Middleware\VerifyCsrfToken;
 use Illuminate\Routing\Middleware\SubstituteBindings;
-use Illuminate\Session\Middleware\StartSession;
 use Illuminate\Session\Middleware\AuthenticateSession;
+use Illuminate\Session\Middleware\StartSession;
+use Illuminate\Support\Facades\Blade;
 use Illuminate\View\Middleware\ShareErrorsFromSession;
 
 class AdminPanelProvider extends PanelProvider
@@ -216,4 +206,3 @@ class AdminPanelProvider extends PanelProvider
             ->databaseNotifications();
     }
 }
-

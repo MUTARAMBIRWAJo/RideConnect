@@ -3,17 +3,17 @@
 namespace App\Filament\Resources;
 
 use App\Enums\UserRole;
-use Filament\Resources\Resource;
 use App\Filament\Resources\RouteOptimizationResource\Pages;
-use Filament\Tables;
+use App\Models\Ride;
 use Filament\Forms;
 use Filament\Forms\Form;
-use Filament\Tables\Table;
-use Filament\Tables\Columns\TextColumn;
+use Filament\Resources\Resource;
+use Filament\Tables;
 use Filament\Tables\Columns\Summarizers\Average;
 use Filament\Tables\Columns\Summarizers\Count;
 use Filament\Tables\Columns\Summarizers\Sum;
-use App\Models\Ride;
+use Filament\Tables\Columns\TextColumn;
+use Filament\Tables\Table;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
 

@@ -44,7 +44,7 @@ class SuperDashboardMetricsService
             $start = CarbonImmutable::now()->subDays($days - 1)->startOfDay();
             $end = CarbonImmutable::now()->endOfDay();
 
-            if (!Schema::hasTable('rides') || !Schema::hasColumn('rides', 'created_at')) {
+            if (! Schema::hasTable('rides') || ! Schema::hasColumn('rides', 'created_at')) {
                 $labels = collect(range(0, $days - 1))
                     ->map(fn (int $offset) => $start->addDays($offset)->format('D'))
                     ->all();
@@ -83,15 +83,12 @@ class SuperDashboardMetricsService
         ]);
     }
 
-    /**
-     * @return float
-     */
     public function resolveTotalRevenue(): float
     {
         return (float) $this->remember('admin.stats.total_revenue', 60, function (): float {
             [$table, $amountColumn] = $this->resolvePaymentSource();
 
-            if (!$table || !$amountColumn) {
+            if (! $table || ! $amountColumn) {
                 return 0.0;
             }
 
@@ -106,7 +103,7 @@ class SuperDashboardMetricsService
     {
         $cached = Cache::remember('admin.stats.payment_source', 300, function (): array {
             foreach (['payments_v2', 'payments'] as $table) {
-                if (!Schema::hasTable($table)) {
+                if (! Schema::hasTable($table)) {
                     continue;
                 }
 
@@ -128,7 +125,8 @@ class SuperDashboardMetricsService
 
     /**
      * @template T
-     * @param T $fallback
+     *
+     * @param  T  $fallback
      * @return T
      */
     private function remember(string $key, int $seconds, callable $callback, mixed $fallback): mixed

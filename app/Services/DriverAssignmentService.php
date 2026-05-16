@@ -19,9 +19,7 @@ use Illuminate\Support\Facades\Schema;
  */
 class DriverAssignmentService
 {
-    public function __construct(private readonly DriverRankerService $driverRankerService)
-    {
-    }
+    public function __construct(private readonly DriverRankerService $driverRankerService) {}
 
     /**
      * Find and auto-assign the best available driver for a trip.
@@ -33,8 +31,6 @@ class DriverAssignmentService
      * 4. Nearest to pickup location (by distance)
      * 5. Availability status 'available'
      *
-     * @param Trip $trip
-     * @param Ride $ride
      * @return Driver|null The best available driver, or null if none found
      */
     public function findBestDriver(Trip $trip, Ride $ride): ?Driver
@@ -70,7 +66,7 @@ class DriverAssignmentService
             ->where('users.name', 'not like', 'TEST_RANKER_%')
             ->whereHas('vehicles', function ($q) use ($vehicleTypes) {
                 $q->where('is_active', true)
-                  ->whereIn('vehicle_type', $vehicleTypes);
+                    ->whereIn('vehicle_type', $vehicleTypes);
             })
             ->select('drivers.*')
             ->selectSub(
@@ -127,15 +123,13 @@ class DriverAssignmentService
      * Uses Haversine formula to calculate distance.
      * Closest drivers appear first.
      *
-     * @param mixed $query
-     * @param float $lat
-     * @param float $lng
+     * @param  mixed  $query
      * @return mixed
      */
     private function orderByProximity($query, float $lat, float $lng)
     {
         return $query->orderByRaw(
-            "
+            '
             (
                 6371 * acos(
                     cos(radians(?)) * cos(radians(COALESCE(driver_locations.latitude, drivers.current_latitude))) *
@@ -143,10 +137,10 @@ class DriverAssignmentService
                     sin(radians(?)) * sin(radians(COALESCE(driver_locations.latitude, drivers.current_latitude)))
                 )
             ) ASC
-            ",
+            ',
             [$lat, $lng, $lat]
         )->selectRaw(
-            "
+            '
             (
                 6371 * acos(
                     cos(radians(?)) * cos(radians(COALESCE(driver_locations.latitude, drivers.current_latitude))) *
@@ -154,17 +148,13 @@ class DriverAssignmentService
                     sin(radians(?)) * sin(radians(COALESCE(driver_locations.latitude, drivers.current_latitude)))
                 )
             ) AS distance_to_pickup_km
-            ",
+            ',
             [$lat, $lng, $lat]
         );
     }
 
     /**
      * Check if a driver is available for assignment.
-     *
-     * @param Driver $driver
-     * @param Ride $ride
-     * @return bool
      */
     public function isDriverAvailable(Driver $driver, Ride $ride): bool
     {
@@ -177,7 +167,7 @@ class DriverAssignmentService
         $compatibleVehicle = $driver->vehicles()
             ->where('is_active', true)
             ->get()
-            ->first(fn($v) => TransportMappingService::isCompatible($v->vehicle_type, $ride->transport_type));
+            ->first(fn ($v) => TransportMappingService::isCompatible($v->vehicle_type, $ride->transport_type));
 
         return $compatibleVehicle !== null;
     }
@@ -186,10 +176,6 @@ class DriverAssignmentService
      * Assign a specific driver to a trip.
      *
      * Updates trip driver_id and returns the updated trip.
-     *
-     * @param Trip $trip
-     * @param Driver $driver
-     * @return Trip
      */
     public function assignDriver(Trip $trip, Driver $driver, ?float $rankerScore = null, ?string $rankerVersion = null): Trip
     {
@@ -212,17 +198,13 @@ class DriverAssignmentService
      * Auto-assign the best available driver to a trip.
      *
      * Returns the updated trip with driver assigned, or null if no driver available.
-     *
-     * @param Trip $trip
-     * @param Ride $ride
-     * @return Trip|null
      */
     public function autoAssign(Trip $trip, Ride $ride): ?Trip
     {
         $selection = $this->selectBestDriver($trip, $ride);
         $driver = $selection['driver'];
 
-        if (!$driver) {
+        if (! $driver) {
             return null;
         }
 

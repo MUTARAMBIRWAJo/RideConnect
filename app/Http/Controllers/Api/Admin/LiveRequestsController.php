@@ -25,7 +25,7 @@ class LiveRequestsController extends Controller
             'requests' => $requests->map(function (Trip $trip) {
                 return [
                     'id' => (int) $trip->id,
-                    'passenger_name' => trim(($trip->passenger?->first_name ?? '') . ' ' . ($trip->passenger?->last_name ?? '')),
+                    'passenger_name' => trim(($trip->passenger?->first_name ?? '').' '.($trip->passenger?->last_name ?? '')),
                     'pickup_lat' => (float) $trip->pickup_lat,
                     'pickup_lng' => (float) $trip->pickup_lng,
                     'destination_lat' => (float) $trip->dropoff_lat,

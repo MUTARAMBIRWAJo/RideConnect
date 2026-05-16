@@ -9,7 +9,7 @@ class AITrainingDataLogger
 {
     public function logRideRequest(Trip $trip): void
     {
-        if (!DB::getSchemaBuilder()->hasTable('ride_requests')) {
+        if (! DB::getSchemaBuilder()->hasTable('ride_requests')) {
             return;
         }
 
@@ -33,7 +33,7 @@ class AITrainingDataLogger
 
     public function logTripEvent(Trip $trip, string $eventType, array $metadata = []): void
     {
-        if (!DB::getSchemaBuilder()->hasTable('ride_events')) {
+        if (! DB::getSchemaBuilder()->hasTable('ride_events')) {
             return;
         }
 
@@ -70,7 +70,7 @@ class AITrainingDataLogger
 
     public function logDriverLocation(int $driverId, float $lat, float $lng, ?float $speedKmh = null, ?float $heading = null): void
     {
-        if (!DB::getSchemaBuilder()->hasTable('driver_locations')) {
+        if (! DB::getSchemaBuilder()->hasTable('driver_locations')) {
             return;
         }
 
@@ -96,7 +96,7 @@ class AITrainingDataLogger
 
     public function logPassengerLocation(int $passengerId, float $lat, float $lng): void
     {
-        if (!DB::getSchemaBuilder()->hasTable('passenger_locations')) {
+        if (! DB::getSchemaBuilder()->hasTable('passenger_locations')) {
             return;
         }
 
@@ -112,7 +112,7 @@ class AITrainingDataLogger
 
     public function syncRideSnapshot(Trip $trip): void
     {
-        if (!DB::getSchemaBuilder()->hasTable('rides')) {
+        if (! DB::getSchemaBuilder()->hasTable('rides')) {
             return;
         }
 
@@ -136,7 +136,7 @@ class AITrainingDataLogger
             );
         }
 
-        if (!DB::table('rides')->where('id', $trip->id)->exists()) {
+        if (! DB::table('rides')->where('id', $trip->id)->exists()) {
             return;
         }
 
@@ -158,7 +158,7 @@ class AITrainingDataLogger
 
     public function logDemand(Trip $trip): void
     {
-        if (!DB::getSchemaBuilder()->hasTable('demand_logs')) {
+        if (! DB::getSchemaBuilder()->hasTable('demand_logs')) {
             return;
         }
 
@@ -167,7 +167,7 @@ class AITrainingDataLogger
 
         DB::table('demand_logs')->insert([
             'trip_id' => $trip->id,
-            'zone_key' => $latBin !== null && $lngBin !== null ? $latBin . ':' . $lngBin : null,
+            'zone_key' => $latBin !== null && $lngBin !== null ? $latBin.':'.$lngBin : null,
             'pickup_lat' => $trip->pickup_lat,
             'pickup_lng' => $trip->pickup_lng,
             'request_time' => $trip->requested_at ?? now(),

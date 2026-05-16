@@ -104,8 +104,9 @@ class OperationsIntelligenceDataService
             $date = $cursor->copy();
             $labels[] = $date->format('D');
 
-            if (!Schema::hasTable('rides')) {
+            if (! Schema::hasTable('rides')) {
                 $values[] = 0;
+
                 continue;
             }
 
@@ -127,7 +128,7 @@ class OperationsIntelligenceDataService
      */
     public function statusMix(?Carbon $from = null, ?Carbon $to = null): array
     {
-        if (!Schema::hasTable('rides')) {
+        if (! Schema::hasTable('rides')) {
             return [
                 'labels' => ['Pending', 'Accepted', 'In Progress', 'Completed', 'Cancelled'],
                 'values' => [0, 0, 0, 0, 0],
@@ -160,14 +161,14 @@ class OperationsIntelligenceDataService
      */
     public function topRoutes(?Carbon $from = null, ?Carbon $to = null): array
     {
-        if (!Schema::hasTable('trips')) {
+        if (! Schema::hasTable('trips')) {
             return [];
         }
 
         $hasPickup = Schema::hasColumn('trips', 'pickup_location');
         $hasDropoff = Schema::hasColumn('trips', 'dropoff_location');
 
-        if (!$hasPickup || !$hasDropoff) {
+        if (! $hasPickup || ! $hasDropoff) {
             return [];
         }
 

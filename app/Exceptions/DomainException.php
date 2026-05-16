@@ -19,9 +19,6 @@ class DomainException extends Exception
 
     /**
      * Create a new DomainException instance.
-     *
-     * @param string $message
-     * @param string $errorCode
      */
     public function __construct(string $message, string $errorCode = 'DOMAIN_ERROR')
     {
@@ -31,10 +28,6 @@ class DomainException extends Exception
 
     /**
      * Static factory method for easy exception creation.
-     *
-     * @param string $message
-     * @param string $errorCode
-     * @return static
      */
     public static function make(string $message, string $errorCode = 'DOMAIN_ERROR'): static
     {
@@ -43,8 +36,6 @@ class DomainException extends Exception
 
     /**
      * Get the error code.
-     *
-     * @return string
      */
     public function getErrorCode(): string
     {

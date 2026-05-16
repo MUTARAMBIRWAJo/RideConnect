@@ -27,7 +27,8 @@ class OfficerOverviewStatsTest extends TestCase
             ->with('drivers', 'is_online')
             ->andReturn(false);
 
-        $widget = new class extends OfficerOverviewStats {
+        $widget = new class extends OfficerOverviewStats
+        {
             public function exposedGetStats(): array
             {
                 return $this->getStats();

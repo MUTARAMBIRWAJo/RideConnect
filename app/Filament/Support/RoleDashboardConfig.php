@@ -11,7 +11,7 @@ class RoleDashboardConfig
      */
     public static function widgetsForRole(?string $role): array
     {
-        if (!$role) {
+        if (! $role) {
             return [];
         }
 
@@ -35,11 +35,11 @@ class RoleDashboardConfig
         $requireAllPermissions = (bool) ($roleConfig['widget_permissions_require_all'] ?? false);
 
         return array_values(array_filter($widgets, static function (string $widgetClass) use ($widgetPermissions, $requireAllPermissions): bool {
-            if (!class_exists($widgetClass)) {
+            if (! class_exists($widgetClass)) {
                 return false;
             }
 
-            if (!self::passesWidgetPermissionGate($widgetClass, $widgetPermissions, $requireAllPermissions)) {
+            if (! self::passesWidgetPermissionGate($widgetClass, $widgetPermissions, $requireAllPermissions)) {
                 return false;
             }
 
@@ -56,19 +56,19 @@ class RoleDashboardConfig
     }
 
     /**
-     * @param array<string, array<int, string>> $widgetPermissions
+     * @param  array<string, array<int, string>>  $widgetPermissions
      */
     private static function passesWidgetPermissionGate(string $widgetClass, array $widgetPermissions, bool $requireAll): bool
     {
         $permissions = $widgetPermissions[$widgetClass] ?? [];
 
-        if (!is_array($permissions) || $permissions === []) {
+        if (! is_array($permissions) || $permissions === []) {
             return true;
         }
 
         $user = auth()->user();
 
-        if (!$user instanceof Authenticatable || !method_exists($user, 'can')) {
+        if (! $user instanceof Authenticatable || ! method_exists($user, 'can')) {
             return false;
         }
 
@@ -80,7 +80,7 @@ class RoleDashboardConfig
 
         if ($requireAll) {
             foreach ($permissions as $permission) {
-                if (!$user->can($permission)) {
+                if (! $user->can($permission)) {
                     return false;
                 }
             }
@@ -104,7 +104,7 @@ class RoleDashboardConfig
     {
         $default = config('dashboard.default_columns', ['default' => 1, 'md' => 2, 'xl' => 3]);
 
-        if (!$role) {
+        if (! $role) {
             return $default;
         }
 
@@ -115,7 +115,7 @@ class RoleDashboardConfig
 
     public static function pollingInterval(): ?string
     {
-        if (!config('dashboard.realtime.enabled', true)) {
+        if (! config('dashboard.realtime.enabled', true)) {
             return null;
         }
 
@@ -128,7 +128,7 @@ class RoleDashboardConfig
 
     public static function pollingIntervalForWidget(string $widgetClass, ?string $fallback = null): ?string
     {
-        if (!config('dashboard.realtime.enabled', true)) {
+        if (! config('dashboard.realtime.enabled', true)) {
             return null;
         }
 
@@ -150,7 +150,7 @@ class RoleDashboardConfig
 
     public static function sectionPollingInterval(string $section, ?string $fallback = null): ?string
     {
-        if (!config('dashboard.realtime.enabled', true)) {
+        if (! config('dashboard.realtime.enabled', true)) {
             return null;
         }
 

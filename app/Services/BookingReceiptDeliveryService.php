@@ -25,8 +25,8 @@ class BookingReceiptDeliveryService
     public function storeReceiptPdf(Booking $booking): array
     {
         $binary = $this->generatePdfBinary($booking);
-        $fileName = 'booking-receipt-' . $booking->id . '.pdf';
-        $path = 'receipts/bookings/' . $fileName;
+        $fileName = 'booking-receipt-'.$booking->id.'.pdf';
+        $path = 'receipts/bookings/'.$fileName;
 
         Storage::disk('public')->put($path, $binary);
 
@@ -52,7 +52,7 @@ class BookingReceiptDeliveryService
         Mail::send([], [], function ($message) use ($recipient, $booking, $receipt) {
             $message
                 ->to($recipient)
-                ->subject('RideConnect Booking Receipt #' . $booking->id)
+                ->subject('RideConnect Booking Receipt #'.$booking->id)
                 ->html($this->buildEmailHtml($booking, $receipt['url']))
                 ->attachData($receipt['binary'], $receipt['file_name'], ['mime' => 'application/pdf']);
         });
@@ -76,9 +76,9 @@ class BookingReceiptDeliveryService
         $receipt = $this->storeReceiptPdf($booking);
 
         $this->sendViaTwilio([
-            'To' => 'whatsapp:' . $to,
+            'To' => 'whatsapp:'.$to,
             'From' => $from,
-            'Body' => 'RideConnect Booking Receipt #' . $booking->id . ' attached. Download link: ' . $receipt['url'],
+            'Body' => 'RideConnect Booking Receipt #'.$booking->id.' attached. Download link: '.$receipt['url'],
             'MediaUrl' => $receipt['url'],
         ]);
     }
@@ -103,7 +103,7 @@ class BookingReceiptDeliveryService
         $this->sendViaTwilio([
             'To' => $to,
             'From' => $from,
-            'Body' => 'RideConnect Booking Receipt #' . $booking->id . ': ' . $receipt['url'],
+            'Body' => 'RideConnect Booking Receipt #'.$booking->id.': '.$receipt['url'],
         ]);
     }
 
@@ -122,7 +122,7 @@ class BookingReceiptDeliveryService
 
         if ($response->failed()) {
             $message = $response->json('message') ?: $response->body();
-            throw new RuntimeException('Twilio send failed: ' . $message);
+            throw new RuntimeException('Twilio send failed: '.$message);
         }
     }
 
@@ -144,7 +144,7 @@ class BookingReceiptDeliveryService
 
         if (! str_starts_with($clean, '+')) {
             $defaultCountryCode = (string) config('services.twilio.default_country_code', '+250');
-            $clean = $defaultCountryCode . ltrim($clean, '0');
+            $clean = $defaultCountryCode.ltrim($clean, '0');
         }
 
         return $forWhatsApp ? str_replace('whatsapp:', '', $clean) : $clean;
@@ -153,10 +153,10 @@ class BookingReceiptDeliveryService
     private function buildEmailHtml(Booking $booking, string $receiptUrl): string
     {
         return '<div style="font-family:Arial,sans-serif;color:#0f172a;line-height:1.5">'
-            . '<h2 style="margin:0 0 12px">RideConnect Booking Receipt</h2>'
-            . '<p style="margin:0 0 8px">Your receipt for booking <strong>#' . $booking->id . '</strong> is attached as PDF.</p>'
-            . '<p style="margin:0 0 8px">You can also download it here: <a href="' . e($receiptUrl) . '">' . e($receiptUrl) . '</a></p>'
-            . '<p style="margin:12px 0 0">Thank you,<br>RideConnect Team</p>'
-            . '</div>';
+            .'<h2 style="margin:0 0 12px">RideConnect Booking Receipt</h2>'
+            .'<p style="margin:0 0 8px">Your receipt for booking <strong>#'.$booking->id.'</strong> is attached as PDF.</p>'
+            .'<p style="margin:0 0 8px">You can also download it here: <a href="'.e($receiptUrl).'">'.e($receiptUrl).'</a></p>'
+            .'<p style="margin:12px 0 0">Thank you,<br>RideConnect Team</p>'
+            .'</div>';
     }
 }

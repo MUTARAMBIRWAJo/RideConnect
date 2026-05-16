@@ -14,7 +14,7 @@ class UserController extends Controller
 {
     /**
      * Display a listing of users.
-     * 
+     *
      * - SuperAdmin: Can see all users
      * - Admin/Manager: Can see mobile users (drivers, passengers)
      * - Mobile users: Can only see their own profile
@@ -22,9 +22,9 @@ class UserController extends Controller
     public function index(Request $request): JsonResponse
     {
         $user = $request->user();
-        
+
         $query = User::query();
-        
+
         // Role-based filtering
         if ($user->role->isSuperAdmin()) {
             // SuperAdmin can see all users
@@ -35,12 +35,12 @@ class UserController extends Controller
             // Mobile users can only see their own profile
             $query->where('id', $user->id);
         }
-        
+
         $users = $query->orderBy('created_at', 'desc')->get();
-        
+
         return response()->json([
             'success' => true,
-            'data' => $users->map(fn($u) => [
+            'data' => $users->map(fn ($u) => [
                 'id' => $u->id,
                 'name' => $u->name,
                 'email' => $u->email,
@@ -60,9 +60,9 @@ class UserController extends Controller
     {
         $currentUser = $request->user();
         $targetUser = User::findOrFail($id);
-        
+
         // Check permissions
-        if (!$currentUser->role->isSuperAdmin() && !$currentUser->role->isManager()) {
+        if (! $currentUser->role->isSuperAdmin() && ! $currentUser->role->isManager()) {
             if ($currentUser->id !== $targetUser->id) {
                 return response()->json([
                     'success' => false,
@@ -70,15 +70,15 @@ class UserController extends Controller
                 ], 403);
             }
         }
-        
+
         // Managers can only view mobile users
-        if ($currentUser->role->isManager() && !$targetUser->role->isMobileUser()) {
+        if ($currentUser->role->isManager() && ! $targetUser->role->isMobileUser()) {
             return response()->json([
                 'success' => false,
                 'message' => 'Unauthorized to view this user',
             ], 403);
         }
-        
+
         return response()->json([
             'success' => true,
             'data' => [
@@ -102,9 +102,9 @@ class UserController extends Controller
     {
         $currentUser = $request->user();
         $targetUser = User::findOrFail($id);
-        
+
         // Check permissions
-        if (!$currentUser->role->isSuperAdmin() && !$currentUser->role->isManager()) {
+        if (! $currentUser->role->isSuperAdmin() && ! $currentUser->role->isManager()) {
             if ($currentUser->id !== $targetUser->id) {
                 return response()->json([
                     'success' => false,
@@ -112,20 +112,20 @@ class UserController extends Controller
                 ], 403);
             }
         }
-        
+
         $validated = $request->validate([
             'name' => 'sometimes|string|max:255',
             'phone' => 'sometimes|string|max:20',
         ]);
-        
+
         // Users can only update their own name and phone
-        if (!$currentUser->role->isSuperAdmin() && !$currentUser->role->isManager()) {
+        if (! $currentUser->role->isSuperAdmin() && ! $currentUser->role->isManager()) {
             $validated = $request->validate([
                 'name' => 'sometimes|string|max:255',
                 'phone' => 'sometimes|string|max:20',
             ]);
         }
-        
+
         // SuperAdmin can update more fields
         if ($currentUser->role->isSuperAdmin()) {
             $adminValidated = $request->validate([
@@ -136,14 +136,14 @@ class UserController extends Controller
                 'is_approved' => 'sometimes|boolean',
             ]);
             $validated = array_merge($validated, $adminValidated);
-            
+
             if (isset($adminValidated['role'])) {
                 $validated['role'] = UserRole::from($adminValidated['role']);
             }
         }
-        
+
         $targetUser->update($validated);
-        
+
         return response()->json([
             'success' => true,
             'message' => 'User updated successfully',
@@ -166,15 +166,15 @@ class UserController extends Controller
     {
         $currentUser = $request->user();
         $targetUser = User::findOrFail($id);
-        
+
         // Only SuperAdmin can delete users
-        if (!$currentUser->role->isSuperAdmin()) {
+        if (! $currentUser->role->isSuperAdmin()) {
             return response()->json([
                 'success' => false,
                 'message' => 'Only SuperAdmin can delete users',
             ], 403);
         }
-        
+
         // Cannot delete yourself
         if ($currentUser->id === $targetUser->id) {
             return response()->json([
@@ -182,9 +182,9 @@ class UserController extends Controller
                 'message' => 'Cannot delete your own account',
             ], 400);
         }
-        
+
         $targetUser->delete();
-        
+
         return response()->json([
             'success' => true,
             'message' => 'User deleted successfully',
@@ -197,7 +197,7 @@ class UserController extends Controller
     public function profile(Request $request): JsonResponse
     {
         $user = $request->user();
-        
+
         return response()->json([
             'success' => true,
             'data' => [
@@ -223,21 +223,21 @@ class UserController extends Controller
             'current_password' => 'required|string',
             'new_password' => 'required|string|min:8|confirmed',
         ]);
-        
+
         $user = $request->user();
-        
+
         // Verify current password
-        if (!Hash::check($request->current_password, $user->password)) {
+        if (! Hash::check($request->current_password, $user->password)) {
             return response()->json([
                 'success' => false,
                 'message' => 'Current password is incorrect',
             ], 400);
         }
-        
+
         $user->update([
             'password' => Hash::make($request->new_password),
         ]);
-        
+
         return response()->json([
             'success' => true,
             'message' => 'Password updated successfully',

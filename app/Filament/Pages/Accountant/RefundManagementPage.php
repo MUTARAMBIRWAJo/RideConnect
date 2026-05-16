@@ -36,7 +36,7 @@ class RefundManagementPage extends Page
         return 'Refund Management';
     }
 
-    public static function getNavigationIcon(): string | Htmlable | null
+    public static function getNavigationIcon(): string|Htmlable|null
     {
         return 'heroicon-o-arrow-uturn-left';
     }
@@ -85,6 +85,7 @@ class RefundManagementPage extends Page
                 $this->pendingRefunds = collect($this->refundRequests)->filter(fn ($r) => in_array($r['status'] ?? '', ['pending', 'PENDING'], true))->count();
                 $this->approvedRefunds = collect($this->refundRequests)->filter(fn ($r) => in_array($r['status'] ?? '', ['approved', 'APPROVED', 'completed', 'COMPLETED'], true))->count();
                 $this->totalRefundAmount = (float) array_sum(array_column($this->refundRequests, 'amount'));
+
                 return;
             }
         }
@@ -103,11 +104,11 @@ class RefundManagementPage extends Page
 
     public function approveRefund(int $refundId): void
     {
-        if (!auth()->user()->can('manage finances')) {
+        if (! auth()->user()->can('manage finances')) {
             abort(403);
         }
 
-        if (!Schema::hasTable('refunds')) {
+        if (! Schema::hasTable('refunds')) {
             return;
         }
 
@@ -143,11 +144,11 @@ class RefundManagementPage extends Page
 
     public function rejectRefund(int $refundId, string $reason = 'rejected_by_accountant'): void
     {
-        if (!auth()->user()->can('manage finances')) {
+        if (! auth()->user()->can('manage finances')) {
             abort(403);
         }
 
-        if (!Schema::hasTable('refunds')) {
+        if (! Schema::hasTable('refunds')) {
             return;
         }
 
@@ -183,11 +184,11 @@ class RefundManagementPage extends Page
 
     public function adjustFare(): void
     {
-        if (!auth()->user()->can('manage finances')) {
+        if (! auth()->user()->can('manage finances')) {
             abort(403);
         }
 
-        if (!Schema::hasTable('payments') || $this->adjustRideId === null || $this->adjustFareAmount === null) {
+        if (! Schema::hasTable('payments') || $this->adjustRideId === null || $this->adjustFareAmount === null) {
             Notification::make()
                 ->title('Ride ID and fare amount are required')
                 ->danger()

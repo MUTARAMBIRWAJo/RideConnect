@@ -1,37 +1,20 @@
 <?php
 
-use App\Filament\Widgets\Dashboard\AccountantRevenueSummary;
-use App\Filament\Widgets\Dashboard\AccountantPaymentHealthWidget;
-use App\Filament\Widgets\Dashboard\AccountantPayoutPipelineWidget;
-use App\Filament\Widgets\Dashboard\ActivityFeedWidget;
-use App\Filament\Widgets\Dashboard\AdminOverviewStats;
-use App\Filament\Widgets\Dashboard\CommissionOverviewWidget;
-use App\Filament\Widgets\Dashboard\DailyCommissionChartWidget;
-use App\Filament\Widgets\Dashboard\EscrowBalanceWidget;
-use App\Filament\Widgets\Dashboard\FinanceExportActionsWidget;
-use App\Filament\Widgets\Dashboard\FraudAlertsWidget;
-use App\Filament\Widgets\Dashboard\MonthlyEarningsChartWidget;
-use App\Filament\Widgets\Dashboard\NotificationsWidget;
-use App\Filament\Widgets\Dashboard\OfficerActiveRidesWidget;
-use App\Filament\Widgets\Dashboard\OfficerComplianceMetricsWidget;
-use App\Filament\Widgets\Dashboard\OfficerMatchingQueueTableWidget;
-use App\Filament\Widgets\Dashboard\OfficerOverviewStats;
-use App\Filament\Widgets\Dashboard\OfficerSupportCasesTableWidget;
-use App\Filament\Widgets\Dashboard\OfficerTicketTrendWidget;
-use App\Filament\Widgets\Dashboard\SuperAdminOverviewStats;
-use App\Filament\Widgets\Dashboard\SystemLogsWidget;
-use App\Filament\Widgets\Dashboard\TransactionsTableWidget;
-use App\Filament\Widgets\Dashboard\FinancialMatrixWidget;
-use App\Filament\Widgets\DemandHeatmapWidget;
-use App\Filament\Widgets\DriverAvailabilityChart;
-use App\Filament\Widgets\LatestRidesTable;
-use App\Filament\Widgets\RideMapWidget;
-use App\Filament\Widgets\RideStatsOverview;
 use App\Filament\Widgets\BI\CommissionTodayWidget;
 use App\Filament\Widgets\BI\FraudRiskHeatmapWidget;
 use App\Filament\Widgets\BI\LiveRevenueTickerWidget;
 use App\Filament\Widgets\BI\RevenueOverTimeChartWidget;
 use App\Filament\Widgets\BI\TopDriversLeaderboardWidget;
+use App\Filament\Widgets\Dashboard\ActivityFeedWidget;
+use App\Filament\Widgets\Dashboard\AdminOverviewStats;
+use App\Filament\Widgets\Dashboard\NotificationsWidget;
+use App\Filament\Widgets\Dashboard\SuperAdminOverviewStats;
+use App\Filament\Widgets\Dashboard\SystemLogsWidget;
+use App\Filament\Widgets\DemandHeatmapWidget;
+use App\Filament\Widgets\DriverAvailabilityChart;
+use App\Filament\Widgets\LatestRidesTable;
+use App\Filament\Widgets\RideMapWidget;
+use App\Filament\Widgets\RideStatsOverview;
 
 return [
     'super_dashboard_static_mode' => env('DASHBOARD_SUPER_STATIC_MODE', false),

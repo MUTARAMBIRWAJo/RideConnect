@@ -47,7 +47,7 @@ class OfficerDashboardV2 extends Page
         return 'Officer Dashboard V2';
     }
 
-    public static function getNavigationIcon(): string | Htmlable | null
+    public static function getNavigationIcon(): string|Htmlable|null
     {
         return 'heroicon-o-clipboard-document-check';
     }
@@ -56,7 +56,7 @@ class OfficerDashboardV2 extends Page
     {
         $user = auth()->user();
 
-        if (!$user) {
+        if (! $user) {
             return false;
         }
 
@@ -312,5 +312,4 @@ class OfficerDashboardV2 extends Page
             ->map(fn ($row): array => (array) $row)
             ->all();
     }
-
 }

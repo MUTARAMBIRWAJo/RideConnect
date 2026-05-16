@@ -28,9 +28,7 @@ class RideController extends Controller
         private readonly AiPredictionService $aiPredictionService,
         private readonly RuraZoneService $ruraZoneService,
         private readonly RuraTariffService $ruraTariffService,
-    )
-    {
-    }
+    ) {}
 
     /**
      * Display a listing of rides.
@@ -38,7 +36,7 @@ class RideController extends Controller
     public function index(Request $request): JsonResponse
     {
         $query = Ride::with(['driver.user', 'vehicle', 'corridor', 'route.corridor']);
-        
+
         // Filter by status
         if ($request->has('status')) {
             $query->where('status', $request->status);
@@ -53,34 +51,34 @@ class RideController extends Controller
         if ($request->has('travel_mode')) {
             $query->where('travel_mode', $request->travel_mode);
         }
-        
+
         // Filter by origin/destination (search)
         if ($request->has('search')) {
             $search = $request->search;
             $query->where(function ($q) use ($search) {
                 $q->where('origin_address', 'ilike', "%{$search}%")
-                  ->orWhere('destination_address', 'ilike', "%{$search}%");
+                    ->orWhere('destination_address', 'ilike', "%{$search}%");
             });
         }
-        
+
         // Filter by date
         if ($request->has('date')) {
             $query->whereDate('departure_time', $request->date);
         }
-        
+
         // Filter available rides
         if ($request->has('available_only') && $request->available_only) {
             $query->where('available_seats', '>', 0)
-                  ->where('status', 'PUBLISHED')
-                  ->where('departure_time', '>', now());
+                ->where('status', 'PUBLISHED')
+                ->where('departure_time', '>', now());
         }
-        
+
         $rides = $query
             ->orderBy('origin_address', 'asc')
             ->orderBy('destination_address', 'asc')
             ->orderBy('departure_time', 'asc')
             ->get();
-        
+
         return response()->json([
             'success' => true,
             'data' => $rides->map(fn (Ride $ride) => $this->ridePayload($ride)),
@@ -93,7 +91,7 @@ class RideController extends Controller
     public function show(int $id): JsonResponse
     {
         $ride = Ride::with(['driver.user', 'vehicle', 'bookings', 'reviews', 'corridor', 'route.corridor'])->findOrFail($id);
-        
+
         return response()->json([
             'success' => true,
             'data' => array_merge(
@@ -210,7 +208,7 @@ class RideController extends Controller
                 'message' => 'Only Admin or Super Admin can update rides',
             ], 403);
         }
-        
+
         // Cannot update if ride has already started
         if (in_array(strtoupper((string) $ride->status), ['IN_PROGRESS', 'COMPLETED', 'CANCELLED'], true)) {
             return response()->json([
@@ -218,7 +216,7 @@ class RideController extends Controller
                 'message' => 'Cannot update ride that has already started, completed, or cancelled',
             ], 400);
         }
-        
+
         $validated = $request->validate([
             'origin_address' => 'sometimes|string',
             'origin_lat' => 'sometimes|numeric|between:-90,90',
@@ -233,20 +231,20 @@ class RideController extends Controller
             'description' => 'nullable|string',
             'status' => 'sometimes|in:DRAFT,PUBLISHED,IN_PROGRESS,COMPLETED,CANCELLED',
         ]);
-        
+
         // If cancelling, add cancellation reason
         if (isset($validated['status']) && strtoupper((string) $validated['status']) === 'CANCELLED') {
             $validated['cancelled_at'] = now();
             $validated['cancellation_reason'] = $request->cancellation_reason;
         }
-        
+
         $ride->update($validated);
 
         if (array_key_exists('departure_time', $validated)
             || ($originalDepartureTime && $this->rideCategoryTransitionService->isTripCategory($ride))) {
             $this->rideCategoryTransitionService->synchronizeTravelCategories($ride);
         }
-        
+
         return response()->json([
             'success' => true,
             'message' => 'Ride updated successfully',
@@ -271,7 +269,7 @@ class RideController extends Controller
                 'message' => 'Only Admin or Super Admin can delete rides',
             ], 403);
         }
-        
+
         // Cannot delete if ride has bookings
         if ($ride->bookings()->count() > 0) {
             return response()->json([
@@ -279,9 +277,9 @@ class RideController extends Controller
                 'message' => 'Cannot delete ride with existing bookings. Cancel it instead.',
             ], 400);
         }
-        
+
         $ride->delete();
-        
+
         return response()->json([
             'success' => true,
             'message' => 'Ride deleted successfully',
@@ -294,29 +292,29 @@ class RideController extends Controller
     public function myRides(Request $request): JsonResponse
     {
         $user = $request->user();
-        
-        if (!$user->isDriver()) {
+
+        if (! $user->isDriver()) {
             return response()->json([
                 'success' => false,
                 'message' => 'Only drivers can access this resource',
             ], 403);
         }
-        
+
         $driver = $user->driver;
-        if (!$driver) {
+        if (! $driver) {
             return response()->json([
                 'success' => false,
                 'message' => 'Driver profile not found',
             ], 404);
         }
-        
+
         $rides = Ride::where('driver_id', $driver->id)
             ->orderBy('departure_time', 'desc')
             ->get();
-        
+
         return response()->json([
             'success' => true,
-            'data' => $rides->map(fn($ride) => [
+            'data' => $rides->map(fn ($ride) => [
                 'id' => $ride->id,
                 'origin' => [
                     'address' => $ride->origin_address,
@@ -342,7 +340,7 @@ class RideController extends Controller
         $user = $request->user();
 
         // Only passengers can book rides
-        if (!$user->isPassenger()) {
+        if (! $user->isPassenger()) {
             return response()->json([
                 'success' => false,
                 'message' => 'Only passengers can book rides',
@@ -374,7 +372,6 @@ class RideController extends Controller
             ], 400);
         }
 
-
         // Detect RURA zones for origin/destination
         $originZone = $this->ruraZoneService->coordsToZone($ride->origin_lat, $ride->origin_lng);
         $destZone = $this->ruraZoneService->coordsToZone($ride->destination_lat, $ride->destination_lng);
@@ -382,8 +379,8 @@ class RideController extends Controller
         // Try to lookup legal RURA fare
         $tariff = $this->ruraTariffService->lookupTariff(
             null,
-            $originZone . ' Bus Park',
-            $destZone . ' Bus Park',
+            $originZone.' Bus Park',
+            $destZone.' Bus Park',
             null
         );
         if ($tariff && isset($tariff['fare_rwf'])) {

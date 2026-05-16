@@ -54,6 +54,7 @@ class BackfillSpatieRolesFromEnum extends Command
 
                 if ($targetRole === null) {
                     $unchanged++;
+
                     continue;
                 }
 
@@ -61,6 +62,7 @@ class BackfillSpatieRolesFromEnum extends Command
 
                 if (count($currentRoles) === 1 && $currentRoles[0] === $targetRole) {
                     $unchanged++;
+
                     continue;
                 }
 

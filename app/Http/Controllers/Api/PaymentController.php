@@ -3,10 +3,10 @@
 namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
-use App\Models\Payment;
-use App\Models\Trip;
 use App\Models\Booking;
 use App\Models\LedgerEntry;
+use App\Models\Payment;
+use App\Models\Trip;
 use App\Services\LedgerService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
@@ -159,7 +159,7 @@ class PaymentController extends Controller
 
         return response()->json([
             'success' => true,
-            'data' => $payments->map(fn($payment) => [
+            'data' => $payments->map(fn ($payment) => [
                 'id' => $payment->id,
                 'type' => $payment->type,
                 'trip_id' => $payment->trip_id,
@@ -187,7 +187,7 @@ class PaymentController extends Controller
     public function show(int $id): JsonResponse
     {
         $user = request()->user();
-        
+
         $payment = Payment::where('user_id', $user->id)
             ->with(['trip', 'booking'])
             ->findOrFail($id);
@@ -226,7 +226,7 @@ class PaymentController extends Controller
 
         $payment = Payment::where('transaction_id', $validated['transaction_id'])->first();
 
-        if (!$payment) {
+        if (! $payment) {
             return response()->json([
                 'success' => false,
                 'message' => 'Payment not found',

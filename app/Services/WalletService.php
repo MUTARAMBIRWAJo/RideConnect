@@ -43,8 +43,8 @@ class WalletService
         DB::transaction(function () use ($driverId, $amount) {
             $wallet = $this->getOrCreate($driverId);
             $wallet->available_balance = round((float) $wallet->available_balance + $amount, 2);
-            $wallet->total_earned      = round((float) $wallet->total_earned + $amount, 2);
-            $wallet->current_balance   = $this->computeTotal($wallet);
+            $wallet->total_earned = round((float) $wallet->total_earned + $amount, 2);
+            $wallet->current_balance = $this->computeTotal($wallet);
             $wallet->save();
         });
     }
@@ -66,14 +66,14 @@ class WalletService
 
             if ((float) $wallet->pending_balance < $amount - 0.001) {
                 throw new RuntimeException(
-                    "Insufficient pending balance for driver #{$driverId}. " .
+                    "Insufficient pending balance for driver #{$driverId}. ".
                     "Have: {$wallet->pending_balance}, need: {$amount}"
                 );
             }
 
-            $wallet->pending_balance   = round(max(0.0, (float) $wallet->pending_balance - $amount), 2);
+            $wallet->pending_balance = round(max(0.0, (float) $wallet->pending_balance - $amount), 2);
             $wallet->available_balance = round((float) $wallet->available_balance + $amount, 2);
-            $wallet->current_balance   = $this->computeTotal($wallet);
+            $wallet->current_balance = $this->computeTotal($wallet);
             $wallet->save();
         });
     }
@@ -95,14 +95,14 @@ class WalletService
 
             if ((float) $wallet->available_balance < $amount - 0.001) {
                 throw new RuntimeException(
-                    "Insufficient available balance for driver #{$driverId}. " .
+                    "Insufficient available balance for driver #{$driverId}. ".
                     "Have: {$wallet->available_balance}, need: {$amount}"
                 );
             }
 
             $wallet->available_balance = round(max(0.0, (float) $wallet->available_balance - $amount), 2);
-            $wallet->total_paid        = round((float) $wallet->total_paid + $amount, 2);
-            $wallet->current_balance   = $this->computeTotal($wallet);
+            $wallet->total_paid = round((float) $wallet->total_paid + $amount, 2);
+            $wallet->current_balance = $this->computeTotal($wallet);
             $wallet->save();
         });
     }
@@ -123,13 +123,13 @@ class WalletService
 
             if ((float) $wallet->available_balance < $amount - 0.001) {
                 throw new RuntimeException(
-                    "Insufficient available balance to freeze for driver #{$driverId}. " .
+                    "Insufficient available balance to freeze for driver #{$driverId}. ".
                     "Have: {$wallet->available_balance}, need: {$amount}"
                 );
             }
 
             $wallet->available_balance = round(max(0.0, (float) $wallet->available_balance - $amount), 2);
-            $wallet->frozen_balance    = round((float) $wallet->frozen_balance + $amount, 2);
+            $wallet->frozen_balance = round((float) $wallet->frozen_balance + $amount, 2);
             $wallet->save();
         });
     }
@@ -146,12 +146,12 @@ class WalletService
 
             if ((float) $wallet->frozen_balance < $amount - 0.001) {
                 throw new RuntimeException(
-                    "Insufficient frozen balance to release for driver #{$driverId}. " .
+                    "Insufficient frozen balance to release for driver #{$driverId}. ".
                     "Have: {$wallet->frozen_balance}, need: {$amount}"
                 );
             }
 
-            $wallet->frozen_balance    = round(max(0.0, (float) $wallet->frozen_balance - $amount), 2);
+            $wallet->frozen_balance = round(max(0.0, (float) $wallet->frozen_balance - $amount), 2);
             $wallet->available_balance = round((float) $wallet->available_balance + $amount, 2);
             $wallet->save();
         });
@@ -181,9 +181,9 @@ class WalletService
 
         return [
             'available' => (float) $wallet->available_balance,
-            'pending'   => (float) $wallet->pending_balance,
-            'frozen'    => (float) $wallet->frozen_balance,
-            'total'     => round((float) $wallet->available_balance + (float) $wallet->pending_balance, 2),
+            'pending' => (float) $wallet->pending_balance,
+            'frozen' => (float) $wallet->frozen_balance,
+            'total' => round((float) $wallet->available_balance + (float) $wallet->pending_balance, 2),
         ];
     }
 
@@ -196,13 +196,13 @@ class WalletService
         return DriverWallet::firstOrCreate(
             ['driver_id' => $driverId],
             [
-                'total_earned'               => 0,
-                'total_paid'                 => 0,
+                'total_earned' => 0,
+                'total_paid' => 0,
                 'total_commission_generated' => 0,
-                'current_balance'            => 0,
-                'available_balance'          => 0,
-                'pending_balance'            => 0,
-                'frozen_balance'             => 0,
+                'current_balance' => 0,
+                'available_balance' => 0,
+                'pending_balance' => 0,
+                'frozen_balance' => 0,
             ]
         );
     }

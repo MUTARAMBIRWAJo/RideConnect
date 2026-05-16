@@ -10,11 +10,11 @@ class AIPredictionLogsWidget extends Widget
 {
     protected static string $view = 'filament.widgets.ai-prediction-logs-widget';
 
-    protected int | string | array $columnSpan = 'full';
+    protected int|string|array $columnSpan = 'full';
 
     protected function getViewData(): array
     {
-        if (!Schema::hasTable('ai_prediction_logs')) {
+        if (! Schema::hasTable('ai_prediction_logs')) {
             return ['logs' => collect()];
         }
 

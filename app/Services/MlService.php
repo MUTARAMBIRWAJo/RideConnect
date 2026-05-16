@@ -14,8 +14,7 @@ class MlService
         private readonly HttpFactory $http,
         private readonly MlPredictionLogger $predictionLogger,
         private readonly DemandHeuristicModelV1 $demandModel,
-    ) {
-    }
+    ) {}
 
     public function predictFare(array $features): array
     {
@@ -70,8 +69,7 @@ class MlService
         string $modelName,
         ?string $modelVersion,
         mixed $tripId = null,
-    ): array
-    {
+    ): array {
         $startedAt = microtime(true);
         $response = $this->client()->post($uri, $payload);
         $result = $this->normalize($response);

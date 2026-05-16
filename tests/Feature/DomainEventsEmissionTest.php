@@ -73,9 +73,9 @@ class DomainEventsEmissionTest extends TestCase
         Route::put('/test/trips/{id}/start', [\App\Http\Controllers\Api\TripController::class, 'start']);
         Route::put('/test/trips/{id}/complete', [\App\Http\Controllers\Api\TripController::class, 'complete']);
 
-        $this->actingAs($driverUser)->putJson('/test/trips/' . $trip->id . '/accept')->assertStatus(200);
-        $this->actingAs($driverUser)->putJson('/test/trips/' . $trip->id . '/start')->assertStatus(200);
-        $this->actingAs($driverUser)->putJson('/test/trips/' . $trip->id . '/complete')->assertStatus(200);
+        $this->actingAs($driverUser)->putJson('/test/trips/'.$trip->id.'/accept')->assertStatus(200);
+        $this->actingAs($driverUser)->putJson('/test/trips/'.$trip->id.'/start')->assertStatus(200);
+        $this->actingAs($driverUser)->putJson('/test/trips/'.$trip->id.'/complete')->assertStatus(200);
 
         Event::assertDispatched(TripMatched::class);
         Event::assertDispatched(TripStarted::class);

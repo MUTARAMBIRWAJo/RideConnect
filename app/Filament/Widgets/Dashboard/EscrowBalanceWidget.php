@@ -2,16 +2,15 @@
 
 namespace App\Filament\Widgets\Dashboard;
 
-use App\Services\LedgerService;
-use App\Services\WalletService;
 use App\Models\DriverPayout;
+use App\Services\LedgerService;
 use Filament\Widgets\StatsOverviewWidget;
 use Filament\Widgets\StatsOverviewWidget\Stat;
 use Illuminate\Support\Facades\Schema;
 
 class EscrowBalanceWidget extends StatsOverviewWidget
 {
-    protected int | string | array $columnSpan = 'full';
+    protected int|string|array $columnSpan = 'full';
 
     protected function getStats(): array
     {
@@ -23,8 +22,8 @@ class EscrowBalanceWidget extends StatsOverviewWidget
             /** @var LedgerService $ledger */
             $ledger = app(LedgerService::class);
 
-            $escrow         = $ledger->getEscrowBalance();
-            $driverWallets  = $ledger->getTotalDriverWalletBalance();
+            $escrow = $ledger->getEscrowBalance();
+            $driverWallets = $ledger->getTotalDriverWalletBalance();
             $platformRevenue = $ledger->getPlatformRevenue();
 
             $pendingSettlements = Schema::hasTable('driver_payouts')
@@ -36,17 +35,17 @@ class EscrowBalanceWidget extends StatsOverviewWidget
         }
 
         return [
-            Stat::make('Total Escrow Balance', 'RWF ' . number_format($escrow, 2))
+            Stat::make('Total Escrow Balance', 'RWF '.number_format($escrow, 2))
                 ->description('Funds held pending settlement')
                 ->color('warning')
                 ->icon('heroicon-o-lock-closed'),
 
-            Stat::make('Total Driver Wallet Balance', 'RWF ' . number_format($driverWallets, 2))
+            Stat::make('Total Driver Wallet Balance', 'RWF '.number_format($driverWallets, 2))
                 ->description('Net settled driver earnings')
                 ->color('info')
                 ->icon('heroicon-o-wallet'),
 
-            Stat::make('Total Platform Revenue', 'RWF ' . number_format($platformRevenue, 2))
+            Stat::make('Total Platform Revenue', 'RWF '.number_format($platformRevenue, 2))
                 ->description('Cumulative 8% commission retained')
                 ->color('success')
                 ->icon('heroicon-o-banknotes'),

@@ -75,7 +75,7 @@ class RoleDashboardNavigationVisibilityTest extends TestCase
 
     private function makeUser(UserRole $role): User
     {
-        $user = new User();
+        $user = new User;
         $user->role = $role;
 
         return $user;

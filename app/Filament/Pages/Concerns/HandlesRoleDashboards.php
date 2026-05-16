@@ -10,7 +10,7 @@ trait HandlesRoleDashboards
 {
     protected static function resolveUserRoleValue(?User $user): ?string
     {
-        if (!$user) {
+        if (! $user) {
             return null;
         }
 
@@ -19,7 +19,7 @@ trait HandlesRoleDashboards
 
     protected static function userHasRole(?User $user, string $spatieRole, UserRole $enumRole): bool
     {
-        if (!$user) {
+        if (! $user) {
             return false;
         }
 
@@ -43,7 +43,7 @@ trait HandlesRoleDashboards
 
     protected static function userHasAnyRole(?User $user, array $spatieRoles, array $enumRoles = []): bool
     {
-        if (!$user) {
+        if (! $user) {
             return false;
         }
 
@@ -68,4 +68,3 @@ trait HandlesRoleDashboards
         return false;
     }
 }
-

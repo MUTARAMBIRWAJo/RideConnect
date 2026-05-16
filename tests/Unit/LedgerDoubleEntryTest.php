@@ -2,11 +2,10 @@
 
 namespace Tests\Unit;
 
+use App\Models\Booking;
 use App\Models\LedgerAccount;
-use App\Models\LedgerEntry;
 use App\Models\LedgerTransaction;
 use App\Models\Payment;
-use App\Models\Booking;
 use App\Models\User;
 use App\Services\LedgerService;
 use Illuminate\Foundation\Testing\RefreshDatabase;
@@ -31,7 +30,7 @@ class LedgerDoubleEntryTest extends TestCase
 
     public function test_balanced_transaction_is_recorded(): void
     {
-        $asset     = $this->makeAccount('Cash', 'asset');
+        $asset = $this->makeAccount('Cash', 'asset');
         $liability = $this->makeAccount('Revenue', 'revenue');
 
         $txn = $this->ledger->record('Test transaction', [
@@ -56,7 +55,7 @@ class LedgerDoubleEntryTest extends TestCase
         $this->expectException(RuntimeException::class);
         $this->expectExceptionMessageMatches('/Ledger imbalance/');
 
-        $asset   = $this->makeAccount('Cash', 'asset');
+        $asset = $this->makeAccount('Cash', 'asset');
         $revenue = $this->makeAccount('Revenue', 'revenue');
 
         $this->ledger->record('Imbalanced', [
@@ -88,12 +87,12 @@ class LedgerDoubleEntryTest extends TestCase
     public function test_settlement_flow_creates_balanced_entries(): void
     {
         $txn = $this->ledger->recordSettlement(
-            driverId:       1,
-            totalAmount:    10000.00,
-            commission:     800.00,
-            driverPayout:   9200.00,
-            referenceType:  'payout',
-            referenceId:    1,
+            driverId: 1,
+            totalAmount: 10000.00,
+            commission: 800.00,
+            driverPayout: 9200.00,
+            referenceType: 'payout',
+            referenceId: 1,
         );
 
         $this->assertTrue($txn->isBalanced());
@@ -101,7 +100,7 @@ class LedgerDoubleEntryTest extends TestCase
         $entries = $txn->entries()->get();
         $this->assertCount(3, $entries);
 
-        $totalDebit  = $entries->sum('debit');
+        $totalDebit = $entries->sum('debit');
         $totalCredit = $entries->sum('credit');
         $this->assertEqualsWithDelta(10000.00, $totalDebit, 0.01);
         $this->assertEqualsWithDelta(10000.00, $totalCredit, 0.01);
@@ -116,7 +115,7 @@ class LedgerDoubleEntryTest extends TestCase
         $this->expectException(RuntimeException::class);
         $this->expectExceptionMessageMatches('/immutable/');
 
-        $asset   = $this->makeAccount('Cash', 'asset');
+        $asset = $this->makeAccount('Cash', 'asset');
         $revenue = $this->makeAccount('Revenue', 'revenue');
 
         $txn = $this->ledger->record('Immutable test', [
@@ -137,7 +136,7 @@ class LedgerDoubleEntryTest extends TestCase
         $this->expectException(RuntimeException::class);
         $this->expectExceptionMessageMatches('/immutable/');
 
-        $asset   = $this->makeAccount('Cash', 'asset');
+        $asset = $this->makeAccount('Cash', 'asset');
         $revenue = $this->makeAccount('Revenue', 'revenue');
 
         $txn = $this->ledger->record('Delete test', [
@@ -155,16 +154,16 @@ class LedgerDoubleEntryTest extends TestCase
 
     public function test_refund_flow_balances(): void
     {
-        $user    = User::factory()->create();
+        $user = User::factory()->create();
         $booking = Booking::factory()->create(['user_id' => $user->id]);
         $payment = Payment::factory()->create([
-            'booking_id'      => $booking->id,
-            'user_id'         => $user->id,
-            'amount'          => 5000.00,
-            'driver_amount'   => 4600.00,
-            'platform_fee'    => 400.00,
-            'payment_provider'=> 'stripe',
-            'status'          => 'COMPLETED',
+            'booking_id' => $booking->id,
+            'user_id' => $user->id,
+            'amount' => 5000.00,
+            'driver_amount' => 4600.00,
+            'platform_fee' => 400.00,
+            'payment_provider' => 'stripe',
+            'status' => 'COMPLETED',
         ]);
 
         $txn = $this->ledger->recordRefund($payment);
@@ -180,7 +179,7 @@ class LedgerDoubleEntryTest extends TestCase
 
     public function test_asset_account_balance_is_debit_minus_credit(): void
     {
-        $debitAcct  = $this->makeAccount('Clearing', 'asset');
+        $debitAcct = $this->makeAccount('Clearing', 'asset');
         $creditAcct = $this->makeAccount('Escrow', 'liability');
 
         $this->ledger->record('Balance test', [
@@ -188,7 +187,7 @@ class LedgerDoubleEntryTest extends TestCase
             ['account_id' => $creditAcct->id, 'debit' => 0,       'credit' => 2500.00],
         ]);
 
-        $assetBalance     = $this->ledger->getAccountBalance($debitAcct->fresh());
+        $assetBalance = $this->ledger->getAccountBalance($debitAcct->fresh());
         $liabilityBalance = $this->ledger->getAccountBalance($creditAcct->fresh());
 
         $this->assertEqualsWithDelta(2500.00, $assetBalance, 0.01);
@@ -223,12 +222,12 @@ class LedgerDoubleEntryTest extends TestCase
     private function makeAccount(string $name, string $type): LedgerAccount
     {
         return LedgerAccount::create([
-            'name'       => $name . '_' . uniqid(),
-            'type'       => $type,
+            'name' => $name.'_'.uniqid(),
+            'type' => $type,
             'owner_type' => 'platform',
-            'owner_id'   => null,
-            'currency'   => 'RWF',
-            'is_active'  => true,
+            'owner_id' => null,
+            'currency' => 'RWF',
+            'is_active' => true,
         ]);
     }
 }

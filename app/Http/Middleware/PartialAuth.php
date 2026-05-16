@@ -15,7 +15,7 @@ class PartialAuth
     {
         $userId = session('pending_auth_user_id');
 
-        if (!$userId) {
+        if (! $userId) {
             return redirect()->route('auth.login');
         }
 

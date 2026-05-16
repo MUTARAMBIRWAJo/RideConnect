@@ -23,9 +23,9 @@ class VerifySeedCoverage extends Command
             return self::FAILURE;
         }
 
-        if (!$includeSystem) {
+        if (! $includeSystem) {
             $tables = array_values(array_filter($tables, function (string $table): bool {
-                return !in_array($table, $this->systemTables(), true);
+                return ! in_array($table, $this->systemTables(), true);
             }));
         }
 
@@ -57,7 +57,7 @@ class VerifySeedCoverage extends Command
 
         $this->table(['Table', 'Rows', 'Status'], $rows);
 
-        if (!empty($below)) {
+        if (! empty($below)) {
             $this->warn(sprintf('%d table(s) below target=%d.', count($below), $target));
 
             return self::FAILURE;

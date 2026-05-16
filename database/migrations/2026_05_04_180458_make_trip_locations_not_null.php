@@ -22,6 +22,7 @@ return new class extends Migration
             DB::statement('ALTER TABLE trips ALTER COLUMN pickup_lng SET NOT NULL');
             DB::statement('ALTER TABLE trips ALTER COLUMN dropoff_lat SET NOT NULL');
             DB::statement('ALTER TABLE trips ALTER COLUMN dropoff_lng SET NOT NULL');
+
             return;
         }
 
@@ -57,6 +58,7 @@ return new class extends Migration
             DB::statement('ALTER TABLE trips ALTER COLUMN pickup_lng DROP NOT NULL');
             DB::statement('ALTER TABLE trips ALTER COLUMN dropoff_lat DROP NOT NULL');
             DB::statement('ALTER TABLE trips ALTER COLUMN dropoff_lng DROP NOT NULL');
+
             return;
         }
 

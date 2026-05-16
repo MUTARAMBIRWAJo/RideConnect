@@ -5,8 +5,8 @@ namespace App\Http\Controllers\Api;
 use App\Http\Controllers\Controller;
 use App\Models\Notification;
 use Illuminate\Http\JsonResponse;
-use Illuminate\Pagination\LengthAwarePaginator;
 use Illuminate\Http\Request;
+use Illuminate\Pagination\LengthAwarePaginator;
 use Illuminate\Support\Collection;
 
 class MobileNotificationController extends Controller
@@ -36,7 +36,7 @@ class MobileNotificationController extends Controller
             $filtered = $all->filter(function (Notification $notification) use ($onlyClearable, $onlyActionRequired): bool {
                 $isActioned = $this->isActionedNotification($notification);
 
-                if ($onlyClearable && !$isActioned) {
+                if ($onlyClearable && ! $isActioned) {
                     return false;
                 }
 
@@ -262,7 +262,7 @@ class MobileNotificationController extends Controller
         ];
 
         foreach ($actionedDataKeys as $key) {
-            if (!empty($data[$key])) {
+            if (! empty($data[$key])) {
                 return true;
             }
         }

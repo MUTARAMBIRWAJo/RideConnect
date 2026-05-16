@@ -74,7 +74,7 @@ class PermissionResource extends Resource
             ->bulkActions([
                 Tables\Actions\BulkActionGroup::make([
                     Tables\Actions\DeleteBulkAction::make()
-                        ->visible(fn (): bool => static::canDelete(new Permission())),
+                        ->visible(fn (): bool => static::canDelete(new Permission)),
                 ]),
             ])
             ->emptyStateActions([
@@ -119,7 +119,7 @@ class PermissionResource extends Resource
 
     private static function isSuperAdmin($user): bool
     {
-        if (!$user) {
+        if (! $user) {
             return false;
         }
 

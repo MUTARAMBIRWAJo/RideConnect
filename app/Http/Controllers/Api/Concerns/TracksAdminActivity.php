@@ -10,11 +10,11 @@ trait TracksAdminActivity
 {
     protected function trackAdminActivity(User $user, string $action, string $description): void
     {
-        if (!Schema::hasTable('activity_logs')) {
+        if (! Schema::hasTable('activity_logs')) {
             return;
         }
 
-        if (!$user->manager_id) {
+        if (! $user->manager_id) {
             return;
         }
 

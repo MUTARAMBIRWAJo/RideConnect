@@ -12,7 +12,6 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Gate;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Validator;
-use Illuminate\Validation\ValidationException;
 
 class UserManagementController extends Controller
 {
@@ -27,7 +26,7 @@ class UserManagementController extends Controller
         $user = $request->user();
 
         // Only super admins and admins can list all users
-        if (!$user->isSuperAdmin() && $user->role !== 'ADMIN') {
+        if (! $user->isSuperAdmin() && $user->role !== 'ADMIN') {
             return response()->json([
                 'success' => false,
                 'message' => 'Unauthorized to view all users',
@@ -56,7 +55,7 @@ class UserManagementController extends Controller
             $search = $request->search;
             $query->where(function ($q) use ($search) {
                 $q->where('name', 'ilike', "%{$search}%")
-                  ->orWhere('email', 'ilike', "%{$search}%");
+                    ->orWhere('email', 'ilike', "%{$search}%");
             });
         }
 
@@ -79,7 +78,7 @@ class UserManagementController extends Controller
 
         return response()->json([
             'success' => true,
-            'data' => $users->map(fn($user) => [
+            'data' => $users->map(fn ($user) => [
                 'id' => $user->id,
                 'name' => $user->name,
                 'email' => $user->email,
@@ -108,7 +107,7 @@ class UserManagementController extends Controller
         $user = $request->user();
 
         // Only super admins can create managers
-        if (!$user->isSuperAdmin()) {
+        if (! $user->isSuperAdmin()) {
             return response()->json([
                 'success' => false,
                 'message' => 'Only super admins can create manager accounts',
@@ -207,7 +206,7 @@ class UserManagementController extends Controller
 
         $validated = $request->validate([
             'name' => 'sometimes|string|max:255',
-            'email' => 'sometimes|string|email|max:255|unique:users,email,' . $id,
+            'email' => 'sometimes|string|email|max:255|unique:users,email,'.$id,
             'phone' => 'nullable|string|max:20',
             'is_approved' => 'sometimes|boolean',
             'is_verified' => 'sometimes|boolean',
@@ -215,10 +214,10 @@ class UserManagementController extends Controller
 
         // Handle approval
         if (isset($validated['is_approved'])) {
-            if ($validated['is_approved'] && !$targetUser->is_approved) {
+            if ($validated['is_approved'] && ! $targetUser->is_approved) {
                 $validated['approved_at'] = now();
                 $validated['approved_by'] = $user->id;
-            } elseif (!$validated['is_approved']) {
+            } elseif (! $validated['is_approved']) {
                 $validated['approved_at'] = null;
                 $validated['approved_by'] = null;
             }
@@ -259,7 +258,7 @@ class UserManagementController extends Controller
         }
 
         // Prevent deleting super admins unless you're a super admin
-        if ($targetUser->role === UserRole::SUPER_ADMIN && !$user->isSuperAdmin()) {
+        if ($targetUser->role === UserRole::SUPER_ADMIN && ! $user->isSuperAdmin()) {
             return response()->json([
                 'success' => false,
                 'message' => 'Cannot delete super admin accounts',

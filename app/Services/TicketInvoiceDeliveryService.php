@@ -26,8 +26,8 @@ class TicketInvoiceDeliveryService
     public function storeInvoicePdf(Ticket $ticket): array
     {
         $binary = $this->generatePdfBinary($ticket);
-        $fileName = 'ticket-invoice-' . $ticket->id . '.pdf';
-        $path = 'invoices/tickets/' . $fileName;
+        $fileName = 'ticket-invoice-'.$ticket->id.'.pdf';
+        $path = 'invoices/tickets/'.$fileName;
 
         Storage::disk('public')->put($path, $binary);
 
@@ -53,7 +53,7 @@ class TicketInvoiceDeliveryService
         Mail::send([], [], function ($message) use ($recipient, $ticket, $invoice) {
             $message
                 ->to($recipient)
-                ->subject('RideConnect Ticket Invoice #' . $ticket->id)
+                ->subject('RideConnect Ticket Invoice #'.$ticket->id)
                 ->html($this->buildEmailHtml($ticket, $invoice['url']))
                 ->attachData($invoice['binary'], $invoice['file_name'], ['mime' => 'application/pdf']);
         });
@@ -77,9 +77,9 @@ class TicketInvoiceDeliveryService
         $invoice = $this->storeInvoicePdf($ticket);
 
         $this->sendViaTwilio([
-            'To' => 'whatsapp:' . $to,
+            'To' => 'whatsapp:'.$to,
             'From' => $from,
-            'Body' => 'RideConnect Ticket Invoice #' . $ticket->id . ' attached. Download link: ' . $invoice['url'],
+            'Body' => 'RideConnect Ticket Invoice #'.$ticket->id.' attached. Download link: '.$invoice['url'],
             'MediaUrl' => $invoice['url'],
         ]);
     }
@@ -104,7 +104,7 @@ class TicketInvoiceDeliveryService
         $this->sendViaTwilio([
             'To' => $to,
             'From' => $from,
-            'Body' => 'RideConnect Ticket Invoice #' . $ticket->id . ': ' . $invoice['url'],
+            'Body' => 'RideConnect Ticket Invoice #'.$ticket->id.': '.$invoice['url'],
         ]);
     }
 
@@ -123,7 +123,7 @@ class TicketInvoiceDeliveryService
 
         if ($response->failed()) {
             $message = $response->json('message') ?: $response->body();
-            throw new RuntimeException('Twilio send failed: ' . $message);
+            throw new RuntimeException('Twilio send failed: '.$message);
         }
     }
 
@@ -145,7 +145,7 @@ class TicketInvoiceDeliveryService
 
         if (! str_starts_with($clean, '+')) {
             $defaultCountryCode = (string) config('services.twilio.default_country_code', '+250');
-            $clean = $defaultCountryCode . ltrim($clean, '0');
+            $clean = $defaultCountryCode.ltrim($clean, '0');
         }
 
         return $forWhatsApp ? str_replace('whatsapp:', '', $clean) : $clean;
@@ -154,10 +154,10 @@ class TicketInvoiceDeliveryService
     private function buildEmailHtml(Ticket $ticket, string $invoiceUrl): string
     {
         return '<div style="font-family:Arial,sans-serif;color:#0f172a;line-height:1.5">'
-            . '<h2 style="margin:0 0 12px">RideConnect Ticket Invoice</h2>'
-            . '<p style="margin:0 0 8px">Your invoice for ticket <strong>#' . $ticket->id . '</strong> is attached as PDF.</p>'
-            . '<p style="margin:0 0 8px">You can also download it here: <a href="' . e($invoiceUrl) . '">' . e($invoiceUrl) . '</a></p>'
-            . '<p style="margin:12px 0 0">Thank you,<br>RideConnect Team</p>'
-            . '</div>';
+            .'<h2 style="margin:0 0 12px">RideConnect Ticket Invoice</h2>'
+            .'<p style="margin:0 0 8px">Your invoice for ticket <strong>#'.$ticket->id.'</strong> is attached as PDF.</p>'
+            .'<p style="margin:0 0 8px">You can also download it here: <a href="'.e($invoiceUrl).'">'.e($invoiceUrl).'</a></p>'
+            .'<p style="margin:12px 0 0">Thank you,<br>RideConnect Team</p>'
+            .'</div>';
     }
 }

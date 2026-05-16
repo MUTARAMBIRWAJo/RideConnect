@@ -3,8 +3,8 @@
 namespace App\Policies;
 
 use App\Enums\UserRole;
-use App\Models\User;
 use App\Models\MobileUser;
+use App\Models\User;
 use Illuminate\Auth\Access\HandlesAuthorization;
 
 class MobileUserPolicy
@@ -17,7 +17,7 @@ class MobileUserPolicy
      */
     public function viewAny(User $user): bool
     {
-        return $user->role === UserRole::SUPER_ADMIN || 
+        return $user->role === UserRole::SUPER_ADMIN ||
                ($user->role && $user->role->isManager());
     }
 
@@ -57,7 +57,7 @@ class MobileUserPolicy
         }
 
         // Super Admin and Managers can view full driver info
-        if ($user->role === UserRole::SUPER_ADMIN || 
+        if ($user->role === UserRole::SUPER_ADMIN ||
             ($user->role && $user->role->isManager())) {
             return true;
         }
@@ -86,7 +86,7 @@ class MobileUserPolicy
         }
 
         // Super Admin and Managers can view full passenger info
-        if ($user->role === UserRole::SUPER_ADMIN || 
+        if ($user->role === UserRole::SUPER_ADMIN ||
             ($user->role && $user->role->isManager())) {
             return true;
         }
@@ -143,7 +143,7 @@ class MobileUserPolicy
     public function getVisibleDriverFields(User $user): array
     {
         // Full info for Super Admin, Managers, and Drivers
-        if ($user->role === UserRole::SUPER_ADMIN || 
+        if ($user->role === UserRole::SUPER_ADMIN ||
             ($user->role && $user->role->isManager()) ||
             $user->role === UserRole::DRIVER) {
             return ['*']; // All fields

@@ -9,7 +9,7 @@ use Illuminate\Support\Facades\Schema;
 
 class FraudAlertsWidget extends StatsOverviewWidget
 {
-    protected int | string | array $columnSpan = 'full';
+    protected int|string|array $columnSpan = 'full';
 
     protected function getStats(): array
     {
@@ -17,10 +17,10 @@ class FraudAlertsWidget extends StatsOverviewWidget
             return $this->emptyStats();
         }
 
-        $highUnresolved   = FraudFlag::query()->where('severity', 'high')->where('resolved', false)->count();
+        $highUnresolved = FraudFlag::query()->where('severity', 'high')->where('resolved', false)->count();
         $mediumUnresolved = FraudFlag::query()->where('severity', 'medium')->where('resolved', false)->count();
-        $resolvedToday    = FraudFlag::query()->where('resolved', true)->whereDate('resolved_at', now())->count();
-        $totalActive      = $highUnresolved + $mediumUnresolved
+        $resolvedToday = FraudFlag::query()->where('resolved', true)->whereDate('resolved_at', now())->count();
+        $totalActive = $highUnresolved + $mediumUnresolved
             + FraudFlag::query()->where('severity', 'low')->where('resolved', false)->count();
 
         return [

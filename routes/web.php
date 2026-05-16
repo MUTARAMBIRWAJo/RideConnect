@@ -1,12 +1,12 @@
 <?php
 
-use App\Http\Controllers\AuthController;
 use App\Http\Controllers\Accountant\ReportDownloadController;
-use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\Admin\FinancialMatrixExportController;
 use App\Http\Controllers\Admin\GoogleMapsHealthController;
 use App\Http\Controllers\Admin\OperationsIntelligenceExportController;
 use App\Http\Controllers\Api\Admin\LiveMapDataController;
+use App\Http\Controllers\AuthController;
+use App\Http\Controllers\DashboardController;
 use Illuminate\Support\Facades\Route;
 
 /*
@@ -44,7 +44,7 @@ Route::middleware('guest')->group(function () {
     // User registration
     Route::get('/register', [AuthController::class, 'showRegister'])->name('register');
     Route::post('/register', [AuthController::class, 'register']);
-    
+
 });
 
 // Note: Filament handles admin authentication at /admin
@@ -74,7 +74,7 @@ Route::middleware(['auth', 'verified'])->prefix('/auth/mfa')->group(function () 
 Route::middleware(['auth'])->group(function () {
     // User dashboard (for drivers, passengers)
     Route::get('/dashboard', [DashboardController::class, 'index'])->name('dashboard');
-    
+
     // User logout
     Route::post('/logout', [AuthController::class, 'logout'])->name('logout');
 });

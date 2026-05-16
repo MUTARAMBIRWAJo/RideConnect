@@ -25,10 +25,10 @@ class LiveRevenueTickerWidget extends BaseWidget
     {
         /** @var ReportingService $reporting */
         $reporting = app(ReportingService::class);
-        $today     = $reporting->getRevenueSummaryToday();
+        $today = $reporting->getRevenueSummaryToday();
 
-        $grossFmt  = 'RWF ' . number_format($today['gross_revenue'] ?? 0);
-        $netFmt    = 'RWF ' . number_format($today['net_revenue'] ?? 0);
+        $grossFmt = 'RWF '.number_format($today['gross_revenue'] ?? 0);
+        $netFmt = 'RWF '.number_format($today['net_revenue'] ?? 0);
         $rideCount = (int) ($today['ride_count'] ?? 0);
 
         return [

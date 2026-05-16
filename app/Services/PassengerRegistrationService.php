@@ -10,9 +10,7 @@ use Illuminate\Support\Str;
 
 class PassengerRegistrationService
 {
-    public function __construct(private readonly PassengerCredentialDeliveryService $credentialDeliveryService)
-    {
-    }
+    public function __construct(private readonly PassengerCredentialDeliveryService $credentialDeliveryService) {}
 
     /**
      * Create or update a passenger in both mobile_users and users.
@@ -35,7 +33,7 @@ class PassengerRegistrationService
 
         $password = Str::random(12);
 
-        $user = DB::transaction(function () use ($email, $phone, $firstName, $lastName, $name, $password): User {
+        $user = DB::transaction(function () use ($email, $phone, $firstName, $lastName, $password): User {
             $mobileUser = MobileUser::query()->updateOrCreate(
                 ['email' => $email],
                 [
@@ -51,7 +49,7 @@ class PassengerRegistrationService
             return User::query()->updateOrCreate(
                 ['email' => $email],
                 [
-                    'name' => trim($firstName . ' ' . $lastName),
+                    'name' => trim($firstName.' '.$lastName),
                     'phone' => $phone,
                     'password' => $password,
                     'role' => UserRole::PASSENGER,

@@ -22,7 +22,7 @@ class UserApprovalController extends Controller
 
         return response()->json([
             'success' => true,
-            'data' => $pendingRiders->map(fn($user) => [
+            'data' => $pendingRiders->map(fn ($user) => [
                 'id' => $user->id,
                 'name' => $user->name,
                 'email' => $user->email,
@@ -41,7 +41,7 @@ class UserApprovalController extends Controller
     public function approveRider(Request $request, int $id): JsonResponse
     {
         $user = $request->user();
-        
+
         $targetUser = User::where('role', 'DRIVER')->findOrFail($id);
 
         if ($targetUser->is_approved) {

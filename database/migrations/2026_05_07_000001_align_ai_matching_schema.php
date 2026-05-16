@@ -23,7 +23,7 @@ return new class extends Migration
 
     private function ensureDriverBehaviorsTable(): void
     {
-        if (!Schema::hasTable('driver_behaviors')) {
+        if (! Schema::hasTable('driver_behaviors')) {
             Schema::create('driver_behaviors', function (Blueprint $table) {
                 $table->id();
                 $table->foreignId('driver_id')->nullable()->constrained('drivers')->nullOnDelete();
@@ -40,11 +40,11 @@ return new class extends Migration
             });
         } else {
             Schema::table('driver_behaviors', function (Blueprint $table) {
-                if (!Schema::hasColumn('driver_behaviors', 'driving_score')) {
+                if (! Schema::hasColumn('driver_behaviors', 'driving_score')) {
                     $table->decimal('driving_score', 8, 4)->nullable()->after('on_time_rate');
                 }
 
-                if (!Schema::hasColumn('driver_behaviors', 'behavior_score')) {
+                if (! Schema::hasColumn('driver_behaviors', 'behavior_score')) {
                     $table->decimal('behavior_score', 8, 4)->nullable()->after('driving_score');
                 }
             });
@@ -56,7 +56,7 @@ return new class extends Migration
 
     private function ensurePassengerBehaviorsTable(): void
     {
-        if (!Schema::hasTable('passenger_behaviors')) {
+        if (! Schema::hasTable('passenger_behaviors')) {
             Schema::create('passenger_behaviors', function (Blueprint $table) {
                 $table->id();
                 $table->foreignId('user_id')->nullable()->constrained('users')->nullOnDelete();
@@ -73,15 +73,15 @@ return new class extends Migration
             });
         } else {
             Schema::table('passenger_behaviors', function (Blueprint $table) {
-                if (!Schema::hasColumn('passenger_behaviors', 'user_id')) {
+                if (! Schema::hasColumn('passenger_behaviors', 'user_id')) {
                     $table->foreignId('user_id')->nullable()->after('id')->constrained('users')->nullOnDelete();
                 }
 
-                if (!Schema::hasColumn('passenger_behaviors', 'rating')) {
+                if (! Schema::hasColumn('passenger_behaviors', 'rating')) {
                     $table->decimal('rating', 4, 2)->nullable()->after('trip_id');
                 }
 
-                if (!Schema::hasColumn('passenger_behaviors', 'payment_reliability')) {
+                if (! Schema::hasColumn('passenger_behaviors', 'payment_reliability')) {
                     $table->decimal('payment_reliability', 8, 4)->nullable()->after('no_show_rate');
                 }
             });
@@ -94,7 +94,7 @@ return new class extends Migration
 
     private function ensureRouteStatesTable(): void
     {
-        if (!Schema::hasTable('route_states')) {
+        if (! Schema::hasTable('route_states')) {
             Schema::create('route_states', function (Blueprint $table) {
                 $table->id();
                 $table->foreignId('trip_id')->nullable()->constrained('trips')->nullOnDelete();
@@ -116,19 +116,19 @@ return new class extends Migration
             });
         } else {
             Schema::table('route_states', function (Blueprint $table) {
-                if (!Schema::hasColumn('route_states', 'route_id')) {
+                if (! Schema::hasColumn('route_states', 'route_id')) {
                     $table->foreignId('route_id')->nullable()->after('trip_id')->constrained('routes')->nullOnDelete();
                 }
 
-                if (!Schema::hasColumn('route_states', 'road_condition')) {
+                if (! Schema::hasColumn('route_states', 'road_condition')) {
                     $table->string('road_condition')->nullable()->after('traffic_level');
                 }
 
-                if (!Schema::hasColumn('route_states', 'average_speed')) {
+                if (! Schema::hasColumn('route_states', 'average_speed')) {
                     $table->decimal('average_speed', 10, 2)->nullable()->after('road_condition');
                 }
 
-                if (!Schema::hasColumn('route_states', 'incident_flag')) {
+                if (! Schema::hasColumn('route_states', 'incident_flag')) {
                     $table->boolean('incident_flag')->nullable()->after('average_speed');
                 }
             });
@@ -140,7 +140,7 @@ return new class extends Migration
 
     private function ensureWeatherConditionsTable(): void
     {
-        if (!Schema::hasTable('weather_conditions')) {
+        if (! Schema::hasTable('weather_conditions')) {
             Schema::create('weather_conditions', function (Blueprint $table) {
                 $table->id();
                 $table->foreignId('trip_id')->nullable()->constrained('trips')->nullOnDelete();
@@ -162,23 +162,23 @@ return new class extends Migration
             });
         } else {
             Schema::table('weather_conditions', function (Blueprint $table) {
-                if (!Schema::hasColumn('weather_conditions', 'weather_type')) {
+                if (! Schema::hasColumn('weather_conditions', 'weather_type')) {
                     $table->string('weather_type')->nullable()->after('location_lng');
                 }
 
-                if (!Schema::hasColumn('weather_conditions', 'temperature')) {
+                if (! Schema::hasColumn('weather_conditions', 'temperature')) {
                     $table->decimal('temperature', 6, 2)->nullable()->after('weather_type');
                 }
 
-                if (!Schema::hasColumn('weather_conditions', 'rain_intensity')) {
+                if (! Schema::hasColumn('weather_conditions', 'rain_intensity')) {
                     $table->decimal('rain_intensity', 6, 2)->nullable()->after('temperature');
                 }
 
-                if (!Schema::hasColumn('weather_conditions', 'visibility')) {
+                if (! Schema::hasColumn('weather_conditions', 'visibility')) {
                     $table->decimal('visibility', 6, 2)->nullable()->after('rain_intensity');
                 }
 
-                if (!Schema::hasColumn('weather_conditions', 'wind_speed')) {
+                if (! Schema::hasColumn('weather_conditions', 'wind_speed')) {
                     $table->decimal('wind_speed', 6, 2)->nullable()->after('visibility');
                 }
             });
@@ -189,32 +189,32 @@ return new class extends Migration
 
     private function ensureTripsTable(): void
     {
-        if (!Schema::hasTable('trips')) {
+        if (! Schema::hasTable('trips')) {
             return;
         }
 
         Schema::table('trips', function (Blueprint $table) {
-            if (!Schema::hasColumn('trips', 'driver_behavior_id')) {
+            if (! Schema::hasColumn('trips', 'driver_behavior_id')) {
                 $table->foreignId('driver_behavior_id')->nullable()->after('driver_id')->constrained('driver_behaviors')->nullOnDelete();
             }
 
-            if (!Schema::hasColumn('trips', 'passenger_behavior_id')) {
+            if (! Schema::hasColumn('trips', 'passenger_behavior_id')) {
                 $table->foreignId('passenger_behavior_id')->nullable()->after('driver_behavior_id')->constrained('passenger_behaviors')->nullOnDelete();
             }
 
-            if (!Schema::hasColumn('trips', 'route_state_id')) {
+            if (! Schema::hasColumn('trips', 'route_state_id')) {
                 $table->foreignId('route_state_id')->nullable()->after('passenger_behavior_id')->constrained('route_states')->nullOnDelete();
             }
 
-            if (!Schema::hasColumn('trips', 'weather_condition_id')) {
+            if (! Schema::hasColumn('trips', 'weather_condition_id')) {
                 $table->foreignId('weather_condition_id')->nullable()->after('route_state_id')->constrained('weather_conditions')->nullOnDelete();
             }
 
-            if (!Schema::hasColumn('trips', 'trip_quality_score')) {
+            if (! Schema::hasColumn('trips', 'trip_quality_score')) {
                 $table->decimal('trip_quality_score', 8, 4)->nullable()->after('weather_condition_id');
             }
 
-            if (!Schema::hasColumn('trips', 'eta_deviation_minutes')) {
+            if (! Schema::hasColumn('trips', 'eta_deviation_minutes')) {
                 $table->integer('eta_deviation_minutes')->nullable()->after('trip_quality_score');
             }
         });

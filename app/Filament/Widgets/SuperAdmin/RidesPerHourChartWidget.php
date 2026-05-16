@@ -9,7 +9,7 @@ class RidesPerHourChartWidget extends ChartWidget
 {
     protected static ?string $heading = 'Rides Per Hour';
 
-    protected int | string | array $columnSpan = 1;
+    protected int|string|array $columnSpan = 1;
 
     protected function getData(): array
     {

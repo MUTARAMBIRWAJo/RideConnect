@@ -22,7 +22,7 @@ class FinancialMatrixExportController extends Controller
 
         [$from, $to] = $this->resolveDateRange($request);
         $snapshot = $service->snapshot($from, $to);
-        $fileName = 'financial-matrix-' . now()->format('Ymd-His') . '.csv';
+        $fileName = 'financial-matrix-'.now()->format('Ymd-His').'.csv';
 
         return response()->streamDownload(function () use ($snapshot): void {
             $out = fopen('php://output', 'w');
@@ -67,7 +67,7 @@ class FinancialMatrixExportController extends Controller
             'generatedAt' => now()->toDateTimeString(),
         ])->setPaper('a4', 'portrait');
 
-        return $pdf->download('financial-matrix-' . now()->format('Ymd-His') . '.pdf');
+        return $pdf->download('financial-matrix-'.now()->format('Ymd-His').'.pdf');
     }
 
     public function xlsx(Request $request, FinancialMatrixDataService $service): BinaryFileResponse
@@ -82,10 +82,10 @@ class FinancialMatrixExportController extends Controller
             abort(500, 'Failed to initialize export file.');
         }
 
-        $xlsxPath = $tmp . '.xlsx';
+        $xlsxPath = $tmp.'.xlsx';
         @unlink($tmp);
 
-        $writer = new Writer();
+        $writer = new Writer;
         $writer->openToFile($xlsxPath);
 
         $writer->addRow(Row::fromValues(['Financial Matrix Report']));
@@ -115,7 +115,7 @@ class FinancialMatrixExportController extends Controller
 
         return response()->download(
             $xlsxPath,
-            'financial-matrix-' . now()->format('Ymd-His') . '.xlsx',
+            'financial-matrix-'.now()->format('Ymd-His').'.xlsx',
             ['Content-Type' => 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet']
         )->deleteFileAfterSend(true);
     }
@@ -140,7 +140,7 @@ class FinancialMatrixExportController extends Controller
 
     private function canExport(?User $user): bool
     {
-        if (!$user) {
+        if (! $user) {
             return false;
         }
 

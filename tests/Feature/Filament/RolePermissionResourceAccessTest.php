@@ -10,7 +10,7 @@ class RolePermissionResourceAccessTest extends TestCase
 {
     public function test_non_super_admin_gets_403_on_roles_and_permissions_resources(): void
     {
-        $user = new User();
+        $user = new User;
         $user->name = 'Admin User';
         $user->email = 'admin@example.com';
         $user->role = UserRole::ADMIN;

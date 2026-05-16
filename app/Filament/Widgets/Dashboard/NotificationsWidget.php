@@ -11,7 +11,7 @@ class NotificationsWidget extends Widget
 {
     protected static string $view = 'filament.widgets.dashboard.notifications-widget';
 
-    protected int | string | array $columnSpan = [
+    protected int|string|array $columnSpan = [
         'default' => 1,
         'md' => 1,
         'xl' => 1,
@@ -49,7 +49,7 @@ class NotificationsWidget extends Widget
 
     private function countByStatus(string $table, array $statuses): int
     {
-        if (!Schema::hasTable($table) || !Schema::hasColumn($table, 'status')) {
+        if (! Schema::hasTable($table) || ! Schema::hasColumn($table, 'status')) {
             return 0;
         }
 

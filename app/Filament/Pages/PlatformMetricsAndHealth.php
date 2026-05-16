@@ -6,7 +6,6 @@ use Filament\Pages\Page;
 use Illuminate\Contracts\Support\Htmlable;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Schema;
-use Carbon\Carbon;
 
 class PlatformMetricsAndHealth extends Page
 {
@@ -43,7 +42,7 @@ class PlatformMetricsAndHealth extends Page
         return 'Platform Metrics';
     }
 
-    public static function getNavigationIcon(): string | Htmlable | null
+    public static function getNavigationIcon(): string|Htmlable|null
     {
         return 'heroicon-o-chart-bar';
     }
@@ -118,7 +117,7 @@ class PlatformMetricsAndHealth extends Page
             }
         }
 
-        return $avgTime . 'ms';
+        return $avgTime.'ms';
     }
 
     /**
@@ -130,6 +129,7 @@ class PlatformMetricsAndHealth extends Page
             // Try to get active connections from the database
             if (Schema::hasTable('pg_stat_activity')) {
                 $count = DB::selectOne('SELECT count(*) as count FROM pg_stat_activity');
+
                 return (int) ($count?->count ?? 5);
             }
 
@@ -218,7 +218,7 @@ class PlatformMetricsAndHealth extends Page
         if (Schema::hasTable('rides')) {
             $count = DB::table('rides')
                 ->where('created_at', '>=', today())
-                ->where('status', 'completed')
+                ->where('status', 'COMPLETED')
                 ->count();
 
             if ($count > 0) {
@@ -230,7 +230,7 @@ class PlatformMetricsAndHealth extends Page
         if (Schema::hasTable('trips')) {
             return DB::table('trips')
                 ->where('created_at', '>=', today())
-                ->where('status', 'completed')
+                ->where('status', 'COMPLETED')
                 ->count();
         }
 
@@ -248,7 +248,7 @@ class PlatformMetricsAndHealth extends Page
         if (Schema::hasTable('payments') && Schema::hasColumn('payments', 'amount')) {
             $payment = DB::table('payments')
                 ->where('created_at', '>=', today())
-                ->where('status', 'completed')
+                ->where('status', 'COMPLETED')
                 ->sum('amount');
 
             $revenue += $payment ?? 0;
@@ -258,7 +258,7 @@ class PlatformMetricsAndHealth extends Page
         if (Schema::hasTable('trips') && Schema::hasColumn('trips', 'total_fare')) {
             $trip = DB::table('trips')
                 ->where('created_at', '>=', today())
-                ->where('status', 'completed')
+                ->where('status', 'COMPLETED')
                 ->sum('total_fare');
 
             $revenue += $trip ?? 0;
@@ -266,7 +266,8 @@ class PlatformMetricsAndHealth extends Page
 
         // Format the revenue
         $revenue = max(0, $revenue);
-        return 'RWF ' . number_format($revenue, 0);
+
+        return 'RWF '.number_format($revenue, 0);
     }
 
     /**
@@ -297,12 +298,11 @@ class PlatformMetricsAndHealth extends Page
      */
     private function getActivePassengersCount(): int
     {
-        // Count users with active rides
-        if (Schema::hasTable('rides') || Schema::hasTable('trips')) {
-            $table = Schema::hasTable('rides') ? 'rides' : 'trips';
-            return DB::table($table)
-                ->whereIn('status', ['accepted', 'in_progress', 'started'])
-                ->distinct('user_id')
+        // trips holds the passenger-user relationship; rides has no passenger field
+        if (Schema::hasTable('trips') && Schema::hasColumn('trips', 'passenger_id')) {
+            return DB::table('trips')
+                ->whereIn('status', ['ACCEPTED', 'IN_PROGRESS', 'STARTED'])
+                ->distinct('passenger_id')
                 ->count();
         }
 
@@ -332,7 +332,7 @@ class PlatformMetricsAndHealth extends Page
     {
         $table = Schema::hasTable('rides') ? 'rides' : (Schema::hasTable('trips') ? 'trips' : null);
 
-        if (!$table) {
+        if (! $table) {
             return 97.2;
         }
 
@@ -346,7 +346,7 @@ class PlatformMetricsAndHealth extends Page
 
         $completedRides = DB::table($table)
             ->where('created_at', '>=', today())
-            ->where('status', 'completed')
+            ->where('status', 'COMPLETED')
             ->count();
 
         return round(($completedRides / $totalRides) * 100, 1);

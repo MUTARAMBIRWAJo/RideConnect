@@ -6,7 +6,6 @@ use App\Models\Driver;
 use App\Models\DriverPayout;
 use App\Modules\Settlement\Contracts\SettlementRepositoryInterface;
 use Illuminate\Support\Collection;
-use Illuminate\Support\Facades\DB;
 
 class SettlementRepository implements SettlementRepositoryInterface
 {
@@ -29,8 +28,8 @@ class SettlementRepository implements SettlementRepositoryInterface
             ->where('status', 'completed')
             ->whereDate('updated_at', $date)
         )
-        ->whereDoesntHave('payouts', fn ($q) => $q->whereDate('payout_date', $date))
-        ->get();
+            ->whereDoesntHave('payouts', fn ($q) => $q->whereDate('payout_date', $date))
+            ->get();
     }
 
     public function sumSettledByDate(string $date): float
@@ -43,7 +42,7 @@ class SettlementRepository implements SettlementRepositoryInterface
     public function markProcessed(int $payoutId, int $processedBy): void
     {
         DriverPayout::where('id', $payoutId)->update([
-            'status'       => 'processed',
+            'status' => 'processed',
             'processed_by' => $processedBy,
             'processed_at' => now(),
         ]);

@@ -24,9 +24,7 @@ class BookingController extends Controller
         private readonly MobileNotificationService $mobileNotificationService,
         private readonly RuraZoneService $ruraZoneService,
         private readonly RuraTariffService $ruraTariffService,
-    )
-    {
-    }
+    ) {}
 
     /**
      * Display a listing of bookings.
@@ -34,9 +32,9 @@ class BookingController extends Controller
     public function index(Request $request): JsonResponse
     {
         $user = $request->user();
-        
+
         $query = Booking::with(['ride.driver.user', 'user', 'payment']);
-        
+
         // Role-based filtering
         if ($user->role->isSuperAdmin() || $user->role->isManager()) {
             // Admins can see all bookings
@@ -44,12 +42,12 @@ class BookingController extends Controller
             // Regular users can only see their own bookings
             $query->where('user_id', $user->id);
         }
-        
+
         // Filter by status
         if ($request->has('status')) {
             $query->where('status', $request->status);
         }
-        
+
         $bookings = $query->orderBy('created_at', 'desc')->get();
 
         if ($request->filled('type')) {
@@ -58,10 +56,10 @@ class BookingController extends Controller
                 return $this->resolveTravelType($booking) === $requestedType;
             })->values();
         }
-        
+
         return response()->json([
             'success' => true,
-            'data' => $bookings->map(fn($booking) => [
+            'data' => $bookings->map(fn ($booking) => [
                 'id' => $booking->id,
                 'user' => [
                     'id' => $booking->user->id,
@@ -98,7 +96,7 @@ class BookingController extends Controller
     public function show(int $id): JsonResponse
     {
         $booking = Booking::with(['ride.driver.user', 'ride.vehicle', 'user', 'payment', 'review'])->findOrFail($id);
-        
+
         return response()->json([
             'success' => true,
             'data' => [
@@ -177,7 +175,7 @@ class BookingController extends Controller
         $user = $request->user();
 
         // Check if user is approved
-        if (!$user->is_approved) {
+        if (! $user->is_approved) {
             return response()->json([
                 'success' => false,
                 'message' => 'Your account must be approved to book rides',
@@ -205,7 +203,7 @@ class BookingController extends Controller
                 RidePolicy::assertTransportRules($ride);
                 RidePolicy::assertBookingAllowed($ride);
 
-                if (!in_array(strtoupper((string) $ride->status), ['PUBLISHED'], true)) {
+                if (! in_array(strtoupper((string) $ride->status), ['PUBLISHED'], true)) {
                     throw DomainException::make(
                         'This ride is not available for booking',
                         'RIDE_NOT_PUBLISHED'
@@ -231,7 +229,6 @@ class BookingController extends Controller
                 'error_code' => $e->getErrorCode(),
             ], 422);
         }
-        
 
         // Detect RURA zones for origin/destination
         $originZone = $this->ruraZoneService->coordsToZone($ride->origin_lat, $ride->origin_lng);
@@ -240,8 +237,8 @@ class BookingController extends Controller
         // Try to lookup legal RURA fare
         $tariff = $this->ruraTariffService->lookupTariff(
             null,
-            $originZone . ' Bus Park',
-            $destZone . ' Bus Park',
+            $originZone.' Bus Park',
+            $destZone.' Bus Park',
             null
         );
         if ($tariff && isset($tariff['fare_rwf'])) {
@@ -250,7 +247,7 @@ class BookingController extends Controller
             // Fallback: use ride price
             $totalPrice = $ride->price_per_seat * $validated['seats_booked'];
         }
-        
+
         // Create booking (only for scheduled rides)
         $booking = Booking::create([
             'user_id' => $user->id,
@@ -271,7 +268,7 @@ class BookingController extends Controller
         event(new BookingCreated((int) $booking->id, (int) $booking->ride_id, (int) $booking->user_id));
 
         $this->mobileNotificationService->sendBookingRequestToDriver($booking->loadMissing('ride.driver'));
-        
+
         return response()->json([
             'success' => true,
             'message' => 'Booking created successfully',
@@ -295,7 +292,7 @@ class BookingController extends Controller
         $booking = Booking::findOrFail($id);
         $user = $request->user();
         $isAdmin = $user->role->isSuperAdmin() || $user->role->value === 'ADMIN';
-        
+
         // Only the booking owner can update (for now, just status changes)
         if ($booking->user_id !== $user->id && ! $isAdmin) {
             return response()->json([
@@ -303,7 +300,7 @@ class BookingController extends Controller
                 'message' => 'Unauthorized to update this booking',
             ], 403);
         }
-        
+
         // Cannot update if already confirmed or cancelled
         if (in_array(strtoupper((string) $booking->status), ['CONFIRMED', 'COMPLETED', 'CANCELLED'], true)) {
             return response()->json([
@@ -311,7 +308,7 @@ class BookingController extends Controller
                 'message' => 'Cannot update booking that is already confirmed, completed, or cancelled',
             ], 400);
         }
-        
+
         $validated = $request->validate([
             'seats_booked' => 'sometimes|integer|min:1|max:8',
             'pickup_address' => 'sometimes|string',
@@ -322,15 +319,15 @@ class BookingController extends Controller
             'dropoff_lng' => 'sometimes|numeric|between:-180,180',
             'special_requests' => 'nullable|string',
         ]);
-        
+
         // Recalculate price if seats changed
         if (isset($validated['seats_booked']) && $validated['seats_booked'] !== $booking->seats_booked) {
             $ride = $booking->ride;
             $validated['total_price'] = $ride->price_per_seat * $validated['seats_booked'];
         }
-        
+
         $booking->update($validated);
-        
+
         return response()->json([
             'success' => true,
             'message' => 'Booking updated successfully',
@@ -354,7 +351,7 @@ class BookingController extends Controller
         $driverUserId = $ride?->driver?->user_id;
         $isDriver = $driverUserId && (int) $driverUserId === (int) $user->id;
         $isAdmin = $user->role->isSuperAdmin() || $user->role->value === 'ADMIN';
-        
+
         // Only the booking owner, assigned driver, admin or superadmin can cancel
         if ($booking->user_id !== $user->id && ! $isDriver && ! $isAdmin) {
             return response()->json([
@@ -362,7 +359,7 @@ class BookingController extends Controller
                 'message' => 'Unauthorized to cancel this booking',
             ], 403);
         }
-        
+
         // Cannot cancel if already cancelled or completed
         if (in_array(strtoupper((string) $booking->status), ['CANCELLED', 'COMPLETED'], true)) {
             return response()->json([
@@ -370,17 +367,17 @@ class BookingController extends Controller
                 'message' => 'Booking is already cancelled or completed',
             ], 400);
         }
-        
+
         $request->validate([
             'cancellation_reason' => 'nullable|string',
         ]);
-        
+
         $booking->update([
             'status' => 'CANCELLED',
             'cancelled_at' => now(),
             'cancellation_reason' => $request->cancellation_reason,
         ]);
-        
+
         // Restore available seats on the ride
         $ride = $booking->ride;
         $ride->increment('available_seats', $booking->seats_booked);
@@ -389,7 +386,7 @@ class BookingController extends Controller
         $actor = $isDriver ? 'driver' : 'passenger';
         $this->mobileNotificationService->sendBookingCancelledToPassenger($booking, $actor);
         $this->mobileNotificationService->sendBookingCancelledToDriver($booking, $actor);
-        
+
         return response()->json([
             'success' => true,
             'message' => 'Booking cancelled successfully',
@@ -402,15 +399,15 @@ class BookingController extends Controller
     public function myBookings(Request $request): JsonResponse
     {
         $user = $request->user();
-        
+
         $query = Booking::with(['ride.driver.user', 'payment'])
             ->where('user_id', $user->id);
-        
+
         // Filter by status
         if ($request->has('status')) {
             $query->where('status', $request->status);
         }
-        
+
         $bookings = $query->orderBy('created_at', 'desc')->get();
 
         if ($request->filled('type')) {
@@ -419,10 +416,10 @@ class BookingController extends Controller
                 return $this->resolveTravelType($booking) === $requestedType;
             })->values();
         }
-        
+
         return response()->json([
             'success' => true,
-            'data' => $bookings->map(fn($booking) => [
+            'data' => $bookings->map(fn ($booking) => [
                 'id' => $booking->id,
                 'ride' => [
                     'id' => $booking->ride->id,
@@ -454,7 +451,7 @@ class BookingController extends Controller
         $booking = Booking::findOrFail($id);
         $user = request()->user();
         $isAdmin = $user->role->isSuperAdmin() || $user->role->value === 'ADMIN';
-        
+
         // Only the driver who owns the ride, admin or superadmin can confirm
         if ($booking->ride->driver?->user_id !== $user->id && ! $isAdmin) {
             return response()->json([
@@ -462,24 +459,24 @@ class BookingController extends Controller
                 'message' => 'Only the ride driver, admin or superadmin can confirm bookings',
             ], 403);
         }
-        
+
         if (strtoupper((string) $booking->status) !== 'PENDING') {
             return response()->json([
                 'success' => false,
                 'message' => 'Booking is not pending',
             ], 400);
         }
-        
+
         $booking->update([
             'status' => 'CONFIRMED',
             'confirmed_at' => now(),
         ]);
-        
+
         // Reduce available seats
         $booking->ride->decrement('available_seats', $booking->seats_booked);
 
         $this->mobileNotificationService->sendBookingConfirmedToPassenger($booking);
-        
+
         return response()->json([
             'success' => true,
             'message' => 'Booking confirmed successfully',

@@ -5,15 +5,12 @@ namespace Database\Seeders;
 use App\Models\Driver;
 use App\Models\DriverPayout;
 use App\Models\LedgerAccount;
-use App\Models\LedgerEntry;
-use App\Models\LedgerTransaction;
 use App\Models\Payment;
 use App\Services\LedgerService;
 use Carbon\Carbon;
 use Illuminate\Database\Console\Seeds\WithoutModelEvents;
 use Illuminate\Database\Seeder;
 use Illuminate\Support\Facades\DB;
-use Illuminate\Support\Str;
 
 class LedgerTransactionSeeder extends Seeder
 {
@@ -52,20 +49,20 @@ class LedgerTransactionSeeder extends Seeder
         // -----------------------------------------------------------------------
         // Seed settlement transactions for each PROCESSED payout
         // -----------------------------------------------------------------------
-        $payouts      = DriverPayout::query()->where('status', 'processed')->get();
-        $payoutCount  = 0;
+        $payouts = DriverPayout::query()->where('status', 'processed')->get();
+        $payoutCount = 0;
 
         foreach ($payouts as $payout) {
             try {
                 DB::transaction(function () use ($payout) {
                     $this->ledger->recordSettlement(
-                        driverId:      (int) $payout->driver_id,
-                        totalAmount:   (float) $payout->total_income,
-                        commission:    (float) $payout->commission_amount,
-                        driverPayout:  (float) $payout->payout_amount,
+                        driverId: (int) $payout->driver_id,
+                        totalAmount: (float) $payout->total_income,
+                        commission: (float) $payout->commission_amount,
+                        driverPayout: (float) $payout->payout_amount,
                         referenceType: 'payout',
-                        referenceId:   $payout->id,
-                        createdBy:     $payout->processed_by
+                        referenceId: $payout->id,
+                        createdBy: $payout->processed_by
                     );
 
                     $this->ledger->recordPayout($payout);
@@ -93,14 +90,14 @@ class LedgerTransactionSeeder extends Seeder
     // -----------------------------------------------------------------------
     private function seedSampleTransactions(): void
     {
-        $escrow    = $this->ledger->getPlatformAccount('Platform Escrow');
-        $revenue   = $this->ledger->getPlatformAccount('Platform Revenue');
-        $stripe    = $this->ledger->getPlatformAccount('Stripe Clearing');
-        $mtn       = $this->ledger->getPlatformAccount('MTN Mobile Money Clearing');
-        $bank      = $this->ledger->getPlatformAccount('Platform Bank');
+        $escrow = $this->ledger->getPlatformAccount('Platform Escrow');
+        $revenue = $this->ledger->getPlatformAccount('Platform Revenue');
+        $stripe = $this->ledger->getPlatformAccount('Stripe Clearing');
+        $mtn = $this->ledger->getPlatformAccount('MTN Mobile Money Clearing');
+        $bank = $this->ledger->getPlatformAccount('Platform Bank');
 
-        $drivers  = Driver::query()->with('user')->take(3)->get();
-        $dates    = [
+        $drivers = Driver::query()->with('user')->take(3)->get();
+        $dates = [
             Carbon::now()->subDays(4)->toDateString(),
             Carbon::now()->subDays(3)->toDateString(),
             Carbon::now()->subDays(2)->toDateString(),
@@ -123,7 +120,7 @@ class LedgerTransactionSeeder extends Seeder
         ];
 
         foreach ($samplePayments as $idx => $sample) {
-            $amount   = $sample['amount'];
+            $amount = $sample['amount'];
             $clearing = $sample['provider'] === 'stripe' ? $stripe : $mtn;
 
             // Determine passenger account (use driver #1's passenger or create a generic one)
@@ -138,10 +135,10 @@ class LedgerTransactionSeeder extends Seeder
                 $this->ledger->record(
                     "Sample payment via {$sample['provider']} — RWF {$amount}",
                     [
-                        array_merge(['account_id' => $clearing->id,     'debit' => $amount, 'credit' => 0,      'description' => "Provider receipt"], $ref),
-                        array_merge(['account_id' => $passengerAcct->id,'debit' => 0,       'credit' => $amount,'description' => "Passenger credit"], $ref),
-                        array_merge(['account_id' => $passengerAcct->id,'debit' => $amount, 'credit' => 0,      'description' => "Transfer to escrow"], $ref),
-                        array_merge(['account_id' => $escrow->id,       'debit' => 0,       'credit' => $amount,'description' => "Escrow hold"], $ref),
+                        array_merge(['account_id' => $clearing->id,     'debit' => $amount, 'credit' => 0,      'description' => 'Provider receipt'], $ref),
+                        array_merge(['account_id' => $passengerAcct->id, 'debit' => 0,       'credit' => $amount, 'description' => 'Passenger credit'], $ref),
+                        array_merge(['account_id' => $passengerAcct->id, 'debit' => $amount, 'credit' => 0,      'description' => 'Transfer to escrow'], $ref),
+                        array_merge(['account_id' => $escrow->id,       'debit' => 0,       'credit' => $amount, 'description' => 'Escrow hold'], $ref),
                     ]
                 );
             } catch (\Throwable) {
@@ -162,11 +159,11 @@ class LedgerTransactionSeeder extends Seeder
                 continue;
             }
 
-            $driver      = $drivers[$s['driver_index']];
-            $total       = $s['amount'];
-            $commission  = round($total * 0.08, 2);
-            $payout      = round($total - $commission, 2);
-            $driverAcct  = $this->ledger->getDriverAccount($driver->id);
+            $driver = $drivers[$s['driver_index']];
+            $total = $s['amount'];
+            $commission = round($total * 0.08, 2);
+            $payout = round($total - $commission, 2);
+            $driverAcct = $this->ledger->getDriverAccount($driver->id);
 
             $ref = ['reference_type' => 'payout', 'reference_id' => 8000 + $idx];
 
@@ -174,9 +171,9 @@ class LedgerTransactionSeeder extends Seeder
                 $this->ledger->record(
                     "Sample settlement driver #{$driver->id} — RWF {$total}",
                     [
-                        array_merge(['account_id' => $escrow->id,    'debit' => $total,  'credit' => 0,          'description' => "Release escrow"], $ref),
-                        array_merge(['account_id' => $driverAcct->id,'debit' => 0,       'credit' => $payout,    'description' => "Driver earnings 92%"], $ref),
-                        array_merge(['account_id' => $revenue->id,   'debit' => 0,       'credit' => $commission,'description' => "Platform commission 8%"], $ref),
+                        array_merge(['account_id' => $escrow->id,    'debit' => $total,  'credit' => 0,          'description' => 'Release escrow'], $ref),
+                        array_merge(['account_id' => $driverAcct->id, 'debit' => 0,       'credit' => $payout,    'description' => 'Driver earnings 92%'], $ref),
+                        array_merge(['account_id' => $revenue->id,   'debit' => 0,       'credit' => $commission, 'description' => 'Platform commission 8%'], $ref),
                     ]
                 );
             } catch (\Throwable) {
@@ -195,8 +192,8 @@ class LedgerTransactionSeeder extends Seeder
                 continue;
             }
 
-            $driver     = $drivers[$d['driver_index']];
-            $amount     = $d['amount'];
+            $driver = $drivers[$d['driver_index']];
+            $amount = $d['amount'];
             $driverAcct = $this->ledger->getDriverAccount($driver->id);
 
             $ref = ['reference_type' => 'payout', 'reference_id' => 7000 + $idx];
@@ -205,8 +202,8 @@ class LedgerTransactionSeeder extends Seeder
                 $this->ledger->record(
                     "Sample payout disbursement driver #{$driver->id} — RWF {$amount}",
                     [
-                        array_merge(['account_id' => $driverAcct->id,'debit' => $amount,'credit' => 0,      'description' => "Payout debit"], $ref),
-                        array_merge(['account_id' => $bank->id,      'debit' => 0,      'credit' => $amount,'description' => "Disbursement"], $ref),
+                        array_merge(['account_id' => $driverAcct->id, 'debit' => $amount, 'credit' => 0,      'description' => 'Payout debit'], $ref),
+                        array_merge(['account_id' => $bank->id,      'debit' => 0,      'credit' => $amount, 'description' => 'Disbursement'], $ref),
                     ]
                 );
             } catch (\Throwable) {

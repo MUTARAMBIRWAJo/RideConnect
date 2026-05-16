@@ -21,6 +21,7 @@ class RideAnalytics extends ChartWidget
                     ->count();
                 $dates->push($count);
             }
+
             return $dates->toArray();
         });
 

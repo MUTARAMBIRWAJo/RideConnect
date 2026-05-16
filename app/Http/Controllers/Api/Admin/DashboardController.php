@@ -7,17 +7,17 @@ use App\Http\Controllers\Controller;
 use App\Http\Resources\Admin\AdminActivityResource;
 use App\Http\Resources\Admin\AdminDashboardAnalyticsResource;
 use App\Http\Resources\Admin\SystemLogResource;
+use App\Models\Booking;
 use App\Models\Manager;
-use App\Models\User;
-use App\Models\Trip;
 use App\Models\Payment;
 use App\Models\Ride;
-use App\Models\Booking;
+use App\Models\Trip;
+use App\Models\User;
 use Carbon\Carbon;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Gate;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Gate;
 use Illuminate\Support\Facades\Schema;
 use Illuminate\Support\Facades\Validator;
 
@@ -52,7 +52,7 @@ class DashboardController extends Controller
         $totalDrivers = User::where('role', 'DRIVER')->count();
         $totalPassengers = User::where('role', 'PASSENGER')->count();
         $totalManagers = User::whereIn('role', ['SUPER_ADMIN', 'ADMIN', 'ACCOUNTANT', 'OFFICER'])->count();
-        
+
         // Pending approvals
         $pendingApprovals = User::where('is_approved', false)->count();
 
@@ -94,7 +94,7 @@ class DashboardController extends Controller
         $totalRevenue = Payment::where('status', 'COMPLETED')
             ->whereBetween('created_at', [$startDate, $endDate])
             ->sum('amount');
-        
+
         $todayRevenue = Payment::where('status', 'COMPLETED')
             ->whereDate('created_at', today())
             ->sum('amount');
@@ -166,7 +166,7 @@ class DashboardController extends Controller
             'per_page' => ['nullable', 'integer', 'min:1', 'max:100'],
         ])->validate();
 
-        if (!Schema::hasTable('activity_logs')) {
+        if (! Schema::hasTable('activity_logs')) {
             return response()->json([
                 'success' => true,
                 'data' => [],
@@ -185,14 +185,14 @@ class DashboardController extends Controller
             $query->where('manager_id', $validated['user_id']);
         }
 
-        if (!empty($validated['action'])) {
+        if (! empty($validated['action'])) {
             $query->where('action', 'like', "%{$validated['action']}%");
         }
 
-        if (!empty($validated['start_date'])) {
+        if (! empty($validated['start_date'])) {
             $query->whereDate('created_at', '>=', $validated['start_date']);
         }
-        if (!empty($validated['end_date'])) {
+        if (! empty($validated['end_date'])) {
             $query->whereDate('created_at', '<=', $validated['end_date']);
         }
 
@@ -233,7 +233,7 @@ class DashboardController extends Controller
             ->orderBy('created_at', 'desc')
             ->limit($limit)
             ->get()
-            ->map(fn($trip) => [
+            ->map(fn ($trip) => [
                 'type' => 'trip',
                 'id' => $trip->id,
                 'status' => $trip->status,
@@ -248,7 +248,7 @@ class DashboardController extends Controller
             ->orderBy('created_at', 'desc')
             ->limit($limit)
             ->get()
-            ->map(fn($payment) => [
+            ->map(fn ($payment) => [
                 'type' => 'payment',
                 'id' => $payment->id,
                 'amount' => $payment->amount,

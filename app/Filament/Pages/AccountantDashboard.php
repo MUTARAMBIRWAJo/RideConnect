@@ -46,7 +46,7 @@ class AccountantDashboard extends Page
         return 'Accountant Dashboard';
     }
 
-    public static function getNavigationIcon(): string | Htmlable | null
+    public static function getNavigationIcon(): string|Htmlable|null
     {
         return 'heroicon-o-banknotes';
     }
@@ -55,7 +55,7 @@ class AccountantDashboard extends Page
     {
         $user = auth()->user();
 
-        if (!$user) {
+        if (! $user) {
             return false;
         }
 
@@ -262,5 +262,4 @@ class AccountantDashboard extends Page
             ->map(fn ($row): array => (array) $row)
             ->all();
     }
-
 }

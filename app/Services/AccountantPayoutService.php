@@ -20,8 +20,7 @@ class AccountantPayoutService
         private readonly DriverEarningService $earningService,
         private readonly LedgerService $ledgerService,
         private readonly FraudDetectionService $fraudService,
-    ) {
-    }
+    ) {}
 
     public function processSingleDriverPayout(int $driverId, string $date, ?int $accountantId = null): DriverPayout
     {
@@ -54,14 +53,14 @@ class AccountantPayoutService
             $driver = Driver::query()->with('user')->findOrFail($driverId);
 
             $payout = DriverPayout::create([
-                'driver_id'         => $driverId,
-                'payout_date'       => $payoutDate,
-                'total_income'      => $income['total_driver_income'],
+                'driver_id' => $driverId,
+                'payout_date' => $payoutDate,
+                'total_income' => $income['total_driver_income'],
                 'commission_amount' => $income['commission'],
-                'payout_amount'     => $income['payout_amount'],
-                'processed_by'      => $accountantId,
-                'status'            => 'processed',
-                'processed_at'      => now(),
+                'payout_amount' => $income['payout_amount'],
+                'processed_by' => $accountantId,
+                'status' => 'processed',
+                'processed_at' => now(),
             ]);
 
             $this->storeCommissionRecords($driverId, $income['ride_ids'] ?? [], $income['total_driver_income'], $payoutDate);
@@ -84,18 +83,18 @@ class AccountantPayoutService
                 // Non-blocking: log and continue since the payout itself succeeded.
                 Log::error('Ledger recording failed for payout', [
                     'payout_id' => $payout->id,
-                    'error'     => $e->getMessage(),
+                    'error' => $e->getMessage(),
                 ]);
             }
 
             Log::info('Driver payout processed', [
-                'driver_id'    => $driverId,
-                'payout_date'  => $payoutDate,
+                'driver_id' => $driverId,
+                'payout_date' => $payoutDate,
                 'processed_by' => $accountantId,
-                'payout_id'    => $payout->id,
+                'payout_id' => $payout->id,
                 'total_income' => $income['total_driver_income'],
-                'commission'   => $income['commission'],
-                'payout_amount'=> $income['payout_amount'],
+                'commission' => $income['commission'],
+                'payout_amount' => $income['payout_amount'],
             ]);
 
             return $payout;
@@ -145,20 +144,20 @@ class AccountantPayoutService
         $wallet = DriverWallet::query()->firstOrCreate(
             ['driver_id' => $driverId],
             [
-                'total_earned'               => 0,
-                'total_paid'                 => 0,
+                'total_earned' => 0,
+                'total_paid' => 0,
                 'total_commission_generated' => 0,
-                'current_balance'            => 0,
-                'available_balance'          => 0,
-                'pending_balance'            => 0,
-                'frozen_balance'             => 0,
+                'current_balance' => 0,
+                'available_balance' => 0,
+                'pending_balance' => 0,
+                'frozen_balance' => 0,
             ]
         );
 
-        $wallet->total_earned               = round((float) $wallet->total_earned + $income, 2);
-        $wallet->total_paid                 = round((float) $wallet->total_paid + $payoutAmount, 2);
+        $wallet->total_earned = round((float) $wallet->total_earned + $income, 2);
+        $wallet->total_paid = round((float) $wallet->total_paid + $payoutAmount, 2);
         $wallet->total_commission_generated = round((float) $wallet->total_commission_generated + $commission, 2);
-        $wallet->current_balance            = round((float) $wallet->total_earned - (float) $wallet->total_paid, 2);
+        $wallet->current_balance = round((float) $wallet->total_earned - (float) $wallet->total_paid, 2);
         // available_balance tracks net settled funds; since manual payout bypasses the pending flow,
         // we keep it non-negative by netting earned vs paid.
         $wallet->available_balance = round(max(0.0, (float) $wallet->total_earned - (float) $wallet->total_paid), 2);

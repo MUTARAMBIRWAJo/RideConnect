@@ -3,9 +3,9 @@
 namespace App\Http\Controllers\Api\Finance;
 
 use App\Http\Controllers\Controller;
+use App\Models\Booking;
 use App\Models\Payment;
 use App\Models\Trip;
-use App\Models\Booking;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
@@ -80,8 +80,8 @@ class FinanceController extends Controller
             ->count();
 
         // Average transaction value
-        $averageTransactionValue = $completedTransactions > 0 
-            ? $totalRevenue / $completedTransactions 
+        $averageTransactionValue = $completedTransactions > 0
+            ? $totalRevenue / $completedTransactions
             : 0;
 
         // Trip earnings for drivers
@@ -113,15 +113,15 @@ class FinanceController extends Controller
                     'pending' => $pendingTransactions,
                     'failed' => $failedTransactions,
                 ],
-                'revenue_by_method' => $revenueByMethod->map(fn($item) => [
+                'revenue_by_method' => $revenueByMethod->map(fn ($item) => [
                     'method' => $item->payment_method,
                     'amount' => round($item->total, 2),
                 ]),
-                'revenue_by_type' => $revenueByType->map(fn($item) => [
+                'revenue_by_type' => $revenueByType->map(fn ($item) => [
                     'type' => $item['type'],
                     'amount' => round($item['total'], 2),
                 ]),
-                'daily_revenue' => $dailyRevenue->map(fn($item) => [
+                'daily_revenue' => $dailyRevenue->map(fn ($item) => [
                     'date' => $item->date,
                     'amount' => round($item->total, 2),
                 ]),
@@ -185,7 +185,7 @@ class FinanceController extends Controller
 
         return response()->json([
             'success' => true,
-            'data' => $transactions->map(fn($payment) => [
+            'data' => $transactions->map(fn ($payment) => [
                 'id' => $payment->id,
                 'user' => [
                     'id' => $payment->user?->id,

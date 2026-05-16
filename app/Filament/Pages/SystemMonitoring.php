@@ -22,7 +22,7 @@ class SystemMonitoring extends BaseDashboard
         return 'System Monitoring';
     }
 
-    public static function getNavigationIcon(): string | Htmlable | null
+    public static function getNavigationIcon(): string|Htmlable|null
     {
         return 'heroicon-o-cpu-chip';
     }
@@ -39,7 +39,7 @@ class SystemMonitoring extends BaseDashboard
         ];
     }
 
-    public function getColumns(): int | string | array
+    public function getColumns(): int|string|array
     {
         return [
             'default' => 1,

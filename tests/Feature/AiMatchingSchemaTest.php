@@ -7,7 +7,6 @@ use App\Models\MobileUser;
 use App\Models\PassengerBehavior;
 use App\Models\Trip;
 use App\Models\User;
-use App\Models\WeatherCondition;
 use App\Services\TripConditionService;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Schema;

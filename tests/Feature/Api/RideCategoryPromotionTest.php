@@ -91,7 +91,7 @@ class RideCategoryPromotionTest extends TestCase
 
         Sanctum::actingAs($driverUser, ['*']);
 
-        $response = $this->putJson('/api/v1/driver/rides/' . $ride->id, [
+        $response = $this->putJson('/api/v1/driver/rides/'.$ride->id, [
             'departure_time' => now()->addHours(5)->toIso8601String(),
         ]);
 
@@ -121,7 +121,7 @@ class RideCategoryPromotionTest extends TestCase
         $mobilePassenger = MobileUser::create([
             'first_name' => 'Passenger',
             'last_name' => 'Tester',
-            'phone' => '+25078' . random_int(1000000, 9999999),
+            'phone' => '+25078'.random_int(1000000, 9999999),
             'email' => "passenger.tester.{$suffix}@example.com",
             'password' => 'password123',
             'role' => UserRole::PASSENGER->value,
@@ -155,8 +155,8 @@ class RideCategoryPromotionTest extends TestCase
 
         $driver = Driver::create([
             'user_id' => $driverUser->id,
-            'license_number' => 'DL-TEST-' . $suffix,
-            'license_plate' => 'RAC-' . random_int(100, 999) . '-' . chr(random_int(65, 90)),
+            'license_number' => 'DL-TEST-'.$suffix,
+            'license_plate' => 'RAC-'.random_int(100, 999).'-'.chr(random_int(65, 90)),
             'status' => 'approved',
             'total_rides' => 0,
             'rating' => 0,

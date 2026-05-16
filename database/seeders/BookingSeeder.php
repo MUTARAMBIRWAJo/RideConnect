@@ -22,13 +22,13 @@ class BookingSeeder extends Seeder
         // Fetch a RURA tariff for a real route (e.g., Nyabugogo-Remera)
         $ruraTariff = \App\Models\RuraTariff::where('origin_stop', 'NYABUGOGO BUS PARK')
             ->where('destination_stop', 'REMERA BUS PARK')
-            ->orWhere(function($q) {
+            ->orWhere(function ($q) {
                 $q->where('origin_stop', 'REMERA BUS PARK')->where('destination_stop', 'NYABUGOGO BUS PARK');
             })
             ->first();
 
         $bookings = [];
-        if (!empty($userIds) && !empty($rideIds)) {
+        if (! empty($userIds) && ! empty($rideIds)) {
             // Booking 1: Nyabugogo-Remera (if available)
             $bookings[] = [
                 'user_id' => $userIds[0],

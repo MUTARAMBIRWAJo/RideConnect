@@ -3,11 +3,8 @@
 namespace App\Listeners\Domain;
 
 use App\Events\Domain\TripMatched;
-use App\Models\Trip;
 use App\Services\NotificationService;
 use App\Services\Realtime\RealtimeGateway;
-use Illuminate\Support\Facades\Log;
-use Throwable;
 
 class TripMatchedListener
 {

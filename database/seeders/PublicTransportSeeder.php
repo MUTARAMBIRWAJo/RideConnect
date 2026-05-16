@@ -86,8 +86,8 @@ class PublicTransportSeeder extends Seeder
             $corridor = Corridor::firstOrCreate(
                 ['code' => $corridorCode],
                 [
-                    'name' => 'Corridor ' . $corridorCode,
-                    'kinyarwanda_name' => 'ICYEREKEZO ' . $corridorCode,
+                    'name' => 'Corridor '.$corridorCode,
+                    'kinyarwanda_name' => 'ICYEREKEZO '.$corridorCode,
                     'start_zone_id' => $defaultZone->id,
                     'end_zone_id' => $defaultZone->id,
                     'base_fare' => 200,
@@ -126,11 +126,11 @@ class PublicTransportSeeder extends Seeder
                 );
 
                 // Create a driver and vehicle representing a bus for this route
-                $driverEmail = 'driver_' . Str::slug($routeCode) . '@example.local';
+                $driverEmail = 'driver_'.Str::slug($routeCode).'@example.local';
                 $user = User::firstOrCreate(
                     ['email' => $driverEmail],
                     [
-                        'name' => 'Driver ' . $routeCode,
+                        'name' => 'Driver '.$routeCode,
                         'password' => bcrypt('password'),
                         'role' => 'DRIVER',
                         'is_approved' => true,
@@ -140,7 +140,7 @@ class PublicTransportSeeder extends Seeder
                 $driver = Driver::firstOrCreate(
                     ['user_id' => $user->id],
                     [
-                        'license_number' => 'LIC-' . strtoupper(Str::random(6)),
+                        'license_number' => 'LIC-'.strtoupper(Str::random(6)),
                         'license_plate' => strtoupper(Str::random(6)),
                         'status' => 'approved',
                         'availability_status' => 'available',

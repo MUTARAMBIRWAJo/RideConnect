@@ -2,9 +2,9 @@
 
 namespace App\Models;
 
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
-use Illuminate\Database\Eloquent\Builder;
 
 class FraudFlag extends Model
 {
@@ -20,9 +20,9 @@ class FraudFlag extends Model
     ];
 
     protected $casts = [
-        'resolved'    => 'boolean',
+        'resolved' => 'boolean',
         'resolved_at' => 'datetime',
-        'metadata'    => 'array',
+        'metadata' => 'array',
     ];
 
     // -----------------------------------------------------------------------

@@ -6,6 +6,7 @@ use App\Domain\Ride\RidePolicy;
 use App\Filament\Resources\TicketResource\Pages;
 use App\Models\Ticket;
 use App\Services\TicketInvoiceDeliveryService;
+use Barryvdh\DomPDF\Facade\Pdf;
 use Filament\Forms;
 use Filament\Forms\Form;
 use Filament\Notifications\Notification;
@@ -15,7 +16,6 @@ use Filament\Tables\Table;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\SoftDeletingScope;
-use Barryvdh\DomPDF\Facade\Pdf;
 use Symfony\Component\HttpFoundation\StreamedResponse;
 use Throwable;
 
@@ -62,7 +62,7 @@ class TicketResource extends Resource
                             ])
                             ->required(),
                     ])->columns(2),
-                
+
                 Forms\Components\Section::make('Timestamps')
                     ->schema([
                         Forms\Components\DateTimePicker::make('issued_at'),
@@ -256,8 +256,8 @@ class TicketResource extends Resource
         ])->setPaper('a4');
 
         return response()->streamDownload(
-            fn () => print($pdf->output()),
-            'ticket-invoice-' . $ticket->id . '.pdf'
+            fn () => print ($pdf->output()),
+            'ticket-invoice-'.$ticket->id.'.pdf'
         );
     }
 

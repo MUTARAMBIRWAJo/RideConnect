@@ -10,9 +10,7 @@ use Illuminate\Support\Collection;
 
 class DriverMatchingService implements DriverMatchingStrategy
 {
-    public function __construct(private readonly RealtimeGateway $realtimeGateway)
-    {
-    }
+    public function __construct(private readonly RealtimeGateway $realtimeGateway) {}
 
     public function findBestDriver(Ride $ride, Collection $drivers, ?Trip $trip = null): ?array
     {
@@ -20,7 +18,7 @@ class DriverMatchingService implements DriverMatchingStrategy
             ->filter(function ($driver) use ($ride) {
                 $vehicle = $driver->vehicles->first() ?? $driver->vehicles()->first();
 
-                if (!$vehicle) {
+                if (! $vehicle) {
                     return false;
                 }
 
@@ -71,7 +69,7 @@ class DriverMatchingService implements DriverMatchingStrategy
 
         $best = $scored[0] ?? null;
 
-        if (!$best) {
+        if (! $best) {
             return null;
         }
 

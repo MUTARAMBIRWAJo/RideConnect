@@ -10,6 +10,7 @@ use PragmaRX\Google2FAQRCode\Google2FA as Google2FAQRCode;
 class MfaSetupController extends Controller
 {
     protected Google2FA $google2fa;
+
     protected Google2FAQRCode $google2faQr;
 
     public function __construct(Google2FA $google2fa, Google2FAQRCode $google2faQr)
@@ -24,6 +25,7 @@ class MfaSetupController extends Controller
     protected function canManageMfa(): bool
     {
         $user = auth()->user();
+
         return $user && ($user->isSuperAdmin() || $user->role?->value === \App\Enums\UserRole::ADMIN->value);
     }
 
@@ -48,7 +50,7 @@ class MfaSetupController extends Controller
         $user = auth()->user();
 
         // Generate secret if not already created
-        if (!session('mfa_secret')) {
+        if (! session('mfa_secret')) {
             $secret = $this->google2fa->generateSecretKey();
             session(['mfa_secret' => $secret]);
         } else {
@@ -81,20 +83,20 @@ class MfaSetupController extends Controller
         $user = auth()->user();
         $secret = session('mfa_secret');
 
-        if (!$secret) {
+        if (! $secret) {
             return back()->with('error', 'MFA setup session expired. Please try again.');
         }
 
         // Verify the code
         $verified = $this->google2fa->verifyKey($secret, $request->code, 2);
 
-        if (!$verified) {
+        if (! $verified) {
             return back()->with('error', 'Invalid verification code. Please try again.');
         }
 
         // Generate backup codes
         $backupCodes = collect(range(1, 10))
-            ->map(fn() => Str::random(8))
+            ->map(fn () => Str::random(8))
             ->toArray();
 
         // Save to user
@@ -121,7 +123,7 @@ class MfaSetupController extends Controller
     {
         $user = auth()->user();
 
-        if (!$user->hasMfaEnabled()) {
+        if (! $user->hasMfaEnabled()) {
             return redirect()->route('mfa.settings')
                 ->with('error', 'MFA is not enabled on this account.');
         }
@@ -137,7 +139,7 @@ class MfaSetupController extends Controller
     public function disable(Request $request)
     {
         // Only SuperAdmin/Admin can disable MFA
-        if (!$this->canManageMfa()) {
+        if (! $this->canManageMfa()) {
             return back()->with('error', 'Only Super Administrators and Admins can disable MFA.');
         }
 

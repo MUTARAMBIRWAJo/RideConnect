@@ -13,10 +13,10 @@ return new class extends Migration
     {
         // Add tracking columns to trips table
         Schema::table('trips', function (Blueprint $table) {
-            if (!Schema::hasColumn('trips', 'accepted_at')) {
+            if (! Schema::hasColumn('trips', 'accepted_at')) {
                 $table->timestamp('accepted_at')->nullable()->after('requested_at');
             }
-            if (!Schema::hasColumn('trips', 'rejected_drivers_count')) {
+            if (! Schema::hasColumn('trips', 'rejected_drivers_count')) {
                 $table->integer('rejected_drivers_count')->default(0)->after('status');
             }
         });

@@ -22,8 +22,8 @@ class LedgerEntry extends Model
     ];
 
     protected $casts = [
-        'debit'      => 'decimal:2',
-        'credit'     => 'decimal:2',
+        'debit' => 'decimal:2',
+        'credit' => 'decimal:2',
         'created_at' => 'datetime',
     ];
 
@@ -36,7 +36,7 @@ class LedgerEntry extends Model
         throw new RuntimeException('Ledger entries are immutable and cannot be updated.');
     }
 
-    public function delete(): bool|null
+    public function delete(): ?bool
     {
         throw new RuntimeException('Ledger entries are immutable and cannot be deleted.');
     }

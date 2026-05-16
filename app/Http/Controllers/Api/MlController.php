@@ -11,9 +11,7 @@ use Illuminate\Support\Facades\Schema;
 
 class MlController extends Controller
 {
-    public function __construct(private readonly MlService $mlService)
-    {
-    }
+    public function __construct(private readonly MlService $mlService) {}
 
     public function predictFare(Request $request): JsonResponse
     {
@@ -91,7 +89,7 @@ class MlController extends Controller
 
     private function respond(array $result): JsonResponse
     {
-        if (!($result['success'] ?? false)) {
+        if (! ($result['success'] ?? false)) {
             return response()->json([
                 'success' => false,
                 'error' => $result['error'] ?? 'ML service call failed',

@@ -6,6 +6,5 @@ class TripStarted
 {
     public function __construct(
         public readonly int $tripId,
-    ) {
-    }
+    ) {}
 }

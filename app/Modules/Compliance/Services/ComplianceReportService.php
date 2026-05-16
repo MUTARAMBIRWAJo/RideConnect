@@ -2,7 +2,6 @@
 
 namespace App\Modules\Compliance\Services;
 
-use App\Models\Booking;
 use App\Models\ComplianceReport;
 use App\Models\DriverPayout;
 use App\Models\FraudFlag;
@@ -34,7 +33,7 @@ class ComplianceReportService
 {
     public function __construct(
         private readonly ComplianceReportRepositoryInterface $reportRepo,
-        private readonly ReportingService                    $reportingService,
+        private readonly ReportingService $reportingService,
     ) {}
 
     /**
@@ -58,21 +57,21 @@ class ComplianceReportService
         ComplianceReport::where('id', $reportId)->update(['status' => 'generating']);
 
         try {
-            $data     = $this->fetchReportData($report);
+            $data = $this->fetchReportData($report);
             $filePath = $this->writeFile($report, $data);
 
             $this->reportRepo->markReady($reportId, $filePath, $this->buildSummary($data));
 
             Log::info('ComplianceReportService: report generated', [
-                'report_id'   => $reportId,
+                'report_id' => $reportId,
                 'report_type' => $report->report_type,
-                'format'      => $report->format,
+                'format' => $report->format,
             ]);
         } catch (\Throwable $e) {
             $this->reportRepo->markFailed($reportId, $e->getMessage());
             Log::error('ComplianceReportService: generation failed', [
                 'report_id' => $reportId,
-                'error'     => $e->getMessage(),
+                'error' => $e->getMessage(),
             ]);
             throw $e;
         }
@@ -82,7 +81,9 @@ class ComplianceReportService
 
     public function downloadUrl(ComplianceReport $report): ?string
     {
-        if (! $report->file_path) return null;
+        if (! $report->file_path) {
+            return null;
+        }
 
         return Storage::url($report->file_path);
     }
@@ -94,30 +95,30 @@ class ComplianceReportService
     private function fetchReportData(ComplianceReport $report): array
     {
         $from = $report->period_start?->toDateString() ?? $report->period_from;
-        $to   = $report->period_end?->toDateString() ?? $report->period_to;
+        $to = $report->period_end?->toDateString() ?? $report->period_to;
 
         return match ($report->report_type) {
-            'daily_ride_summary'    => $this->dailyRideSummary($from, $to),
-            'driver_earnings'       => $this->driverEarnings($from, $to),
-            'commission_breakdown'  => $this->commissionBreakdown($from, $to),
-            'tax_payable_summary'   => $this->taxPayableSummary($from, $to),
-            'refund_report'         => $this->refundReport($from, $to),
+            'daily_ride_summary' => $this->dailyRideSummary($from, $to),
+            'driver_earnings' => $this->driverEarnings($from, $to),
+            'commission_breakdown' => $this->commissionBreakdown($from, $to),
+            'tax_payable_summary' => $this->taxPayableSummary($from, $to),
+            'refund_report' => $this->refundReport($from, $to),
             'fraud_incident_report' => $this->fraudIncidentReport($from, $to),
-            default                 => throw new \InvalidArgumentException("Unknown report type: {$report->report_type}"),
+            default => throw new \InvalidArgumentException("Unknown report type: {$report->report_type}"),
         };
     }
 
     private function writeFile(ComplianceReport $report, array $data): string
     {
-        $dir    = 'compliance/' . date('Y/m');
+        $dir = 'compliance/'.date('Y/m');
         $from = $report->period_start?->toDateString() ?? $report->period_from;
         $to = $report->period_end?->toDateString() ?? $report->period_to;
-        $name   = "{$report->report_type}_{$from}_{$to}_{$report->id}.{$report->format}";
-        $path   = "{$dir}/{$name}";
+        $name = "{$report->report_type}_{$from}_{$to}_{$report->id}.{$report->format}";
+        $path = "{$dir}/{$name}";
 
         $content = match ($report->format) {
-            'csv'  => $this->toCsv($data),
-            'pdf'  => $this->toPdf($report, $data),
+            'csv' => $this->toCsv($data),
+            'pdf' => $this->toPdf($report, $data),
             'json' => json_encode(['report' => $report->report_type, 'data' => $data], JSON_PRETTY_PRINT),
             default => throw new \InvalidArgumentException("Unknown format: {$report->format}"),
         };
@@ -130,16 +131,18 @@ class ComplianceReportService
     private function buildSummary(array $data): array
     {
         return [
-            'row_count'    => count($data),
+            'row_count' => count($data),
             'generated_at' => now()->toIso8601String(),
         ];
     }
 
     private function toCsv(array $data): string
     {
-        if (empty($data)) return '';
+        if (empty($data)) {
+            return '';
+        }
 
-        $out     = fopen('php://temp', 'r+');
+        $out = fopen('php://temp', 'r+');
         $headers = array_keys($data[0]);
 
         fputcsv($out, $headers);
@@ -158,16 +161,17 @@ class ComplianceReportService
         $columns = ! empty($data) ? array_keys($data[0]) : [];
 
         $pdf = Pdf::loadView('compliance.report-pdf', [
-            'reportId'    => $report->id,
-            'reportType'  => $report->report_type,
+            'reportId' => $report->id,
+            'reportType' => $report->report_type,
             'reportTitle' => ComplianceReport::TYPES[$report->report_type] ?? $report->report_type,
-            'periodFrom'  => $report->period_from,
-            'periodTo'    => $report->period_to,
-            'generatedAt' => now()->format('Y-m-d H:i:s') . ' UTC',
-            'columns'     => $columns,
-            'rows'        => $data,
+            'periodFrom' => $report->period_from,
+            'periodTo' => $report->period_to,
+            'generatedAt' => now()->format('Y-m-d H:i:s').' UTC',
+            'columns' => $columns,
+            'rows' => $data,
             'summaryData' => [],
         ]);
+
         return $pdf->output();
     }
 
@@ -178,16 +182,16 @@ class ComplianceReportService
     private function dailyRideSummary(string $from, string $to): array
     {
         return Ride::where('status', 'completed')
-            ->whereBetween('updated_at', [$from . ' 00:00:00', $to . ' 23:59:59'])
-            ->selectRaw("DATE(updated_at) as ride_date, COUNT(*) as total_rides, SUM(price_per_seat) as total_fare")
+            ->whereBetween('updated_at', [$from.' 00:00:00', $to.' 23:59:59'])
+            ->selectRaw('DATE(updated_at) as ride_date, COUNT(*) as total_rides, SUM(price_per_seat) as total_fare')
             ->groupByRaw('DATE(updated_at)')
             ->orderBy('ride_date')
             ->get()
             ->map(fn ($r) => [
-                'date'        => $r->ride_date,
+                'date' => $r->ride_date,
                 'total_rides' => $r->total_rides,
-                'total_fare'  => number_format((float) $r->total_fare, 2),
-                'currency'    => 'RWF',
+                'total_fare' => number_format((float) $r->total_fare, 2),
+                'currency' => 'RWF',
             ])
             ->all();
     }
@@ -199,14 +203,14 @@ class ComplianceReportService
             ->orderBy('payout_date')
             ->get()
             ->map(fn ($p) => [
-                'payout_date'       => $p->payout_date,
-                'driver_id'         => $p->driver_id,
-                'driver_name'       => $p->driver->user->name ?? 'N/A',
-                'total_income'      => $p->total_income,
+                'payout_date' => $p->payout_date,
+                'driver_id' => $p->driver_id,
+                'driver_name' => $p->driver->user->name ?? 'N/A',
+                'total_income' => $p->total_income,
                 'commission_amount' => $p->commission_amount,
-                'payout_amount'     => $p->payout_amount,
-                'status'            => $p->status,
-                'currency'          => 'RWF',
+                'payout_amount' => $p->payout_amount,
+                'status' => $p->status,
+                'currency' => 'RWF',
             ])
             ->all();
     }
@@ -220,11 +224,11 @@ class ComplianceReportService
             ->orderBy('payout_date')
             ->get()
             ->map(fn ($r) => [
-                'date'                => $r->payout_date,
-                'gross_income_rwf'    => $r->gross,
+                'date' => $r->payout_date,
+                'gross_income_rwf' => $r->gross,
                 'commission_8pct_rwf' => $r->commission,
-                'driver_payout_rwf'   => $r->payout,
-                'currency'            => 'RWF',
+                'driver_payout_rwf' => $r->payout,
+                'currency' => 'RWF',
             ])
             ->all();
     }
@@ -235,19 +239,21 @@ class ComplianceReportService
             ->where('owner_type', 'platform')
             ->first();
 
-        if (! $taxAccount) return [];
+        if (! $taxAccount) {
+            return [];
+        }
 
         return $taxAccount->entries()
-            ->whereBetween('created_at', [$from . ' 00:00:00', $to . ' 23:59:59'])
+            ->whereBetween('created_at', [$from.' 00:00:00', $to.' 23:59:59'])
             ->with('transaction')
             ->get()
             ->map(fn ($e) => [
-                'date'             => $e->created_at->toDateString(),
-                'reference_type'   => $e->reference_type,
-                'reference_id'     => $e->reference_id,
-                'tax_amount_rwf'   => $e->credit,
-                'description'      => $e->description,
-                'currency'         => 'RWF',
+                'date' => $e->created_at->toDateString(),
+                'reference_type' => $e->reference_type,
+                'reference_id' => $e->reference_id,
+                'tax_amount_rwf' => $e->credit,
+                'description' => $e->description,
+                'currency' => 'RWF',
             ])
             ->all();
     }
@@ -255,33 +261,33 @@ class ComplianceReportService
     private function refundReport(string $from, string $to): array
     {
         return Payment::where('status', 'refunded')
-            ->whereBetween('updated_at', [$from . ' 00:00:00', $to . ' 23:59:59'])
+            ->whereBetween('updated_at', [$from.' 00:00:00', $to.' 23:59:59'])
             ->with('booking')
             ->get()
             ->map(fn ($p) => [
-                'date'         => $p->updated_at->toDateString(),
-                'payment_id'   => $p->id,
-                'booking_id'   => $p->booking_id,
-                'user_id'      => $p->user_id,
-                'amount_rwf'   => $p->amount,
-                'provider'     => $p->payment_provider,
-                'currency'     => 'RWF',
+                'date' => $p->updated_at->toDateString(),
+                'payment_id' => $p->id,
+                'booking_id' => $p->booking_id,
+                'user_id' => $p->user_id,
+                'amount_rwf' => $p->amount,
+                'provider' => $p->payment_provider,
+                'currency' => 'RWF',
             ])
             ->all();
     }
 
     private function fraudIncidentReport(string $from, string $to): array
     {
-        return FraudFlag::whereBetween('created_at', [$from . ' 00:00:00', $to . ' 23:59:59'])
+        return FraudFlag::whereBetween('created_at', [$from.' 00:00:00', $to.' 23:59:59'])
             ->orderBy('severity')
             ->get()
             ->map(fn ($f) => [
-                'date'        => $f->created_at->toDateString(),
+                'date' => $f->created_at->toDateString(),
                 'entity_type' => $f->entity_type,
-                'entity_id'   => $f->entity_id,
-                'severity'    => $f->severity,
-                'reason'      => $f->reason,
-                'resolved'    => $f->resolved ? 'Yes' : 'No',
+                'entity_id' => $f->entity_id,
+                'severity' => $f->severity,
+                'reason' => $f->reason,
+                'resolved' => $f->resolved ? 'Yes' : 'No',
                 'resolved_at' => $f->resolved_at?->toDateString(),
             ])
             ->all();

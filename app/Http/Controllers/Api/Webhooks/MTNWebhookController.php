@@ -18,24 +18,24 @@ class MTNWebhookController extends Controller
     public function __construct(
         private readonly LedgerService $ledgerService,
         private readonly WalletService $walletService,
-    ) {
-    }
+    ) {}
 
     public function handle(Request $request): Response
     {
         // MTN MoMo uses a shared API key passed in the callback header
-        $apiKey      = $request->header('X-Callback-Api-Key', '');
+        $apiKey = $request->header('X-Callback-Api-Key', '');
         $expectedKey = config('services.mtn.callback_api_key', '');
 
         if (! $expectedKey || ! hash_equals($expectedKey, $apiKey)) {
             Log::warning('MTN webhook: invalid or missing callback API key', ['ip' => $request->ip()]);
+
             return response('Forbidden', 403);
         }
 
-        $payload              = $request->all();
-        $externalId           = $payload['externalId']            ?? null; // maps to booking_id
-        $status               = strtolower($payload['status']     ?? '');
-        $amount               = (float) ($payload['amount']       ?? 0);
+        $payload = $request->all();
+        $externalId = $payload['externalId'] ?? null; // maps to booking_id
+        $status = strtolower($payload['status'] ?? '');
+        $amount = (float) ($payload['amount'] ?? 0);
         $financialTransactionId = $payload['financialTransactionId'] ?? null;
 
         if (! $externalId) {
@@ -44,22 +44,24 @@ class MTNWebhookController extends Controller
 
         // Idempotency check
         if ($financialTransactionId && Payment::query()->where('webhook_event_id', $financialTransactionId)->exists()) {
-            Log::info("MTN webhook already processed", ['financial_transaction_id' => $financialTransactionId]);
+            Log::info('MTN webhook already processed', ['financial_transaction_id' => $financialTransactionId]);
+
             return response('Already processed', 200);
         }
 
         try {
             match ($status) {
                 'successful' => $this->handleSuccess($payload, $financialTransactionId),
-                'failed'     => $this->handleFailure($payload),
-                default      => null,
+                'failed' => $this->handleFailure($payload),
+                default => null,
             };
         } catch (Throwable $e) {
-            Log::error("MTN webhook handler error", [
+            Log::error('MTN webhook handler error', [
                 'external_id' => $externalId,
-                'status'      => $status,
-                'error'       => $e->getMessage(),
+                'status' => $status,
+                'error' => $e->getMessage(),
             ]);
+
             return response('Handler error', 500);
         }
 
@@ -72,25 +74,26 @@ class MTNWebhookController extends Controller
 
     private function handleSuccess(array $payload, ?string $financialTransactionId): void
     {
-        $bookingId  = $payload['externalId'] ?? null;
-        $amount     = (float) ($payload['amount'] ?? 0);
+        $bookingId = $payload['externalId'] ?? null;
+        $amount = (float) ($payload['amount'] ?? 0);
         $payerPhone = $payload['payer']['partyId'] ?? null;
 
         $booking = Booking::query()->with(['payment', 'ride'])->find((int) $bookingId);
 
         if (! $booking) {
             Log::warning("MTN webhook: booking #{$bookingId} not found");
+
             return;
         }
 
         DB::transaction(function () use ($booking, $amount, $financialTransactionId, $payload, $payerPhone) {
             $commonFields = [
-                'payment_provider'        => 'mtn_momo',
+                'payment_provider' => 'mtn_momo',
                 'provider_transaction_id' => $payload['externalId'],
-                'webhook_event_id'        => $financialTransactionId,
-                'verification_status'     => 'verified',
-                'status'                  => 'COMPLETED',
-                'paid_at'                 => now(),
+                'webhook_event_id' => $financialTransactionId,
+                'verification_status' => 'verified',
+                'status' => 'COMPLETED',
+                'paid_at' => now(),
             ];
 
             if ($booking->payment) {
@@ -98,13 +101,13 @@ class MTNWebhookController extends Controller
                 $payment = $booking->payment->fresh();
             } else {
                 $payment = Payment::create(array_merge($commonFields, [
-                    'booking_id'      => $booking->id,
-                    'user_id'         => $booking->user_id,
-                    'amount'          => $amount,
-                    'platform_fee'    => round($amount * 0.08, 2),
-                    'driver_amount'   => round($amount * 0.92, 2),
-                    'currency'        => $payload['currency'] ?? 'RWF',
-                    'payment_method'  => 'mtn_momo',
+                    'booking_id' => $booking->id,
+                    'user_id' => $booking->user_id,
+                    'amount' => $amount,
+                    'platform_fee' => round($amount * 0.08, 2),
+                    'driver_amount' => round($amount * 0.92, 2),
+                    'currency' => $payload['currency'] ?? 'RWF',
+                    'payment_method' => 'mtn_momo',
                     'payment_details' => json_encode(['payer_phone' => $payerPhone]),
                 ]));
             }
@@ -117,7 +120,7 @@ class MTNWebhookController extends Controller
             }
         });
 
-        Log::info("MTN payment processed", ['booking_id' => $booking->id, 'amount' => $amount]);
+        Log::info('MTN payment processed', ['booking_id' => $booking->id, 'amount' => $amount]);
     }
 
     private function handleFailure(array $payload): void
@@ -134,11 +137,11 @@ class MTNWebhookController extends Controller
 
         if ($payment) {
             $payment->update([
-                'status'              => 'FAILED',
+                'status' => 'FAILED',
                 'verification_status' => 'failed',
             ]);
         }
 
-        Log::info("MTN payment failed", compact('bookingId'));
+        Log::info('MTN payment failed', compact('bookingId'));
     }
 }

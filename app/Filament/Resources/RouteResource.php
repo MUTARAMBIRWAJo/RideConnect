@@ -31,7 +31,7 @@ class RouteResource extends Resource
                     ->orderBy('code')
                     ->get()
                     ->mapWithKeys(fn (Corridor $corridor): array => [
-                        $corridor->id => trim('Corridor ' . ($corridor->code ?? $corridor->id) . ' - ' . $corridor->name),
+                        $corridor->id => trim('Corridor '.($corridor->code ?? $corridor->id).' - '.$corridor->name),
                     ])
                     ->all()),
             Forms\Components\TextInput::make('route_code')
@@ -64,7 +64,7 @@ class RouteResource extends Resource
                 ->searchable(),
             Tables\Columns\TextColumn::make('corridor.code')
                 ->label('Corridor')
-                ->formatStateUsing(fn ($state) => $state ? 'Corridor ' . $state : 'Unknown'),
+                ->formatStateUsing(fn ($state) => $state ? 'Corridor '.$state : 'Unknown'),
             Tables\Columns\IconColumn::make('is_active')
                 ->boolean()
                 ->label('Active'),

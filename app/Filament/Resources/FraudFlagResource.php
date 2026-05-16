@@ -9,10 +9,8 @@ use App\Services\FraudDetectionService;
 use Filament\Forms\Form;
 use Filament\Notifications\Notification;
 use Filament\Resources\Resource;
-use Filament\Tables;
 use Filament\Tables\Actions\Action;
 use Filament\Tables\Actions\BulkAction;
-use Filament\Tables\Columns\BadgeColumn;
 use Filament\Tables\Columns\IconColumn;
 use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Filters\Filter;
@@ -26,10 +24,13 @@ class FraudFlagResource extends Resource
 {
     protected static ?string $model = FraudFlag::class;
 
-    protected static ?string $navigationIcon  = 'heroicon-o-shield-exclamation';
+    protected static ?string $navigationIcon = 'heroicon-o-shield-exclamation';
+
     protected static ?string $navigationLabel = 'Fraud Monitoring';
+
     protected static ?string $navigationGroup = 'Finance';
-    protected static ?int    $navigationSort  = 20;
+
+    protected static ?int $navigationSort = 20;
 
     // -----------------------------------------------------------------------
     // Access control
@@ -38,12 +39,24 @@ class FraudFlagResource extends Resource
     public static function canViewAny(): bool
     {
         $user = auth()->user();
+
         return $user && in_array($user->role, [UserRole::SUPER_ADMIN, UserRole::ACCOUNTANT]);
     }
 
-    public static function canCreate(): bool        { return false; }
-    public static function canEdit($record): bool   { return false; }
-    public static function canDelete($record): bool { return false; }
+    public static function canCreate(): bool
+    {
+        return false;
+    }
+
+    public static function canEdit($record): bool
+    {
+        return false;
+    }
+
+    public static function canDelete($record): bool
+    {
+        return false;
+    }
 
     // -----------------------------------------------------------------------
     // Table
@@ -66,10 +79,10 @@ class FraudFlagResource extends Resource
                     ->label('Entity')
                     ->badge()
                     ->color(fn (string $state) => match ($state) {
-                        'driver'      => 'info',
-                        'passenger'   => 'warning',
+                        'driver' => 'info',
+                        'passenger' => 'warning',
                         'transaction' => 'danger',
-                        default       => 'gray',
+                        default => 'gray',
                     }),
 
                 TextColumn::make('entity_id')
@@ -87,10 +100,10 @@ class FraudFlagResource extends Resource
                     ->label('Severity')
                     ->badge()
                     ->color(fn (string $state) => match ($state) {
-                        'high'   => 'danger',
+                        'high' => 'danger',
                         'medium' => 'warning',
-                        'low'    => 'info',
-                        default  => 'gray',
+                        'low' => 'info',
+                        default => 'gray',
                     }),
 
                 IconColumn::make('resolved')
@@ -123,15 +136,15 @@ class FraudFlagResource extends Resource
             ->filters([
                 SelectFilter::make('severity')
                     ->options([
-                        'high'   => 'High',
+                        'high' => 'High',
                         'medium' => 'Medium',
-                        'low'    => 'Low',
+                        'low' => 'Low',
                     ]),
 
                 SelectFilter::make('entity_type')
                     ->options([
-                        'driver'      => 'Driver',
-                        'passenger'   => 'Passenger',
+                        'driver' => 'Driver',
+                        'passenger' => 'Passenger',
                         'transaction' => 'Transaction',
                     ]),
 
@@ -171,7 +184,7 @@ class FraudFlagResource extends Resource
                     ->visible(fn () => auth()->user()?->role === UserRole::SUPER_ADMIN)
                     ->action(function (Collection $records): void {
                         $service = app(FraudDetectionService::class);
-                        $userId  = (int) auth()->id();
+                        $userId = (int) auth()->id();
 
                         $records->where('resolved', false)->each(
                             fn (FraudFlag $flag) => $service->resolve($flag, $userId)

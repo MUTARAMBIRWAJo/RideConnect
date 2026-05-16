@@ -7,7 +7,9 @@ use Carbon\CarbonInterface;
 class DemandHeuristicModelV1
 {
     public const MODEL_NAME = 'DemandHeuristicModelV1';
+
     public const MODEL_VERSION = 'v1';
+
     public const ENDPOINT = '/ml/predict-demand';
 
     public function payload(array $input, ?CarbonInterface $time = null): array

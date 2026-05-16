@@ -13,17 +13,19 @@ class ReportingRepository implements ReportingRepositoryInterface
             ->where('date_key', $date)
             ->first();
 
-        if (! $row) return $this->emptyRevenueSummary($date);
+        if (! $row) {
+            return $this->emptyRevenueSummary($date);
+        }
 
         return [
-            'date'               => $date,
-            'total_gross'        => (float) $row->total_gross,
-            'total_commission'   => (float) $row->total_commission,
-            'total_driver_payout'=> (float) $row->total_driver_payout,
-            'total_tax'          => (float) $row->total_tax,
-            'total_net_revenue'  => (float) $row->total_net_revenue,
-            'transaction_count'  => (int)   $row->transaction_count,
-            'currency'           => 'RWF',
+            'date' => $date,
+            'total_gross' => (float) $row->total_gross,
+            'total_commission' => (float) $row->total_commission,
+            'total_driver_payout' => (float) $row->total_driver_payout,
+            'total_tax' => (float) $row->total_tax,
+            'total_net_revenue' => (float) $row->total_net_revenue,
+            'transaction_count' => (int) $row->transaction_count,
+            'currency' => 'RWF',
         ];
     }
 
@@ -58,9 +60,9 @@ class ReportingRepository implements ReportingRepositoryInterface
         return DB::table('ledger_entries as e')
             ->join('ledger_accounts as a', 'a.id', '=', 'e.account_id')
             ->where('a.name', 'Tax Payable')
-            ->whereBetween('e.created_at', [$from . ' 00:00:00', $to . ' 23:59:59'])
-            ->selectRaw("DATE(e.created_at) as date, SUM(e.credit) as tax_collected, e.reference_type")
-            ->groupByRaw("DATE(e.created_at), e.reference_type")
+            ->whereBetween('e.created_at', [$from.' 00:00:00', $to.' 23:59:59'])
+            ->selectRaw('DATE(e.created_at) as date, SUM(e.credit) as tax_collected, e.reference_type')
+            ->groupByRaw('DATE(e.created_at), e.reference_type')
             ->orderByRaw('DATE(e.created_at)')
             ->get()
             ->map(fn ($r) => (array) $r)
@@ -71,8 +73,8 @@ class ReportingRepository implements ReportingRepositoryInterface
     {
         return DB::table('payments')
             ->where('status', 'refunded')
-            ->whereBetween('updated_at', [$from . ' 00:00:00', $to . ' 23:59:59'])
-            ->selectRaw("DATE(updated_at) as date, COUNT(*) as count, SUM(amount) as total_refunded")
+            ->whereBetween('updated_at', [$from.' 00:00:00', $to.' 23:59:59'])
+            ->selectRaw('DATE(updated_at) as date, COUNT(*) as count, SUM(amount) as total_refunded')
             ->groupByRaw('DATE(updated_at)')
             ->orderBy('date')
             ->get()
@@ -83,8 +85,8 @@ class ReportingRepository implements ReportingRepositoryInterface
     public function getFraudIncidentReport(string $from, string $to): array
     {
         return DB::table('fraud_flags')
-            ->whereBetween('created_at', [$from . ' 00:00:00', $to . ' 23:59:59'])
-            ->selectRaw("severity, COUNT(*) as count, SUM(CASE WHEN resolved THEN 1 ELSE 0 END) as resolved_count")
+            ->whereBetween('created_at', [$from.' 00:00:00', $to.' 23:59:59'])
+            ->selectRaw('severity, COUNT(*) as count, SUM(CASE WHEN resolved THEN 1 ELSE 0 END) as resolved_count')
             ->groupBy('severity')
             ->orderByRaw("CASE severity WHEN 'high' THEN 1 WHEN 'medium' THEN 2 ELSE 3 END")
             ->get()
@@ -95,14 +97,14 @@ class ReportingRepository implements ReportingRepositoryInterface
     private function emptyRevenueSummary(string $date): array
     {
         return [
-            'date'                => $date,
-            'total_gross'         => 0.0,
-            'total_commission'    => 0.0,
+            'date' => $date,
+            'total_gross' => 0.0,
+            'total_commission' => 0.0,
             'total_driver_payout' => 0.0,
-            'total_tax'           => 0.0,
-            'total_net_revenue'   => 0.0,
-            'transaction_count'   => 0,
-            'currency'            => 'RWF',
+            'total_tax' => 0.0,
+            'total_net_revenue' => 0.0,
+            'transaction_count' => 0,
+            'currency' => 'RWF',
         ];
     }
 }

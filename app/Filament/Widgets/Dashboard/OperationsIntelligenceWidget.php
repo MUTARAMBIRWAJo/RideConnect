@@ -10,7 +10,7 @@ class OperationsIntelligenceWidget extends Widget
 {
     protected static string $view = 'filament.widgets.dashboard.operations-intelligence-widget';
 
-    protected int | string | array $columnSpan = [
+    protected int|string|array $columnSpan = [
         'default' => 1,
         'md' => 2,
         'xl' => 2,

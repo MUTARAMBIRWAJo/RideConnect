@@ -18,19 +18,19 @@ class StripeWebhookController extends Controller
     public function __construct(
         private readonly LedgerService $ledgerService,
         private readonly WalletService $walletService,
-    ) {
-    }
+    ) {}
 
     public function handle(Request $request): Response
     {
-        $payload   = $request->getContent();
+        $payload = $request->getContent();
         $sigHeader = $request->header('Stripe-Signature', '');
-        $secret    = config('services.stripe.webhook_secret', '');
+        $secret = config('services.stripe.webhook_secret', '');
 
         if (! $this->verifyStripeSignature($payload, $sigHeader, $secret)) {
             Log::warning('Stripe webhook signature verification failed', [
                 'ip' => $request->ip(),
             ]);
+
             return response('Invalid signature', 400);
         }
 
@@ -40,7 +40,7 @@ class StripeWebhookController extends Controller
             return response('Invalid JSON payload', 400);
         }
 
-        $eventId   = $event['id']   ?? null;
+        $eventId = $event['id'] ?? null;
         $eventType = $event['type'] ?? null;
 
         if (! $eventId) {
@@ -49,22 +49,24 @@ class StripeWebhookController extends Controller
 
         // Idempotency: already processed?
         if (Payment::query()->where('webhook_event_id', $eventId)->exists()) {
-            Log::info("Stripe webhook already processed", ['event_id' => $eventId]);
+            Log::info('Stripe webhook already processed', ['event_id' => $eventId]);
+
             return response('Already processed', 200);
         }
 
         try {
             match ($eventType) {
                 'payment_intent.succeeded' => $this->handlePaymentSucceeded($event, $eventId),
-                'charge.refunded'          => $this->handleRefund($event),
-                default                    => null,
+                'charge.refunded' => $this->handleRefund($event),
+                default => null,
             };
         } catch (Throwable $e) {
-            Log::error("Stripe webhook handler error", [
-                'event_id'   => $eventId,
+            Log::error('Stripe webhook handler error', [
+                'event_id' => $eventId,
                 'event_type' => $eventType,
-                'error'      => $e->getMessage(),
+                'error' => $e->getMessage(),
             ]);
+
             return response('Handler error', 500);
         }
 
@@ -77,15 +79,16 @@ class StripeWebhookController extends Controller
 
     private function handlePaymentSucceeded(array $event, string $eventId): void
     {
-        $intent            = $event['data']['object'] ?? [];
-        $providerTxnId     = $intent['id'] ?? null;
-        $amountCents       = (int) ($intent['amount'] ?? 0);
-        $amount            = $amountCents / 100; // Stripe stores in cents
-        $metadata          = $intent['metadata'] ?? [];
-        $bookingId         = $metadata['booking_id'] ?? null;
+        $intent = $event['data']['object'] ?? [];
+        $providerTxnId = $intent['id'] ?? null;
+        $amountCents = (int) ($intent['amount'] ?? 0);
+        $amount = $amountCents / 100; // Stripe stores in cents
+        $metadata = $intent['metadata'] ?? [];
+        $bookingId = $metadata['booking_id'] ?? null;
 
         if (! $bookingId) {
             Log::warning('Stripe payment_intent.succeeded: missing booking_id in metadata', compact('eventId'));
+
             return;
         }
 
@@ -93,6 +96,7 @@ class StripeWebhookController extends Controller
 
         if (! $booking) {
             Log::warning("Stripe webhook: booking #{$bookingId} not found");
+
             return;
         }
 
@@ -107,13 +111,13 @@ class StripeWebhookController extends Controller
             }
         });
 
-        Log::info("Stripe payment processed", ['booking_id' => $booking->id, 'amount' => $amount]);
+        Log::info('Stripe payment processed', ['booking_id' => $booking->id, 'amount' => $amount]);
     }
 
     private function handleRefund(array $event): void
     {
-        $charge        = $event['data']['object'] ?? [];
-        $intentId      = $charge['payment_intent'] ?? null;
+        $charge = $event['data']['object'] ?? [];
+        $intentId = $charge['payment_intent'] ?? null;
 
         if (! $intentId) {
             return;
@@ -123,13 +127,14 @@ class StripeWebhookController extends Controller
 
         if (! $payment) {
             Log::warning("Stripe refund: payment not found for intent {$intentId}");
+
             return;
         }
 
         DB::transaction(function () use ($payment) {
             $payment->update([
-                'status'              => 'REFUNDED',
-                'refunded_at'         => now(),
+                'status' => 'REFUNDED',
+                'refunded_at' => now(),
                 'verification_status' => 'verified',
             ]);
 
@@ -142,10 +147,10 @@ class StripeWebhookController extends Controller
                     $this->walletService->freeze((int) $driverId, (float) $payment->driver_amount);
                     Log::info("Driver #{$driverId} funds frozen due to refund", ['payment_id' => $payment->id]);
                 } catch (Throwable $e) {
-                    Log::warning("Could not freeze driver funds for refund", [
-                        'driver_id'  => $driverId,
+                    Log::warning('Could not freeze driver funds for refund', [
+                        'driver_id' => $driverId,
                         'payment_id' => $payment->id,
-                        'error'      => $e->getMessage(),
+                        'error' => $e->getMessage(),
                     ]);
                 }
             }
@@ -164,26 +169,27 @@ class StripeWebhookController extends Controller
         string $eventId
     ): Payment {
         $commonFields = [
-            'payment_provider'        => $provider,
+            'payment_provider' => $provider,
             'provider_transaction_id' => $providerTxnId,
-            'webhook_event_id'        => $eventId,
-            'verification_status'     => 'verified',
-            'status'                  => 'COMPLETED',
-            'paid_at'                 => now(),
+            'webhook_event_id' => $eventId,
+            'verification_status' => 'verified',
+            'status' => 'COMPLETED',
+            'paid_at' => now(),
         ];
 
         if ($booking->payment) {
             $booking->payment->fill($commonFields)->save();
+
             return $booking->payment->fresh();
         }
 
         return Payment::create(array_merge($commonFields, [
-            'booking_id'     => $booking->id,
-            'user_id'        => $booking->user_id,
-            'amount'         => $amount,
-            'platform_fee'   => round($amount * 0.08, 2),
-            'driver_amount'  => round($amount * 0.92, 2),
-            'currency'       => $booking->currency ?? 'RWF',
+            'booking_id' => $booking->id,
+            'user_id' => $booking->user_id,
+            'amount' => $amount,
+            'platform_fee' => round($amount * 0.08, 2),
+            'driver_amount' => round($amount * 0.92, 2),
+            'currency' => $booking->currency ?? 'RWF',
             'payment_method' => $provider,
         ]));
     }
@@ -199,7 +205,7 @@ class StripeWebhookController extends Controller
             return app()->environment('local');
         }
 
-        $parts     = explode(',', $sigHeader);
+        $parts = explode(',', $sigHeader);
         $timestamp = null;
         $signatures = [];
 

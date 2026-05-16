@@ -19,7 +19,7 @@ class PassengerDashboard extends BaseDashboard
         return 'Passenger Dashboard';
     }
 
-    public static function getNavigationIcon(): string | Htmlable | null
+    public static function getNavigationIcon(): string|Htmlable|null
     {
         return 'heroicon-o-user-circle';
     }

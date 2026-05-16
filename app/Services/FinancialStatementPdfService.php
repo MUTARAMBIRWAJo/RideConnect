@@ -233,7 +233,7 @@ class FinancialStatementPdfService
         ])->setPaper('a4', $landscape ? 'landscape' : 'portrait');
 
         return [
-            'filename' => $reportCode . '-' . $printedAt->format('Ymd-His') . '.pdf',
+            'filename' => $reportCode.'-'.$printedAt->format('Ymd-His').'.pdf',
             'content' => $pdf->output(),
         ];
     }
@@ -394,7 +394,7 @@ class FinancialStatementPdfService
                 continue;
             }
 
-            return 'data:' . $mime . ';base64,' . base64_encode($raw);
+            return 'data:'.$mime.';base64,'.base64_encode($raw);
         }
 
         return null;

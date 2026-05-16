@@ -6,8 +6,8 @@ use App\Models\Driver;
 use App\Models\DriverPayout;
 use App\Models\LedgerAccount;
 use App\Models\User;
-use App\Modules\Settlement\Services\SettlementService;
 use App\Modules\Settlement\DTOs\SettlementResultDTO;
+use App\Modules\Settlement\Services\SettlementService;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\TestCase;
 
@@ -23,6 +23,7 @@ class SettlementIdempotencyTest extends TestCase
     use RefreshDatabase;
 
     private SettlementService $settlementService;
+
     private Driver $driver;
 
     protected function setUp(): void
@@ -32,7 +33,7 @@ class SettlementIdempotencyTest extends TestCase
         $this->settlementService = app(SettlementService::class);
 
         // Create minimal driver with associated user
-        $user   = User::factory()->create(['name' => 'Test Driver']);
+        $user = User::factory()->create(['name' => 'Test Driver']);
         $this->driver = Driver::factory()->create(['user_id' => $user->id]);
 
         // Seed required ledger accounts (settlement service needs them)
@@ -41,7 +42,7 @@ class SettlementIdempotencyTest extends TestCase
 
     public function test_first_settlement_creates_payout_record(): void
     {
-        $date   = '2025-06-01';
+        $date = '2025-06-01';
         $income = 200_000.0;
 
         $result = $this->settlementService->settleDriver($this->driver->id, $income, $date);
@@ -50,14 +51,14 @@ class SettlementIdempotencyTest extends TestCase
         $this->assertFalse($result->isIdempotent, 'First call must not be idempotent');
 
         $this->assertDatabaseHas('driver_payouts', [
-            'driver_id'    => $this->driver->id,
-            'payout_date'  => $date,
+            'driver_id' => $this->driver->id,
+            'payout_date' => $date,
         ]);
     }
 
     public function test_second_settlement_same_date_is_idempotent(): void
     {
-        $date   = '2025-06-02';
+        $date = '2025-06-02';
         $income = 150_000.0;
 
         // First call

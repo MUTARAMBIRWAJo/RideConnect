@@ -12,7 +12,7 @@ use Illuminate\Support\Facades\Schema;
 
 class SuperAdminOverviewStats extends StatsOverviewWidget
 {
-    protected int | string | array $columnSpan = 'full';
+    protected int|string|array $columnSpan = 'full';
 
     public static function isLazy(): bool
     {
@@ -35,7 +35,7 @@ class SuperAdminOverviewStats extends StatsOverviewWidget
             Stat::make('Total Users', number_format($totalUsers))
                 ->description('All registered accounts')
                 ->color('primary'),
-            Stat::make('Total Revenue', 'RWF ' . number_format($totalRevenue, 2))
+            Stat::make('Total Revenue', 'RWF '.number_format($totalRevenue, 2))
                 ->description('Across all recorded payments')
                 ->color('success'),
             Stat::make('Active Rides', number_format($activeRides))
@@ -50,7 +50,7 @@ class SuperAdminOverviewStats extends StatsOverviewWidget
     private function resolveTotalRevenue(): float
     {
         foreach (['payments_v2', 'payments'] as $table) {
-            if (!Schema::hasTable($table)) {
+            if (! Schema::hasTable($table)) {
                 continue;
             }
 

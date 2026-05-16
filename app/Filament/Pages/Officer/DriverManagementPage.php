@@ -30,7 +30,7 @@ class DriverManagementPage extends Page
         return 'Driver Management';
     }
 
-    public static function getNavigationIcon(): string | Htmlable | null
+    public static function getNavigationIcon(): string|Htmlable|null
     {
         return 'heroicon-o-users';
     }
@@ -65,7 +65,7 @@ class DriverManagementPage extends Page
 
     private function loadDrivers(): void
     {
-        if (!Schema::hasTable('drivers')) {
+        if (! Schema::hasTable('drivers')) {
             return;
         }
 
@@ -96,7 +96,7 @@ class DriverManagementPage extends Page
 
     public function approveDriver(int $driverId): void
     {
-        if (!auth()->user()->can('manage drivers')) {
+        if (! auth()->user()->can('manage drivers')) {
             abort(403);
         }
 
@@ -125,7 +125,7 @@ class DriverManagementPage extends Page
 
     public function suspendDriver(int $driverId, ?string $reason = null): void
     {
-        if (!auth()->user()->can('manage drivers')) {
+        if (! auth()->user()->can('manage drivers')) {
             abort(403);
         }
 
@@ -154,7 +154,7 @@ class DriverManagementPage extends Page
 
     public function toggleOnlineStatus(int $driverId): void
     {
-        if (!auth()->user()->can('manage drivers')) {
+        if (! auth()->user()->can('manage drivers')) {
             abort(403);
         }
 

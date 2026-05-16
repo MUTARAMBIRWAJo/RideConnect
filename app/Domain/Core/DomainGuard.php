@@ -24,7 +24,7 @@ class DomainGuard
         $trace = debug_backtrace(DEBUG_BACKTRACE_IGNORE_ARGS, 2);
         $callerFile = $trace[1]['file'] ?? null;
 
-        if (!$callerFile || !is_file($callerFile)) {
+        if (! $callerFile || ! is_file($callerFile)) {
             return;
         }
 
@@ -33,7 +33,7 @@ class DomainGuard
         foreach (self::FORBIDDEN_PATTERNS as $pattern) {
             if (preg_match($pattern, $source) === 1) {
                 throw DomainException::make(
-                    'Domain guard violation in ' . $context . '. Use RidePolicy/DriverPolicy instead of inline transport checks.',
+                    'Domain guard violation in '.$context.'. Use RidePolicy/DriverPolicy instead of inline transport checks.',
                     'DOMAIN_GUARD_POLICY_BYPASS'
                 );
             }
@@ -47,14 +47,14 @@ class DomainGuard
      */
     public static function assertControllerUsesPolicies(string $controllerClass, array $methods = []): void
     {
-        if (!class_exists($controllerClass)) {
+        if (! class_exists($controllerClass)) {
             return;
         }
 
         $reflection = new ReflectionClass($controllerClass);
         $file = $reflection->getFileName();
 
-        if (!$file || !is_file($file)) {
+        if (! $file || ! is_file($file)) {
             return;
         }
 
@@ -63,7 +63,7 @@ class DomainGuard
         foreach (self::FORBIDDEN_PATTERNS as $pattern) {
             if (preg_match($pattern, $source) === 1) {
                 throw DomainException::make(
-                    'Controller policy enforcement failed for ' . $controllerClass . '. Use RidePolicy/DriverPolicy instead of inline transport checks.',
+                    'Controller policy enforcement failed for '.$controllerClass.'. Use RidePolicy/DriverPolicy instead of inline transport checks.',
                     'DOMAIN_GUARD_POLICY_BYPASS'
                 );
             }

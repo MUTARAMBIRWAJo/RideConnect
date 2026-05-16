@@ -18,7 +18,7 @@ class LedgerAccount extends Model
 
     protected $casts = [
         'is_active' => 'boolean',
-        'owner_id'  => 'integer',
+        'owner_id' => 'integer',
     ];
 
     public function entries(): HasMany
@@ -31,13 +31,13 @@ class LedgerAccount extends Model
      */
     public function getRunningBalance(): float
     {
-        $debit  = (float) $this->entries()->sum('debit');
+        $debit = (float) $this->entries()->sum('debit');
         $credit = (float) $this->entries()->sum('credit');
 
         return match ($this->type) {
-            'asset', 'expense'       => $debit - $credit,
-            'liability', 'revenue'   => $credit - $debit,
-            default                  => $debit - $credit,
+            'asset', 'expense' => $debit - $credit,
+            'liability', 'revenue' => $credit - $debit,
+            default => $debit - $credit,
         };
     }
 }
