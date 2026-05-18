@@ -27,7 +27,7 @@ class PassengerBusBookingTest extends TestCase
     protected function setUp(): void
     {
         parent::setUp();
-        $this->passenger = MobileUser::factory()->create(['role' => 'passenger']);
+        $this->passenger = MobileUser::factory()->create(['role' => 'PASSENGER']);
         $this->setupCorridor();
     }
 

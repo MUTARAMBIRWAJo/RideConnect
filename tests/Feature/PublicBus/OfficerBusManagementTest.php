@@ -29,8 +29,8 @@ class OfficerBusManagementTest extends TestCase
 
     protected function setupOfficerAndAssets(): void
     {
-        $this->officer = MobileUser::factory()->create(['role' => 'officer']);
-        $this->driver = MobileUser::factory()->create(['role' => 'driver']);
+        $this->officer = MobileUser::factory()->create(['role' => 'OFFICER']);
+        $this->driver = MobileUser::factory()->create(['role' => 'DRIVER']);
         $this->bus = Vehicle::factory()->create([
             'driver_id' => $this->driver->id,
             'type' => 'bus',

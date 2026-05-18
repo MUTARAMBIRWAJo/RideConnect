@@ -104,6 +104,11 @@ Route::prefix('v1')->group(function () {
         Route::post('/login', [ApiAuthController::class, 'login']);
         // Flutter/mobile login (email or phone)
         Route::post('/mobile/login', [ApiAuthController::class, 'mobileLogin']);
+        
+        // Password Reset
+        Route::post('/forgot-password', [ApiAuthController::class, 'forgotPassword']);
+        Route::post('/reset-password', [ApiAuthController::class, 'resetPassword']);
+        Route::get('/verify-reset-token/{token}', [ApiAuthController::class, 'verifyResetToken']);
     });
     // Shared pricing calculator for UI auto pricing
     Route::post('/pricing/calculate', [PricingController::class, 'calculate']);

@@ -34,7 +34,7 @@ class DriverBusOperationTest extends TestCase
 
     protected function setupDriver(): void
     {
-        $this->driver = MobileUser::factory()->create(['role' => 'driver']);
+        $this->driver = MobileUser::factory()->create(['role' => 'DRIVER']);
         $this->bus = Vehicle::factory()->create([
             'driver_id' => $this->driver->id,
             'type' => 'bus',

@@ -11,6 +11,7 @@ use App\Models\User;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Str;
 
 class AuthController extends Controller
 {
@@ -435,6 +436,112 @@ class AuthController extends Controller
                     'created_at' => $user->created_at->toIso8601String(),
                 ],
             ],
+        ]);
+    }
+
+    /**
+     * Forgot password - Send password reset link.
+     * POST /api/v1/auth/forgot-password
+     */
+    public function forgotPassword(Request $request): JsonResponse
+    {
+        $validated = $request->validate([
+            'email' => 'required|email|exists:users,email',
+        ]);
+
+        $user = User::where('email', $validated['email'])->first();
+
+        if (!$user) {
+            return response()->json([
+                'success' => false,
+                'message' => 'User not found',
+            ], 404);
+        }
+
+        // Generate password reset token
+        $token = Str::random(60);
+        
+        // Store token in database (you may want to create a password_resets table)
+        // For now, we'll use a simple approach with the users table
+        $user->update([
+            'password_reset_token' => $token,
+            'password_reset_expires_at' => now()->addHours(1),
+        ]);
+
+        // In production, send email with reset link
+        // For now, return the token for testing
+        return response()->json([
+            'success' => true,
+            'message' => 'Password reset token generated successfully',
+            'data' => [
+                'reset_token' => $token, // In production, remove this and send via email
+                'expires_at' => now()->addHours(1)->toIso8601String(),
+            ],
+        ]);
+    }
+
+    /**
+     * Verify password reset token.
+     * GET /api/v1/auth/verify-reset-token/{token}
+     */
+    public function verifyResetToken(string $token): JsonResponse
+    {
+        $user = User::where('password_reset_token', $token)
+            ->where('password_reset_expires_at', '>', now())
+            ->first();
+
+        if (!$user) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Invalid or expired reset token',
+            ], 400);
+        }
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Token is valid',
+            'data' => [
+                'email' => $user->email,
+                'expires_at' => $user->password_reset_expires_at->toIso8601String(),
+            ],
+        ]);
+    }
+
+    /**
+     * Reset password with token.
+     * POST /api/v1/auth/reset-password
+     */
+    public function resetPassword(Request $request): JsonResponse
+    {
+        $validated = $request->validate([
+            'token' => 'required|string',
+            'password' => 'required|string|min:8|confirmed',
+        ]);
+
+        $user = User::where('password_reset_token', $validated['token'])
+            ->where('password_reset_expires_at', '>', now())
+            ->first();
+
+        if (!$user) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Invalid or expired reset token',
+            ], 400);
+        }
+
+        // Update password
+        $user->update([
+            'password' => Hash::make($validated['password']),
+            'password_reset_token' => null,
+            'password_reset_expires_at' => null,
+        ]);
+
+        // Revoke all existing tokens for security
+        $user->tokens()->delete();
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Password reset successfully. Please login with your new password.',
         ]);
     }
 }
