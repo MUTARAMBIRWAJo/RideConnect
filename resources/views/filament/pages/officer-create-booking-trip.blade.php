@@ -5,8 +5,7 @@
                 <p class="text-xs font-semibold uppercase tracking-wider text-emerald-100">Officer Operations</p>
                 <h1 class="text-2xl font-semibold sm:text-3xl">Create Booking or Trip</h1>
                 <p class="max-w-2xl text-sm text-emerald-100 sm:text-base">
-                    Use the live production forms below. They include validation, searchable dropdowns, map point selection,
-                    interactive map picking, and working create actions.
+                    Use the live production forms below. Booking creates passenger reservations on scheduled rides with fare validation, while Trip creation is limited to BUS public-transport routes and can be seeded from an existing booking.
                 </p>
             </div>
         </x-filament::section>
@@ -14,7 +13,7 @@
         <div class="grid gap-4 md:grid-cols-2">
             <x-filament::section>
                 <x-slot name="heading">Booking Form</x-slot>
-                <x-slot name="description">Create bookings for passengers with ride, fare, and pickup/dropoff map selection.</x-slot>
+                <x-slot name="description">Create bookings for passengers on scheduled rides, with route-based fare validation and pickup/dropoff location selection.</x-slot>
 
                 <div class="space-y-3">
                     <a
@@ -34,7 +33,7 @@
 
             <x-filament::section>
                 <x-slot name="heading">Trip Form</x-slot>
-                <x-slot name="description">Create direct trips with passenger, driver, route, and map-based location inputs.</x-slot>
+                <x-slot name="description">Create direct trips for BUS public transport rides or turn an existing booking into a trip. Driver and fare are auto-filled from ride or booking data.</x-slot>
 
                 <div class="space-y-3">
                     <a

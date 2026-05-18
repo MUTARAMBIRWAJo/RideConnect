@@ -43,8 +43,6 @@ class OfficerBusManagementTest extends TestCase
         $this->bus = Vehicle::factory()->create([
             'driver_id' => $this->driverProfile->id,
             'vehicle_type' => 'van',
-            'plate_number' => 'TXL-002B',
-            'capacity' => 45,
         ]);
 
         $this->corridor = TransportCorridor::create([
