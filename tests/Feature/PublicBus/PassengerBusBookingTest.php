@@ -86,8 +86,6 @@ class PassengerBusBookingTest extends TestCase
         $this->bus = Vehicle::factory()->create([
             'driver_id' => $this->driverProfile->id,
             'vehicle_type' => 'van',
-            'plate_number' => 'BUS-101',
-            'capacity' => 40,
         ]);
 
         $this->assignment = BusRouteAssignment::create([
@@ -286,7 +284,7 @@ class PassengerBusBookingTest extends TestCase
                 'data' => [
                     'ticket_code',
                     'corridor',
-                    'pickup_stop',
+                    'boarding_stop',
                     'destination_stop',
                     'bus',
                     'fare_amount',
