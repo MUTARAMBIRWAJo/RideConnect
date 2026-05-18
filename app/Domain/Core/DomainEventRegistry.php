@@ -3,7 +3,10 @@
 namespace App\Domain\Core;
 
 use App\Events\Domain\BookingCreated;
+use App\Events\Domain\BusPositionUpdated;
+use App\Events\Domain\BusRouteAssignmentCreated;
 use App\Events\Domain\DriverAvailabilityChanged;
+use App\Events\Domain\PassengerBoardingUpdated;
 use App\Events\Domain\PaymentVerified;
 use App\Events\Domain\RideCreated;
 use App\Events\Domain\SeatAvailabilityChanged;
@@ -30,6 +33,9 @@ class DomainEventRegistry
             TripStarted::class => [BroadcastTripEvents::class],
             TripCompleted::class => [BroadcastTripEvents::class],
             DriverAvailabilityChanged::class => [BroadcastPublicTransportEvents::class],
+            BusRouteAssignmentCreated::class => [BroadcastPublicTransportEvents::class],
+            BusPositionUpdated::class => [BroadcastPublicTransportEvents::class],
+            PassengerBoardingUpdated::class => [BroadcastPublicTransportEvents::class],
             SeatAvailabilityChanged::class => [BroadcastPublicTransportEvents::class],
             TripAssignmentCreated::class => [BroadcastPublicTransportEvents::class],
             TripAssignmentRejected::class => [BroadcastPublicTransportEvents::class],

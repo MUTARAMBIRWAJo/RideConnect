@@ -138,6 +138,11 @@ class Trip extends Model
         return $this->hasMany(SeatReservation::class);
     }
 
+    public function publicBusBoarding()
+    {
+        return $this->hasOne(PassengerRouteBoarding::class, 'trip_id');
+    }
+
     public function statusEvents()
     {
         return $this->hasMany(TripStatusEvent::class);

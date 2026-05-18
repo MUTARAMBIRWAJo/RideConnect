@@ -11,7 +11,7 @@ class TransportTicketService
 {
     public function issueForTrip(Trip $trip): TransportTicket
     {
-        $trip->loadMissing(['booking', 'ride', 'payment']);
+        $trip->loadMissing(['booking', 'ride', 'payment', 'publicBusBoarding.corridor', 'publicBusBoarding.boardingStop', 'publicBusBoarding.destinationStop', 'publicBusBoarding.busRouteAssignment.bus.driver.user']);
 
         $ticket = TransportTicket::query()->firstOrNew(['trip_id' => $trip->id]);
         if ($ticket->exists && $ticket->status !== TransportTicket::STATUS_CANCELLED) {
@@ -64,6 +64,19 @@ class TransportTicketService
             'payment_status' => $trip->payment_status ?? 'pending',
             'validation_timestamp' => now()->toIso8601String(),
         ];
+
+        if ($boarding = $trip->publicBusBoarding) {
+            $payload['bus'] = [
+                'corridor_id' => $boarding->corridor_id,
+                'corridor_code' => $boarding->corridor?->corridor_code,
+                'boarding_stop_id' => $boarding->boarding_stop_id,
+                'boarding_stop' => $boarding->boardingStop?->stop_name,
+                'destination_stop_id' => $boarding->destination_stop_id,
+                'destination_stop' => $boarding->destinationStop?->stop_name,
+                'bus_route_assignment_id' => $boarding->bus_route_assignment_id,
+                'seats_reserved' => $boarding->seats_reserved,
+            ];
+        }
 
         $payload['signature'] = hash_hmac('sha256', json_encode($payload), (string) config('app.key'));
 

@@ -15,6 +15,7 @@ use App\Http\Controllers\Api\AuthController as ApiAuthController;
 use App\Http\Controllers\Api\BookingController;
 use App\Http\Controllers\Api\DeviceTokenController;
 use App\Http\Controllers\Api\DriverController;
+use App\Http\Controllers\Api\DriverPublicBusController;
 use App\Http\Controllers\Api\DriverPublicTransportController;
 use App\Http\Controllers\API\DriverLocationController;
 use App\Http\Controllers\Api\DriverTrackingController;
@@ -25,8 +26,10 @@ use App\Http\Controllers\Api\MlController;
 use App\Http\Controllers\Api\MobileDriverController;
 use App\Http\Controllers\Api\MobileNotificationController;
 use App\Http\Controllers\Api\MobilePassengerController;
+use App\Http\Controllers\Api\OfficerPublicBusController;
 use App\Http\Controllers\Api\OfficerPublicTransportController;
 use App\Http\Controllers\Api\PassengerController;
+use App\Http\Controllers\Api\PassengerPublicBusController;
 use App\Http\Controllers\Api\PaymentController;
 use App\Http\Controllers\Api\PricingController;
 use App\Http\Controllers\Api\PublicTransportController;
@@ -132,6 +135,14 @@ Route::prefix('v1')->group(function () {
             Route::get('/profile', [PassengerController::class, 'profile']);
             Route::put('/profile', [PassengerController::class, 'updateProfile']);
             Route::get('/stats', [PassengerController::class, 'stats']);
+            Route::prefix('public-bus')->group(function () {
+                Route::get('/corridors', [PassengerPublicBusController::class, 'corridors']);
+                Route::get('/corridors/{corridor}/stops', [PassengerPublicBusController::class, 'stops']);
+                Route::get('/corridors/{corridor}/active-buses', [PassengerPublicBusController::class, 'activeBuses']);
+                Route::post('/book-seat', [PassengerPublicBusController::class, 'bookSeat']);
+                Route::get('/trips/current', [PassengerPublicBusController::class, 'currentTrip']);
+                Route::get('/tickets/{ticket}', [PassengerPublicBusController::class, 'ticket']);
+            });
             Route::get('/public-transport/corridors', [PassengerController::class, 'corridors']);
             Route::get('/public-transport/routes', [PassengerController::class, 'routes']);
             Route::get('/public-transport/available', [PublicTransportController::class, 'available']);
@@ -180,6 +191,12 @@ Route::prefix('v1')->group(function () {
             Route::get('/profile', [DriverController::class, 'profile']);
             Route::put('/profile', [DriverController::class, 'updateProfile']);
             Route::get('/stats', [DriverController::class, 'stats']);
+            Route::prefix('public-bus')->group(function () {
+                Route::post('/location', [DriverPublicBusController::class, 'location']);
+                Route::post('/arrived-stop', [DriverPublicBusController::class, 'arrivedStop']);
+                Route::post('/passenger-boarded', [DriverPublicBusController::class, 'passengerBoarded']);
+                Route::post('/passenger-completed', [DriverPublicBusController::class, 'passengerCompleted']);
+            });
             Route::post('/status', [DriverPublicTransportController::class, 'updateStatus']);
             Route::get('/assignment/current', [DriverPublicTransportController::class, 'currentAssignment']);
             Route::post('/assignments/{attempt}/accept', [DriverPublicTransportController::class, 'accept'])->whereNumber('attempt');
@@ -240,6 +257,15 @@ Route::prefix('v1')->group(function () {
             // Documents
             Route::post('/documents', [RiderController::class, 'uploadDocument']);
             Route::get('/documents', [RiderController::class, 'listDocuments']);
+        });
+
+        Route::prefix('officer')->group(function () {
+            Route::prefix('public-bus')->group(function () {
+                Route::post('/corridors', [OfficerPublicBusController::class, 'corridors']);
+                Route::post('/stops', [OfficerPublicBusController::class, 'stops']);
+                Route::post('/assign-driver', [OfficerPublicBusController::class, 'assignDriver']);
+                Route::get('/live-monitoring', [OfficerPublicBusController::class, 'liveMonitoring']);
+            });
         });
 
         /* ===========================
