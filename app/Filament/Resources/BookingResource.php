@@ -131,7 +131,7 @@ class BookingResource extends Resource
                             ->all();
                     })
                     ->helperText('Only SCHEDULED rides can be booked. Trip requests go through the Trips panel.')
-                    ->rules(function (string $attribute, mixed $value, \Closure $fail) use ($get): void {
+                    ->rules(function (string $attribute, mixed $value, \Closure $fail, callable $get): void {
                         if (! $value) {
                             return;
                         }
@@ -215,10 +215,10 @@ class BookingResource extends Resource
 
                         return 'No RURA tariff found for this route.';
                     })
-                    ->validationMessages([
-                        'rura_compliance' => 'Entered fare does not match RURA legal tariff for this route.',
-                    ])
-                    ->rules(function (string $attribute, mixed $value, \Closure $fail) use ($get): void {
+                            ->validationMessages([
+                                'rura_compliance' => 'Entered fare does not match RURA legal tariff for this route.',
+                            ])
+                            ->rules(function (string $attribute, mixed $value, \Closure $fail, callable $get): void {
                         // Validate against RURA tariff
                         $rideId = $get('ride_id');
                         $seats = $get('seats_booked') ?: 1;

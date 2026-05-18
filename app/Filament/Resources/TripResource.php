@@ -20,6 +20,8 @@ use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Builder as EloquentBuilder;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\SoftDeletingScope;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Str;
 
 class TripResource extends Resource
 {
@@ -67,7 +69,8 @@ class TripResource extends Resource
                                     ->all();
                             })
                             ->helperText('Only BUS public-transport rides are shown. Private transport (CAR/MOTO) cannot create trips directly.')
-                            ->rules(function (string $attribute, mixed $value, Closure $fail) use ($get): void {
+                            ->rules(
+                                function (string $attribute, mixed $value, \Closure $fail): void {
                                 if (! $value) {
                                     return;
                                 }
@@ -87,7 +90,7 @@ class TripResource extends Resource
                                         . 'CAR and MOTORCYCLE rides must use the booking / request flow.'
                                     );
                                 }
-                            })
+                                })
                             ->afterStateUpdated(function ($state, callable $set, callable $get): void {
                                 if (! $state) {
                                     return;
