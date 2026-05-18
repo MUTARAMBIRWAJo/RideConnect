@@ -9,9 +9,11 @@ use App\Exceptions\DomainException;
 use App\Http\Controllers\Controller;
 use App\Models\Booking;
 use App\Models\Ride;
+use App\Models\SeatReservation;
 use App\Services\MobileNotificationService;
 use App\Services\RuraTariffService;
 use App\Services\RuraZoneService;
+use App\Services\SeatReservationService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
@@ -24,6 +26,7 @@ class BookingController extends Controller
         private readonly MobileNotificationService $mobileNotificationService,
         private readonly RuraZoneService $ruraZoneService,
         private readonly RuraTariffService $ruraTariffService,
+        private readonly SeatReservationService $seatReservationService,
     ) {}
 
     /**
@@ -195,11 +198,9 @@ class BookingController extends Controller
         ]);
 
         try {
-            // Atomic reservation with retry-safe transaction and row lock
-            $ride = DB::transaction(function () use ($validated) {
+            $booking = DB::transaction(function () use ($validated, $user): Booking {
                 $ride = Ride::query()->whereKey($validated['ride_id'])->lockForUpdate()->firstOrFail();
 
-                // Enforce transport rules first
                 RidePolicy::assertTransportRules($ride);
                 RidePolicy::assertBookingAllowed($ride);
 
@@ -218,9 +219,45 @@ class BookingController extends Controller
                 }
 
                 RidePolicy::assertSeatsAvailable($ride, (int) $validated['seats_booked']);
+
+                $originZone = $this->ruraZoneService->coordsToZone($ride->origin_lat, $ride->origin_lng);
+                $destZone = $this->ruraZoneService->coordsToZone($ride->destination_lat, $ride->destination_lng);
+                $tariff = $this->ruraTariffService->lookupTariff(
+                    null,
+                    $originZone.' Bus Park',
+                    $destZone.' Bus Park',
+                    null
+                );
+                $totalPrice = ($tariff['fare_rwf'] ?? $ride->price_per_seat) * $validated['seats_booked'];
+
                 $ride->decrement('available_seats', (int) $validated['seats_booked']);
 
-                return $ride->fresh();
+                $booking = Booking::query()->create([
+                    'user_id' => $user->id,
+                    'ride_id' => $ride->id,
+                    'seats_booked' => $validated['seats_booked'],
+                    'total_price' => $totalPrice,
+                    'currency' => $ride->currency,
+                    'status' => 'PENDING',
+                    'pickup_address' => $validated['pickup_address'],
+                    'pickup_lat' => $validated['pickup_lat'],
+                    'pickup_lng' => $validated['pickup_lng'],
+                    'dropoff_address' => $validated['dropoff_address'],
+                    'dropoff_lat' => $validated['dropoff_lat'],
+                    'dropoff_lng' => $validated['dropoff_lng'],
+                    'special_requests' => $validated['special_requests'] ?? null,
+                ]);
+
+                SeatReservation::query()->create([
+                    'ride_id' => $ride->id,
+                    'booking_id' => $booking->id,
+                    'passenger_id' => $user->mobile_user_id ?: null,
+                    'seats' => (int) $validated['seats_booked'],
+                    'status' => 'reserved',
+                    'reserved_at' => now(),
+                ]);
+
+                return $booking->load('ride');
             }, 2);
         } catch (DomainException $e) {
             return response()->json([
@@ -229,41 +266,6 @@ class BookingController extends Controller
                 'error_code' => $e->getErrorCode(),
             ], 422);
         }
-
-        // Detect RURA zones for origin/destination
-        $originZone = $this->ruraZoneService->coordsToZone($ride->origin_lat, $ride->origin_lng);
-        $destZone = $this->ruraZoneService->coordsToZone($ride->destination_lat, $ride->destination_lng);
-
-        // Try to lookup legal RURA fare
-        $tariff = $this->ruraTariffService->lookupTariff(
-            null,
-            $originZone.' Bus Park',
-            $destZone.' Bus Park',
-            null
-        );
-        if ($tariff && isset($tariff['fare_rwf'])) {
-            $totalPrice = $tariff['fare_rwf'] * $validated['seats_booked'];
-        } else {
-            // Fallback: use ride price
-            $totalPrice = $ride->price_per_seat * $validated['seats_booked'];
-        }
-
-        // Create booking (only for scheduled rides)
-        $booking = Booking::create([
-            'user_id' => $user->id,
-            'ride_id' => $ride->id,
-            'seats_booked' => $validated['seats_booked'],
-            'total_price' => $totalPrice,
-            'currency' => $ride->currency,
-            'status' => 'PENDING',
-            'pickup_address' => $validated['pickup_address'],
-            'pickup_lat' => $validated['pickup_lat'],
-            'pickup_lng' => $validated['pickup_lng'],
-            'dropoff_address' => $validated['dropoff_address'],
-            'dropoff_lat' => $validated['dropoff_lat'],
-            'dropoff_lng' => $validated['dropoff_lng'],
-            'special_requests' => $validated['special_requests'] ?? null,
-        ]);
 
         event(new BookingCreated((int) $booking->id, (int) $booking->ride_id, (int) $booking->user_id));
 
@@ -372,15 +374,15 @@ class BookingController extends Controller
             'cancellation_reason' => 'nullable|string',
         ]);
 
-        $booking->update([
-            'status' => 'CANCELLED',
-            'cancelled_at' => now(),
-            'cancellation_reason' => $request->cancellation_reason,
-        ]);
+        DB::transaction(function () use ($booking, $request): void {
+            $booking->update([
+                'status' => 'CANCELLED',
+                'cancelled_at' => now(),
+                'cancellation_reason' => $request->cancellation_reason,
+            ]);
 
-        // Restore available seats on the ride
-        $ride = $booking->ride;
-        $ride->increment('available_seats', $booking->seats_booked);
+            $this->seatReservationService->releaseForBooking((int) $booking->id);
+        }, 2);
 
         $booking->loadMissing('ride.driver');
         $actor = $isDriver ? 'driver' : 'passenger';
@@ -471,9 +473,6 @@ class BookingController extends Controller
             'status' => 'CONFIRMED',
             'confirmed_at' => now(),
         ]);
-
-        // Reduce available seats
-        $booking->ride->decrement('available_seats', $booking->seats_booked);
 
         $this->mobileNotificationService->sendBookingConfirmedToPassenger($booking);
 

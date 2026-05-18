@@ -19,6 +19,7 @@ class Vehicle extends Model
         'seats',
         'air_conditioning',
         'is_active',
+        'maintenance_status',
         'photo_url',
         'verified_at',
     ];

@@ -23,6 +23,7 @@ class Trip extends Model
         'ride_id',
         'passenger_id',
         'driver_id',
+        'transport_type',
         'route_state_id',
         'weather_condition_id',
         'pickup_location',
@@ -43,12 +44,18 @@ class Trip extends Model
         'actual_distance',
         'actual_fare',
         'status',
+        'payment_status',
+        'assignment_status',
+        'current_assignment_attempt_id',
         'requested_at',
         'accepted_at',
+        'pickup_verified_at',
         'rejected_at',
         'rejection_reason',
         'started_at',
         'completed_at',
+        'admin_completed_by',
+        'admin_completion_reason',
         'paid_to_driver_at',
         'ranker_score',
         'ranker_version',
@@ -71,6 +78,7 @@ class Trip extends Model
         'rejected_at' => 'datetime',
         'started_at' => 'datetime',
         'completed_at' => 'datetime',
+        'pickup_verified_at' => 'datetime',
         'paid_to_driver_at' => 'datetime',
         'ranker_score' => 'decimal:4',
     ];
@@ -103,6 +111,36 @@ class Trip extends Model
     public function weatherCondition()
     {
         return $this->belongsTo(WeatherCondition::class, 'weather_condition_id');
+    }
+
+    public function payment()
+    {
+        return $this->hasOne(Payment::class);
+    }
+
+    public function transportTicket()
+    {
+        return $this->hasOne(TransportTicket::class);
+    }
+
+    public function assignmentAttempts()
+    {
+        return $this->hasMany(TripAssignmentAttempt::class);
+    }
+
+    public function currentAssignmentAttempt()
+    {
+        return $this->belongsTo(TripAssignmentAttempt::class, 'current_assignment_attempt_id');
+    }
+
+    public function seatReservations()
+    {
+        return $this->hasMany(SeatReservation::class);
+    }
+
+    public function statusEvents()
+    {
+        return $this->hasMany(TripStatusEvent::class);
     }
 
     public function setStatusAttribute($value): void

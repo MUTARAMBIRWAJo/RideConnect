@@ -62,9 +62,19 @@ class Booking extends Model
         return $this->hasOne(Payment::class);
     }
 
+    public function trips()
+    {
+        return $this->hasMany(Trip::class);
+    }
+
     public function review()
     {
         return $this->hasOne(Review::class);
+    }
+
+    public function seatReservations()
+    {
+        return $this->hasMany(SeatReservation::class);
     }
 
     public function setStatusAttribute($value): void

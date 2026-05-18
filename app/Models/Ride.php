@@ -141,6 +141,16 @@ class Ride extends Model
         return $this->hasMany(Review::class);
     }
 
+    public function seatReservations()
+    {
+        return $this->hasMany(SeatReservation::class);
+    }
+
+    public function transportTickets()
+    {
+        return $this->hasMany(TransportTicket::class);
+    }
+
     // Transport classification helper methods
     public function isScheduled(): bool
     {

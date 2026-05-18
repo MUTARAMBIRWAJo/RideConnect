@@ -14,6 +14,7 @@ use App\Models\Trip;
 use App\Services\Location\DriverLocationService;
 use App\Services\Location\TripLocationService;
 use App\Services\MobileNotificationService;
+use App\Services\TripCompletionService;
 use App\Services\TransportMappingService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
@@ -32,6 +33,7 @@ class MobileDriverController extends Controller
         private readonly DriverLocationService $driverLocationService,
         private readonly TransportMappingService $transportMappingService,
         private readonly MobileNotificationService $mobileNotificationService,
+        private readonly TripCompletionService $tripCompletionService,
     ) {}
 
     /**
@@ -235,17 +237,29 @@ class MobileDriverController extends Controller
         // Step 5: Atomically assign driver and transition state
         // Use database transaction to prevent race conditions
         try {
-            $trip = Trip::query()
-                ->where('id', $id)
-                ->where('status', 'PENDING')
-                ->whereNull('driver_id')
-                ->lockForUpdate()  // Lock row for atomic update
-                ->firstOrFail();
+            $trip = DB::transaction(function () use ($id, $driver): Trip {
+                $trip = Trip::query()
+                    ->where('id', $id)
+                    ->where('status', 'PENDING')
+                    ->whereNull('driver_id')
+                    ->lockForUpdate()
+                    ->firstOrFail();
 
-            $trip->driver_id = $driver->id;
-            $trip->status = TripStateMachine::ACCEPTED;
-            $trip->accepted_at = now();
-            $trip->save();
+                DriverPolicy::assertCanAcceptTrip($driver, $trip);
+                TripStateMachine::assertTransitionForTrip($trip, TripStateMachine::ACCEPTED);
+
+                $trip->driver_id = $driver->id;
+                $trip->status = TripStateMachine::ACCEPTED;
+                $trip->accepted_at = now();
+                $trip->assignment_status = 'accepted';
+                $trip->save();
+
+                if (($trip->transport_type ?: $trip->ride?->transport_type) === 'MOTORCYCLE') {
+                    $driver->forceFill(['availability_status' => 'busy'])->save();
+                }
+
+                return $trip->fresh();
+            }, 2);
 
             event(new TripMatched((int) $trip->id, (int) $driver->id));
 
@@ -529,11 +543,7 @@ class MobileDriverController extends Controller
             ->firstOrFail();
 
         try {
-            TripStateMachine::assertTransitionForTrip($trip, TripStateMachine::COMPLETED);
-            $trip->status = TripStateMachine::COMPLETED;
-            $trip->save();
-
-            event(new TripCompleted($trip->id));
+            $trip = $this->tripCompletionService->complete((int) $trip->id, (int) $user->id);
 
         } catch (DomainException $e) {
             return response()->json([

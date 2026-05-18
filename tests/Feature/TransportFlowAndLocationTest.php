@@ -12,6 +12,7 @@ use App\Models\User;
 use App\Models\Vehicle;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Route;
+use App\Debug\DumpHelper;
 use Tests\TestCase;
 
 /**
@@ -79,26 +80,34 @@ class TransportFlowAndLocationTest extends TestCase
         $ch = $this->freshChains();
 
         $ride = Ride::create([
-            'driver_id'       => $ch['driver']->id,
-            'vehicle_id'      => $ch['vehicle']->id,
-            'transport_type'  => $transportType,
-            'travel_mode'     => $travelMode,
-            // Required so Ride::saving / validateTransportRules doesn't throw
-            // InvalidArgumentException at the model layer.
-            'route_id'        => $travelMode === Ride::MODE_SCHEDULED ? 1 : null,
-            'available_seats' => $travelMode === Ride::MODE_SCHEDULED ? 4 : 1,
-            'origin_address'  => '100 KM Ave',
-            'destination_address' => 'Airport Road',
-            'departure_time'  => now()->addDay(),
+            'driver_id'            => $ch['driver']->id,
+            'vehicle_id'           => $ch['vehicle']->id,
+            'transport_type'       => $transportType,
+            'travel_mode'          => $travelMode,
+            'ride_type'            => Ride::TYPE_LOCAL,
+            'route_id'             => $travelMode === Ride::MODE_SCHEDULED ? 1 : null,
+            'available_seats'      => $travelMode === Ride::MODE_SCHEDULED ? 4 : 1,
+            'origin_address'       => '100 KM Ave',
+            'origin_lat'           => -1.9403,
+            'origin_lng'           => 29.8739,
+            'destination_address'  => 'Airport Road',
+            'destination_lat'      => -1.9500,
+            'destination_lng'      => 30.0588,
+            'departure_time'       => now()->addDay(),
+            'price_per_seat'       => 1000,
+            'currency'             => 'RWF',
+            'status'               => 'scheduled',
         ]);
 
         return array_merge([
             'ride_id'          => $ride->id,
             'passenger_id'     => $ch['passengerId'],
             'pickup_location'  => '100 KM Ave',
+            'pickup_place_name'  => '100 KM Ave',
             'pickup_lat'       => -1.9403,
             'pickup_lng'       => 29.8739,
             'dropoff_location' => 'Airport Road',
+            'dropoff_place_name' => 'Airport Road',
             'dropoff_lat'      => -1.9500,
             'dropoff_lng'      => 30.0588,
             'fare'             => 5000,
@@ -117,14 +126,19 @@ class TransportFlowAndLocationTest extends TestCase
             'vehicle_id'           => $ch['vehicle']->id,
             'transport_type'       => $transportType,
             'travel_mode'          => Ride::MODE_SCHEDULED,
+            'ride_type'            => Ride::TYPE_LOCAL,
             'available_seats'      => 4,
             'route_id'             => 1,
             'origin_address'       => 'Central Bus Park',
-            'destination_address'  => 'Bugesera Airport',
             'origin_lat'           => -1.9403,
             'origin_lng'           => 29.8739,
+            'destination_address'  => 'Bugesera Airport',
             'destination_lat'      => -2.1400,
             'destination_lng'      => 30.0820,
+            'departure_time'       => now()->addDay(),
+            'price_per_seat'       => 1000,
+            'currency'             => 'RWF',
+            'status'               => 'scheduled',
         ]);
 
         return array_merge([
@@ -332,7 +346,7 @@ class TransportFlowAndLocationTest extends TestCase
         config(['laramaps.api_key' => 'test-coverage-key']);
 
         $response = $this->getJson(
-            '/locations/search?q=Nyabugogo&country=rw'
+            '/api/v1/locations/search?q=Nyabugogo&country=rw'
         );
 
         // A missing-API-key Graceful response still returns 200 with emtpy results

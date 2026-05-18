@@ -3,10 +3,18 @@
 namespace App\Domain\Core;
 
 use App\Events\Domain\BookingCreated;
+use App\Events\Domain\DriverAvailabilityChanged;
+use App\Events\Domain\PaymentVerified;
 use App\Events\Domain\RideCreated;
+use App\Events\Domain\SeatAvailabilityChanged;
+use App\Events\Domain\TicketIssued;
+use App\Events\Domain\TripAssignmentCreated;
+use App\Events\Domain\TripAssignmentRejected;
 use App\Events\Domain\TripCompleted;
 use App\Events\Domain\TripMatched;
+use App\Events\Domain\TripReassigned;
 use App\Events\Domain\TripStarted;
+use App\Listeners\BroadcastPublicTransportEvents;
 use App\Listeners\BroadcastTripEvents;
 use App\Listeners\Domain\BookingCreatedListener;
 use App\Listeners\Domain\RideCreatedListener;
@@ -21,6 +29,13 @@ class DomainEventRegistry
             TripMatched::class => [BroadcastTripEvents::class],
             TripStarted::class => [BroadcastTripEvents::class],
             TripCompleted::class => [BroadcastTripEvents::class],
+            DriverAvailabilityChanged::class => [BroadcastPublicTransportEvents::class],
+            SeatAvailabilityChanged::class => [BroadcastPublicTransportEvents::class],
+            TripAssignmentCreated::class => [BroadcastPublicTransportEvents::class],
+            TripAssignmentRejected::class => [BroadcastPublicTransportEvents::class],
+            TripReassigned::class => [BroadcastPublicTransportEvents::class],
+            PaymentVerified::class => [BroadcastPublicTransportEvents::class],
+            TicketIssued::class => [BroadcastPublicTransportEvents::class],
         ];
     }
 }

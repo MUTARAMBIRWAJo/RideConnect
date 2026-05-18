@@ -8,6 +8,7 @@ use App\Events\Domain\TripStarted;
 use App\Models\Trip;
 use App\Services\Realtime\RealtimeGateway;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Str;
 use Throwable;
 
 class BroadcastTripEvents
@@ -50,10 +51,10 @@ class BroadcastTripEvents
         $this->realtimeGateway->broadcast(
             "driver:{$event->driverId}",
             'trip.request',
-            [
+            $this->payload([
                 'trip_id' => $event->tripId,
                 'pickup' => $pickup,
-            ]
+            ], $event->tripId)
         );
     }
 
@@ -62,9 +63,9 @@ class BroadcastTripEvents
         $this->realtimeGateway->broadcast(
             "trip:{$event->tripId}",
             'trip.started',
-            [
+            $this->payload([
                 'trip_id' => $event->tripId,
-            ]
+            ], $event->tripId)
         );
     }
 
@@ -75,19 +76,29 @@ class BroadcastTripEvents
         $this->realtimeGateway->broadcast(
             "trip:{$event->tripId}",
             'trip.completed',
-            [
+            $this->payload([
                 'trip_id' => $event->tripId,
-            ]
+            ], $event->tripId)
         );
 
         if ($trip?->passenger_id) {
             $this->realtimeGateway->broadcast(
                 "passenger:{$trip->passenger_id}",
                 'trip.completed',
-                [
+                $this->payload([
                     'trip_id' => $event->tripId,
-                ]
+                ], $event->tripId)
             );
         }
+    }
+
+    private function payload(array $data, int $tripId): array
+    {
+        return array_merge([
+            'event_id' => (string) Str::uuid(),
+            'trip_id' => $tripId,
+            'updated_at' => now()->toIso8601String(),
+            'version' => now()->getTimestampMs(),
+        ], $data);
     }
 }

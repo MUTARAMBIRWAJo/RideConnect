@@ -15,6 +15,7 @@ use App\Http\Controllers\Api\AuthController as ApiAuthController;
 use App\Http\Controllers\Api\BookingController;
 use App\Http\Controllers\Api\DeviceTokenController;
 use App\Http\Controllers\Api\DriverController;
+use App\Http\Controllers\Api\DriverPublicTransportController;
 use App\Http\Controllers\API\DriverLocationController;
 use App\Http\Controllers\Api\DriverTrackingController;
 use App\Http\Controllers\Api\Finance\ExportController;
@@ -24,9 +25,11 @@ use App\Http\Controllers\Api\MlController;
 use App\Http\Controllers\Api\MobileDriverController;
 use App\Http\Controllers\Api\MobileNotificationController;
 use App\Http\Controllers\Api\MobilePassengerController;
+use App\Http\Controllers\Api\OfficerPublicTransportController;
 use App\Http\Controllers\Api\PassengerController;
 use App\Http\Controllers\Api\PaymentController;
 use App\Http\Controllers\Api\PricingController;
+use App\Http\Controllers\Api\PublicTransportController;
 use App\Http\Controllers\Api\RideController;
 use App\Http\Controllers\Api\RiderController;
 use App\Http\Controllers\Api\TicketController;
@@ -131,6 +134,11 @@ Route::prefix('v1')->group(function () {
             Route::get('/stats', [PassengerController::class, 'stats']);
             Route::get('/public-transport/corridors', [PassengerController::class, 'corridors']);
             Route::get('/public-transport/routes', [PassengerController::class, 'routes']);
+            Route::get('/public-transport/available', [PublicTransportController::class, 'available']);
+            Route::post('/trip-requests', [PublicTransportController::class, 'createTripRequest']);
+            Route::get('/trips/current', [PublicTransportController::class, 'currentTrip']);
+            Route::get('/trips/{trip}/ticket', [PublicTransportController::class, 'ticket'])->whereNumber('trip');
+            Route::post('/trips/{trip}/feedback', [PublicTransportController::class, 'feedback'])->whereNumber('trip');
 
             // Rides - Discovery + Booking
             Route::get('/rides/available', [RideController::class, 'index']);
@@ -172,6 +180,13 @@ Route::prefix('v1')->group(function () {
             Route::get('/profile', [DriverController::class, 'profile']);
             Route::put('/profile', [DriverController::class, 'updateProfile']);
             Route::get('/stats', [DriverController::class, 'stats']);
+            Route::post('/status', [DriverPublicTransportController::class, 'updateStatus']);
+            Route::get('/assignment/current', [DriverPublicTransportController::class, 'currentAssignment']);
+            Route::post('/assignments/{attempt}/accept', [DriverPublicTransportController::class, 'accept'])->whereNumber('attempt');
+            Route::post('/assignments/{attempt}/reject', [DriverPublicTransportController::class, 'reject'])->whereNumber('attempt');
+            Route::post('/trips/{trip}/pickup-verify', [DriverPublicTransportController::class, 'pickupVerify'])->whereNumber('trip');
+            Route::post('/trips/{trip}/start', [DriverPublicTransportController::class, 'start'])->whereNumber('trip');
+            Route::post('/trips/{trip}/complete', [DriverPublicTransportController::class, 'complete'])->whereNumber('trip');
 
             // Rides managed by the driver
             Route::get('/rides', [RideController::class, 'myRides']);
@@ -419,6 +434,13 @@ Route::prefix('v1')->group(function () {
             // Passenger management
             Route::get('/passengers', [\App\Http\Controllers\Api\OfficerBookingTripController::class, 'getPassengers'])->name('passengers');
             Route::post('/passengers', [\App\Http\Controllers\Api\OfficerBookingTripController::class, 'createPassenger'])->name('passengers.create');
+
+            // Public transport operations
+            Route::get('/public-transport/available', [OfficerPublicTransportController::class, 'available'])->name('public-transport.available');
+            Route::post('/assisted-bookings', [OfficerPublicTransportController::class, 'assistedBooking'])->name('assisted-bookings');
+            Route::post('/trips/{trip}/reassign', [OfficerPublicTransportController::class, 'reassign'])->whereNumber('trip')->name('trips.reassign');
+            Route::post('/payments/{payment}/verify', [OfficerPublicTransportController::class, 'verifyPayment'])->whereNumber('payment')->name('payments.verify');
+            Route::get('/seat-monitoring', [OfficerPublicTransportController::class, 'seatMonitoring'])->name('seat-monitoring');
 
             // Location & Corridor search
             Route::get('/corridors', [\App\Http\Controllers\Api\OfficerBookingTripController::class, 'getCorridors'])->name('corridors');

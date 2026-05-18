@@ -55,4 +55,9 @@ class Payment extends Model
     {
         return $this->belongsTo(User::class);
     }
+
+    public function verifications()
+    {
+        return $this->hasMany(PaymentVerification::class);
+    }
 }

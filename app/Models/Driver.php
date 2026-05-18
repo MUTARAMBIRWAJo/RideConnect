@@ -21,6 +21,7 @@ class Driver extends Model
         'current_latitude',
         'current_longitude',
         'last_online_at',
+        'online_since',
         'total_rides',
         'rating',
         'rating_count',
@@ -35,6 +36,7 @@ class Driver extends Model
         'current_longitude' => 'decimal:7',
         'last_online_at' => 'datetime',
         'approved_at' => 'datetime',
+        'online_since' => 'datetime',
         'total_rides' => 'integer',
         'rating_count' => 'integer',
         'is_test' => 'boolean',
@@ -68,6 +70,11 @@ class Driver extends Model
     public function commissions()
     {
         return $this->hasMany(PlatformCommission::class);
+    }
+
+    public function availabilitySnapshots()
+    {
+        return $this->hasMany(DriverAvailabilitySnapshot::class);
     }
 
     protected static function booted(): void

@@ -19,6 +19,7 @@ use App\Services\AITrainingDataLogger;
 use App\Services\DriverAssignmentService;
 use App\Services\Location\TripLocationService;
 use App\Services\MobileNotificationService;
+use App\Services\TripCompletionService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Validator;
@@ -68,6 +69,7 @@ class TripController extends Controller
         private readonly MobileNotificationService $mobileNotificationService,
         private readonly TripLocationService $tripLocationService,
         private readonly DriverAssignmentService $driverAssignmentService,
+        private readonly TripCompletionService $tripCompletionService,
     ) {}
 
     /**
@@ -589,7 +591,12 @@ class TripController extends Controller
         }
 
         try {
-            TripStateMachine::assertTransitionForTrip($trip, TripStateMachine::COMPLETED);
+            $trip = $this->tripCompletionService->complete(
+                (int) $trip->id,
+                (int) $user->id,
+                $user->role->isSuperAdmin(),
+                $user->role->isSuperAdmin() ? 'admin override from API' : null
+            );
         } catch (DomainException $e) {
             return response()->json([
                 'success' => false,
@@ -598,14 +605,7 @@ class TripController extends Controller
             ], 422);
         }
 
-        $trip->update([
-            'status' => 'COMPLETED',
-            'completed_at' => now(),
-        ]);
-
-        event(new TripCompleted((int) $trip->id));
-
-        $this->mobileNotificationService->sendTripCompletedToPassenger($trip->fresh());
+        $this->mobileNotificationService->sendTripCompletedToPassenger($trip);
 
         app(AITrainingDataLogger::class)->logTripEvent($trip->fresh(), 'ride_completed');
         app(AITrainingDataLogger::class)->syncRideSnapshot($trip->fresh());
