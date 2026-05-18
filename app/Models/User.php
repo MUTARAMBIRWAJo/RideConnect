@@ -38,6 +38,8 @@ class User extends Authenticatable implements FilamentUser
         'approved_at',
         'google_id',
         'two_factor_enabled',
+        'password_reset_token',
+        'password_reset_expires_at',
         'two_factor_secret',
         'two_factor_confirmed_at',
         'two_factor_backup_codes',

@@ -3,9 +3,10 @@
 namespace Tests\Feature\PublicBus;
 
 use App\Models\BusRouteAssignment;
-use App\Models\MobileUser;
+use App\Models\CorridorStop;
+use App\Models\Driver;
 use App\Models\TransportCorridor;
-use App\Models\TransportStop;
+use App\Models\User;
 use App\Models\Vehicle;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Foundation\Testing\WithFaker;
@@ -16,8 +17,8 @@ class OfficerBusManagementTest extends TestCase
 {
     use RefreshDatabase, WithFaker;
 
-    protected MobileUser $officer;
-    protected MobileUser $driver;
+    protected User $officer;
+    protected Driver $driverProfile;
     protected Vehicle $bus;
     protected TransportCorridor $corridor;
 
@@ -29,18 +30,29 @@ class OfficerBusManagementTest extends TestCase
 
     protected function setupOfficerAndAssets(): void
     {
-        $this->officer = MobileUser::factory()->create(['role' => 'OFFICER']);
-        $this->driver = MobileUser::factory()->create(['role' => 'DRIVER']);
+        $this->officer = User::factory()->create([
+            'role' => 'OFFICER',
+            'is_approved' => true,
+        ]);
+
+        $this->driverProfile = Driver::factory()->create([
+            'status' => 'approved',
+            'availability_status' => 'available',
+        ]);
+
         $this->bus = Vehicle::factory()->create([
-            'driver_id' => $this->driver->id,
-            'type' => 'bus',
+            'driver_id' => $this->driverProfile->id,
+            'vehicle_type' => 'van',
             'plate_number' => 'TXL-002B',
             'capacity' => 45,
         ]);
 
-        $this->corridor = TransportCorridor::factory()->create([
-            'name' => 'Route 1: Downtown-Airport',
-            'is_active' => true,
+        $this->corridor = TransportCorridor::create([
+            'corridor_code' => 'ROUTE-001',
+            'corridor_name' => 'Route 1: Downtown-Airport',
+            'transport_type' => 'BUS',
+            'status' => 'active',
+            'estimated_duration_minutes' => 35,
         ]);
     }
 
@@ -49,26 +61,27 @@ class OfficerBusManagementTest extends TestCase
         Sanctum::actingAs($this->officer);
 
         $response = $this->postJson('/api/v1/officer/public-bus/corridors', [
-            'name' => 'Route 5: Westlands-Eastlands',
-            'start_point' => 'Westlands Commercial Centre',
-            'end_point' => 'Eastlands Mall',
+            'corridor_code' => 'ROUTE-005',
+            'corridor_name' => 'Route 5: Westlands-Eastlands',
             'estimated_duration_minutes' => 45,
-            'is_active' => true,
+            'transport_type' => 'BUS',
+            'status' => 'active',
         ]);
 
         $response->assertCreated()
             ->assertJsonStructure([
                 'data' => [
                     'id',
-                    'name',
-                    'start_point',
-                    'end_point',
-                    'is_active',
+                    'corridor_code',
+                    'corridor_name',
+                    'transport_type',
+                    'status',
                 ],
             ]);
 
         $this->assertDatabaseHas('transport_corridors', [
-            'name' => 'Route 5: Westlands-Eastlands',
+            'corridor_code' => 'ROUTE-005',
+            'corridor_name' => 'Route 5: Westlands-Eastlands',
         ]);
     }
 
@@ -78,10 +91,11 @@ class OfficerBusManagementTest extends TestCase
 
         $response = $this->postJson('/api/v1/officer/public-bus/stops', [
             'corridor_id' => $this->corridor->id,
-            'name' => 'Central Park Stop',
+            'stop_name' => 'Central Park Stop',
+            'stop_order' => 2,
             'latitude' => -1.2850,
             'longitude' => 36.8050,
-            'order_index' => 2,
+            'is_major_terminal' => false,
         ]);
 
         $response->assertCreated()
@@ -89,16 +103,17 @@ class OfficerBusManagementTest extends TestCase
                 'data' => [
                     'id',
                     'corridor_id',
-                    'name',
+                    'stop_name',
+                    'stop_order',
                     'latitude',
                     'longitude',
-                    'order_index',
+                    'is_major_terminal',
                 ],
             ]);
 
-        $this->assertDatabaseHas('transport_stops', [
+        $this->assertDatabaseHas('corridor_stops', [
             'corridor_id' => $this->corridor->id,
-            'name' => 'Central Park Stop',
+            'stop_name' => 'Central Park Stop',
         ]);
     }
 
@@ -107,29 +122,26 @@ class OfficerBusManagementTest extends TestCase
         Sanctum::actingAs($this->officer);
 
         $response = $this->postJson('/api/v1/officer/public-bus/assign-driver', [
-            'driver_id' => $this->driver->id,
-            'vehicle_id' => $this->bus->id,
+            'driver_id' => $this->driverProfile->id,
+            'bus_id' => $this->bus->id,
             'corridor_id' => $this->corridor->id,
-            'start_date' => now()->toDateString(),
-            'end_date' => now()->addMonth()->toDateString(),
         ]);
 
         $response->assertCreated()
             ->assertJsonStructure([
                 'data' => [
                     'id',
-                    'driver_id',
-                    'vehicle_id',
+                    'bus_id',
                     'corridor_id',
+                    'driver_id',
                     'status',
-                    'start_date',
-                    'end_date',
                 ],
             ]);
 
         $this->assertDatabaseHas('bus_route_assignments', [
-            'driver_id' => $this->driver->id,
+            'driver_id' => $this->driverProfile->id,
             'corridor_id' => $this->corridor->id,
+            'bus_id' => $this->bus->id,
         ]);
     }
 
@@ -137,9 +149,10 @@ class OfficerBusManagementTest extends TestCase
     {
         Sanctum::actingAs($this->officer);
 
-        $assignment = BusRouteAssignment::factory()->create([
+        BusRouteAssignment::create([
+            'bus_id' => $this->bus->id,
             'corridor_id' => $this->corridor->id,
-            'vehicle_id' => $this->bus->id,
+            'driver_id' => $this->driverProfile->id,
             'status' => 'active',
         ]);
 
@@ -149,15 +162,15 @@ class OfficerBusManagementTest extends TestCase
             ->assertJsonStructure([
                 'data' => [
                     '*' => [
-                        'id',
-                        'assignment_id',
-                        'vehicle_plate',
-                        'driver_name',
-                        'corridor_name',
-                        'current_position',
-                        'boarding_count',
-                        'available_seats',
-                        'status',
+                        'corridor' => [
+                            'id',
+                            'corridor_code',
+                            'corridor_name',
+                        ],
+                        'stop_count',
+                        'active_bus_count',
+                        'seat_utilization',
+                        'active_buses',
                     ],
                 ],
             ]);

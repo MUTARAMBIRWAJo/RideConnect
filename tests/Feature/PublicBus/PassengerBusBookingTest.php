@@ -2,14 +2,15 @@
 
 namespace Tests\Feature\PublicBus;
 
-use App\Models\BusPositionUpdate;
 use App\Models\BusRouteAssignment;
+use App\Models\CorridorStop;
+use App\Models\Driver;
 use App\Models\MobileUser;
-use App\Models\PassengerBoardingEvent;
 use App\Models\PassengerRouteBoarding;
-use App\Models\StopArrivalEvent;
 use App\Models\TransportCorridor;
-use App\Models\TransportStop;
+use App\Models\Trip;
+use App\Models\User;
+use App\Models\Vehicle;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Foundation\Testing\WithFaker;
 use Laravel\Sanctum\Sanctum;
@@ -19,47 +20,87 @@ class PassengerBusBookingTest extends TestCase
 {
     use RefreshDatabase, WithFaker;
 
-    protected MobileUser $passenger;
+    protected User $passengerUser;
+    protected MobileUser $passengerMobile;
     protected TransportCorridor $corridor;
-    protected TransportStop $pickupStop;
-    protected TransportStop $dropoffStop;
+    protected CorridorStop $pickupStop;
+    protected CorridorStop $dropoffStop;
+    protected Driver $driverProfile;
+    protected Vehicle $bus;
+    protected BusRouteAssignment $assignment;
 
     protected function setUp(): void
     {
         parent::setUp();
-        $this->passenger = MobileUser::factory()->create(['role' => 'PASSENGER']);
-        $this->setupCorridor();
+        $this->setupPassengerAndCorridor();
+        $this->setupActiveBus();
     }
 
-    protected function setupCorridor(): void
+    protected function setupPassengerAndCorridor(): void
     {
-        $this->corridor = TransportCorridor::factory()->create([
-            'name' => 'Downtown to Airport',
-            'start_point' => 'Downtown Terminal',
-            'end_point' => 'International Airport',
-            'is_active' => true,
+        $this->passengerMobile = MobileUser::factory()->create([
+            'role' => 'PASSENGER',
         ]);
 
-        $this->pickupStop = TransportStop::factory()->create([
+        $this->passengerUser = User::factory()->create([
+            'role' => 'PASSENGER',
+            'mobile_user_id' => $this->passengerMobile->id,
+            'email' => $this->passengerMobile->email,
+            'phone' => $this->passengerMobile->phone,
+            'is_verified' => true,
+            'is_approved' => true,
+        ]);
+
+        $this->corridor = TransportCorridor::create([
+            'corridor_code' => 'BUS-100',
+            'corridor_name' => 'Downtown to Airport',
+            'transport_type' => 'BUS',
+            'status' => 'active',
+            'estimated_duration_minutes' => 35,
+        ]);
+
+        $this->pickupStop = CorridorStop::create([
             'corridor_id' => $this->corridor->id,
-            'name' => 'Downtown Terminal',
-            'order_index' => 1,
+            'stop_name' => 'Downtown Terminal',
+            'stop_order' => 1,
             'latitude' => -1.2921,
             'longitude' => 36.8219,
         ]);
 
-        $this->dropoffStop = TransportStop::factory()->create([
+        $this->dropoffStop = CorridorStop::create([
             'corridor_id' => $this->corridor->id,
-            'name' => 'Airport Departure',
-            'order_index' => 5,
+            'stop_name' => 'Airport Departure',
+            'stop_order' => 5,
             'latitude' => -1.3521,
             'longitude' => 36.7278,
         ]);
     }
 
+    protected function setupActiveBus(): void
+    {
+        $this->driverProfile = Driver::factory()->create([
+            'status' => 'approved',
+            'availability_status' => 'available',
+        ]);
+
+        $this->bus = Vehicle::factory()->create([
+            'driver_id' => $this->driverProfile->id,
+            'vehicle_type' => 'van',
+            'plate_number' => 'BUS-101',
+            'capacity' => 40,
+        ]);
+
+        $this->assignment = BusRouteAssignment::create([
+            'bus_id' => $this->bus->id,
+            'corridor_id' => $this->corridor->id,
+            'driver_id' => $this->driverProfile->id,
+            'status' => 'active',
+        ]);
+    }
+
     public function test_passenger_can_list_corridors(): void
     {
-        Sanctum::actingAs($this->passenger);
+        Sanctum::actingAs($this->passengerUser);
 
         $response = $this->getJson('/api/v1/passenger/public-bus/corridors');
 
@@ -68,10 +109,10 @@ class PassengerBusBookingTest extends TestCase
                 'data' => [
                     '*' => [
                         'id',
-                        'name',
-                        'start_point',
-                        'end_point',
-                        'is_active',
+                        'corridor_code',
+                        'corridor_name',
+                        'transport_type',
+                        'status',
                     ],
                 ],
             ]);
@@ -79,19 +120,27 @@ class PassengerBusBookingTest extends TestCase
 
     public function test_passenger_can_list_stops_for_corridor(): void
     {
-        Sanctum::actingAs($this->passenger);
+        Sanctum::actingAs($this->passengerUser);
 
         $response = $this->getJson("/api/v1/passenger/public-bus/corridors/{$this->corridor->id}/stops");
 
         $response->assertOk()
             ->assertJsonStructure([
                 'data' => [
-                    '*' => [
+                    'corridor' => [
                         'id',
-                        'name',
-                        'order_index',
-                        'latitude',
-                        'longitude',
+                        'corridor_code',
+                        'corridor_name',
+                    ],
+                    'stops' => [
+                        '*' => [
+                            'id',
+                            'stop_name',
+                            'stop_order',
+                            'latitude',
+                            'longitude',
+                            'is_major_terminal',
+                        ],
                     ],
                 ],
             ]);
@@ -99,7 +148,7 @@ class PassengerBusBookingTest extends TestCase
 
     public function test_passenger_can_view_active_buses(): void
     {
-        Sanctum::actingAs($this->passenger);
+        Sanctum::actingAs($this->passengerUser);
 
         $response = $this->getJson("/api/v1/passenger/public-bus/corridors/{$this->corridor->id}/active-buses");
 
@@ -107,12 +156,12 @@ class PassengerBusBookingTest extends TestCase
             ->assertJsonStructure([
                 'data' => [
                     '*' => [
-                        'id',
-                        'vehicle_id',
-                        'status',
-                        'current_position',
+                        'assignment_id',
+                        'bus_id',
+                        'driver',
+                        'bus',
                         'available_seats',
-                        'fare',
+                        'status',
                     ],
                 ],
             ]);
@@ -120,47 +169,65 @@ class PassengerBusBookingTest extends TestCase
 
     public function test_passenger_can_book_seat(): void
     {
-        Sanctum::actingAs($this->passenger);
-
-        $assignment = BusRouteAssignment::factory()->create([
-            'corridor_id' => $this->corridor->id,
-            'status' => 'active',
-        ]);
+        Sanctum::actingAs($this->passengerUser);
 
         $response = $this->postJson('/api/v1/passenger/public-bus/book-seat', [
-            'assignment_id' => $assignment->id,
-            'pickup_stop_id' => $this->pickupStop->id,
-            'dropoff_stop_id' => $this->dropoffStop->id,
-            'fare' => 500,
+            'corridor_id' => $this->corridor->id,
+            'boarding_stop_id' => $this->pickupStop->id,
+            'destination_stop_id' => $this->dropoffStop->id,
+            'seats_reserved' => 1,
         ]);
 
         $response->assertCreated()
             ->assertJsonStructure([
                 'data' => [
                     'id',
-                    'passenger_id',
-                    'assignment_id',
-                    'trip_id',
+                    'ticket_code',
+                    'corridor',
+                    'bus',
+                    'boarding_stop',
+                    'destination_stop',
                     'status',
-                    'ticket_number',
-                    'fare',
-                    'pickup_stop',
-                    'dropoff_stop',
                 ],
             ]);
 
         $this->assertDatabaseHas('passenger_route_boardings', [
-            'user_id' => $this->passenger->id,
-            'assignment_id' => $assignment->id,
+            'passenger_id' => $this->passengerMobile->id,
+            'corridor_id' => $this->corridor->id,
         ]);
     }
 
     public function test_passenger_can_view_current_trip(): void
     {
-        Sanctum::actingAs($this->passenger);
+        Sanctum::actingAs($this->passengerUser);
 
-        $booking = PassengerRouteBoarding::factory()->create([
-            'user_id' => $this->passenger->id,
+        $trip = Trip::create([
+            'passenger_id' => $this->passengerMobile->id,
+            'driver_id' => $this->driverProfile->id,
+            'pickup_location' => 'Downtown Terminal',
+            'dropoff_location' => 'Airport Departure',
+            'pickup_lat' => $this->pickupStop->latitude,
+            'pickup_lng' => $this->pickupStop->longitude,
+            'dropoff_lat' => $this->dropoffStop->latitude,
+            'dropoff_lng' => $this->dropoffStop->longitude,
+            'fare' => 500.00,
+            'status' => 'PENDING',
+            'requested_at' => now(),
+        ]);
+
+        $booking = PassengerRouteBoarding::create([
+            'passenger_id' => $this->passengerMobile->id,
+            'trip_id' => $trip->id,
+            'corridor_id' => $this->corridor->id,
+            'bus_route_assignment_id' => $this->assignment->id,
+            'boarding_stop_id' => $this->pickupStop->id,
+            'destination_stop_id' => $this->dropoffStop->id,
+            'ticket_code' => 'BUS-TICKET-001',
+            'qr_payload' => ['test' => true],
+            'seats_reserved' => 1,
+            'fare_amount' => 500.00,
+            'payment_status' => 'pending',
+            'status' => 'reserved',
         ]);
 
         $response = $this->getJson('/api/v1/passenger/public-bus/trips/current');
@@ -169,39 +236,62 @@ class PassengerBusBookingTest extends TestCase
             ->assertJsonStructure([
                 'data' => [
                     'id',
-                    'ticket_number',
-                    'bus_assignment',
-                    'boarding_status',
-                    'pickup_stop',
-                    'dropoff_stop',
-                    'estimated_arrival',
+                    'ticket_code',
+                    'corridor',
+                    'bus',
+                    'boarding_stop',
+                    'destination_stop',
+                    'status',
                 ],
             ]);
     }
 
     public function test_passenger_can_retrieve_ticket(): void
     {
-        Sanctum::actingAs($this->passenger);
+        Sanctum::actingAs($this->passengerUser);
 
-        $booking = PassengerRouteBoarding::factory()->create([
-            'user_id' => $this->passenger->id,
+        $trip = Trip::create([
+            'passenger_id' => $this->passengerMobile->id,
+            'driver_id' => $this->driverProfile->id,
+            'pickup_location' => 'Downtown Terminal',
+            'dropoff_location' => 'Airport Departure',
+            'pickup_lat' => $this->pickupStop->latitude,
+            'pickup_lng' => $this->pickupStop->longitude,
+            'dropoff_lat' => $this->dropoffStop->latitude,
+            'dropoff_lng' => $this->dropoffStop->longitude,
+            'fare' => 500.00,
+            'status' => 'PENDING',
+            'requested_at' => now(),
         ]);
 
-        $response = $this->getJson("/api/v1/passenger/public-bus/tickets/{$booking->id}");
+        $booking = PassengerRouteBoarding::create([
+            'passenger_id' => $this->passengerMobile->id,
+            'trip_id' => $trip->id,
+            'corridor_id' => $this->corridor->id,
+            'bus_route_assignment_id' => $this->assignment->id,
+            'boarding_stop_id' => $this->pickupStop->id,
+            'destination_stop_id' => $this->dropoffStop->id,
+            'ticket_code' => 'BUS-TICKET-002',
+            'qr_payload' => ['test' => true],
+            'seats_reserved' => 1,
+            'fare_amount' => 500.00,
+            'payment_status' => 'pending',
+            'status' => 'reserved',
+        ]);
+
+        $response = $this->getJson("/api/v1/passenger/public-bus/tickets/{$booking->ticket_code}");
 
         $response->assertOk()
             ->assertJsonStructure([
                 'data' => [
-                    'ticket_number',
-                    'passenger_name',
+                    'ticket_code',
                     'corridor',
                     'pickup_stop',
-                    'dropoff_stop',
-                    'bus_plate',
-                    'fare',
-                    'booking_time',
-                    'departure_time',
-                    'qr_code',
+                    'destination_stop',
+                    'bus',
+                    'fare_amount',
+                    'status',
+                    'ticket_qr',
                 ],
             ]);
     }

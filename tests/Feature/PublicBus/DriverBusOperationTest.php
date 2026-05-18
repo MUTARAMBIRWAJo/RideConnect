@@ -2,14 +2,15 @@
 
 namespace Tests\Feature\PublicBus;
 
-use App\Models\BusPositionUpdate;
 use App\Models\BusRouteAssignment;
+use App\Models\CorridorStop;
+use App\Models\Driver;
 use App\Models\MobileUser;
-use App\Models\PassengerBoardingEvent;
 use App\Models\PassengerRouteBoarding;
 use App\Models\StopArrivalEvent;
 use App\Models\TransportCorridor;
-use App\Models\TransportStop;
+use App\Models\Trip;
+use App\Models\User;
 use App\Models\Vehicle;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Foundation\Testing\WithFaker;
@@ -20,11 +21,12 @@ class DriverBusOperationTest extends TestCase
 {
     use RefreshDatabase, WithFaker;
 
-    protected MobileUser $driver;
+    protected User $driver;
+    protected Driver $driverProfile;
     protected Vehicle $bus;
     protected BusRouteAssignment $assignment;
     protected TransportCorridor $corridor;
-    protected TransportStop $stop;
+    protected CorridorStop $stop;
 
     protected function setUp(): void
     {
@@ -34,24 +36,42 @@ class DriverBusOperationTest extends TestCase
 
     protected function setupDriver(): void
     {
-        $this->driver = MobileUser::factory()->create(['role' => 'DRIVER']);
-        $this->bus = Vehicle::factory()->create([
-            'driver_id' => $this->driver->id,
-            'type' => 'bus',
-            'plate_number' => 'TXL-001A',
+        $this->driver = User::factory()->create([
+            'role' => 'DRIVER',
+            'is_approved' => true,
         ]);
 
-        $this->corridor = TransportCorridor::factory()->create(['is_active' => true]);
-        $this->assignment = BusRouteAssignment::factory()->create([
-            'corridor_id' => $this->corridor->id,
-            'vehicle_id' => $this->bus->id,
+        $this->driverProfile = Driver::factory()->create([
+            'user_id' => $this->driver->id,
+            'status' => 'approved',
+            'availability_status' => 'available',
+        ]);
+
+        $this->bus = Vehicle::factory()->create([
+            'driver_id' => $this->driverProfile->id,
+            'vehicle_type' => 'van',
+        ]);
+
+        $this->corridor = TransportCorridor::create([
+            'corridor_code' => 'BUS-001',
+            'corridor_name' => 'Downtown Loop',
+            'transport_type' => 'BUS',
             'status' => 'active',
         ]);
 
-        $this->stop = TransportStop::factory()->create([
+        $this->assignment = BusRouteAssignment::create([
+            'bus_id' => $this->bus->id,
             'corridor_id' => $this->corridor->id,
-            'name' => 'Main Station',
-            'order_index' => 1,
+            'driver_id' => $this->driverProfile->id,
+            'status' => 'active',
+        ]);
+
+        $this->stop = CorridorStop::create([
+            'corridor_id' => $this->corridor->id,
+            'stop_name' => 'Main Station',
+            'stop_order' => 1,
+            'latitude' => -1.2921,
+            'longitude' => 36.8219,
         ]);
     }
 
@@ -60,26 +80,26 @@ class DriverBusOperationTest extends TestCase
         Sanctum::actingAs($this->driver);
 
         $response = $this->postJson('/api/v1/driver/public-bus/location', [
-            'assignment_id' => $this->assignment->id,
+            'bus_route_assignment_id' => $this->assignment->id,
             'latitude' => -1.2921,
             'longitude' => 36.8219,
-            'speed_kmh' => 45.5,
+            'speed_kph' => 45.5,
         ]);
 
         $response->assertOk()
             ->assertJsonStructure([
                 'data' => [
                     'id',
-                    'assignment_id',
+                    'bus_route_assignment_id',
                     'latitude',
                     'longitude',
-                    'speed_kmh',
-                    'timestamp',
+                    'speed_kph',
+                    'captured_at',
                 ],
             ]);
 
         $this->assertDatabaseHas('bus_position_updates', [
-            'assignment_id' => $this->assignment->id,
+            'bus_route_assignment_id' => $this->assignment->id,
         ]);
     }
 
@@ -88,25 +108,24 @@ class DriverBusOperationTest extends TestCase
         Sanctum::actingAs($this->driver);
 
         $response = $this->postJson('/api/v1/driver/public-bus/arrived-stop', [
-            'assignment_id' => $this->assignment->id,
-            'stop_id' => $this->stop->id,
-            'arrival_time' => now()->toIso8601String(),
+            'bus_route_assignment_id' => $this->assignment->id,
+            'corridor_stop_id' => $this->stop->id,
         ]);
 
         $response->assertOk()
             ->assertJsonStructure([
                 'data' => [
                     'id',
-                    'assignment_id',
-                    'stop_id',
+                    'bus_route_assignment_id',
+                    'corridor_stop_id',
                     'arrival_time',
                     'departure_time',
                 ],
             ]);
 
         $this->assertDatabaseHas('stop_arrival_events', [
-            'assignment_id' => $this->assignment->id,
-            'stop_id' => $this->stop->id,
+            'bus_route_assignment_id' => $this->assignment->id,
+            'corridor_stop_id' => $this->stop->id,
         ]);
     }
 
@@ -114,27 +133,52 @@ class DriverBusOperationTest extends TestCase
     {
         Sanctum::actingAs($this->driver);
 
-        $boarding = PassengerRouteBoarding::factory()->create([
-            'assignment_id' => $this->assignment->id,
-            'status' => 'awaiting_boarding',
+        $passenger = MobileUser::factory()->create(['role' => 'PASSENGER']);
+        $trip = Trip::create([
+            'passenger_id' => $passenger->id,
+            'driver_id' => $this->driverProfile->id,
+            'pickup_location' => 'Main Station',
+            'dropoff_location' => 'Airport',
+            'pickup_lat' => -1.2921,
+            'pickup_lng' => 36.8219,
+            'dropoff_lat' => -1.3521,
+            'dropoff_lng' => 36.7278,
+            'fare' => 250.00,
+            'status' => 'PENDING',
+            'requested_at' => now(),
+        ]);
+
+        $boarding = PassengerRouteBoarding::create([
+            'passenger_id' => $passenger->id,
+            'trip_id' => $trip->id,
+            'corridor_id' => $this->corridor->id,
+            'bus_route_assignment_id' => $this->assignment->id,
+            'boarding_stop_id' => $this->stop->id,
+            'destination_stop_id' => $this->stop->id,
+            'ticket_code' => 'TEST-BOARD-001',
+            'qr_payload' => ['test' => true],
+            'seats_reserved' => 1,
+            'fare_amount' => 250.00,
+            'payment_status' => 'pending',
+            'status' => 'reserved',
         ]);
 
         $response = $this->postJson('/api/v1/driver/public-bus/passenger-boarded', [
-            'boarding_id' => $boarding->id,
-            'boarding_time' => now()->toIso8601String(),
+            'passenger_route_boarding_id' => $boarding->id,
         ]);
 
         $response->assertOk()
             ->assertJsonStructure([
                 'data' => [
                     'id',
+                    'passenger_route_boarding_id',
                     'status',
                     'boarded_at',
                 ],
             ]);
 
         $this->assertDatabaseHas('passenger_boarding_events', [
-            'boarding_id' => $boarding->id,
+            'passenger_route_boarding_id' => $boarding->id,
         ]);
     }
 
@@ -142,15 +186,38 @@ class DriverBusOperationTest extends TestCase
     {
         Sanctum::actingAs($this->driver);
 
-        $boarding = PassengerRouteBoarding::factory()->create([
-            'assignment_id' => $this->assignment->id,
-            'status' => 'on_board',
-            'dropoff_stop_id' => $this->stop->id,
+        $passenger = MobileUser::factory()->create(['role' => 'PASSENGER']);
+        $trip = Trip::create([
+            'passenger_id' => $passenger->id,
+            'driver_id' => $this->driverProfile->id,
+            'pickup_location' => 'Main Station',
+            'dropoff_location' => 'Airport',
+            'pickup_lat' => -1.2921,
+            'pickup_lng' => 36.8219,
+            'dropoff_lat' => -1.3521,
+            'dropoff_lng' => 36.7278,
+            'fare' => 250.00,
+            'status' => 'PENDING',
+            'requested_at' => now(),
+        ]);
+
+        $boarding = PassengerRouteBoarding::create([
+            'passenger_id' => $passenger->id,
+            'trip_id' => $trip->id,
+            'corridor_id' => $this->corridor->id,
+            'bus_route_assignment_id' => $this->assignment->id,
+            'boarding_stop_id' => $this->stop->id,
+            'destination_stop_id' => $this->stop->id,
+            'ticket_code' => 'TEST-COMPLETE-001',
+            'qr_payload' => ['test' => true],
+            'seats_reserved' => 1,
+            'fare_amount' => 250.00,
+            'payment_status' => 'pending',
+            'status' => 'boarded',
         ]);
 
         $response = $this->postJson('/api/v1/driver/public-bus/passenger-completed', [
-            'boarding_id' => $boarding->id,
-            'completion_time' => now()->toIso8601String(),
+            'passenger_route_boarding_id' => $boarding->id,
         ]);
 
         $response->assertOk()
