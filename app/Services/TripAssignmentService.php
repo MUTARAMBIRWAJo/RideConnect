@@ -2,6 +2,10 @@
 
 namespace App\Services;
 
+use App\Events\Domain\DriverAssignmentAccepted;
+use App\Events\Domain\DriverAssignmentRejected;
+use App\Events\Domain\DriverMatchAvailabilityChanged;
+use App\Events\Domain\DriverTemporarilyLocked;
 use App\Events\Domain\TripAssignmentCreated;
 use App\Exceptions\DomainException;
 use App\Jobs\ExpireAssignmentAttemptJob;
@@ -24,6 +28,14 @@ class TripAssignmentService
 
             if ($lockedDriver->availability_status !== 'available') {
                 throw DomainException::make('Driver is not available', 'DRIVER_NOT_AVAILABLE');
+            }
+
+            if (TripAssignmentAttempt::query()
+                ->where('driver_id', $lockedDriver->id)
+                ->whereIn('status', [TripAssignmentAttempt::STATUS_PENDING, TripAssignmentAttempt::STATUS_NOTIFIED])
+                ->exists()
+            ) {
+                throw DomainException::make('Driver is temporarily locked by another passenger', 'DRIVER_LOCKED');
             }
 
             if ($lockedTrip->transport_type === Ride::TRANSPORT_MOTORCYCLE && $this->availabilityService->isMotoDriverBusy($lockedDriver->id)) {
@@ -51,6 +63,8 @@ class TripAssignmentService
             ]);
 
             event(new TripAssignmentCreated($attempt->id));
+            event(new DriverTemporarilyLocked($lockedDriver->id, $attempt->trip->matching_session_id ?? ''));
+            event(new DriverMatchAvailabilityChanged($lockedDriver->id, 'temporary_locked', false));
             ExpireAssignmentAttemptJob::dispatch($attempt->id)->delay($attempt->expires_at);
 
             return $attempt;
@@ -96,7 +110,10 @@ class TripAssignmentService
 
             if ($trip->transport_type === Ride::TRANSPORT_MOTORCYCLE) {
                 $driver->update(['availability_status' => 'busy']);
+                event(new DriverMatchAvailabilityChanged($driver->id, 'busy', false));
             }
+
+            event(new DriverAssignmentAccepted($driver->id, $trip->id));
 
             return $trip->fresh();
         });
@@ -121,7 +138,7 @@ class TripAssignmentService
                 ->whereKey($attempt->trip_id)
                 ->update(['assignment_status' => 'rejected']);
 
-            event(new \App\Events\Domain\TripAssignmentRejected($attempt->id));
+            event(new DriverAssignmentRejected($attempt->driver_id, $attempt->trip_id, [$attempt->driver_id]));
 
             return $attempt->fresh();
         });

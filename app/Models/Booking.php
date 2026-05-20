@@ -20,6 +20,8 @@ class Booking extends Model
     protected $fillable = [
         'user_id',
         'ride_id',
+        'matching_session_id',
+        'idempotency_key',
         'seats_booked',
         'total_price',
         'currency',

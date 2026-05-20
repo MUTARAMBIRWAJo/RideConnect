@@ -8,8 +8,10 @@ use App\Events\Domain\BookingCreated;
 use App\Exceptions\DomainException;
 use App\Http\Controllers\Controller;
 use App\Models\Booking;
+use App\Models\Driver;
 use App\Models\Ride;
 use App\Models\SeatReservation;
+use App\Services\DriverMatchingService;
 use App\Services\MobileNotificationService;
 use App\Services\RuraTariffService;
 use App\Services\RuraZoneService;
@@ -27,6 +29,7 @@ class BookingController extends Controller
         private readonly RuraZoneService $ruraZoneService,
         private readonly RuraTariffService $ruraTariffService,
         private readonly SeatReservationService $seatReservationService,
+        private readonly DriverMatchingService $driverMatchingService,
     ) {}
 
     /**
@@ -186,7 +189,10 @@ class BookingController extends Controller
         }
 
         $validated = $request->validate([
-            'ride_id' => 'required|exists:rides,id',
+            'ride_id' => 'nullable|required_without:driver_id|exists:rides,id',
+            'driver_id' => 'nullable|required_without:ride_id|integer|exists:drivers,id',
+            'transport_type' => 'nullable|string|in:private_car,car,CAR',
+            'schedule_time' => 'nullable|date|after:now',
             'seats_booked' => 'required|integer|min:1|max:8',
             'pickup_address' => 'required|string',
             'pickup_lat' => 'required|numeric|between:-90,90',
@@ -199,7 +205,9 @@ class BookingController extends Controller
 
         try {
             $booking = DB::transaction(function () use ($validated, $user): Booking {
-                $ride = Ride::query()->whereKey($validated['ride_id'])->lockForUpdate()->firstOrFail();
+                $ride = ! empty($validated['ride_id'])
+                    ? Ride::query()->whereKey($validated['ride_id'])->lockForUpdate()->firstOrFail()
+                    : $this->createPrivateCarRideForSelectedDriver($validated, $user);
 
                 RidePolicy::assertTransportRules($ride);
                 RidePolicy::assertBookingAllowed($ride);
@@ -532,5 +540,91 @@ class BookingController extends Controller
         }
 
         return 'PENDING';
+    }
+
+    private function createPrivateCarRideForSelectedDriver(array $validated, $user): Ride
+    {
+        $driver = Driver::query()
+            ->with(['user:id,is_approved', 'vehicles'])
+            ->lockForUpdate()
+            ->findOrFail((int) $validated['driver_id']);
+
+        $vehicle = $this->driverMatchingService->activeVehicleFor($driver, Ride::TRANSPORT_CAR);
+
+        if (! $vehicle
+            || ! in_array((string) $driver->availability_status, ['online', 'available'], true)
+            || ! $driver->user?->is_approved) {
+            throw DomainException::make(
+                'Selected driver is no longer available',
+                'DRIVER_UNAVAILABLE'
+            );
+        }
+
+        $hasBlockingTrip = \App\Models\Trip::query()
+            ->where('driver_id', $driver->id)
+            ->where(function ($query): void {
+                $query->whereIn('status', ['PENDING', 'ACCEPTED', 'STARTED'])
+                    ->orWhere(function ($paymentQuery): void {
+                        $paymentQuery->where('status', 'COMPLETED')
+                            ->whereNull('paid_to_driver_at');
+                    });
+            })
+            ->exists();
+
+        if ($hasBlockingTrip) {
+            throw DomainException::make(
+                'Selected driver is already assigned to another trip',
+                'DRIVER_ASSIGNED'
+            );
+        }
+
+        $seats = (int) $validated['seats_booked'];
+        if ((int) $vehicle->seats < $seats) {
+            throw DomainException::make(
+                'Not enough seats available',
+                'INSUFFICIENT_SEATS'
+            );
+        }
+
+        $distanceKm = $this->distanceKm(
+            (float) $validated['pickup_lat'],
+            (float) $validated['pickup_lng'],
+            (float) $validated['dropoff_lat'],
+            (float) $validated['dropoff_lng'],
+        );
+        $estimatedFare = $this->driverMatchingService->estimateFare(Ride::TRANSPORT_CAR, $distanceKm);
+
+        return Ride::query()->create([
+            'driver_id' => $driver->id,
+            'vehicle_id' => $vehicle->id,
+            'created_by' => $user->id,
+            'transport_type' => Ride::TRANSPORT_CAR,
+            'travel_mode' => Ride::MODE_SCHEDULED,
+            'ride_type' => Ride::TYPE_LOCAL,
+            'origin_address' => $validated['pickup_address'],
+            'origin_lat' => $validated['pickup_lat'],
+            'origin_lng' => $validated['pickup_lng'],
+            'destination_address' => $validated['dropoff_address'],
+            'destination_lat' => $validated['dropoff_lat'],
+            'destination_lng' => $validated['dropoff_lng'],
+            'departure_time' => $validated['schedule_time'] ?? now()->addMinutes(30),
+            'arrival_time_estimated' => null,
+            'available_seats' => (int) $vehicle->seats,
+            'price_per_seat' => round($estimatedFare / max(1, $seats), 2),
+            'currency' => 'RWF',
+            'status' => 'PUBLISHED',
+            'description' => 'Private car booking request',
+        ]);
+    }
+
+    private function distanceKm(float $lat1, float $lng1, float $lat2, float $lng2): float
+    {
+        $earthRadius = 6371;
+        $latDelta = deg2rad($lat2 - $lat1);
+        $lngDelta = deg2rad($lng2 - $lng1);
+        $a = sin($latDelta / 2) ** 2
+            + cos(deg2rad($lat1)) * cos(deg2rad($lat2)) * sin($lngDelta / 2) ** 2;
+
+        return $earthRadius * (2 * atan2(sqrt($a), sqrt(1 - $a)));
     }
 }

@@ -10,6 +10,7 @@ use App\Models\TransportRoute;
 use App\Models\Trip;
 use App\Models\User;
 use App\Services\MobileNotificationService;
+use App\Services\DriverMatchingService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Validation\ValidationException;
@@ -18,7 +19,10 @@ class PassengerController extends Controller
 {
     private const TICKET_THRESHOLD_HOURS = 6;
 
-    public function __construct(private readonly MobileNotificationService $mobileNotificationService) {}
+    public function __construct(
+        private readonly MobileNotificationService $mobileNotificationService,
+        private readonly DriverMatchingService $driverMatchingService,
+    ) {}
 
     /**
      * Get passenger profile.
@@ -317,12 +321,13 @@ class PassengerController extends Controller
             'dropoff_location' => 'required|string',
             'dropoff_lat' => 'required|numeric|between:-90,90',
             'dropoff_lng' => 'required|numeric|between:-180,180',
-            'fare' => 'required|numeric|min:0',
+            'fare' => 'nullable|numeric|min:0',
+            'transport_type' => 'nullable|string|in:motor_vehicle,moto,motorcycle,MOTORCYCLE',
         ]);
 
-        $driver = Driver::query()->with('user:id,is_approved')->findOrFail((int) $validated['driver_id']);
+        $driver = Driver::query()->with(['user:id,is_approved', 'vehicles'])->findOrFail((int) $validated['driver_id']);
 
-        if (($driver->availability_status ?? 'offline') !== 'online') {
+        if (! in_array((string) $driver->availability_status, ['online', 'available'], true)) {
             return response()->json([
                 'success' => false,
                 'message' => 'Selected driver is currently offline',
@@ -336,11 +341,47 @@ class PassengerController extends Controller
             ], 400);
         }
 
+        if (! $this->driverMatchingService->activeVehicleFor($driver, 'MOTORCYCLE')) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Selected driver does not have an active motorcycle',
+            ], 400);
+        }
+
+        $hasBlockingTrip = Trip::query()
+            ->where('driver_id', $driver->id)
+            ->where(function ($query): void {
+                $query->whereIn('status', ['PENDING', 'ACCEPTED', 'STARTED'])
+                    ->orWhere(function ($paymentQuery): void {
+                        $paymentQuery->where('status', 'COMPLETED')
+                            ->whereNull('paid_to_driver_at');
+                    });
+            })
+            ->exists();
+
+        if ($hasBlockingTrip) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Selected driver is no longer available',
+            ], 409);
+        }
+
         $passengerMobileUserId = $this->resolvePassengerMobileUserId($user);
+        $fare = (float) ($validated['fare'] ?? $this->driverMatchingService->estimateFare(
+            'MOTORCYCLE',
+            $this->distanceKm(
+                (float) $validated['pickup_lat'],
+                (float) $validated['pickup_lng'],
+                (float) $validated['dropoff_lat'],
+                (float) $validated['dropoff_lng'],
+            )
+        ));
 
         $attributes = array_merge($validated, [
             'passenger_id' => $passengerMobileUserId,
             'driver_id' => $driver->id,
+            'transport_type' => 'MOTORCYCLE',
+            'fare' => $fare,
             'status' => 'PENDING',
             'requested_at' => now(),
         ]);
@@ -380,5 +421,16 @@ class PassengerController extends Controller
         throw ValidationException::withMessages([
             'user' => 'Passenger mobile profile is not linked. Please contact support.',
         ]);
+    }
+
+    private function distanceKm(float $lat1, float $lng1, float $lat2, float $lng2): float
+    {
+        $earthRadius = 6371;
+        $latDelta = deg2rad($lat2 - $lat1);
+        $lngDelta = deg2rad($lng2 - $lng1);
+        $a = sin($latDelta / 2) ** 2
+            + cos(deg2rad($lat1)) * cos(deg2rad($lat2)) * sin($lngDelta / 2) ** 2;
+
+        return $earthRadius * (2 * atan2(sqrt($a), sqrt(1 - $a)));
     }
 }

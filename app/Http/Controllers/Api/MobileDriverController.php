@@ -216,7 +216,7 @@ class MobileDriverController extends Controller
         }
 
         // Step 3: Check if trip already has a driver (race condition)
-        if ($trip->driver_id !== null) {
+        if ($trip->driver_id !== null && (int) $trip->driver_id !== (int) $driver->id) {
             return response()->json([
                 'status' => 'error',
                 'message' => 'This trip has already been accepted by another driver.',
@@ -241,7 +241,10 @@ class MobileDriverController extends Controller
                 $trip = Trip::query()
                     ->where('id', $id)
                     ->where('status', 'PENDING')
-                    ->whereNull('driver_id')
+                    ->where(function ($query) use ($driver): void {
+                        $query->whereNull('driver_id')
+                            ->orWhere('driver_id', $driver->id);
+                    })
                     ->lockForUpdate()
                     ->firstOrFail();
 
@@ -267,11 +270,12 @@ class MobileDriverController extends Controller
 
             return response()->json([
                 'status' => 'success',
-                'message' => 'Trip accepted successfully. Please proceed to pickup location.',
+                'message' => 'Trip accepted successfully. Please proceed to pickup location. Cancellation is not allowed within 15 minutes of pickup time.',
                 'data' => [
                     'trip_id' => $trip->id,
                     'trip_state' => $trip->status,
                     'accepted_at' => $trip->accepted_at->toIso8601String(),
+                    'driver_acknowledgement' => 'After accepting, you cannot reject or cancel when 15 minutes or less remain before pickup.',
                 ],
             ]);
 
@@ -310,8 +314,8 @@ class MobileDriverController extends Controller
             ], 404);
         }
 
-        // Can only reject pending trips without driver
-        if ($trip->status !== 'PENDING' || $trip->driver_id !== null) {
+        // Can only reject pending trips that are unassigned or assigned to this driver.
+        if ($trip->status !== 'PENDING' || ($trip->driver_id !== null && (int) $trip->driver_id !== (int) $driver->id)) {
             return response()->json([
                 'status' => 'error',
                 'message' => 'This trip cannot be rejected as it has already been accepted.',
@@ -321,6 +325,9 @@ class MobileDriverController extends Controller
         // Log the rejection (for analytics/matching algorithms)
         // Could track which drivers reject which trip patterns
         $trip->rejected_drivers_count = ($trip->rejected_drivers_count ?? 0) + 1;
+        $trip->driver_id = null;
+        $trip->rejected_at = now();
+        $trip->rejection_reason = 'Driver declined';
         $trip->save();
 
         // Optional: Create a record of this rejection for matching optimization
@@ -332,9 +339,15 @@ class MobileDriverController extends Controller
             'updated_at' => now(),
         ]);
 
+        $this->mobileNotificationService->sendRideRejectedToPassenger($trip->fresh(), $driver, 'Driver declined');
+
         return response()->json([
             'status' => 'success',
             'message' => 'Trip request declined.',
+            'data' => [
+                'excluded_driver_id' => $driver->id,
+                'rematch_endpoint' => '/api/v1/mobile/drivers/match',
+            ],
         ]);
     }
 
@@ -494,6 +507,13 @@ class MobileDriverController extends Controller
             ->where('driver_id', $driver->id)
             ->firstOrFail();
 
+        if ($this->minutesUntilPickup($trip) !== null && $this->minutesUntilPickup($trip) <= 15) {
+            return response()->json([
+                'status' => 'error',
+                'message' => 'You cannot cancel this trip because pickup is within 15 minutes.',
+            ], 422);
+        }
+
         try {
             TripStateMachine::assertTransitionForTrip($trip, TripStateMachine::STARTED);
             $trip->status = TripStateMachine::STARTED;
@@ -590,6 +610,7 @@ class MobileDriverController extends Controller
             TripStateMachine::assertTransitionForTrip($trip, TripStateMachine::CANCELLED);
             $trip->status = TripStateMachine::CANCELLED;
             $trip->save();
+            $this->mobileNotificationService->sendTripCancelledToPassenger($trip, 'Driver cancelled');
 
         } catch (DomainException $e) {
             return response()->json([
@@ -623,5 +644,16 @@ class MobileDriverController extends Controller
         $c = 2 * atan2(sqrt($a), sqrt(1 - $a));
 
         return $earthRadius * $c;
+    }
+
+    private function minutesUntilPickup(Trip $trip): ?int
+    {
+        $pickupTime = $trip->ride?->departure_time;
+
+        if (! $pickupTime) {
+            return null;
+        }
+
+        return (int) now()->diffInMinutes($pickupTime, false);
     }
 }

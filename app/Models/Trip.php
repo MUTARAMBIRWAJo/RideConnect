@@ -24,6 +24,8 @@ class Trip extends Model
         'passenger_id',
         'driver_id',
         'transport_type',
+        'matching_session_id',
+        'idempotency_key',
         'route_state_id',
         'weather_condition_id',
         'pickup_location',

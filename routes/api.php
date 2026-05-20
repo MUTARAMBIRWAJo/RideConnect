@@ -14,6 +14,7 @@ use App\Http\Controllers\Api\Analytics\AnalyticsController;
 use App\Http\Controllers\Api\AuthController as ApiAuthController;
 use App\Http\Controllers\Api\BookingController;
 use App\Http\Controllers\Api\DeviceTokenController;
+use App\Http\Controllers\Api\DriverMatchingController;
 use App\Http\Controllers\Api\DriverController;
 use App\Http\Controllers\Api\DriverPublicBusController;
 use App\Http\Controllers\Api\DriverPublicTransportController;
@@ -161,6 +162,7 @@ Route::prefix('v1')->group(function () {
             Route::post('/rides', [RideController::class, 'bookRide']);
             Route::get('/rides', [PassengerController::class, 'rideHistory']);
             Route::get('/drivers/online', [PassengerController::class, 'onlineDrivers']);
+            Route::get('/drivers/match', [DriverMatchingController::class, 'index']);
             Route::post('/ride-requests', [PassengerController::class, 'requestRide']);
 
             // Ride History
@@ -299,6 +301,7 @@ Route::prefix('v1')->group(function () {
         Route::prefix('mobile')->group(function () {
             // Passenger Mobile APIs
             Route::get('/rides', [MobilePassengerController::class, 'getRides']);
+            Route::get('/drivers/match', [DriverMatchingController::class, 'index']);
             Route::post('/bookings', [MobilePassengerController::class, 'createBooking']);
             Route::post('/trips/request', [MobilePassengerController::class, 'requestTrip']);
             Route::get('/trips/current', [MobilePassengerController::class, 'getCurrentTrip']);

@@ -38,16 +38,17 @@ class DriverPolicy
             return false;
         }
 
-        // Trip must have an associated ride
+        // Trip must identify a transport type, either directly or through a ride.
         $ride = $trip->ride;
-        if (! $ride) {
+        $transportType = $ride?->transport_type ?? $trip->transport_type;
+        if (! $transportType) {
             return false;
         }
 
         // Vehicle type must be compatible with ride transport type
         return TransportMappingService::isCompatible(
             $vehicle->vehicle_type,
-            $ride->transport_type
+            $transportType
         );
     }
 
@@ -78,17 +79,18 @@ class DriverPolicy
             );
         }
 
-        // Check if trip has a ride
+        // Check if trip has a transport type, either directly or through a ride
         $ride = $trip->ride;
-        if (! $ride) {
+        $transportType = $ride?->transport_type ?? $trip->transport_type;
+        if (! $transportType) {
             throw DomainException::make(
-                'Trip must be associated with a ride',
-                'NO_RIDE_FOUND'
+                'Trip must identify a transport type',
+                'NO_TRANSPORT_TYPE_FOUND'
             );
         }
 
         // Check vehicle compatibility
-        if (! TransportMappingService::isCompatible($vehicle->vehicle_type, $ride->transport_type)) {
+        if (! TransportMappingService::isCompatible($vehicle->vehicle_type, $transportType)) {
             throw DomainException::make(
                 'Vehicle type not compatible with ride transport type',
                 'VEHICLE_TYPE_INCOMPATIBLE'

@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Models\TripAssignmentAttempt;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\SoftDeletes;
@@ -52,9 +53,19 @@ class Driver extends Model
         return $this->hasMany(Vehicle::class);
     }
 
+    public function assignmentAttempts()
+    {
+        return $this->hasMany(TripAssignmentAttempt::class);
+    }
+
     public function rides()
     {
         return $this->hasMany(Ride::class);
+    }
+
+    public function trips()
+    {
+        return $this->hasMany(Trip::class);
     }
 
     public function wallet()
