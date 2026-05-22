@@ -224,6 +224,35 @@ class PassengerBusBookingTest extends TestCase
         ]);
     }
 
+    public function test_unapproved_passenger_cannot_book_seat(): void
+    {
+        $mobile = MobileUser::factory()->create([
+            'role' => 'PASSENGER',
+        ]);
+
+        $user = User::factory()->create([
+            'role' => 'PASSENGER',
+            'mobile_user_id' => $mobile->id,
+            'email' => $mobile->email,
+            'phone' => $mobile->phone,
+            'is_verified' => true,
+            'is_approved' => false,
+        ]);
+
+        Sanctum::actingAs($user);
+
+        $response = $this->postJson('/api/v1/passenger/public-bus/book-seat', [
+            'corridor_id' => $this->corridor->id,
+            'boarding_stop_id' => $this->pickupStop->id,
+            'destination_stop_id' => $this->dropoffStop->id,
+            'seats_reserved' => 1,
+        ]);
+
+        $response->assertForbidden()
+            ->assertJsonPath('message', 'Your account must be approved to book a bus seat')
+            ->assertJsonPath('error_code', 'PASSENGER_NOT_APPROVED');
+    }
+
     public function test_passenger_can_view_current_trip(): void
     {
         Sanctum::actingAs($this->passengerUser);

@@ -8,6 +8,7 @@ use App\Models\MobileUser;
 use App\Models\PassengerRouteBoarding;
 use App\Models\TransportCorridor;
 use App\Services\PublicBusTransportService;
+use Illuminate\Auth\Access\AuthorizationException;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Gate;
@@ -80,7 +81,33 @@ class PassengerPublicBusController extends Controller
 
     public function bookSeat(Request $request): JsonResponse
     {
-        Gate::authorize('create', PassengerRouteBoarding::class);
+        $user = $request->user();
+
+        if (! $user?->isPassenger()) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Only passengers can book bus seats',
+                'error_code' => 'PASSENGER_ONLY',
+            ], 403);
+        }
+
+        if (! $user->is_approved) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Your account must be approved to book a bus seat',
+                'error_code' => 'PASSENGER_NOT_APPROVED',
+            ], 403);
+        }
+
+        try {
+            Gate::authorize('create', PassengerRouteBoarding::class);
+        } catch (AuthorizationException) {
+            return response()->json([
+                'success' => false,
+                'message' => 'You are not allowed to book a bus seat',
+                'error_code' => 'BUS_BOOKING_FORBIDDEN',
+            ], 403);
+        }
 
         $validated = $request->validate([
             'corridor_id' => 'required|integer|exists:transport_corridors,id',
