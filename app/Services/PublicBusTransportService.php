@@ -121,7 +121,8 @@ class PublicBusTransportService
 
             $seats = max(1, (int) ($data['seats_reserved'] ?? 1));
             $passengerId = $this->resolvePassengerMobileUserId($user);
-            $assignment = $this->resolveBookableAssignment($corridor, $boardingStop, $seats);
+            $selectedAssignmentId = isset($data['bus_route_assignment_id']) ? (int) $data['bus_route_assignment_id'] : null;
+            $assignment = $this->resolveBookableAssignment($corridor, $boardingStop, $seats, $selectedAssignmentId);
 
             $fareAmount = $this->calculateFareAmount($boardingStop, $destinationStop, $seats, $corridor);
 
@@ -352,15 +353,44 @@ class PublicBusTransportService
     private function candidateAssignments(TransportCorridor $corridor): Builder
     {
         return BusRouteAssignment::query()
-            ->with(['bus', 'driver.user', 'activeTrip', 'positionUpdates' => fn ($query) => $query->latest('captured_at')->limit(1), 'stopArrivals' => fn ($query) => $query->latest('arrival_time')->limit(1)])
+            ->with([
+                'bus',
+                'driver.user',
+                'corridor.stops' => fn ($query) => $query->orderBy('stop_order'),
+                'activeTrip',
+                'positionUpdates' => fn ($query) => $query->latest('captured_at')->limit(1),
+                'stopArrivals' => fn ($query) => $query->latest('arrival_time')->limit(1),
+            ])
             ->where('corridor_id', $corridor->id)
             ->where('status', 'active')
             ->whereHas('bus', fn (Builder $query) => $query->where('is_active', true))
             ->whereHas('driver', fn (Builder $query) => $query->where('status', 'approved')->whereIn('availability_status', ['available', 'online']));
     }
 
-    private function resolveBookableAssignment(TransportCorridor $corridor, CorridorStop $boardingStop, int $seats): ?BusRouteAssignment
+    private function resolveBookableAssignment(TransportCorridor $corridor, CorridorStop $boardingStop, int $seats, ?int $selectedAssignmentId = null): ?BusRouteAssignment
     {
+        if ($selectedAssignmentId) {
+            $assignment = BusRouteAssignment::query()
+                ->with(['bus', 'driver.user', 'corridor'])
+                ->lockForUpdate()
+                ->whereKey($selectedAssignmentId)
+                ->where('corridor_id', $corridor->id)
+                ->where('status', 'active')
+                ->whereHas('bus', fn (Builder $query) => $query->where('is_active', true))
+                ->whereHas('driver', fn (Builder $query) => $query->where('status', 'approved')->whereIn('availability_status', ['available', 'online']))
+                ->first();
+
+            if (! $assignment) {
+                throw DomainException::make('Selected bus is not available for booking', 'BUS_SELECTION_INVALID');
+            }
+
+            if ($this->availableSeatsForAssignment($assignment->id) < $seats) {
+                throw DomainException::make('Selected bus does not have enough available seats', 'INSUFFICIENT_BUS_CAPACITY');
+            }
+
+            return $assignment;
+        }
+
         $candidates = $this->activeBuses($corridor, $boardingStop);
 
         foreach ($candidates as $candidate) {
@@ -409,12 +439,25 @@ class PublicBusTransportService
             ],
             'bus' => [
                 'id' => $assignment->bus?->id,
-                'plate' => $assignment->bus?->license_plate,
+                'display_name' => $this->formatBusDisplayName($assignment),
+                'make' => $assignment->bus?->make,
+                'model' => $assignment->bus?->model,
+                'year' => $assignment->bus?->year,
+                'color' => $assignment->bus?->color,
+                'photo_url' => $assignment->bus?->photo_url,
+                'plate' => $assignment->driver?->license_plate,
                 'type' => $assignment->bus?->vehicle_type,
                 'seats' => (int) ($assignment->bus?->seats ?? 0),
                 'is_active' => (bool) $assignment->bus?->is_active,
             ],
             'available_seats' => $availableSeats,
+            'route' => [
+                'corridor_id' => $assignment->corridor?->id,
+                'corridor_code' => $assignment->corridor?->corridor_code,
+                'corridor_name' => $assignment->corridor?->corridor_name,
+                'origin_stop' => optional($assignment->corridor?->stops->first())->only(['id', 'stop_name', 'latitude', 'longitude', 'stop_order']),
+                'destination_stop' => optional($assignment->corridor?->stops->last())->only(['id', 'stop_name', 'latitude', 'longitude', 'stop_order']),
+            ],
             'active_trip_id' => $assignment->active_trip_id,
             'status' => $assignment->status,
             'started_at' => $assignment->started_at?->toIso8601String(),
@@ -432,7 +475,49 @@ class PublicBusTransportService
             'demand_index' => $demand,
             'score' => $score,
             'next_stop' => $latestPosition?->nextStop?->only(['id', 'stop_name', 'stop_order']) ?? null,
+            'location' => $this->resolveAssignmentLocation($assignment, $latestPosition),
         ];
+    }
+
+    private function formatBusDisplayName(BusRouteAssignment $assignment): string
+    {
+        $bus = $assignment->bus;
+        $nameParts = array_filter([
+            $bus?->year,
+            $bus?->make,
+            $bus?->model,
+        ]);
+
+        $displayName = implode(' ', $nameParts);
+
+        if (trim($displayName) !== '') {
+            return $displayName;
+        }
+
+        return sprintf('Bus #%d', $assignment->bus_id);
+    }
+
+    private function resolveAssignmentLocation(BusRouteAssignment $assignment, ?BusPositionUpdate $latestPosition): ?array
+    {
+        if ($latestPosition) {
+            return [
+                'latitude' => (float) $latestPosition->latitude,
+                'longitude' => (float) $latestPosition->longitude,
+                'captured_at' => $latestPosition->captured_at?->toIso8601String(),
+                'source' => 'bus_position',
+            ];
+        }
+
+        if ($assignment->driver?->current_latitude !== null && $assignment->driver?->current_longitude !== null) {
+            return [
+                'latitude' => (float) $assignment->driver->current_latitude,
+                'longitude' => (float) $assignment->driver->current_longitude,
+                'captured_at' => null,
+                'source' => 'driver_profile',
+            ];
+        }
+
+        return null;
     }
 
     private function scoreAssignment(BusRouteAssignment $assignment, ?CorridorStop $boardingStop, int $availableSeats, int $etaMinutes, float $demandIndex): float

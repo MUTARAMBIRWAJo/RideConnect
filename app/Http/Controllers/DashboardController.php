@@ -17,8 +17,8 @@ class DashboardController extends Controller
     {
         $user = Auth::user();
 
-        // Check if user is approved
-        if (! $user->is_approved) {
+        // Manager roles are allowed even if approval was not yet toggled in the database.
+        if (! $user->is_approved && ! ($user->role?->isManager() ?? false)) {
             Auth::logout();
             $request->session()->invalidate();
             $request->session()->regenerateToken();

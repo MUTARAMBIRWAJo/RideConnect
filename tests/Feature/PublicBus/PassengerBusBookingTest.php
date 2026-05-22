@@ -86,6 +86,10 @@ class PassengerBusBookingTest extends TestCase
         $this->bus = Vehicle::factory()->create([
             'driver_id' => $this->driverProfile->id,
             'vehicle_type' => 'van',
+            'make' => 'Toyota',
+            'model' => 'Coaster',
+            'year' => 2020,
+            'color' => 'White',
         ]);
 
         $this->assignment = BusRouteAssignment::create([
@@ -158,11 +162,36 @@ class PassengerBusBookingTest extends TestCase
                         'bus_id',
                         'driver',
                         'bus',
+                        'route',
                         'available_seats',
                         'status',
+                        'location',
                     ],
                 ],
             ]);
+    }
+
+    public function test_passenger_can_book_seat_with_selected_bus_assignment(): void
+    {
+        Sanctum::actingAs($this->passengerUser);
+
+        $response = $this->postJson('/api/v1/passenger/public-bus/book-seat', [
+            'corridor_id' => $this->corridor->id,
+            'boarding_stop_id' => $this->pickupStop->id,
+            'destination_stop_id' => $this->dropoffStop->id,
+            'bus_route_assignment_id' => $this->assignment->id,
+            'seats_reserved' => 1,
+        ]);
+
+        $response->assertCreated()
+            ->assertJsonPath('data.bus.id', $this->bus->id)
+            ->assertJsonPath('data.bus.display_name', sprintf('%s %s %s', $this->bus->year, $this->bus->make, $this->bus->model));
+
+        $this->assertDatabaseHas('passenger_route_boardings', [
+            'passenger_id' => $this->passengerMobile->id,
+            'corridor_id' => $this->corridor->id,
+            'bus_route_assignment_id' => $this->assignment->id,
+        ]);
     }
 
     public function test_passenger_can_book_seat(): void

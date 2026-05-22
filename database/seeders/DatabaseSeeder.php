@@ -83,6 +83,7 @@ class DatabaseSeeder extends Seeder
             RuraTariffSeeder::class,
             ZoneCorridorSeeder::class,
             PublicTransportSeeder::class,
+            BusCorridorAssignmentSeeder::class,
         ]);
 
         // Fintech architecture seeders (depend on drivers, rides, payments, users)

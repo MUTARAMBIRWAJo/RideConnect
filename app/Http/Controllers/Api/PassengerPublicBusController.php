@@ -65,6 +65,7 @@ class PassengerPublicBusController extends Controller
     {
         $validated = $request->validate([
             'boarding_stop_id' => 'nullable|integer|exists:corridor_stops,id',
+            'destination_stop_id' => 'nullable|integer|exists:corridor_stops,id',
         ]);
 
         $boardingStop = isset($validated['boarding_stop_id'])
@@ -85,6 +86,7 @@ class PassengerPublicBusController extends Controller
             'corridor_id' => 'required|integer|exists:transport_corridors,id',
             'boarding_stop_id' => 'required|integer|exists:corridor_stops,id',
             'destination_stop_id' => 'required|integer|exists:corridor_stops,id',
+            'bus_route_assignment_id' => 'nullable|integer|exists:bus_route_assignments,id',
             'seats_reserved' => 'nullable|integer|min:1|max:8',
         ]);
 
@@ -141,6 +143,7 @@ class PassengerPublicBusController extends Controller
             'bus_route_assignment_id' => $boarding->bus_route_assignment_id,
             'bus' => [
                 'id' => $boarding->busRouteAssignment?->bus?->id,
+                'display_name' => trim(sprintf('%s %s %s', $boarding->busRouteAssignment?->bus?->year, $boarding->busRouteAssignment?->bus?->make, $boarding->busRouteAssignment?->bus?->model)),
                 'plate' => $boarding->busRouteAssignment?->bus?->license_plate,
                 'driver' => $boarding->busRouteAssignment?->driver?->user?->name,
             ],
