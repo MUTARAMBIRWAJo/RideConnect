@@ -216,6 +216,61 @@ class TripController extends Controller
             ], 403);
         }
 
+        // Normalize alternate location payload shapes to expected keys
+        $payload = $request->all();
+        if (! isset($payload['pickup_lat']) && isset($payload['pickup']) && is_array($payload['pickup'])) {
+            if (isset($payload['pickup']['lat'])) {
+                $request->merge(['pickup_lat' => $payload['pickup']['lat']]);
+            }
+            if (isset($payload['pickup']['lng'])) {
+                $request->merge(['pickup_lng' => $payload['pickup']['lng']]);
+            }
+            if (isset($payload['pickup']['latitude'])) {
+                $request->merge(['pickup_lat' => $payload['pickup']['latitude']]);
+            }
+            if (isset($payload['pickup']['longitude'])) {
+                $request->merge(['pickup_lng' => $payload['pickup']['longitude']]);
+            }
+        }
+        if (! isset($payload['dropoff_lat']) && isset($payload['dropoff']) && is_array($payload['dropoff'])) {
+            if (isset($payload['dropoff']['lat'])) {
+                $request->merge(['dropoff_lat' => $payload['dropoff']['lat']]);
+            }
+            if (isset($payload['dropoff']['lng'])) {
+                $request->merge(['dropoff_lng' => $payload['dropoff']['lng']]);
+            }
+            if (isset($payload['dropoff']['latitude'])) {
+                $request->merge(['dropoff_lat' => $payload['dropoff']['latitude']]);
+            }
+            if (isset($payload['dropoff']['longitude'])) {
+                $request->merge(['dropoff_lng' => $payload['dropoff']['longitude']]);
+            }
+        }
+
+        // Accept camelCase variants
+        if (! isset($payload['pickup_lat']) && isset($payload['pickupLatitude'])) {
+            $request->merge(['pickup_lat' => $payload['pickupLatitude']]);
+        }
+        if (! isset($payload['pickup_lng']) && isset($payload['pickupLongitude'])) {
+            $request->merge(['pickup_lng' => $payload['pickupLongitude']]);
+        }
+        if (! isset($payload['dropoff_lat']) && isset($payload['dropoffLatitude'])) {
+            $request->merge(['dropoff_lat' => $payload['dropoffLatitude']]);
+        }
+        if (! isset($payload['dropoff_lng']) && isset($payload['dropoffLongitude'])) {
+            $request->merge(['dropoff_lng' => $payload['dropoffLongitude']]);
+        }
+
+        // Coerce numeric strings to numbers where possible
+        foreach (['pickup_lat','pickup_lng','dropoff_lat','dropoff_lng'] as $k) {
+            if ($request->has($k) && is_string($request->input($k))) {
+                $val = $request->input($k);
+                if (is_numeric($val)) {
+                    $request->merge([$k => (float) $val]);
+                }
+            }
+        }
+
         $validator = Validator::make($request->all(), [
             'ride_id' => 'required|exists:rides,id',
             'pickup_location' => 'required|string|min:3',
