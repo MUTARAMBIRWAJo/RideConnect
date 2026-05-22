@@ -102,7 +102,7 @@ class DriverMatchingService
             ->with([
                 'user:id,name,phone,profile_photo,is_approved,mobile_user_id',
                 'vehicles',
-                'assignmentAttempts' => fn ($query): void => $query->whereIn('status', [TripAssignmentAttempt::STATUS_PENDING, TripAssignmentAttempt::STATUS_NOTIFIED]),
+                'assignmentAttempts' => fn ($query) => $query->whereIn('status', [TripAssignmentAttempt::STATUS_PENDING, TripAssignmentAttempt::STATUS_NOTIFIED]),
             ])
             ->leftJoin('users', 'drivers.user_id', '=', 'users.id')
             ->leftJoin('driver_locations', function ($join): void {
