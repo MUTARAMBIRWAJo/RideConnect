@@ -83,6 +83,7 @@ class DatabaseSeeder extends Seeder
             RuraTariffSeeder::class,
             ZoneCorridorSeeder::class,
             PublicTransportSeeder::class,
+            TransportCorridorSeeder::class,
             BusCorridorAssignmentSeeder::class,
         ]);
 
