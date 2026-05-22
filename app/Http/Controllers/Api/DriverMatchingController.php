@@ -136,10 +136,26 @@ class DriverMatchingController extends Controller
 
         $passengerId = $request->user()?->mobile_user_id ?? $request->user()?->id;
 
-        return response()->json([
-            'success' => true,
-            'data' => $this->driverMatchingService->match($validated, (int) $passengerId),
-        ]);
+        try {
+            $data = $this->driverMatchingService->match($validated, (int) $passengerId);
+
+            return response()->json([
+                'success' => true,
+                'data' => $data,
+            ]);
+        } catch (\Throwable $e) {
+            $body = [
+                'success' => false,
+                'message' => 'Failed to fetch drivers',
+                'error_code' => 'DRIVER_MATCHING_FAILURE',
+            ];
+
+            if (config('app.debug')) {
+                $body['debug'] = ['exception' => $e->getMessage()];
+            }
+
+            return response()->json($body, 500);
+        }
     }
 
     private function hasInvalidRwandaCoordinates($lat, $lng): bool
