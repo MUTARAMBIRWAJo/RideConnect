@@ -6,6 +6,7 @@ use App\Models\Trip;
 use App\Services\Location\TripLocationService;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Storage;
+use PHPUnit\Framework\Attributes\Test;
 use Tests\TestCase;
 
 class TripLocationServiceTest extends TestCase
@@ -18,7 +19,7 @@ class TripLocationServiceTest extends TestCase
         Storage::fake('local');
     }
 
-    /** @test */
+    #[Test]
     public function it_updates_and_reads_current_location(): void
     {
         $trip = Trip::factory()->create();

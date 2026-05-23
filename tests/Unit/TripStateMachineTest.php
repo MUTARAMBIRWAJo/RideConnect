@@ -4,11 +4,12 @@ namespace Tests\Unit;
 
 use App\Domain\Trip\TripStateMachine;
 use App\Exceptions\DomainException;
+use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 
 class TripStateMachineTest extends TestCase
 {
-    /** @test */
+    #[Test]
     public function it_allows_valid_transitions(): void
     {
         $this->assertTrue(TripStateMachine::canTransition('REQUESTED', 'MATCHED'));
@@ -20,7 +21,7 @@ class TripStateMachineTest extends TestCase
         $this->assertTrue(TripStateMachine::canTransition('PENDING', 'ACCEPTED')); // legacy support
     }
 
-    /** @test */
+    #[Test]
     public function it_blocks_invalid_transitions(): void
     {
         $this->assertFalse(TripStateMachine::canTransition('COMPLETED', 'STARTED'));
@@ -29,7 +30,7 @@ class TripStateMachineTest extends TestCase
         $this->assertFalse(TripStateMachine::canTransition('STARTED', 'CANCELLED'));
     }
 
-    /** @test */
+    #[Test]
     public function assert_transition_throws_for_invalid_transition(): void
     {
         $this->expectException(DomainException::class);

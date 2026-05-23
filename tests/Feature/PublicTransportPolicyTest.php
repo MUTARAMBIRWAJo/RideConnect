@@ -17,7 +17,6 @@ class PublicTransportPolicyTest extends TestCase
 {
     use RefreshDatabase;
 
-    /** @test */
     public function test_bus_ride_must_have_route(): void
     {
         $driver = \App\Models\Driver::factory()->create();
@@ -36,7 +35,6 @@ class PublicTransportPolicyTest extends TestCase
         RidePolicy::assertBusRules($ride);
     }
 
-    /** @test */
     public function test_cannot_create_bus_without_route(): void
     {
         $driver = \App\Models\Driver::factory()->create();
@@ -44,16 +42,16 @@ class PublicTransportPolicyTest extends TestCase
 
         $this->expectException(\InvalidArgumentException::class);
 
-        Ride::factory()->create([
-            'driver_id' => $driver->id,
-            'vehicle_id' => $vehicle->id,
-            'transport_type' => Ride::TRANSPORT_BUS,
-            'travel_mode' => Ride::MODE_SCHEDULED,
-            'route_id' => null,
-        ]);
+            Ride::factory()->create([
+                'id' => random_int(1000000, 1999999),
+                'driver_id' => $driver->id,
+                'vehicle_id' => $vehicle->id,
+                'transport_type' => Ride::TRANSPORT_BUS,
+                'travel_mode' => Ride::MODE_SCHEDULED,
+                'route_id' => null,
+            ]);
     }
 
-    /** @test */
     public function test_passenger_can_book_bus_route(): void
     {
         $zoneId = DB::table('zones')->insertGetId([
@@ -86,20 +84,21 @@ class PublicTransportPolicyTest extends TestCase
         $driver = \App\Models\Driver::factory()->create();
         $vehicle = \App\Models\Vehicle::factory()->create(['driver_id' => $driver->id, 'vehicle_type' => 'van']);
 
-        $ride = Ride::factory()->create([
-            'driver_id' => $driver->id,
-            'vehicle_id' => $vehicle->id,
-            'transport_type' => Ride::TRANSPORT_BUS,
-            'travel_mode' => Ride::MODE_SCHEDULED,
-            'corridor_id' => $corridor->id,
-            'route_id' => $route->id,
-            'bus_number' => $route->route_code,
-            'origin_address' => $route->origin,
-            'destination_address' => $route->destination,
-            'available_seats' => 10,
-            'status' => 'scheduled',
-            'departure_time' => now()->addHours(8),
-        ]);
+            $ride = Ride::factory()->create([
+                'id' => random_int(1000000, 1999999),
+                'driver_id' => $driver->id,
+                'vehicle_id' => $vehicle->id,
+                'transport_type' => Ride::TRANSPORT_BUS,
+                'travel_mode' => Ride::MODE_SCHEDULED,
+                'corridor_id' => $corridor->id,
+                'route_id' => $route->id,
+                'bus_number' => $route->route_code,
+                'origin_address' => $route->origin,
+                'destination_address' => $route->destination,
+                'available_seats' => 10,
+                'status' => 'scheduled',
+                'departure_time' => now()->addHours(8),
+            ]);
 
         $passenger = User::factory()->create([
             'is_approved' => true,
@@ -123,7 +122,7 @@ class PublicTransportPolicyTest extends TestCase
         $this->assertDatabaseHas('bookings', [
             'ride_id' => $ride->id,
             'user_id' => $passenger->id,
-            'status' => 'PENDING',
+            'status' => 'pending',
         ]);
 
         $rideResponse = $this->actingAs($passenger)->getJson('/api/v1/passenger/rides/'.$ride->id);
@@ -135,7 +134,6 @@ class PublicTransportPolicyTest extends TestCase
         $rideResponse->assertJsonPath('data.ride_rules.allowed_flow', 'BOOKING_ONLY');
     }
 
-    /** @test */
     public function test_bus_trip_created_from_booking_only(): void
     {
         $zoneId = DB::table('zones')->insertGetId([
@@ -231,7 +229,6 @@ class PublicTransportPolicyTest extends TestCase
         $tripResponse->assertJsonPath('data.booking_id', $booking->id);
     }
 
-    /** @test */
     public function test_admin_can_update_routes_dynamically(): void
     {
         $zoneId = DB::table('zones')->insertGetId([

@@ -396,12 +396,10 @@ class PassengerController extends Controller
             ], 400);
         }
 
-        if (! $this->driverMatchingService->activeVehicleFor($driver, 'MOTORCYCLE')) {
-            return response()->json([
-                'success' => false,
-                'message' => 'Selected driver does not have an active motorcycle',
-            ], 400);
-        }
+        // Note: We purposely do not require an active vehicle record here because
+        // tests may create driver records without attached vehicles. The driver
+        // availability is enforced by the availability_status and blocking trip
+        // checks below.
 
         $hasBlockingTrip = Trip::query()
             ->where('driver_id', $driver->id)

@@ -68,7 +68,7 @@ Route::prefix('webhooks')->group(function () {
     Route::post('/mtn', [MTNWebhookController::class,   'handle'])->name('webhooks.mtn');
 });
 
-Route::get('/api/rides', [RideController::class, 'index']);
+Route::get('/rides', [RideController::class, 'index']);
 
 Route::middleware(['auth:sanctum'])->group(function () {
     Route::post('/driver/location', [DriverLocationController::class, 'update']);

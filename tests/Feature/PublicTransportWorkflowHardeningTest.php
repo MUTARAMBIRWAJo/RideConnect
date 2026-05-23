@@ -143,7 +143,12 @@ class PublicTransportWorkflowHardeningTest extends TestCase
             'updated_at' => now(),
         ]);
 
+        // Assign a high random id in tests to reduce accidental collisions with other tests
+        // that may create rides with low auto-increment ids in the same process.
+        $uniqueId = $overrides['id'] ?? random_int(1000000, 1999999);
+
         return Ride::factory()->create(array_merge([
+            'id' => $uniqueId,
             'driver_id' => $driver,
             'vehicle_id' => $vehicle->id,
             'corridor_id' => $corridor,

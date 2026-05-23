@@ -8,7 +8,6 @@ use PHPUnit\Framework\TestCase;
 
 class TransportMappingServiceTest extends TestCase
 {
-    /** @test */
     public function test_vehicle_to_transport_mapping_is_correct()
     {
         // Bus-type vehicles
@@ -30,7 +29,6 @@ class TransportMappingServiceTest extends TestCase
         $this->assertEquals(Ride::TRANSPORT_MOTORCYCLE, TransportMappingService::toTransportType('moto'));
     }
 
-    /** @test */
     public function test_mapping_service_is_case_insensitive()
     {
         $this->assertEquals(Ride::TRANSPORT_BUS, TransportMappingService::toTransportType('VAN'));
@@ -41,7 +39,6 @@ class TransportMappingServiceTest extends TestCase
         $this->assertEquals(Ride::TRANSPORT_MOTORCYCLE, TransportMappingService::toTransportType('Motorbike'));
     }
 
-    /** @test */
     public function test_unknown_vehicle_type_returns_null()
     {
         $this->assertNull(TransportMappingService::toTransportType('unknown_vehicle'));
@@ -49,7 +46,6 @@ class TransportMappingServiceTest extends TestCase
         $this->assertNull(TransportMappingService::toTransportType(''));
     }
 
-    /** @test */
     public function test_is_compatible_returns_true_for_matching_types()
     {
         $this->assertTrue(TransportMappingService::isCompatible('van', Ride::TRANSPORT_BUS));
@@ -57,7 +53,6 @@ class TransportMappingServiceTest extends TestCase
         $this->assertTrue(TransportMappingService::isCompatible('motorbike', Ride::TRANSPORT_MOTORCYCLE));
     }
 
-    /** @test */
     public function test_is_compatible_returns_false_for_mismatched_types()
     {
         $this->assertFalse(TransportMappingService::isCompatible('van', Ride::TRANSPORT_CAR));
@@ -66,7 +61,6 @@ class TransportMappingServiceTest extends TestCase
         $this->assertFalse(TransportMappingService::isCompatible('motorbike', Ride::TRANSPORT_CAR));
     }
 
-    /** @test */
     public function test_is_compatible_is_case_insensitive()
     {
         $this->assertTrue(TransportMappingService::isCompatible('VAN', Ride::TRANSPORT_BUS));
@@ -74,7 +68,6 @@ class TransportMappingServiceTest extends TestCase
         $this->assertTrue(TransportMappingService::isCompatible('MOTORBIKE', Ride::TRANSPORT_MOTORCYCLE));
     }
 
-    /** @test */
     public function test_is_compatible_returns_false_for_null_values()
     {
         $this->assertFalse(TransportMappingService::isCompatible(null, Ride::TRANSPORT_BUS));
@@ -82,7 +75,6 @@ class TransportMappingServiceTest extends TestCase
         $this->assertFalse(TransportMappingService::isCompatible(null, null));
     }
 
-    /** @test */
     public function test_normalize_converts_to_lowercase_and_trims()
     {
         $this->assertEquals('van', TransportMappingService::normalize('VAN'));
@@ -91,7 +83,6 @@ class TransportMappingServiceTest extends TestCase
         $this->assertEquals('sedan', TransportMappingService::normalize('SEDAN'));
     }
 
-    /** @test */
     public function test_get_vehicle_types_for_transport_type()
     {
         $busVehicles = TransportMappingService::getVehicleTypesFor(Ride::TRANSPORT_BUS);
@@ -110,7 +101,6 @@ class TransportMappingServiceTest extends TestCase
         $this->assertContains('boda', $motorcycleVehicles);
     }
 
-    /** @test */
     public function test_get_all_vehicle_types()
     {
         $allVehicles = TransportMappingService::getAllVehicleTypes();
@@ -121,7 +111,6 @@ class TransportMappingServiceTest extends TestCase
         $this->assertGreaterThan(6, count($allVehicles));
     }
 
-    /** @test */
     public function test_get_all_transport_types()
     {
         $allTransports = TransportMappingService::getAllTransportTypes();

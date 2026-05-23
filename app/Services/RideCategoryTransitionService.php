@@ -160,6 +160,8 @@ class RideCategoryTransitionService
                 'confirmed_at' => $status === 'confirmed' ? ($lockedBooking->confirmed_at ?: now()) : $lockedBooking->confirmed_at,
             ]);
 
+            $lockedBooking->delete();
+
             return $trip;
         });
     }

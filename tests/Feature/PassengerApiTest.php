@@ -72,6 +72,7 @@ class PassengerApiTest extends TestCase
     {
         // Create test rides
         Ride::factory()->create([
+            'id' => random_int(1000000, 1999999),
             'transport_type' => 'CAR',
             'travel_mode' => 'ON_DEMAND',
             'status' => 'scheduled',
@@ -126,10 +127,12 @@ class PassengerApiTest extends TestCase
     public function test_can_book_scheduled_ride()
     {
         $ride = Ride::factory()->create([
+            'id' => random_int(1000000, 1999999),
             'transport_type' => 'CAR',
             'travel_mode' => 'SCHEDULED',
             'status' => 'scheduled',
             'price_per_seat' => 5000,
+            'available_seats' => 4,
         ]);
 
         $response = $this->actingAs($this->passengerUser, 'sanctum')
@@ -153,6 +156,7 @@ class PassengerApiTest extends TestCase
     public function test_can_request_on_demand_trip()
     {
         $ride = Ride::factory()->create([
+            'id' => random_int(1000000, 1999999),
             'transport_type' => 'CAR',
             'travel_mode' => 'ON_DEMAND',
             'status' => 'scheduled',
@@ -234,12 +238,14 @@ class PassengerApiTest extends TestCase
     public function test_api_returns_ride_rules_correctly()
     {
         $scheduledRide = Ride::factory()->create([
+            'id' => random_int(1000000, 1999999),
             'transport_type' => 'CAR',
             'travel_mode' => 'SCHEDULED',
             'status' => 'scheduled',
         ]);
 
         $onDemandRide = Ride::factory()->create([
+            'id' => random_int(1000000, 1999999),
             'transport_type' => 'CAR',
             'travel_mode' => 'ON_DEMAND',
             'status' => 'scheduled',

@@ -21,7 +21,9 @@ class SeatReservationService
             }
 
             if ((int) $ride->available_seats < $seats) {
-                throw DomainException::make('Insufficient seats', 'INSUFFICIENT_SEATS');
+                $message = 'Insufficient seats';
+
+                throw DomainException::make($message, 'INSUFFICIENT_SEATS');
             }
 
             $ride->decrement('available_seats', $seats);

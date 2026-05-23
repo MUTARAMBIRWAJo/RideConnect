@@ -85,10 +85,6 @@
                     <p class="mt-2 text-xs text-red-700 dark:text-red-300">Last 24 hours</p>
                 </div>
             </div>
-                    <p class="mt-1 text-2xl font-semibold text-red-900">{{ $systemMetrics['error_rate'] ?? 0 }}%</p>
-                    <p class="mt-1 text-xs text-red-700">Incidents</p>
-                </div>
-            </div>
         </section>
 
         <!-- Business Metrics -->

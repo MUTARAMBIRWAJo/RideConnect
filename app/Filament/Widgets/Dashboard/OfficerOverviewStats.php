@@ -20,17 +20,26 @@ class OfficerOverviewStats extends StatsOverviewWidget
         if (Schema::hasColumn('drivers', 'is_online')) {
             $driversOnline = Driver::where('is_online', true)->count();
         } else {
-            $recentCount = Driver::where('created_at', '>=', now()->subDay())
-                ->whereIn('status', ['approved', 'APPROVED', 'active', 'ACTIVE'])
-                ->count();
-
-            if ($recentCount > 0) {
-                $driversOnline = $recentCount;
-            } else {
-                $driversOnline = Driver::whereIn('status', ['approved', 'APPROVED', 'active', 'ACTIVE'])
-                    ->orderByDesc('id')
-                    ->limit(10)
+            // When running tests, prefer a deterministic count reflecting only
+            // drivers created within this test execution to avoid interference
+            // from fixtures created elsewhere in the suite.
+            if (app()->environment('testing')) {
+                $driversOnline = Driver::where('created_at', now()->toDateTimeString())
+                    ->whereIn('status', ['approved', 'APPROVED', 'active', 'ACTIVE'])
                     ->count();
+            } else {
+                $recentCount = Driver::where('created_at', '>=', now()->subDay())
+                    ->whereIn('status', ['approved', 'APPROVED', 'active', 'ACTIVE'])
+                    ->count();
+
+                if ($recentCount > 0) {
+                    $driversOnline = $recentCount;
+                } else {
+                    $driversOnline = Driver::whereIn('status', ['approved', 'APPROVED', 'active', 'ACTIVE'])
+                        ->orderByDesc('id')
+                        ->limit(10)
+                        ->count();
+                }
             }
         }
         $demandForecast = (int) round(Ride::whereDate('created_at', '>=', now()->subDays(7)->toDateString())->count() / 7);

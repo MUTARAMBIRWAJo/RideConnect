@@ -47,8 +47,10 @@ class RideFactory extends Factory
 
     public function configure(): static
     {
-        return $this->afterMaking(function (\App\Models\Ride $ride) {
-            if ($ride->transport_type === Ride::TRANSPORT_BUS && empty($ride->route_id)) {
+        return $this->afterMaking(function (\App\Models\Ride $ride): void {
+            $attributes = $ride->getAttributes();
+
+            if ($ride->transport_type === Ride::TRANSPORT_BUS && ! array_key_exists('route_id', $attributes)) {
                 $startZone = \App\Models\Zone::query()->create([
                     'name' => 'Start '.uniqid(),
                     'code' => 'Z-'.strtoupper(\Illuminate\Support\Str::random(8)),
@@ -77,40 +79,16 @@ class RideFactory extends Factory
                 ]);
 
                 $ride->route_id = $route->id;
-            }
-        })->afterCreating(function (\App\Models\Ride $ride) {
-            if ($ride->transport_type === Ride::TRANSPORT_BUS && empty($ride->route_id)) {
-                $startZone = \App\Models\Zone::query()->create([
-                    'name' => 'Start '.uniqid(),
-                    'code' => 'Z-'.strtoupper(\Illuminate\Support\Str::random(8)),
-                ]);
-                $endZone = \App\Models\Zone::query()->create([
-                    'name' => 'End '.uniqid(),
-                    'code' => 'Z-'.strtoupper(\Illuminate\Support\Str::random(8)),
-                ]);
-
-                $corridor = \App\Models\Corridor::query()->create([
-                    'name' => 'Test corridor '.uniqid(),
-                    'start_zone_id' => $startZone->id,
-                    'end_zone_id' => $endZone->id,
-                    'base_fare' => 100.00,
-                    'price_per_km' => 50.00,
-                ]);
-
-                $route = \App\Models\TransportRoute::query()->create([
-                    'corridor_id' => $corridor->id,
-                    'route_code' => 'TST-'.strtoupper(substr(uniqid(), 0, 6)),
-                    'name' => 'Test route '.uniqid(),
-                    'via' => null,
-                    'origin' => $ride->origin_address ?? 'Origin',
-                    'destination' => $ride->destination_address ?? 'Destination',
-                    'is_active' => true,
-                ]);
-
-                $ride->route_id = $route->id;
-                $ride->save();
             }
         });
+    }
+
+    public function bus(): static
+    {
+        return $this->state(fn (array $attributes) => [
+            'transport_type' => Ride::TRANSPORT_BUS,
+            'travel_mode' => Ride::MODE_SCHEDULED,
+        ]);
     }
 
     /**

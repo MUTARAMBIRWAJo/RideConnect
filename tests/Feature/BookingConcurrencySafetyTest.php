@@ -6,13 +6,14 @@ use App\Models\Booking;
 use App\Models\Ride;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use PHPUnit\Framework\Attributes\Test;
 use Tests\TestCase;
 
 class BookingConcurrencySafetyTest extends TestCase
 {
     use RefreshDatabase;
 
-    /** @test */
+    #[Test]
     public function concurrent_booking_does_not_overbook_with_lock()
     {
         // Create a ride with only 1 seat
@@ -23,6 +24,7 @@ class BookingConcurrencySafetyTest extends TestCase
         ]);
 
         $ride = Ride::factory()->create([
+            'id' => random_int(1000000, 1999999),
             'driver_id' => $driver->id,
             'vehicle_id' => $vehicle->id,
             'travel_mode' => Ride::MODE_SCHEDULED,
@@ -72,7 +74,7 @@ class BookingConcurrencySafetyTest extends TestCase
         $this->assertEquals(1, Booking::count());
     }
 
-    /** @test */
+    #[Test]
     public function booking_validation_uses_ride_policy()
     {
         // Create an ON_DEMAND ride
@@ -108,7 +110,7 @@ class BookingConcurrencySafetyTest extends TestCase
         $response->assertJsonPath('error_code', 'BOOKING_NOT_ALLOWED_FOR_TRAVEL_MODE');
     }
 
-    /** @test */
+    #[Test]
     public function booking_prevents_departed_ride()
     {
         $driver = \App\Models\Driver::factory()->create();
@@ -146,7 +148,7 @@ class BookingConcurrencySafetyTest extends TestCase
         $response->assertJsonPath('error_code', 'RIDE_DEPARTED');
     }
 
-    /** @test */
+    #[Test]
     public function api_contract_includes_ride_rules()
     {
         $driver = \App\Models\Driver::factory()->create();
@@ -180,7 +182,7 @@ class BookingConcurrencySafetyTest extends TestCase
         ]);
     }
 
-    /** @test */
+    #[Test]
     public function ride_rules_correctly_indicate_scheduled_car_can_book()
     {
         $driver = \App\Models\Driver::factory()->create();
@@ -202,7 +204,7 @@ class BookingConcurrencySafetyTest extends TestCase
         $response->assertJsonPath('data.ride_rules.allowed_flow', 'BOOKING_ONLY');
     }
 
-    /** @test */
+    #[Test]
     public function ride_rules_correctly_indicate_ondemand_car_can_request_trip()
     {
         $driver = \App\Models\Driver::factory()->create();
