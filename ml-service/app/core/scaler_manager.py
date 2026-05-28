@@ -6,7 +6,11 @@ import os
 import pickle
 from typing import Optional
 
-import joblib
+try:
+    import joblib
+except ModuleNotFoundError:
+    joblib = None
+
 import numpy as np
 
 from app.core.config import settings
@@ -104,6 +108,8 @@ class ScalerManager:
             
             # Try joblib first (more robust)
             if scaler_path.endswith('.joblib'):
+                if joblib is None:
+                    raise RuntimeError("joblib is required to load .joblib scaler files")
                 self.scaler = joblib.load(scaler_path)
                 self.scaler_type = 'joblib'
             else:

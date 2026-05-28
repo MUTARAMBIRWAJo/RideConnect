@@ -8,7 +8,11 @@ import time
 from pathlib import Path
 from typing import Any, Optional
 
-import joblib
+try:
+    import joblib
+except ModuleNotFoundError:
+    joblib = None
+
 import numpy as np
 import pandas as pd
 
@@ -51,6 +55,9 @@ class DriverRankerLoader:
             ]:
                 if not os.path.exists(path):
                     raise FileNotFoundError(f"{name} artifact not found at {path}")
+
+            if joblib is None:
+                raise RuntimeError("joblib is required to load driver ranker artifacts")
 
             logger.info(f"Loading driver ranker model from {self.model_path}")
             self.model = joblib.load(self.model_path)

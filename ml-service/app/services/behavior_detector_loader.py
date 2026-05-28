@@ -3,7 +3,11 @@ import json
 import os
 from typing import Optional, Tuple
 
-import joblib
+try:
+    import joblib
+except ModuleNotFoundError:
+    joblib = None
+
 import numpy as np
 
 from app.core.config import settings
@@ -52,6 +56,9 @@ class BehaviorDetectorLoader:
             ]:
                 if not os.path.exists(path):
                     raise FileNotFoundError(f"Behavior {name} file not found at {path}")
+
+            if joblib is None:
+                raise RuntimeError("joblib is required to load behavior detector artifacts")
 
             logger.info(f"Loading behavior detector from {self.detector_path}")
             self.detector = joblib.load(self.detector_path)

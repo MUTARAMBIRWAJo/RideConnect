@@ -2,6 +2,7 @@ fastapi>=0.111
 uvicorn[standard]>=0.29
 pydantic>=2
 numpy>=1.24
+joblib>=1.3
 # Install tflite-runtime first; if unavailable, the service falls back to ai-edge-litert,
 # then the tensorflow lite interpreter as a last resort.
 tflite-runtime>=2.14.0
