@@ -136,6 +136,12 @@ class DriverSelectionFlowTest extends TestCase
             'driver_id' => $driver->id,
             'status' => 'ACCEPTED',
         ]);
+
+        $this->assertDatabaseHas('user_notifications', [
+            'user_id' => $passenger->id,
+            'type' => 'ride_request_accepted',
+            'data->trip_id' => $tripId,
+        ]);
     }
 
     public function test_mobile_private_car_booking_can_use_selected_driver_without_ride_id(): void
