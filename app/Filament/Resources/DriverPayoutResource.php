@@ -20,7 +20,7 @@ class DriverPayoutResource extends Resource
 
     protected static ?string $navigationLabel = 'Driver Payouts';
 
-    protected static ?string $navigationGroup = 'Passengers';
+    protected static ?string $navigationGroup = 'Financial & Payouts';
 
     protected static ?int $navigationSort = 8;
 

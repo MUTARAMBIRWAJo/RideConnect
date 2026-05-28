@@ -26,7 +26,7 @@ class ComplianceDashboard extends Page implements HasTable
 
     protected static ?string $navigationLabel = 'Compliance';
 
-    protected static ?string $navigationGroup = 'AI & Analytics';
+    protected static ?string $navigationGroup = 'Analytics';
 
     protected static ?string $title = 'Compliance & Regulatory Reports';
 

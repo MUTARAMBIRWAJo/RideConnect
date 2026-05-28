@@ -11,8 +11,8 @@
 
         <!-- Key Metrics -->
         <section class="grid grid-cols-1 gap-4 md:grid-cols-2">
-            <x-dashboard-card title="Avg Wait Time" :value="$avgWaitTime . ' min'" subtitle="Platform average" tone="blue" />
-            <x-dashboard-card title="Acceptance Rate" :value="$acceptanceRate . '%'" subtitle="Driver acceptance" tone="green" />
+            <x-dashboard-card title="Avg Wait Time" :value="$avgWaitTime === null ? '—' : number_format($avgWaitTime, 2) . ' min'" subtitle="Platform average" tone="blue" />
+            <x-dashboard-card title="Acceptance Rate" :value="$acceptanceRate === null ? '—' : number_format($acceptanceRate, 1) . '%'" subtitle="Driver acceptance" tone="green" />
         </section>
 
         <!-- ML Service Demand Prediction (Real-time from ML Microservice) -->
@@ -123,7 +123,7 @@
                         </div>
                         <div class="text-right">
                             <div class="text-sm font-semibold text-slate-900">{{ $area['demand'] }} requests</div>
-                            <div class="text-xs text-slate-600">{{ $area['available_drivers'] }} drivers</div>
+                            <div class="text-xs text-slate-600">{{ is_null($area['available_drivers'] ?? null) ? '—' : $area['available_drivers'].' drivers' }}</div>
                         </div>
                     </div>
                 @empty

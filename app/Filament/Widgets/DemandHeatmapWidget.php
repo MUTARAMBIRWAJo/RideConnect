@@ -23,17 +23,4 @@ class DemandHeatmapWidget extends Widget
     {
         return RoleDashboardConfig::pollingIntervalForWidget(static::class, '180s');
     }
-
-    protected function getViewData(): array
-    {
-        // coordinates + labels are static placeholders — replace with real data if available
-        $markers = [
-            ['label' => 'Nyabugogo', 'lat' => -1.953, 'lng' => 30.060],
-            ['label' => 'Remera', 'lat' => -1.944, 'lng' => 30.091],
-            ['label' => 'Kacyiru', 'lat' => -1.948, 'lng' => 30.074],
-            ['label' => 'Kimironko', 'lat' => -1.951, 'lng' => 30.102],
-        ];
-
-        return compact('markers');
-    }
 }

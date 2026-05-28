@@ -53,6 +53,13 @@ Schedule::command('ai:retrain-models')
     ->onOneServer()
     ->name('ai-retrain-models');
 
+// Persist platform health snapshots for dashboard metrics.
+Schedule::command('health:record-platform-snapshot')
+    ->everyFiveMinutes()
+    ->withoutOverlapping()
+    ->onOneServer()
+    ->name('platform-health-snapshot');
+
 // Poll production demand forecasts for key Kigali zones.
 Schedule::job(new PollDemandPredictionsJob)
     ->everyFiveMinutes()

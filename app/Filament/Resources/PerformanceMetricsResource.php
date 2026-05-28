@@ -28,7 +28,7 @@ class PerformanceMetricsResource extends Resource
 
     protected static ?string $navigationLabel = 'Performance Metrics';
 
-    protected static ?string $navigationGroup = 'AI & Analytics';
+    protected static ?string $navigationGroup = 'Analytics';
 
     protected static ?string $modelLabel = 'Performance Metric';
 

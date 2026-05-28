@@ -36,7 +36,7 @@
                 <div class="flex items-center justify-between">
                     <div>
                         <p class="text-sm font-medium text-blue-700 dark:text-blue-300">Avg Resolution Time</p>
-                        <p class="mt-2 text-3xl font-bold text-blue-600">{{ $avgResolutionHours }}</p>
+                        <p class="mt-2 text-3xl font-bold text-blue-600">{{ $avgResolutionHours === null ? '—' : number_format($avgResolutionHours, 1) }}</p>
                         <p class="text-xs text-blue-500 dark:text-blue-400">Hours (30 days)</p>
                     </div>
                     <svg class="h-12 w-12 text-blue-200 dark:text-blue-900" fill="currentColor" viewBox="0 0 24 24">

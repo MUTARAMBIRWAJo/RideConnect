@@ -32,7 +32,7 @@
 							<x-heroicon-o-user-group class="w-4 h-4 text-amber-600 dark:text-amber-400" />
 						</div>
 					</div>
-					<p class="text-3xl font-bold">{{ number_format($operationsSnapshot['pending_drivers'] ?? 0) }}</p>
+					<p class="text-3xl font-bold">{{ is_null($operationsSnapshot['pending_drivers'] ?? null) ? '—' : number_format($operationsSnapshot['pending_drivers']) }}</p>
 					<p class="mt-2 text-xs text-amber-700 dark:text-amber-300">Awaiting onboarding approval.</p>
 				</div>
 
@@ -43,7 +43,7 @@
 							<x-heroicon-o-users class="w-4 h-4 text-blue-600 dark:text-blue-400" />
 						</div>
 					</div>
-					<p class="text-3xl font-bold">{{ number_format($operationsSnapshot['pending_users'] ?? 0) }}</p>
+					<p class="text-3xl font-bold">{{ is_null($operationsSnapshot['pending_users'] ?? null) ? '—' : number_format($operationsSnapshot['pending_users']) }}</p>
 					<p class="mt-2 text-xs text-blue-700 dark:text-blue-300">Accounts blocked by approval gate.</p>
 				</div>
 
@@ -54,7 +54,7 @@
 							<x-heroicon-o-exclamation-triangle class="w-4 h-4 text-red-600 dark:text-red-400" />
 						</div>
 					</div>
-					<p class="text-3xl font-bold">{{ number_format($operationsSnapshot['failed_payments_24h'] ?? 0) }}</p>
+					<p class="text-3xl font-bold">{{ is_null($operationsSnapshot['failed_payments_24h'] ?? null) ? '—' : number_format($operationsSnapshot['failed_payments_24h']) }}</p>
 					<p class="mt-2 text-xs text-red-700 dark:text-red-300">Needs retry, alerting, or follow-up.</p>
 				</div>
 
@@ -65,7 +65,7 @@
 							<x-heroicon-o-inbox class="w-4 h-4 text-purple-600 dark:text-purple-400" />
 						</div>
 					</div>
-					<p class="text-3xl font-bold">{{ number_format($operationsSnapshot['pending_outbox'] ?? 0) }}</p>
+					<p class="text-3xl font-bold">{{ is_null($operationsSnapshot['pending_outbox'] ?? null) ? '—' : number_format($operationsSnapshot['pending_outbox']) }}</p>
 					<p class="mt-2 text-xs text-purple-700 dark:text-purple-300">Domain events waiting publication.</p>
 				</div>
 			</div>

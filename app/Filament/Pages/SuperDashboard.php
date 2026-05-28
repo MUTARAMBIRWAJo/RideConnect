@@ -23,12 +23,12 @@ class SuperDashboard extends BaseDashboard
 
     protected static string $view = 'filament.pages.super-dashboard';
 
-    /** @var array<string, int> */
+    /** @var array<string, int|null> */
     public array $operationsSnapshot = [
-        'pending_drivers' => 0,
-        'pending_users' => 0,
-        'failed_payments_24h' => 0,
-        'pending_outbox' => 0,
+        'pending_drivers' => null,
+        'pending_users' => null,
+        'failed_payments_24h' => null,
+        'pending_outbox' => null,
     ];
 
     public ?string $lastMaintenanceActionAt = null;
@@ -249,21 +249,21 @@ class SuperDashboard extends BaseDashboard
 
     public function refreshOperationsSnapshot(): void
     {
-        $pendingDrivers = 0;
+        $pendingDrivers = null;
         if (Schema::hasTable('drivers') && Schema::hasColumn('drivers', 'status')) {
             $pendingDrivers = (int) DB::table('drivers')
                 ->whereRaw('LOWER(CAST(status AS TEXT)) = ?', ['pending'])
                 ->count();
         }
 
-        $pendingUsers = 0;
+        $pendingUsers = null;
         if (Schema::hasTable('users') && Schema::hasColumn('users', 'is_approved')) {
             $pendingUsers = (int) DB::table('users')
                 ->where('is_approved', false)
                 ->count();
         }
 
-        $failedPayments24h = 0;
+        $failedPayments24h = null;
         if (Schema::hasTable('payments') && Schema::hasColumn('payments', 'status') && Schema::hasColumn('payments', 'created_at')) {
             $failedPayments24h = (int) DB::table('payments')
                 ->whereIn('status', ['failed', 'FAILED', 'declined', 'DECLINED'])
@@ -271,7 +271,7 @@ class SuperDashboard extends BaseDashboard
                 ->count();
         }
 
-        $pendingOutbox = 0;
+        $pendingOutbox = null;
         if (Schema::hasTable('event_outbox') && Schema::hasColumn('event_outbox', 'status')) {
             $pendingOutbox = (int) DB::table('event_outbox')
                 ->whereRaw('LOWER(CAST(status AS TEXT)) = ?', ['pending'])

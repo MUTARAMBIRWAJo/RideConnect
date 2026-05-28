@@ -412,7 +412,7 @@ class LiveRidesPage extends Page
             return [
                 'driver_id' => (int) $driver->driver_id,
                 'driver_name' => $driver->driver_name ?? ('Driver #'.$driver->driver_id),
-                'license_plate' => $driver->license_plate ?? 'N/A',
+                'license_plate' => $driver->license_plate ?? '—',
                 'vehicle' => ! empty($vehicleLabelParts) ? implode(' • ', $vehicleLabelParts) : 'Vehicle details unavailable',
                 'availability' => strtoupper($availability),
                 'is_online' => $isOnline,

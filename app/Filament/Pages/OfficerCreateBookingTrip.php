@@ -16,7 +16,7 @@ class OfficerCreateBookingTrip extends Page
 
     protected static ?int $navigationSort = 1;
 
-    protected static ?string $navigationGroup = 'Operations';
+    protected static ?string $navigationGroup = 'Live Operations';
 
     public static function canAccess(): bool
     {

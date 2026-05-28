@@ -18,7 +18,7 @@ class ComplianceReportResource extends Resource
 
     protected static ?string $navigationIcon = 'heroicon-o-document-text';
 
-    protected static ?string $navigationGroup = 'AI & Analytics';
+    protected static ?string $navigationGroup = 'Analytics';
 
     protected static ?string $label = 'Compliance Report';
 

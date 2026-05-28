@@ -31,6 +31,8 @@ class TripResource extends Resource
 
     protected static ?string $navigationLabel = 'Trips';
 
+    protected static ?string $navigationGroup = 'Live Operations';
+
     protected static ?string $modelLabel = 'Trip';
 
     protected static ?string $pluralModelLabel = 'Trips';

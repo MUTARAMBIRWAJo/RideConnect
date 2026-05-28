@@ -56,7 +56,7 @@
                 <div class="flex items-center justify-between">
                     <div>
                         <p class="text-sm font-medium text-gray-600 dark:text-gray-400">Avg Driver Rating</p>
-                        <p class="mt-2 text-2xl font-bold text-yellow-600">{{ $avgDriverRating }}</p>
+                        <p class="mt-2 text-2xl font-bold text-yellow-600">{{ $avgDriverRating === null ? '—' : number_format($avgDriverRating, 2) }}</p>
                         <p class="text-xs text-gray-500 dark:text-gray-400">Out of 5.0</p>
                     </div>
                     <div class="text-yellow-100 dark:text-yellow-900/30">

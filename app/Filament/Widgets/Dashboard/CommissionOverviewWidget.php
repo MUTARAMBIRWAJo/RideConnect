@@ -52,17 +52,17 @@ class CommissionOverviewWidget extends StatsOverviewWidget
     private function emptyStats(): array
     {
         return [
-            Stat::make('Total Commission Today', 'RWF 0.00')
-                ->description('Current day retained commission')
+            Stat::make('Total Commission Today', '—')
+                ->description('Commission data not tracked yet')
                 ->color('success'),
-            Stat::make('Total Commission This Week', 'RWF 0.00')
-                ->description('Week-to-date commission')
+            Stat::make('Total Commission This Week', '—')
+                ->description('Commission data not tracked yet')
                 ->color('info'),
-            Stat::make('Total Commission This Month', 'RWF 0.00')
-                ->description('Month-to-date commission')
+            Stat::make('Total Commission This Month', '—')
+                ->description('Commission data not tracked yet')
                 ->color('warning'),
-            Stat::make('Total Commission All Time', 'RWF 0.00')
-                ->description('Lifetime retained commission')
+            Stat::make('Total Commission All Time', '—')
+                ->description('Commission data not tracked yet')
                 ->color('primary'),
         ];
     }

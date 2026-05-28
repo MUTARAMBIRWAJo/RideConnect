@@ -17,10 +17,10 @@ class AccountantRevenueSummary extends StatsOverviewWidget
 
         if (! $table || ! $column) {
             return [
-                Stat::make('Revenue Summary', 'RWF 0.00'),
-                Stat::make('This Month', 'RWF 0.00'),
-                Stat::make('Transactions', '0'),
-                Stat::make('Avg Transaction', 'RWF 0.00'),
+                Stat::make('Revenue Summary', '—')->description('Revenue data not tracked yet')->color('gray'),
+                Stat::make('This Month', '—')->description('Revenue data not tracked yet')->color('gray'),
+                Stat::make('Transactions', '—')->description('Revenue data not tracked yet')->color('gray'),
+                Stat::make('Avg Transaction', '—')->description('Revenue data not tracked yet')->color('gray'),
             ];
         }
 

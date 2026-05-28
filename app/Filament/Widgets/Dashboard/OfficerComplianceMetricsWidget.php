@@ -54,7 +54,7 @@ class OfficerComplianceMetricsWidget extends Widget
             'cancellationRate' => $cancellationRate,
             'totalRides' => $totalRides,
             'completedRides' => $totalCompletedRides,
-            'avgDriverRating' => $avgDriverRating ? round($avgDriverRating, 2) : 'N/A',
+            'avgDriverRating' => $avgDriverRating ? round($avgDriverRating, 2) : null,
             'complianceScore' => max(0, 100 - $cancellationRate),
         ];
     }

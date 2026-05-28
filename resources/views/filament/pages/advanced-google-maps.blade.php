@@ -16,38 +16,38 @@
         <section class="grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-3">
             <div class="rounded-xl border border-slate-200 bg-white p-4 shadow-sm">
                 <p class="text-xs uppercase tracking-wide text-slate-500">Active Vehicles</p>
-                <p class="mt-1 text-2xl font-semibold text-slate-900">{{ $analytics['active_vehicles'] ?? 0 }}</p>
+                <p class="mt-1 text-2xl font-semibold text-slate-900">{{ is_null($analytics['active_vehicles'] ?? null) ? '—' : number_format($analytics['active_vehicles']) }}</p>
                 <p class="mt-1 text-xs text-slate-600">Currently on the road</p>
             </div>
 
             <div class="rounded-xl border border-slate-200 bg-white p-4 shadow-sm">
                 <p class="text-xs uppercase tracking-wide text-slate-500">Active Rides</p>
-                <p class="mt-1 text-2xl font-semibold text-slate-900">{{ $analytics['active_rides'] ?? 0 }}</p>
+                <p class="mt-1 text-2xl font-semibold text-slate-900">{{ is_null($analytics['active_rides'] ?? null) ? '—' : number_format($analytics['active_rides']) }}</p>
                 <p class="mt-1 text-xs text-slate-600">In progress</p>
             </div>
 
             <div class="rounded-xl border border-slate-200 bg-white p-4 shadow-sm">
                 <p class="text-xs uppercase tracking-wide text-slate-500">Avg Wait Time</p>
-                <p class="mt-1 text-2xl font-semibold text-slate-900">{{ $analytics['average_wait_time'] ?? '-' }}</p>
+                <p class="mt-1 text-2xl font-semibold text-slate-900">{{ $analytics['average_wait_time'] ?? '—' }}</p>
                 <p class="mt-1 text-xs text-slate-600">Customer average</p>
             </div>
 
             <div class="rounded-xl border border-slate-200 bg-white p-4 shadow-sm">
                 <p class="text-xs uppercase tracking-wide text-slate-500">System Efficiency</p>
-                <p class="mt-1 text-2xl font-semibold text-slate-900">{{ $analytics['system_efficiency'] ?? 0 }}%</p>
+                <p class="mt-1 text-2xl font-semibold text-slate-900">{{ is_null($analytics['system_efficiency'] ?? null) ? '—' : number_format($analytics['system_efficiency'], 1).'%' }}</p>
                 <p class="mt-1 text-xs text-slate-600">Operational</p>
             </div>
 
             <div class="rounded-xl border border-slate-200 bg-white p-4 shadow-sm">
                 <p class="text-xs uppercase tracking-wide text-slate-500">Coverage Area</p>
-                <p class="mt-1 text-2xl font-semibold text-slate-900">{{ $analytics['coverage_percentage'] ?? 0 }}%</p>
+                <p class="mt-1 text-2xl font-semibold text-slate-900">{{ is_null($analytics['coverage_percentage'] ?? null) ? '—' : number_format($analytics['coverage_percentage'], 1).'%' }}</p>
                 <p class="mt-1 text-xs text-slate-600">Geographic</p>
             </div>
 
             <div class="rounded-xl border border-slate-200 bg-white p-4 shadow-sm">
                 <p class="text-xs uppercase tracking-wide text-slate-500">Peak Zones</p>
                 <p class="mt-1 text-sm font-medium text-slate-900">
-                    {{ implode(', ', $analytics['peak_zones'] ?? []) }}
+                    {{ ! empty($analytics['peak_zones'] ?? []) ? implode(', ', $analytics['peak_zones']) : '—' }}
                 </p>
                 <p class="mt-1 text-xs text-slate-600">High demand</p>
             </div>
