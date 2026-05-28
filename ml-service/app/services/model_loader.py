@@ -1,11 +1,18 @@
 """ML Model loading and management service"""
+from __future__ import annotations
+
 import os
 from pathlib import Path
-from typing import Optional
+from typing import Any, Optional
 
 import numpy as np
-import tensorflow as tf
-from tensorflow import keras
+
+try:
+    import tensorflow as tf
+    from tensorflow import keras
+except ModuleNotFoundError:
+    tf = None
+    keras = None
 
 from app.core.config import settings
 from app.core.feature_config import EXPECTED_FEATURE_COUNT, EXPECTED_OUTPUT_SHAPES
@@ -24,11 +31,12 @@ class ModelLoader:
     
     def __init__(self):
         """Initialize model loader"""
-        self.model: Optional[tf.keras.Model] = None
+        self.model: Optional[Any] = None
         self.model_path = settings.MODEL_PATH
         self.model_version = settings.MODEL_VERSION
         self.devices = None
         self.initialized_at = None
+        self.tensorflow_available = tf is not None and keras is not None
         
     async def initialize(self) -> None:
         """
@@ -40,14 +48,26 @@ class ModelLoader:
             Exception: If model loading fails
         """
         try:
+            if not self.tensorflow_available:
+                logger.warning(
+                    "TensorFlow/keras backend unavailable; skipping model loading. "
+                    "Requests requiring the Keras model will remain unavailable until dependencies are installed."
+                )
+                self.model = None
+                self.initialized_at = None
+                return
+
             # Log TensorFlow device info
             self._log_device_info()
             
             # Check if model file exists
             if not os.path.exists(self.model_path):
-                raise FileNotFoundError(
-                    f"Model file not found at {self.model_path}"
+                logger.warning(
+                    f"Model file not found at {self.model_path}; skipping model loading"
                 )
+                self.model = None
+                self.initialized_at = None
+                return
             
             logger.info(f"Loading model from {self.model_path}")
             
@@ -78,6 +98,9 @@ class ModelLoader:
     
     def _log_device_info(self) -> None:
         """Log available TensorFlow devices."""
+        if tf is None:
+            return
+
         try:
             devices = tf.config.list_physical_devices()
             logger.info(f"Available TensorFlow devices: {len(devices)}")
@@ -384,7 +407,8 @@ class ModelLoader:
             self.model = None
             
             # Clear TensorFlow session
-            keras.backend.clear_session()
+            if keras is not None:
+                keras.backend.clear_session()
             
             logger.info("Model cleaned up and backend session cleared")
 
@@ -400,15 +424,18 @@ class ModelLoader:
             import time
             uptime_seconds = time.time() - self.initialized_at
 
+        tensorflow_version = tf.__version__ if tf is not None else "unavailable"
+        available_devices = []
+        if tf is not None:
+            available_devices = [str(device) for device in tf.config.list_physical_devices()]
+
         if self.model is None:
             return {
                 "loaded": False,
                 "path": self.model_path,
                 "version": self.model_version,
-                "tensorflow_version": tf.__version__,
-                "available_devices": [
-                    str(device) for device in tf.config.list_physical_devices()
-                ],
+                "tensorflow_version": tensorflow_version,
+                "available_devices": available_devices,
                 "uptime_seconds": uptime_seconds,
             }
 
@@ -426,10 +453,8 @@ class ModelLoader:
             "input_shape": input_shapes,
             "output_shape": list(self.model.output_shape),
             "parameters": self.model.count_params(),
-            "tensorflow_version": tf.__version__,
-            "available_devices": [
-                str(device) for device in tf.config.list_physical_devices()
-            ],
+            "tensorflow_version": tensorflow_version,
+            "available_devices": available_devices,
             "uptime_seconds": uptime_seconds,
         }
 

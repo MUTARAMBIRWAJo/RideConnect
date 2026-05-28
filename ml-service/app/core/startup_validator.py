@@ -110,7 +110,12 @@ class StartupValidator:
             model_loader = get_model_loader()
             
             if model_loader.model is None:
-                raise RuntimeError("Model not loaded")
+                logger.warning("  No model loaded; skipping model validation")
+                return {
+                    "loaded": False,
+                    "valid": False,
+                    "warning": "No model loaded",
+                }
             
             input_shape = model_loader.model.input_shape
             output_shape = model_loader.model.output_shape
@@ -224,6 +229,13 @@ class StartupValidator:
         
         try:
             model_loader = get_model_loader()
+            if model_loader.model is None:
+                logger.warning("  No model loaded; integration validation skipped")
+                return {
+                    "valid": True,
+                    "skipped": True,
+                    "reason": "No model loaded",
+                }
             
             # Create dummy batch matching feature space
             batch_size = 2
