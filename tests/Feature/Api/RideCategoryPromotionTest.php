@@ -10,12 +10,25 @@ use App\Models\Ride;
 use App\Models\Trip;
 use App\Models\User;
 use App\Models\Vehicle;
+use App\Services\AiPredictionService;
 use Illuminate\Support\Str;
 use Laravel\Sanctum\Sanctum;
 use Tests\TestCase;
 
 class RideCategoryPromotionTest extends TestCase
 {
+    protected function setUp(): void
+    {
+        parent::setUp();
+
+        $this->mock(AiPredictionService::class, function ($mock): void {
+            $mock->shouldReceive('predictPrice')->andReturn([
+                'predicted_price' => 3500,
+                'success' => true,
+            ]);
+        });
+    }
+
     public function test_create_as_booking_when_departure_is_greater_than_six_hours(): void
     {
         [$passenger] = $this->createPassengerUser();

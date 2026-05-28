@@ -26,10 +26,10 @@ class AccountantPayoutPipelineWidget extends StatsOverviewWidget
     {
         if (! Schema::hasTable('driver_payouts') || ! Schema::hasColumn('driver_payouts', 'status')) {
             return [
-                Stat::make('Pending Payouts', '0')->description('Awaiting processing')->color('warning'),
-                Stat::make('Processed Today', '0')->description('Completed today')->color('success'),
-                Stat::make('Failed / Rejected', '0')->description('Needs review')->color('danger'),
-                Stat::make('Total Payout Records', '0')->description('Pipeline volume')->color('info'),
+                Stat::make('Pending Payouts', '—')->description('Payout data not tracked yet')->color('warning'),
+                Stat::make('Processed Today', '—')->description('Payout data not tracked yet')->color('success'),
+                Stat::make('Failed / Rejected', '—')->description('Payout data not tracked yet')->color('danger'),
+                Stat::make('Total Payout Records', '—')->description('Payout data not tracked yet')->color('info'),
             ];
         }
 

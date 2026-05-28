@@ -36,7 +36,7 @@
                             <tr class="border-b border-slate-100 hover:bg-slate-50 transition">
                                 <td class="py-3 pr-3 font-mono text-slate-700">#{{ $log['id'] ?? '-' }}</td>
                                 <td class="py-3 pr-3 font-medium text-slate-900">
-                                    {{ $log['ride_id'] ?? $log['subject_id'] ?? 'N/A' }}
+                                    {{ $log['ride_id'] ?? $log['subject_id'] ?? '—' }}
                                 </td>
                                 <td class="py-3 pr-3">
                                     <span class="font-mono font-semibold {{ ($log['fare_difference'] ?? 0) > 0 ? 'text-orange-600' : 'text-slate-700' }}">

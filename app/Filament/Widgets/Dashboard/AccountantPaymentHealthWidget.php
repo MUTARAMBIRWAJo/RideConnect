@@ -28,10 +28,10 @@ class AccountantPaymentHealthWidget extends StatsOverviewWidget
 
         if (! $table || ! $amountColumn) {
             return [
-                Stat::make('Successful Payments (24h)', '0')->description('Last 24 hours')->color('success'),
-                Stat::make('Failed Payments (24h)', '0')->description('Last 24 hours')->color('danger'),
-                Stat::make('Success Rate', '0%')->description('Payment reliability')->color('info'),
-                Stat::make('Volume (24h)', 'RWF 0')->description('Successful amount')->color('primary'),
+                Stat::make('Successful Payments (24h)', '—')->description('Payment telemetry not tracked yet')->color('success'),
+                Stat::make('Failed Payments (24h)', '—')->description('Payment telemetry not tracked yet')->color('danger'),
+                Stat::make('Success Rate', '—')->description('Payment telemetry not tracked yet')->color('info'),
+                Stat::make('Volume (24h)', '—')->description('Payment telemetry not tracked yet')->color('primary'),
             ];
         }
 

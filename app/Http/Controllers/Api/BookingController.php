@@ -284,6 +284,7 @@ class BookingController extends Controller
             'message' => 'Booking created successfully',
             'data' => [
                 'id' => $booking->id,
+                'ride_id' => $booking->ride_id,
                 'status' => $booking->status,
                 'total_price' => $booking->total_price,
                 'currency' => $booking->currency,

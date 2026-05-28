@@ -2,6 +2,72 @@
 
 Production-grade FastAPI microservice for intelligent driver matching in the RideConnect platform using TensorFlow/Keras ML model.
 
+## MIGRATION: TFLite Edge Impulse ranking
+
+### What changed
+- Replaced the legacy Keras/TensorFlow model loader with a lightweight TFLite interpreter loader.
+- The matcher now loads a `.tflite` model once at startup, caches input/output tensor indices, and runs per-candidate inference without TensorFlow runtime overhead.
+- The `/rank-drivers` request and response schema is unchanged, so Laravel does not need any API changes.
+
+### Why this change
+- Removing TensorFlow cuts build size and startup time, which is important for Render free-tier deployments.
+- The Edge Impulse export is lighter and better suited to a small Python web service.
+
+### How to deploy
+1. Drop the Edge Impulse model file, such as `Matching_Modal_tflite_learn_1013157_3.tflite`, into `ml-service/model/`.
+2. Optionally override the model with `MODEL_PATH` if you keep it elsewhere.
+3. Verify `ACCEPT_INDEX` matches the accepted class order from Edge Impulse; if ranking reverses, adjust it.
+
+### Contract stability
+- Laravel can continue calling the same ranking endpoint.
+- `/health` remains available for Render health checks.
+
+### Example curl
+```bash
+curl -X POST http://localhost:8000/rank-drivers \
+  -H "Content-Type: application/json" \
+  -d '{
+    "trip_id": 101,
+    "matching_session_id": "session-001",
+    "candidates": [
+      {
+        "driver_id": 11,
+        "features": {
+          "distance_km": 1.2,
+          "predicted_eta_min": 4.5,
+          "driver_rating": 4.8,
+          "acceptance_rate": 0.92,
+          "cancellation_rate": 0.04,
+          "on_time_rate": 0.95,
+          "behavior_score": 0.88,
+          "total_rides": 240,
+          "driver_idle_minutes": 13,
+          "vehicle_match": 1,
+          "same_zone": 1,
+          "is_rush_hour": 1,
+          "traffic_level": 0.6,
+          "weather_severity": 0.2,
+          "request_hour": 17
+        }
+      }
+    ]
+  }'
+```
+
+Expected shape:
+```json
+{
+  "selected_driver_id": 11,
+  "ranked": [
+    {
+      "driver_id": 11,
+      "score": 0.9234,
+      "rank": 1
+    }
+  ]
+}
+```
+
 ## Overview
 
 This microservice provides:

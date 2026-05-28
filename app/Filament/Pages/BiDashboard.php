@@ -16,7 +16,7 @@ class BiDashboard extends Page
 
     protected static ?string $navigationLabel = 'Analytics';
 
-    protected static ?string $navigationGroup = 'AI & Analytics';
+    protected static ?string $navigationGroup = 'Analytics';
 
     protected static ?string $title = 'Business Intelligence Dashboard';
 

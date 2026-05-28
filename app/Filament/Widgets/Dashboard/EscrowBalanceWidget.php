@@ -60,10 +60,10 @@ class EscrowBalanceWidget extends StatsOverviewWidget
     private function emptyStats(): array
     {
         return [
-            Stat::make('Total Escrow Balance', 'RWF 0.00')->description('Awaiting migrations')->color('gray'),
-            Stat::make('Total Driver Wallet Balance', 'RWF 0.00')->description('Awaiting migrations')->color('gray'),
-            Stat::make('Total Platform Revenue', 'RWF 0.00')->description('Awaiting migrations')->color('gray'),
-            Stat::make('Pending Settlements', '0')->description('Awaiting migrations')->color('gray'),
+            Stat::make('Total Escrow Balance', '—')->description('Ledger data not tracked yet')->color('gray'),
+            Stat::make('Total Driver Wallet Balance', '—')->description('Ledger data not tracked yet')->color('gray'),
+            Stat::make('Total Platform Revenue', '—')->description('Ledger data not tracked yet')->color('gray'),
+            Stat::make('Pending Settlements', '—')->description('Ledger data not tracked yet')->color('gray'),
         ];
     }
 }

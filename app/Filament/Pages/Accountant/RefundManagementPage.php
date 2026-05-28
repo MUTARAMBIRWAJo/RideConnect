@@ -66,7 +66,6 @@ class RefundManagementPage extends Page
 
     private function loadRefundRequests(): void
     {
-        // Try to load refund requests from database
         if (Schema::hasTable('refunds')) {
             $columns = collect(['id', 'ride_id', 'amount', 'reason', 'status', 'created_at', 'user_id'])
                 ->filter(fn (string $column): bool => Schema::hasColumn('refunds', $column))
@@ -90,16 +89,10 @@ class RefundManagementPage extends Page
             }
         }
 
-        // Fallback: create mock data for demonstration
-        $this->refundRequests = [
-            ['id' => 1, 'ride_id' => 1001, 'amount' => 15.50, 'reason' => 'Incorrect fare calculation', 'status' => 'pending', 'created_at' => now()->subHours(3)->toDateTimeString()],
-            ['id' => 2, 'ride_id' => 1002, 'amount' => 8.00, 'reason' => 'Driver canceled after pickup', 'status' => 'approved', 'created_at' => now()->subHours(12)->toDateTimeString()],
-            ['id' => 3, 'ride_id' => 1003, 'amount' => 22.75, 'reason' => 'Service issue - driver went wrong route', 'status' => 'pending', 'created_at' => now()->subHours(5)->toDateTimeString()],
-        ];
-
-        $this->pendingRefunds = 2;
-        $this->approvedRefunds = 1;
-        $this->totalRefundAmount = 46.25;
+        $this->refundRequests = [];
+        $this->pendingRefunds = 0;
+        $this->approvedRefunds = 0;
+        $this->totalRefundAmount = 0.0;
     }
 
     public function approveRefund(int $refundId): void

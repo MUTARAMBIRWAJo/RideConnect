@@ -14,13 +14,14 @@ use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Event;
 use Illuminate\Support\Facades\Route;
+use PHPUnit\Framework\Attributes\Test;
 use Tests\TestCase;
 
 class DomainEventsEmissionTest extends TestCase
 {
     use RefreshDatabase;
 
-    /** @test */
+    #[Test]
     public function booking_and_trip_events_are_emitted(): void
     {
         Event::fake([
@@ -37,6 +38,7 @@ class DomainEventsEmissionTest extends TestCase
         $passenger = User::factory()->create(['is_approved' => true]);
 
         $ride = Ride::factory()->create([
+            'id' => random_int(1000000, 1999999),
             'driver_id' => $driver->id,
             'vehicle_id' => $vehicle->id,
             'travel_mode' => Ride::MODE_SCHEDULED,
@@ -82,7 +84,7 @@ class DomainEventsEmissionTest extends TestCase
         Event::assertDispatched(TripCompleted::class);
     }
 
-    /** @test */
+    #[Test]
     public function ride_created_event_is_emitted(): void
     {
         Event::fake([RideCreated::class]);

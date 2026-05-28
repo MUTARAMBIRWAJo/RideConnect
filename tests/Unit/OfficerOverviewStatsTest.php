@@ -8,10 +8,12 @@ use App\Models\Ride;
 use App\Models\Ticket;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\Schema;
+use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\TestCase;
 
 class OfficerOverviewStatsTest extends TestCase
 {
+    use RefreshDatabase;
     public function test_driver_status_uses_fallback_count_when_is_online_column_is_missing(): void
     {
         Carbon::setTestNow(Carbon::parse('2026-05-16 10:00:00'));
@@ -19,7 +21,13 @@ class OfficerOverviewStatsTest extends TestCase
         Driver::factory()->create(['status' => 'approved']);
         Driver::factory()->create(['status' => 'approved']);
         Driver::factory()->pending()->create();
-        Ride::factory()->count(2)->create(['created_at' => now()]);
+        // Create rides without attached drivers/vehicles to avoid creating
+        // extra Driver records via related factories during the test.
+        Ride::factory()->count(2)->create([
+            'created_at' => now(),
+            'driver_id' => null,
+            'vehicle_id' => null,
+        ]);
         Ticket::factory()->count(3)->create(['status' => 'open']);
 
         Schema::shouldReceive('hasColumn')

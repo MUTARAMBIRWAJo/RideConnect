@@ -12,13 +12,14 @@ use App\Models\User;
 use App\Models\WeatherCondition;
 use App\Services\MatchingEngine;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use PHPUnit\Framework\Attributes\Test;
 use Tests\TestCase;
 
 class MatchingEngineTest extends TestCase
 {
     use RefreshDatabase;
 
-    /** @test */
+    #[Test]
     public function it_prefers_closer_and_more_reliable_drivers(): void
     {
         $mobileUser = MobileUser::factory()->create(['role' => 'PASSENGER']);
@@ -97,7 +98,7 @@ class MatchingEngineTest extends TestCase
         $this->assertGreaterThan($scores[$farDriver->id], $scores[$nearDriver->id]);
     }
 
-    /** @test */
+    #[Test]
     public function it_remains_null_safe_when_snapshot_data_is_missing(): void
     {
         $trip = Trip::factory()->create();

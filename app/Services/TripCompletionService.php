@@ -6,6 +6,7 @@ use App\Domain\Trip\TripStateMachine;
 use App\Events\Domain\TripCompleted;
 use App\Exceptions\DomainException;
 use App\Models\Driver;
+use App\Models\Ride;
 use App\Models\Trip;
 use App\Models\TripStatusEvent;
 use Illuminate\Support\Facades\DB;
@@ -27,11 +28,22 @@ class TripCompletionService
 
             $payment = $trip->payment ?: $trip->booking?->payment;
             $paymentPaid = $payment && in_array(strtolower((string) $payment->status), ['paid', 'completed'], true);
-            if (! $paymentPaid && ! $adminApproved) {
-                throw DomainException::make(
-                    'Payment must be verified before completion',
-                    'PAYMENT_NOT_VERIFIED'
-                );
+            // BUS trips always require payment verification before completion
+            if ($trip->transport_type === Ride::TRANSPORT_BUS) {
+                if (! $paymentPaid && ! $adminApproved) {
+                    throw DomainException::make(
+                        'Payment must be verified before completion',
+                        'PAYMENT_NOT_VERIFIED'
+                    );
+                }
+            } else {
+                // For non-bus trips, only require verified payment when a payment record exists.
+                if ($payment && ! $paymentPaid && ! $adminApproved) {
+                    throw DomainException::make(
+                        'Payment must be verified before completion',
+                        'PAYMENT_NOT_VERIFIED'
+                    );
+                }
             }
 
             $trip->update([

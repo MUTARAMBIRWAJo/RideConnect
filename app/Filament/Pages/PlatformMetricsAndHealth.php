@@ -76,67 +76,59 @@ class PlatformMetricsAndHealth extends Page
     /**
      * Calculate system uptime percentage
      */
-    private function calculateSystemUptime(): float
+    private function calculateSystemUptime(): ?float
     {
-        // Check if we have an uptime tracking table
-        if (Schema::hasTable('system_health_logs') && Schema::hasColumn('system_health_logs', 'status')) {
-            $totalChecks = DB::table('system_health_logs')
+        if (Schema::hasTable('platform_health_snapshots')) {
+            $snapshot = DB::table('platform_health_snapshots')
                 ->where('created_at', '>=', now()->subDays(30))
-                ->count();
+                ->selectRaw('COALESCE(SUM(successful_checks), 0) as successful_checks')
+                ->selectRaw('COALESCE(SUM(total_checks), 0) as total_checks')
+                ->first();
 
-            if ($totalChecks === 0) {
-                return 99.98; // Default if no logs
+            if (! $snapshot || (int) $snapshot->total_checks === 0) {
+                return null;
             }
 
-            $successfulChecks = DB::table('system_health_logs')
-                ->where('created_at', '>=', now()->subDays(30))
-                ->where('status', 'healthy')
-                ->count();
-
-            return round(($successfulChecks / $totalChecks) * 100, 2);
+            return round(((int) $snapshot->successful_checks / (int) $snapshot->total_checks) * 100, 2);
         }
 
-        // Default to 99.98% if no tracking table exists
-        return 99.98;
+        return null;
     }
 
     /**
      * Get average API response time in milliseconds
      */
-    private function getAverageApiResponseTime(): string
+    private function getAverageApiResponseTime(): ?string
     {
-        $avgTime = 145; // Default value
-
-        if (Schema::hasTable('api_request_logs') && Schema::hasColumn('api_request_logs', 'response_time_ms')) {
-            $result = DB::table('api_request_logs')
-                ->where('created_at', '>=', now()->subHours(1))
+        if (Schema::hasTable('ai_prediction_logs') && Schema::hasColumn('ai_prediction_logs', 'response_time_ms')) {
+            $result = DB::table('ai_prediction_logs')
+                ->where('requested_at', '>=', now()->subHours(1))
+                ->whereNotNull('response_time_ms')
                 ->avg('response_time_ms');
 
             if ($result !== null) {
-                $avgTime = (int) $result;
+                return (int) round((float) $result).'ms';
             }
         }
 
-        return $avgTime.'ms';
+        return null;
     }
 
     /**
      * Get current database connection count
      */
-    private function getDatabaseConnectionCount(): int
+    private function getDatabaseConnectionCount(): ?int
     {
         try {
-            // Try to get active connections from the database
-            if (Schema::hasTable('pg_stat_activity')) {
-                $count = DB::selectOne('SELECT count(*) as count FROM pg_stat_activity');
+            if (DB::connection()->getDriverName() === 'pgsql') {
+                $count = DB::selectOne('SELECT count(*) as count FROM pg_stat_activity WHERE datname = current_database()');
 
-                return (int) ($count?->count ?? 5);
+                return (int) ($count?->count ?? 0);
             }
 
-            // Fallback: estimate from typical pool size
-            return 42;
+            return null;
         } catch (\Exception $e) {
-            return 42;
+            return null;
         }
     }
 
@@ -160,53 +152,53 @@ class PlatformMetricsAndHealth extends Page
     /**
      * Get cache hit rate percentage
      */
-    private function getCacheHitRate(): float
+    private function getCacheHitRate(): ?float
     {
-        // Check if we have cache statistics tracking
-        if (Schema::hasTable('cache_statistics') && Schema::hasColumn('cache_statistics', 'status')) {
-            $totalHits = DB::table('cache_statistics')
+        if (Schema::hasTable('platform_health_snapshots')) {
+            $totalSnapshots = DB::table('platform_health_snapshots')
                 ->where('created_at', '>=', now()->subHours(1))
+                ->whereNotNull('cache_status')
                 ->count();
 
-            if ($totalHits === 0) {
-                return 94.3; // Default
+            if ($totalSnapshots === 0) {
+                return null;
             }
 
-            $successful = DB::table('cache_statistics')
+            $successful = DB::table('platform_health_snapshots')
                 ->where('created_at', '>=', now()->subHours(1))
-                ->where('status', 'hit')
+                ->where('cache_status', 'ok')
                 ->count();
 
-            return round(($successful / $totalHits) * 100, 1);
+            return round(($successful / $totalSnapshots) * 100, 1);
         }
 
-        // Default cache hit rate
-        return 94.3;
+        return null;
     }
 
     /**
      * Get application error rate percentage
      */
-    private function getErrorRate(): float
+    private function getErrorRate(): ?float
     {
-        if (Schema::hasTable('activity_logs') && Schema::hasColumn('activity_logs', 'event')) {
-            $totalLogs = DB::table('activity_logs')
-                ->where('created_at', '>=', now()->subHours(1))
-                ->count();
-
-            if ($totalLogs === 0) {
-                return 0.02;
-            }
-
-            $errors = DB::table('activity_logs')
-                ->where('created_at', '>=', now()->subHours(1))
-                ->whereIn('event', ['error', 'exception', 'failed'])
-                ->count();
-
-            return round(($errors / $totalLogs) * 100, 2);
+        if (! Schema::hasTable('platform_health_snapshots')) {
+            return null;
         }
 
-        return 0.02;
+        $totalSnapshots = DB::table('platform_health_snapshots')
+            ->where('created_at', '>=', now()->subHours(24))
+            ->whereNotNull('overall_status')
+            ->count();
+
+        if ($totalSnapshots === 0) {
+            return null;
+        }
+
+        $failedSnapshots = DB::table('platform_health_snapshots')
+            ->where('created_at', '>=', now()->subHours(24))
+            ->where('overall_status', 'degraded')
+            ->count();
+
+        return round(($failedSnapshots / $totalSnapshots) * 100, 2);
     }
 
     /**
@@ -214,19 +206,13 @@ class PlatformMetricsAndHealth extends Page
      */
     private function getTotalRidesToday(): int
     {
-        // Try using rides table first
         if (Schema::hasTable('rides')) {
-            $count = DB::table('rides')
+            return DB::table('rides')
                 ->where('created_at', '>=', today())
                 ->where('status', 'COMPLETED')
                 ->count();
-
-            if ($count > 0) {
-                return $count;
-            }
         }
 
-        // Try trips table as fallback
         if (Schema::hasTable('trips')) {
             return DB::table('trips')
                 ->where('created_at', '>=', today())
@@ -312,28 +298,28 @@ class PlatformMetricsAndHealth extends Page
     /**
      * Get average rating from reviews
      */
-    private function getAverageRating(): float
+    private function getAverageRating(): ?float
     {
         if (Schema::hasTable('reviews') && Schema::hasColumn('reviews', 'rating')) {
             $avg = DB::table('reviews')
                 ->where('created_at', '>=', now()->subDays(30))
                 ->avg('rating');
 
-            return round($avg ?? 4.75, 2);
+            return $avg !== null ? round((float) $avg, 2) : null;
         }
 
-        return 4.75;
+        return null;
     }
 
     /**
      * Get ride completion rate percentage
      */
-    private function getRideCompletionRate(): float
+    private function getRideCompletionRate(): ?float
     {
         $table = Schema::hasTable('rides') ? 'rides' : (Schema::hasTable('trips') ? 'trips' : null);
 
         if (! $table) {
-            return 97.2;
+            return null;
         }
 
         $totalRides = DB::table($table)
@@ -341,7 +327,7 @@ class PlatformMetricsAndHealth extends Page
             ->count();
 
         if ($totalRides === 0) {
-            return 97.2;
+            return null;
         }
 
         $completedRides = DB::table($table)
@@ -350,5 +336,82 @@ class PlatformMetricsAndHealth extends Page
             ->count();
 
         return round(($completedRides / $totalRides) * 100, 1);
+    }
+
+    /**
+     * @return array{tone: string, label: string, message: string}
+     */
+    public function getPlatformStatus(): array
+    {
+        $systemMetrics = $this->getSystemMetrics();
+        $businessMetrics = $this->getBusinessMetrics();
+
+        if (! Schema::hasTable('platform_health_snapshots')) {
+            return [
+                'tone' => 'warning',
+                'label' => 'Telemetry unavailable',
+                'message' => 'Create the platform_health_snapshots table and run the health snapshot recorder.',
+            ];
+        }
+
+        $latestSnapshot = DB::table('platform_health_snapshots')
+            ->orderByDesc('created_at')
+            ->first();
+
+        if (! $latestSnapshot) {
+            return [
+                'tone' => 'warning',
+                'label' => 'No snapshots yet',
+                'message' => 'Run the health snapshot recorder to populate live metrics.',
+            ];
+        }
+
+        $issues = [];
+
+        if (($systemMetrics['uptime'] ?? null) === null) {
+            $issues[] = 'Uptime snapshots are missing.';
+        } elseif ($systemMetrics['uptime'] < 99) {
+            $issues[] = 'Uptime is below target.';
+        }
+
+        if (($systemMetrics['api_response_time'] ?? null) === null) {
+            $issues[] = 'Prediction latency has not been recorded yet.';
+        }
+
+        if (($systemMetrics['cache_hit_rate'] ?? null) === null) {
+            $issues[] = 'Cache snapshots are missing.';
+        }
+
+        if (($systemMetrics['error_rate'] ?? null) === null) {
+            $issues[] = 'Error snapshots are missing.';
+        }
+
+        if (($systemMetrics['queue_jobs_pending'] ?? 0) > 1000) {
+            $issues[] = 'Queue backlog is high.';
+        }
+
+        if (($businessMetrics['completion_rate'] ?? null) !== null && $businessMetrics['completion_rate'] < 90) {
+            $issues[] = 'Ride completion rate is below target.';
+        } elseif (($businessMetrics['completion_rate'] ?? null) === null) {
+            $missingTelemetry[] = 'ride completion data';
+        }
+
+        if (($businessMetrics['average_rating'] ?? null) === null) {
+            $issues[] = 'Review data is unavailable.';
+        }
+
+        if ($issues !== []) {
+            return [
+                'tone' => $latestSnapshot->overall_status === 'healthy' ? 'warning' : 'danger',
+                'label' => $latestSnapshot->overall_status === 'healthy' ? 'Operational with gaps' : 'Degraded',
+                'message' => implode(' ', $issues),
+            ];
+        }
+
+        return [
+            'tone' => 'success',
+            'label' => 'Operational',
+            'message' => 'Latest database snapshot shows the platform operating normally.',
+        ];
     }
 }

@@ -29,7 +29,7 @@ class FinanceResource extends Resource
 
     protected static ?int $navigationSort = 6;
 
-    protected static ?string $navigationGroup = 'Passengers';
+    protected static ?string $navigationGroup = 'Financial & Payouts';
 
     public static function form(Form $form): Form
     {

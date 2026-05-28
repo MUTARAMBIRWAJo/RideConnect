@@ -73,7 +73,7 @@ class AdvancedGoogleMaps extends Page
     /**
      * Get count of vehicles currently active on the road
      */
-    private function getActiveVehiclesCount(): int
+    private function getActiveVehiclesCount(): ?int
     {
         // Check if driver_locations table exists for real-time tracking
         if (Schema::hasTable('driver_locations') && Schema::hasColumn('driver_locations', 'updated_at')) {
@@ -98,13 +98,13 @@ class AdvancedGoogleMaps extends Page
                 ->count();
         }
 
-        return 0;
+        return null;
     }
 
     /**
      * Get count of rides currently in progress
      */
-    private function getActiveRidesCount(): int
+    private function getActiveRidesCount(): ?int
     {
         // Try rides table first
         if (Schema::hasTable('rides')) {
@@ -120,7 +120,7 @@ class AdvancedGoogleMaps extends Page
                 ->count();
         }
 
-        return 0;
+        return null;
     }
 
     /**
@@ -128,8 +128,6 @@ class AdvancedGoogleMaps extends Page
      */
     private function getPeakZones(): array
     {
-        $peakZones = [];
-
         // Try to get zones from pickup locations
         if (Schema::hasTable('rides') && Schema::hasColumn('rides', 'origin_address')) {
             $zones = DB::table('rides')
@@ -164,14 +162,13 @@ class AdvancedGoogleMaps extends Page
             }
         }
 
-        // Default peak zones
-        return ['Downtown', 'Airport', 'Business District'];
+        return [];
     }
 
     /**
      * Get average wait time for passengers
      */
-    private function getAverageWaitTime(): string
+    private function getAverageWaitTime(): ?string
     {
         // Try to calculate from rides/trip data
         if (Schema::hasTable('rides') && Schema::hasColumn('rides', 'created_at') && Schema::hasColumn('rides', 'started_at')) {
@@ -205,20 +202,19 @@ class AdvancedGoogleMaps extends Page
             }
         }
 
-        // Default value
-        return '4m 23s';
+        return null;
     }
 
     /**
      * Calculate system efficiency percentage based on active rides and available drivers
      */
-    private function calculateSystemEfficiency(): float
+    private function calculateSystemEfficiency(): ?float
     {
         $activeRides = $this->getActiveRidesCount();
         $activeVehicles = $this->getActiveVehiclesCount();
 
-        if ($activeVehicles === 0) {
-            return 94.2;
+        if ($activeRides === null || $activeVehicles === null || $activeVehicles === 0) {
+            return null;
         }
 
         // Efficiency = (active rides / available vehicles) * 100
@@ -231,7 +227,7 @@ class AdvancedGoogleMaps extends Page
     /**
      * Calculate coverage percentage of service areas
      */
-    private function calculateCoveragePercentage(): float
+    private function calculateCoveragePercentage(): ?float
     {
         // Count unique zones/areas with activity
         if (Schema::hasTable('rides')) {
@@ -257,8 +253,7 @@ class AdvancedGoogleMaps extends Page
             }
         }
 
-        // Default coverage
-        return 98.7;
+        return null;
     }
 
     public function updateMapFilters(): void

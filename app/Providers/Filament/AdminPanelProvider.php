@@ -126,13 +126,17 @@ class AdminPanelProvider extends PanelProvider
                 fn (): string => Blade::render("@vite(['resources/js/app.js'])"),
             )
             ->navigationGroups([
-                NavigationGroup::make('📊 Dashboard')
-                    ->label('Dashboard')
+                NavigationGroup::make('📊 Dashboards')
+                    ->label('Dashboards')
                     ->collapsible(false),
 
                 NavigationGroup::make('⚡ Live Operations')
                     ->label('Live Operations')
                     ->collapsible(false),
+
+                NavigationGroup::make('💰 Financial & Payouts')
+                    ->label('Financial & Payouts')
+                    ->collapsible(true),
 
                 NavigationGroup::make('🚗 Fleet & Drivers')
                     ->label('Fleet & Drivers')
@@ -142,12 +146,12 @@ class AdminPanelProvider extends PanelProvider
                     ->label('Passengers')
                     ->collapsible(true),
 
-                NavigationGroup::make('🤖 AI & Analytics')
-                    ->label('AI & Analytics')
+                NavigationGroup::make('🤖 Analytics')
+                    ->label('Analytics')
                     ->collapsible(true),
 
-                NavigationGroup::make('🔧 System Management')
-                    ->label('System Management')
+                NavigationGroup::make('🔧 System')
+                    ->label('System')
                     ->collapsible(true),
 
                 NavigationGroup::make('📚 Information Hub')
@@ -171,20 +175,20 @@ class AdminPanelProvider extends PanelProvider
             ->pages([
                 Dashboard::class,
                 \App\Filament\Pages\SuperDashboard::class,
-                \App\Filament\Pages\RideManagement::class,
-                \App\Filament\Pages\DriverManagement::class,
-                \App\Filament\Pages\PassengerManagement::class,
-                \App\Filament\Pages\AnalyticsDashboard::class,
-                \App\Filament\Pages\SystemMonitoring::class,
                 \App\Filament\Pages\AdminDashboard::class,
                 \App\Filament\Pages\AccountantDashboard::class,
                 \App\Filament\Pages\OfficerDashboardV2::class,
-                \App\Filament\Pages\OfficerCreateBookingTrip::class,
                 \App\Filament\Pages\DriverDashboard::class,
                 \App\Filament\Pages\PassengerDashboard::class,
+                \App\Filament\Pages\AIMonitoringDashboard::class,
+                \App\Filament\Pages\SystemMonitoring::class,
+                \App\Filament\Pages\RideManagement::class,
+                \App\Filament\Pages\OfficerCreateBookingTrip::class,
+                \App\Filament\Pages\DriverManagement::class,
+                \App\Filament\Pages\PassengerManagement::class,
+                \App\Filament\Pages\AnalyticsDashboard::class,
                 \App\Filament\Pages\BiDashboard::class,
                 \App\Filament\Pages\ComplianceDashboard::class,
-                \App\Filament\Pages\AIMonitoringDashboard::class,
                 \App\Filament\Pages\SystemNewsAndUpdates::class,
                 \App\Filament\Pages\AdvancedGoogleMaps::class,
                 \App\Filament\Pages\PlatformMetricsAndHealth::class,

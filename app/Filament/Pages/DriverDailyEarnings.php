@@ -27,7 +27,7 @@ class DriverDailyEarnings extends Page implements HasTable
 
     protected static ?string $navigationLabel = 'Driver Daily Earnings';
 
-    protected static ?string $navigationGroup = 'Passengers';
+    protected static ?string $navigationGroup = 'Financial & Payouts';
 
     protected static ?int $navigationSort = 7;
 

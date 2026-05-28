@@ -8,13 +8,14 @@ use App\Models\Ride;
 use App\Models\Vehicle;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Collection;
+use PHPUnit\Framework\Attributes\Test;
 use Tests\TestCase;
 
 class DriverMatchingServiceTest extends TestCase
 {
     use RefreshDatabase;
 
-    /** @test */
+    #[Test]
     public function it_returns_null_when_no_eligible_driver(): void
     {
         $ride = Ride::factory()->create([
@@ -30,7 +31,7 @@ class DriverMatchingServiceTest extends TestCase
         $this->assertNull($result);
     }
 
-    /** @test */
+    #[Test]
     public function it_selects_compatible_online_driver_with_placeholder_scores(): void
     {
         $ride = Ride::factory()->create([

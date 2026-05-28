@@ -3,10 +3,14 @@
 namespace Tests\Feature\Api;
 
 use App\Enums\UserRole;
+use App\Jobs\DeliverPushNotificationJob;
 use App\Models\Driver;
 use App\Models\MobileUser;
 use App\Models\Notification;
+use App\Models\NotificationDelivery;
 use App\Models\User;
+use Illuminate\Support\Facades\Http;
+use Illuminate\Support\Facades\Queue;
 use Illuminate\Support\Str;
 use Laravel\Sanctum\Sanctum;
 use Tests\TestCase;
@@ -407,5 +411,90 @@ class PassengerNotificationEndpointsTest extends TestCase
             ->assertJsonPath('pagination.total', 1)
             ->assertJsonPath('data.0.id', $pending->id)
             ->assertJsonPath('data.0.can_be_cleared', false);
+    }
+
+    public function test_mobile_notification_dispatch_enqueues_push_delivery_queue_and_tracks_delivery(): void
+    {
+        config()->set('services.push.fcm_server_key', 'test-fcm-key');
+        Http::fake([
+            'https://fcm.googleapis.com/fcm/send' => Http::response(['results' => [['message_id' => 'abc123']]], 200),
+        ]);
+
+        Queue::fake();
+
+        $user = User::factory()->create([
+            'role' => UserRole::PASSENGER->value,
+            'is_approved' => true,
+        ]);
+
+        $user->mobileDeviceTokens()->create([
+            'platform' => 'fcm',
+            'device_token' => 'fcm-test-token-001',
+            'device_id' => 'pixel-test',
+            'last_seen_at' => now(),
+        ]);
+
+        $notification = app(\App\Services\MobileNotificationService::class)->sendToUserId(
+            $user->id,
+            'ride_request_received',
+            'New Ride Request',
+            'A driver is looking for your ride.',
+            ['trip_id' => 1234]
+        );
+
+        Queue::assertPushed(DeliverPushNotificationJob::class, function (DeliverPushNotificationJob $job) use ($notification) {
+            return $job->notificationId === $notification->id;
+        });
+
+        $job = new DeliverPushNotificationJob($notification->id);
+        $job->handle(app(\App\Services\PushDeliveryBridge::class));
+
+        $this->assertDatabaseHas('notification_deliveries', [
+            'notification_id' => $notification->id,
+            'status' => 'delivered',
+            'platform' => 'fcm',
+        ]);
+    }
+
+    public function test_notification_acknowledgement_endpoint_marks_delivery_acknowledged(): void
+    {
+        $user = User::factory()->create([
+            'role' => UserRole::PASSENGER->value,
+            'is_approved' => true,
+        ]);
+
+        $notification = Notification::create([
+            'user_id' => $user->id,
+            'type' => 'ride_request_accepted',
+            'title' => 'Ride Accepted',
+            'message' => 'Your ride is on the way.',
+            'data' => ['trip_id' => 555],
+            'is_read' => false,
+        ]);
+
+        $delivery = NotificationDelivery::create([
+            'notification_id' => $notification->id,
+            'user_id' => $user->id,
+            'platform' => 'fcm',
+            'status' => 'delivered',
+            'sent_at' => now(),
+        ]);
+
+        Sanctum::actingAs($user, ['*']);
+
+        $this->putJson('/api/v1/notifications/'.$notification->id.'/acknowledge')
+            ->assertStatus(200)
+            ->assertJsonPath('success', true)
+            ->assertJsonPath('data.acknowledged', true);
+
+        $this->assertDatabaseHas('user_notifications', [
+            'id' => $notification->id,
+            'is_read' => true,
+        ]);
+
+        $this->assertDatabaseHas('notification_deliveries', [
+            'id' => $delivery->id,
+            'status' => 'acknowledged',
+        ]);
     }
 }

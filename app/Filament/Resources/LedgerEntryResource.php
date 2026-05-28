@@ -23,7 +23,7 @@ class LedgerEntryResource extends Resource
 
     protected static ?string $navigationLabel = 'Ledger Viewer';
 
-    protected static ?string $navigationGroup = 'Finance';
+    protected static ?string $navigationGroup = 'Financial & Payouts';
 
     protected static ?int $navigationSort = 10;
 

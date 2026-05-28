@@ -24,7 +24,8 @@ class MobileNotificationController extends Controller
 
         $query = Notification::query()
             ->where('user_id', $user->id)
-            ->orderByDesc('created_at');
+            ->orderByDesc('created_at')
+            ->orderByDesc('id');
 
         if ($request->boolean('unread_only')) {
             $query->where('is_read', false);

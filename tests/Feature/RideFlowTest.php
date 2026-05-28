@@ -6,19 +6,21 @@ use App\Models\Ride;
 use App\Models\Trip;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use PHPUnit\Framework\Attributes\Test;
 use Tests\TestCase;
 
 class RideFlowTest extends TestCase
 {
     use RefreshDatabase;
 
-    /** @test */
+    #[Test]
     public function cannot_overbook_seats()
     {
         $user = User::factory()->create(['is_approved' => true]);
         $driver = \App\Models\Driver::factory()->create(['user_id' => $user->id]);
         $vehicle = \App\Models\Vehicle::factory()->create(['driver_id' => $driver->id, 'vehicle_type' => 'van']);
         $ride = Ride::factory()->create([
+            'id' => random_int(1000000, 1999999),
             'driver_id' => $driver->id,
             'vehicle_id' => $vehicle->id,
             'travel_mode' => Ride::MODE_SCHEDULED,
@@ -40,7 +42,7 @@ class RideFlowTest extends TestCase
         ])->assertStatus(422);
     }
 
-    /** @test */
+    #[Test]
     public function driver_cannot_accept_wrong_vehicle_type()
     {
         $this->withoutExceptionHandling();
@@ -54,6 +56,7 @@ class RideFlowTest extends TestCase
         $vehicle = \App\Models\Vehicle::factory()->create(['driver_id' => $driver->id, 'vehicle_type' => 'sedan']);
 
         $ride = Ride::factory()->create([
+            'id' => random_int(1000000, 1999999),
             'driver_id' => $driver->id,
             'vehicle_id' => $vehicle->id,
             'transport_type' => Ride::TRANSPORT_MOTORCYCLE,
@@ -75,10 +78,11 @@ class RideFlowTest extends TestCase
             ->assertStatus(422);
     }
 
-    /** @test */
+    #[Test]
     public function api_returns_correct_flags()
     {
         $ride = Ride::factory()->create([
+            'id' => random_int(1000000, 1999999),
             'transport_type' => Ride::TRANSPORT_BUS,
             'travel_mode' => Ride::MODE_SCHEDULED,
         ]);
@@ -94,7 +98,7 @@ class RideFlowTest extends TestCase
         ]);
     }
 
-    /** @test */
+    #[Test]
     public function driver_can_accept_with_compatible_vehicle_type()
     {
         $this->withoutExceptionHandling();
@@ -108,6 +112,7 @@ class RideFlowTest extends TestCase
         $vehicle = \App\Models\Vehicle::factory()->create(['driver_id' => $driver->id, 'vehicle_type' => 'van']);
 
         $ride = Ride::factory()->create([
+            'id' => random_int(1000000, 1999999),
             'driver_id' => $driver->id,
             'vehicle_id' => $vehicle->id,
             'transport_type' => Ride::TRANSPORT_BUS,
@@ -130,7 +135,7 @@ class RideFlowTest extends TestCase
         $response->assertJson(['success' => true]);
     }
 
-    /** @test */
+    #[Test]
     public function driver_can_accept_car_ride_with_suv()
     {
         $this->withoutExceptionHandling();
@@ -144,6 +149,7 @@ class RideFlowTest extends TestCase
         $vehicle = \App\Models\Vehicle::factory()->create(['driver_id' => $driver->id, 'vehicle_type' => 'suv']);
 
         $ride = Ride::factory()->create([
+            'id' => random_int(1000000, 1999999),
             'driver_id' => $driver->id,
             'vehicle_id' => $vehicle->id,
             'transport_type' => Ride::TRANSPORT_CAR,
@@ -166,10 +172,11 @@ class RideFlowTest extends TestCase
         $response->assertJson(['success' => true]);
     }
 
-    /** @test */
+    #[Test]
     public function ride_model_has_vehicle_compatibility_helper()
     {
         $ride = Ride::factory()->create([
+            'id' => random_int(1000000, 1999999),
             'transport_type' => Ride::TRANSPORT_BUS,
         ]);
 

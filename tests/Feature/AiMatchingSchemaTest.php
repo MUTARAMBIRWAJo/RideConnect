@@ -10,13 +10,14 @@ use App\Models\User;
 use App\Services\TripConditionService;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Schema;
+use PHPUnit\Framework\Attributes\Test;
 use Tests\TestCase;
 
 class AiMatchingSchemaTest extends TestCase
 {
     use RefreshDatabase;
 
-    /** @test */
+    #[Test]
     public function it_exposes_the_ai_matching_columns(): void
     {
         $this->assertTrue(Schema::hasTable('driver_behaviors'));
@@ -31,7 +32,7 @@ class AiMatchingSchemaTest extends TestCase
         $this->assertTrue(Schema::hasColumn('trips', 'eta_deviation_minutes'));
     }
 
-    /** @test */
+    #[Test]
     public function it_preserves_historical_snapshots_across_multiple_trips(): void
     {
         $service = app(TripConditionService::class);
@@ -85,7 +86,7 @@ class AiMatchingSchemaTest extends TestCase
         $this->assertNotNull($firstTrip->fresh()->trip_quality_score);
     }
 
-    /** @test */
+    #[Test]
     public function it_keeps_the_relationship_bridge_between_mobile_users_and_users(): void
     {
         $mobileUser = MobileUser::factory()->create(['role' => 'PASSENGER']);

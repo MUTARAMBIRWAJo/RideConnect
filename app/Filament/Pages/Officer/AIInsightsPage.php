@@ -7,6 +7,8 @@ use App\Services\DemandPredictionService;
 use App\Services\MlService;
 use Filament\Pages\Page;
 use Illuminate\Contracts\Support\Htmlable;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Schema;
 use Illuminate\Support\Facades\Log;
 
 class AIInsightsPage extends Page
@@ -22,9 +24,9 @@ class AIInsightsPage extends Page
 
     public array $trendData = [];
 
-    public float $avgWaitTime = 0;
+    public ?float $avgWaitTime = null;
 
-    public float $acceptanceRate = 0;
+    public ?float $acceptanceRate = null;
 
     // ML Service demand prediction
     public array $mlDemandPrediction = [];
@@ -77,36 +79,127 @@ class AIInsightsPage extends Page
         // Load real ML service demand predictions
         $this->loadMLServiceDemandPredictions();
 
-        // Load demand by area from database or cache
-        $this->demandByArea = [
-            ['area' => 'Downtown', 'demand' => 450, 'available_drivers' => 23],
-            ['area' => 'Suburbia', 'demand' => 280, 'available_drivers' => 15],
-            ['area' => 'Airport', 'demand' => 180, 'available_drivers' => 8],
-            ['area' => 'Industrial', 'demand' => 120, 'available_drivers' => 5],
-            ['area' => 'Residential', 'demand' => 200, 'available_drivers' => 12],
-        ];
+        $this->demandByArea = $this->loadDemandByArea();
+        $this->peakHours = $this->loadPeakHours();
+        $this->trendData = $this->loadTrendData();
+        $this->avgWaitTime = $this->loadAverageWaitTime();
+        $this->acceptanceRate = $this->loadAcceptanceRate();
+    }
 
-        // Peak hours data
-        $this->peakHours = [
-            ['hour' => '06:00 - 09:00', 'demand' => 'Very High', 'color' => 'red'],
-            ['hour' => '12:00 - 14:00', 'demand' => 'High', 'color' => 'orange'],
-            ['hour' => '18:00 - 21:00', 'demand' => 'Very High', 'color' => 'red'],
-            ['hour' => '10:00 - 12:00', 'demand' => 'Medium', 'color' => 'yellow'],
-        ];
+    private function loadDemandByArea(): array
+    {
+        if (! Schema::hasTable('rides') || ! Schema::hasColumn('rides', 'origin_address')) {
+            return [];
+        }
 
-        // Trend data
-        $this->trendData = [
-            ['date' => 'Mon', 'rides' => 340, 'revenue' => 4200],
-            ['date' => 'Tue', 'rides' => 380, 'revenue' => 4600],
-            ['date' => 'Wed', 'rides' => 420, 'revenue' => 5100],
-            ['date' => 'Thu', 'rides' => 390, 'revenue' => 4800],
-            ['date' => 'Fri', 'rides' => 450, 'revenue' => 5500],
-            ['date' => 'Sat', 'rides' => 380, 'revenue' => 4900],
-            ['date' => 'Sun', 'rides' => 310, 'revenue' => 3800],
-        ];
+        return DB::table('rides')
+            ->where('created_at', '>=', now()->subDays(7))
+            ->whereNotNull('origin_address')
+            ->selectRaw('origin_address as area, COUNT(*) as demand')
+            ->groupBy('origin_address')
+            ->orderByDesc('demand')
+            ->limit(5)
+            ->get()
+            ->map(fn ($row): array => [
+                'area' => (string) $row->area,
+                'demand' => (int) $row->demand,
+                'available_drivers' => null,
+            ])
+            ->all();
+    }
 
-        $this->avgWaitTime = 3.45;
-        $this->acceptanceRate = 92.5;
+    private function loadPeakHours(): array
+    {
+        if (! Schema::hasTable('rides') || ! Schema::hasColumn('rides', 'created_at') || ! Schema::hasColumn('rides', 'status')) {
+            return [];
+        }
+
+        return DB::table('rides')
+            ->where('created_at', '>=', now()->subDay())
+            ->whereIn('status', ['completed', 'COMPLETED'])
+            ->selectRaw('EXTRACT(HOUR FROM created_at) as hour_bucket, COUNT(*) as demand')
+            ->groupBy('hour_bucket')
+            ->orderByDesc('demand')
+            ->limit(4)
+            ->get()
+            ->map(function ($row): array {
+                $hour = (int) $row->hour_bucket;
+                $demand = (int) $row->demand;
+
+                return [
+                    'hour' => sprintf('%02d:00 - %02d:59', $hour, $hour),
+                    'demand' => $demand >= 20 ? 'Very High' : ($demand >= 10 ? 'High' : ($demand >= 5 ? 'Medium' : 'Low')),
+                    'color' => $demand >= 20 ? 'red' : ($demand >= 10 ? 'orange' : 'yellow'),
+                ];
+            })
+            ->all();
+    }
+
+    private function loadTrendData(): array
+    {
+        if (! Schema::hasTable('rides') || ! Schema::hasColumn('rides', 'created_at')) {
+            return [];
+        }
+
+        $days = collect(range(6, 0))->map(fn (int $offset) => now()->subDays($offset)->startOfDay())->values();
+
+        return $days->map(function ($date): array {
+            $rides = (int) DB::table('rides')
+                ->whereDate('created_at', $date->toDateString())
+                ->whereIn('status', ['completed', 'COMPLETED'])
+                ->count();
+
+            $revenue = 0.0;
+            if (Schema::hasColumn('rides', 'total_price')) {
+                $revenue = (float) DB::table('rides')
+                    ->whereDate('created_at', $date->toDateString())
+                    ->whereIn('status', ['completed', 'COMPLETED'])
+                    ->sum('total_price');
+            }
+
+            return [
+                'date' => $date->format('D'),
+                'rides' => $rides,
+                'revenue' => $revenue,
+            ];
+        })->filter(fn (array $day): bool => $day['rides'] > 0 || $day['revenue'] > 0)->values()->all();
+    }
+
+    private function loadAverageWaitTime(): ?float
+    {
+        if (! Schema::hasTable('rides') || ! Schema::hasColumn('rides', 'created_at') || ! Schema::hasColumn('rides', 'started_at')) {
+            return null;
+        }
+
+        $avgWaitSeconds = DB::table('rides')
+            ->where('created_at', '>=', now()->subDays(7))
+            ->whereNotNull('started_at')
+            ->selectRaw('AVG(EXTRACT(EPOCH FROM (started_at - created_at))) as avg_wait')
+            ->value('avg_wait');
+
+        return $avgWaitSeconds !== null ? round(((float) $avgWaitSeconds) / 60, 2) : null;
+    }
+
+    private function loadAcceptanceRate(): ?float
+    {
+        if (! Schema::hasTable('rides') || ! Schema::hasColumn('rides', 'created_at') || ! Schema::hasColumn('rides', 'status')) {
+            return null;
+        }
+
+        $total = (int) DB::table('rides')
+            ->where('created_at', '>=', now()->subDays(7))
+            ->count();
+
+        if ($total === 0) {
+            return null;
+        }
+
+        $accepted = (int) DB::table('rides')
+            ->where('created_at', '>=', now()->subDays(7))
+            ->whereIn('status', ['accepted', 'ACCEPTED', 'started', 'STARTED', 'completed', 'COMPLETED'])
+            ->count();
+
+        return round(($accepted / $total) * 100, 1);
     }
 
     /**
@@ -142,7 +235,7 @@ class AIInsightsPage extends Page
                 Log::warning('Invalid demand prediction response', $response);
 
                 $fallback = app(DemandPredictionService::class)->predict();
-                $fallbackIntensity = (float) ($fallback->max('intensity') ?? 0.45);
+                $fallbackIntensity = (float) ($fallback->max('intensity') ?? 0.0);
 
                 $this->mlDemandPrediction = [
                     'source' => 'local-fallback',
@@ -161,7 +254,7 @@ class AIInsightsPage extends Page
             ]);
 
             $fallback = app(DemandPredictionService::class)->predict();
-            $fallbackIntensity = (float) ($fallback->max('intensity') ?? 0.45);
+            $fallbackIntensity = (float) ($fallback->max('intensity') ?? 0.0);
 
             $this->demandPredictionStatus = 'fallback';
             $this->mlDemandPrediction = [
@@ -178,13 +271,31 @@ class AIInsightsPage extends Page
     private function buildDemandPayload(): array
     {
         $now = now('Africa/Kigali');
+        $anchor = $this->resolveDemandAnchor();
 
         return [
-            'latitude' => -1.9579,
-            'longitude' => 30.1127,
+            'latitude' => $anchor[0],
+            'longitude' => $anchor[1],
             'hour' => $now->hour,
             'day_of_week' => $now->dayOfWeek,
         ];
+    }
+
+    private function resolveDemandAnchor(): array
+    {
+        if (Schema::hasTable('rides') && Schema::hasColumn('rides', 'origin_lat') && Schema::hasColumn('rides', 'origin_lng')) {
+            $row = DB::table('rides')
+                ->whereNotNull('origin_lat')
+                ->whereNotNull('origin_lng')
+                ->latest('created_at')
+                ->first(['origin_lat', 'origin_lng']);
+
+            if ($row) {
+                return [(float) $row->origin_lat, (float) $row->origin_lng];
+            }
+        }
+
+        return [-1.9579, 30.1127];
     }
 
     private function resolveMlServiceUrl(): string

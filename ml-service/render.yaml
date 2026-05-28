@@ -1,0 +1,16 @@
+services:
+  - type: web
+    name: rideconnect-ml-tflite
+    env: python
+    plan: free
+    buildCommand: pip install -r requirements.txt
+    startCommand: uvicorn main:app --host 0.0.0.0 --port $PORT
+    healthCheckPath: /health
+    envVars:
+      - key: MODEL_DIR
+        value: model
+      - key: ACCEPT_INDEX
+        value: 0
+      - key: PYTHONUNBUFFERED
+        value: 1
+    # Removing TensorFlow shrinks the build and speeds up Render deployments.

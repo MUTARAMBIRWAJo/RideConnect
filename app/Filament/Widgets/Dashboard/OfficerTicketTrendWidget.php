@@ -53,7 +53,7 @@ class OfficerTicketTrendWidget extends Widget
         return [
             'openTickets' => $openTickets,
             'resolvedToday' => $resolvedToday,
-            'avgResolutionHours' => $averageResolutionTime ? round($averageResolutionTime, 1) : 'N/A',
+            'avgResolutionHours' => $averageResolutionTime ? round($averageResolutionTime, 1) : null,
             'byPriority' => $byPriority,
         ];
     }

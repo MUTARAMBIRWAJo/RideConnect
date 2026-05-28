@@ -11,6 +11,7 @@ use App\Models\Trip;
 use App\Models\User;
 use App\Models\Vehicle;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Route;
 use App\Debug\DumpHelper;
 use Tests\TestCase;
@@ -78,6 +79,7 @@ class TransportFlowAndLocationTest extends TestCase
         array $overrides = [],
     ): array {
         $ch = $this->freshChains();
+        $routeId = $travelMode === Ride::MODE_SCHEDULED ? $this->createRouteId() : null;
 
         $ride = Ride::create([
             'driver_id'            => $ch['driver']->id,
@@ -85,7 +87,7 @@ class TransportFlowAndLocationTest extends TestCase
             'transport_type'       => $transportType,
             'travel_mode'          => $travelMode,
             'ride_type'            => Ride::TYPE_LOCAL,
-            'route_id'             => $travelMode === Ride::MODE_SCHEDULED ? 1 : null,
+            'route_id'             => $routeId,
             'available_seats'      => $travelMode === Ride::MODE_SCHEDULED ? 4 : 1,
             'origin_address'       => '100 KM Ave',
             'origin_lat'           => -1.9403,
@@ -120,6 +122,7 @@ class TransportFlowAndLocationTest extends TestCase
     private function bookingPayload(string $transportType, array $overrides = []): array
     {
         $ch = $this->freshChains();
+        $routeId = $this->createRouteId();
 
         $ride = Ride::create([
             'driver_id'            => $ch['driver']->id,
@@ -128,7 +131,7 @@ class TransportFlowAndLocationTest extends TestCase
             'travel_mode'          => Ride::MODE_SCHEDULED,
             'ride_type'            => Ride::TYPE_LOCAL,
             'available_seats'      => 4,
-            'route_id'             => 1,
+            'route_id'             => $routeId,
             'origin_address'       => 'Central Bus Park',
             'origin_lat'           => -1.9403,
             'origin_lng'           => 29.8739,
@@ -153,6 +156,35 @@ class TransportFlowAndLocationTest extends TestCase
             'seats_booked'    => 2,
             'total_price'     => 2000,
         ], $overrides);
+    }
+
+    private function createRouteId(): int
+    {
+        $zoneId = DB::table('zones')->insertGetId([
+            'name' => 'Transport Flow Zone '.uniqid(),
+            'code' => 'TF'.substr(uniqid(), -6),
+            'created_at' => now(),
+            'updated_at' => now(),
+        ]);
+
+        $corridor = \App\Models\Corridor::query()->create([
+            'code' => 'TC'.substr(uniqid(), -6),
+            'name' => 'Transport Flow Corridor',
+            'kinyarwanda_name' => 'Transport Flow Corridor',
+            'start_zone_id' => $zoneId,
+            'end_zone_id' => $zoneId,
+            'base_fare' => 100,
+            'price_per_km' => 0,
+        ]);
+
+        return \App\Models\TransportRoute::query()->create([
+            'corridor_id' => $corridor->id,
+            'route_code' => 'TR'.substr(uniqid(), -6),
+            'name' => 'Transport Flow Route',
+            'origin' => 'Origin',
+            'destination' => 'Destination',
+            'is_active' => true,
+        ])->id;
     }
 
     // =========================================================================
@@ -201,11 +233,10 @@ class TransportFlowAndLocationTest extends TestCase
      */
     public function test_bus_booking_creation_succeeds(): void
     {
-        $this->tripPayload(Ride::TRANSPORT_BUS, Ride::MODE_SCHEDULED);
-
         $payload = $this->bookingPayload(Ride::TRANSPORT_BUS);
 
-        $response = $this->postJson('/api/v1/passenger/bookings', $payload);
+        $response = $this->actingAs(User::findOrFail((int) $payload['user_id']))
+            ->postJson('/api/v1/passenger/bookings', $payload);
 
         $response->assertStatus(201);
         $this->assertDatabaseHas('bookings', [
@@ -303,11 +334,10 @@ class TransportFlowAndLocationTest extends TestCase
      */
     public function test_car_scheduled_booking_creation_succeeds(): void
     {
-        $this->tripPayload(Ride::TRANSPORT_CAR, Ride::MODE_SCHEDULED);
-
         $payload = $this->bookingPayload(Ride::TRANSPORT_CAR);
 
-        $response = $this->postJson('/api/v1/passenger/bookings', $payload);
+        $response = $this->actingAs(User::findOrFail((int) $payload['user_id']))
+            ->postJson('/api/v1/passenger/bookings', $payload);
 
         $response->assertStatus(201);
         $this->assertDatabaseHas('bookings', [

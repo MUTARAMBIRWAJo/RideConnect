@@ -8,11 +8,12 @@ use App\Events\Domain\RideCreated;
 use App\Events\Domain\TripCompleted;
 use App\Events\Domain\TripMatched;
 use App\Events\Domain\TripStarted;
+use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 
 class DomainEventRegistryTest extends TestCase
 {
-    /** @test */
+    #[Test]
     public function it_registers_expected_event_listener_contracts(): void
     {
         $listeners = DomainEventRegistry::listeners();

@@ -70,7 +70,7 @@ class AuditLogsPage extends Page
                     'activity_logs.id',
                     DB::raw("COALESCE(activity_logs.action, 'system.event') as action"),
                     DB::raw("COALESCE(activity_logs.description, '') as description"),
-                    DB::raw('COALESCE(activity_logs.created_at, NOW()) as created_at'),
+                    DB::raw('COALESCE(activity_logs.created_at, CURRENT_TIMESTAMP) as created_at'),
                     $actorExpression,
                 ])
                 ->latest('activity_logs.id')
@@ -82,7 +82,7 @@ class AuditLogsPage extends Page
 
                     return [
                         'id' => $item['id'] ?? null,
-                        'ride_id' => 'N/A',
+                        'ride_id' => null,
                         'fare_difference' => 0,
                         'status' => str_contains($action, 'reject') || str_contains($action, 'cancel') ? 'Suspicious' : 'Valid',
                         'actor' => $item['actor'] ?? 'System',
@@ -97,14 +97,8 @@ class AuditLogsPage extends Page
             return;
         }
 
-        // Fallback: create mock data
-        $this->auditLogs = [
-            ['id' => 1, 'ride_id' => 1001, 'fare_difference' => 5.50, 'status' => 'Valid', 'actor' => 'System', 'created_at' => now()->subHours(2)->toDateTimeString()],
-            ['id' => 2, 'ride_id' => 1002, 'fare_difference' => 0.0, 'status' => 'Valid', 'actor' => 'System', 'created_at' => now()->subHours(4)->toDateTimeString()],
-            ['id' => 3, 'ride_id' => 1003, 'fare_difference' => 12.75, 'status' => 'Suspicious', 'actor' => 'Manual Review', 'created_at' => now()->subHours(6)->toDateTimeString()],
-        ];
-
-        $this->totalAuditEntries = count($this->auditLogs);
-        $this->suspiciousTransactions = collect($this->auditLogs)->filter(fn ($log) => ($log['status'] ?? '') === 'Suspicious')->count();
+        $this->auditLogs = [];
+        $this->totalAuditEntries = 0;
+        $this->suspiciousTransactions = 0;
     }
 }

@@ -162,7 +162,7 @@ class ManageUserMfa extends Page implements Tables\Contracts\HasTable
                                         ->disabled(),
                                     Forms\Components\TextInput::make('two_factor_confirmed_at')
                                         ->label('Enabled Since')
-                                        ->formatStateUsing(fn ($state) => $state?->format('M d, Y H:i') ?? 'N/A')
+                                        ->formatStateUsing(fn ($state) => $state?->format('M d, Y H:i') ?? '—')
                                         ->disabled(),
                                     Forms\Components\TextInput::make('mfa_attempts')
                                         ->label('Failed Attempts')

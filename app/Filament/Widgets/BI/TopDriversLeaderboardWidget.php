@@ -61,7 +61,7 @@ class TopDriversLeaderboardWidget extends BaseWidget
                 // Feed table rows from warehouse projections while honoring Eloquent return type.
                 $model->forceFill([
                     'rank' => $index + 1,
-                    'driver_id' => $row['driver_id'] ?? 'N/A',
+                    'driver_id' => $row['driver_id'] ?? '—',
                     'driver_name' => $row['driver_name'] ?? 'Unknown',
                     'total_rides' => number_format((int) ($row['total_rides'] ?? 0)),
                     'total_earned' => 'RWF '.number_format((float) ($row['total_earned'] ?? 0)),

@@ -6,19 +6,21 @@ use App\Models\Booking;
 use App\Models\Ride;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use PHPUnit\Framework\Attributes\Test;
 use Tests\TestCase;
 
 class RideTransportClassificationTest extends TestCase
 {
     use RefreshDatabase;
 
-    /** @test */
+    #[Test]
     public function cannot_create_booking_for_on_demand_ride()
     {
         $user = User::factory()->create(['is_approved' => true]);
         $driver = \App\Models\Driver::factory()->create(['user_id' => $user->id]);
         $vehicle = \App\Models\Vehicle::factory()->create(['driver_id' => $driver->id]);
         $ride = Ride::factory()->create([
+            'id' => random_int(1000000, 1999999),
             'driver_id' => $driver->id,
             'vehicle_id' => $vehicle->id,
             'travel_mode' => Ride::MODE_ON_DEMAND,
@@ -45,13 +47,14 @@ class RideTransportClassificationTest extends TestCase
             ]);
     }
 
-    /** @test */
+    #[Test]
     public function can_create_booking_for_scheduled_ride()
     {
         $user = User::factory()->create(['is_approved' => true]);
         $driver = \App\Models\Driver::factory()->create(['user_id' => $user->id]);
         $vehicle = \App\Models\Vehicle::factory()->create(['driver_id' => $driver->id]);
         $ride = Ride::factory()->create([
+            'id' => random_int(1000000, 1999999),
             'driver_id' => $driver->id,
             'vehicle_id' => $vehicle->id,
             'travel_mode' => Ride::MODE_SCHEDULED,
@@ -86,7 +89,7 @@ class RideTransportClassificationTest extends TestCase
         ]);
     }
 
-    /** @test */
+    #[Test]
     public function can_create_trip_directly_for_on_demand_ride()
     {
         $user = User::factory()->create(['is_approved' => true, 'role' => \App\Enums\UserRole::PASSENGER]);
@@ -123,7 +126,7 @@ class RideTransportClassificationTest extends TestCase
         ]);
     }
 
-    /** @test */
+    #[Test]
     public function trip_from_booking_works_correctly()
     {
         $admin = User::factory()->create(['is_approved' => true, 'role' => \App\Enums\UserRole::SUPER_ADMIN]);
@@ -134,6 +137,7 @@ class RideTransportClassificationTest extends TestCase
         $driver = \App\Models\Driver::factory()->create();
         $vehicle = \App\Models\Vehicle::factory()->create(['driver_id' => $driver->id]);
         $ride = Ride::factory()->create([
+            'id' => random_int(1000000, 1999999),
             'driver_id' => $driver->id,
             'vehicle_id' => $vehicle->id,
             'travel_mode' => Ride::MODE_SCHEDULED,
@@ -161,7 +165,7 @@ class RideTransportClassificationTest extends TestCase
         ]);
     }
 
-    /** @test */
+    #[Test]
     public function ride_classification_works_correctly()
     {
         $busRide = Ride::factory()->create([
@@ -203,7 +207,7 @@ class RideTransportClassificationTest extends TestCase
         $this->assertTrue($motorcycleRide->isOnDemand());
     }
 
-    /** @test */
+    #[Test]
     public function ride_validation_rules_work()
     {
         // Valid combinations should not throw exceptions

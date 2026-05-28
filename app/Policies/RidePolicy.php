@@ -29,7 +29,12 @@ class RidePolicy
 
     public function update(User $user, Ride $ride): bool
     {
-        return in_array($user->role?->value ?? $user->role, ['SUPER_ADMIN', 'ADMIN'], true);
+        if (in_array($user->role?->value ?? $user->role, ['SUPER_ADMIN', 'ADMIN'], true)) {
+            return true;
+        }
+
+        return $user->role?->value === 'DRIVER'
+            && $ride->driver?->user_id === $user->id;
     }
 
     public function delete(User $user, Ride $ride): bool

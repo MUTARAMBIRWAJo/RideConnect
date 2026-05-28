@@ -27,7 +27,7 @@ class RouteOptimizationResource extends Resource
 
     protected static ?string $navigationLabel = 'Route Optimization';
 
-    protected static ?string $navigationGroup = 'AI & Analytics';
+    protected static ?string $navigationGroup = 'Analytics';
 
     protected static ?string $modelLabel = 'Route Optimization';
 

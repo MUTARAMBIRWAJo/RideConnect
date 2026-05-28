@@ -6,13 +6,14 @@ use App\Domain\Ride\RidePolicy;
 use App\Models\Ride;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use PHPUnit\Framework\Attributes\Test;
 use Tests\TestCase;
 
 class RideApiContractTest extends TestCase
 {
     use RefreshDatabase;
 
-    /** @test */
+    #[Test]
     public function ride_api_always_exposes_ride_rules(): void
     {
         $driver = \App\Models\Driver::factory()->create();

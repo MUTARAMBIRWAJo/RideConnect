@@ -49,10 +49,10 @@ class FraudAlertsWidget extends StatsOverviewWidget
     private function emptyStats(): array
     {
         return [
-            Stat::make('High-Severity Flags', '0')->description('Awaiting migrations')->color('gray'),
-            Stat::make('Medium-Severity Flags', '0')->description('Awaiting migrations')->color('gray'),
-            Stat::make('Total Active Flags', '0')->description('Awaiting migrations')->color('gray'),
-            Stat::make('Resolved Today', '0')->description('Awaiting migrations')->color('gray'),
+            Stat::make('High-Severity Flags', '—')->description('Fraud telemetry not tracked yet')->color('gray'),
+            Stat::make('Medium-Severity Flags', '—')->description('Fraud telemetry not tracked yet')->color('gray'),
+            Stat::make('Total Active Flags', '—')->description('Fraud telemetry not tracked yet')->color('gray'),
+            Stat::make('Resolved Today', '—')->description('Fraud telemetry not tracked yet')->color('gray'),
         ];
     }
 }

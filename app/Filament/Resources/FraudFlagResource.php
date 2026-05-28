@@ -28,7 +28,7 @@ class FraudFlagResource extends Resource
 
     protected static ?string $navigationLabel = 'Fraud Monitoring';
 
-    protected static ?string $navigationGroup = 'Finance';
+    protected static ?string $navigationGroup = 'Analytics';
 
     protected static ?int $navigationSort = 20;
 
@@ -116,13 +116,13 @@ class FraudFlagResource extends Resource
 
                 TextColumn::make('resolver.name')
                     ->label('Resolved By')
-                    ->default('N/A'),
+                    ->default('—'),
 
                 TextColumn::make('resolved_at')
                     ->label('Resolved At')
                     ->formatStateUsing(static function ($state): string {
                         if (blank($state)) {
-                            return 'N/A';
+                            return '—';
                         }
 
                         return \Illuminate\Support\Carbon::parse($state)->format('Y-m-d H:i');

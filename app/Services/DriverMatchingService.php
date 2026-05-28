@@ -102,7 +102,7 @@ class DriverMatchingService
             ->with([
                 'user:id,name,phone,profile_photo,is_approved,mobile_user_id',
                 'vehicles',
-                'assignmentAttempts' => fn ($query): void => $query->whereIn('status', [TripAssignmentAttempt::STATUS_PENDING, TripAssignmentAttempt::STATUS_NOTIFIED]),
+                'assignmentAttempts' => fn ($query) => $query->whereIn('status', [TripAssignmentAttempt::STATUS_PENDING, TripAssignmentAttempt::STATUS_NOTIFIED]),
             ])
             ->leftJoin('users', 'drivers.user_id', '=', 'users.id')
             ->leftJoin('driver_locations', function ($join): void {
@@ -110,7 +110,7 @@ class DriverMatchingService
                     ->orOn('driver_locations.driver_id', '=', 'users.mobile_user_id');
             })
             ->where('drivers.status', 'approved')
-            ->where('drivers.availability_status', 'available')
+            ->whereIn('drivers.availability_status', ['available', 'online'])
             ->whereNotIn('drivers.id', $excludedDriverIds)
             ->whereHas('user', fn ($query) => $query->where('is_approved', true))
             ->whereHas('vehicles', function ($query) use ($vehicleTypes): void {
@@ -150,7 +150,8 @@ class DriverMatchingService
         $behaviorScore = $this->behaviorScore((int) $driver->id);
         $fare = $this->estimateFare($transportType, $routeDistanceKm);
         $hasActiveAssignment = $driver->assignmentAttempts->isNotEmpty();
-        $acceptingRequests = $driver->availability_status === 'available' && $driver->user?->is_approved && ! $hasActiveAssignment;
+        $acceptingRequests = in_array((string) $driver->availability_status, ['available', 'online'], true)
+            && $driver->user?->is_approved && ! $hasActiveAssignment;
         $assignmentState = $hasActiveAssignment ? 'locked' : ($driver->availability_status === 'busy' ? 'busy' : 'available');
 
         $payload = [
