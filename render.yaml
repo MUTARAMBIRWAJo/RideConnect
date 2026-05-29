@@ -1,108 +1,35 @@
 services:
   - type: web
     name: rideconnect-api
-    runtime: docker
-    plan: free
-    rootDir: .
-    dockerfilePath: ./Dockerfile
-    dockerContext: ./
-    startCommand: /bin/sh /var/www/scripts/start.sh
+    runtime: php
+    buildCommand: composer install --no-dev --optimize-autoloader && php artisan config:cache && php artisan route:cache
+    startCommand: php artisan serve --host=0.0.0.0 --port=$PORT
     envVars:
       - key: APP_ENV
         value: production
-      - key: APP_DEBUG
-        value: false
       - key: APP_URL
         value: https://rideconnect-emp0.onrender.com
+      - key: TFLITE_ENDPOINT
+        value: https://ml-service-j72g.onrender.com
+      - key: TFLITE_TIMEOUT
+        value: "20"
+      - key: APP_KEY
+        generateValue: true
+      - key: SUPABASE_URL
+        sync: false
+      - key: SUPABASE_SERVICE_KEY
+        sync: false
+      - key: FCM_SERVER_KEY
+        sync: false
+
+  - type: web
+    name: ml-service
+    runtime: docker
+    dockerfilePath: ./ml-service/Dockerfile
+    dockerContext: ./ml-service
+    envVars:
       - key: PORT
-        value: 10000
-      - key: ENABLE_OCTANE
-        value: auto
-      - key: CACHE_DRIVER
-        value: redis
-      - key: SESSION_DRIVER
-        value: redis
-      - key: QUEUE_CONNECTION
-        value: redis
-      - key: REDIS_CLIENT
-        value: predis
-      - key: REDIS_HOST
-        value: rideconnect-redis
-      - key: REDIS_PORT
-        value: 6379
-      - key: DASHBOARD_WARM_ON_BOOT
-        value: true
-      - key: DASHBOARD_WARM_DAYS
-        value: 7
-      - key: DB_MIGRATE_ON_BOOT
-        value: true
-      - key: DB_ENSURE_SEEDED_ON_BOOT
-        value: false
-      - key: DB_FORCE_SEED_ON_BOOT
-        value: false
-      - key: WAIT_FOR_DB
-        value: true
-      - key: DB_SEED_SKIP_RESET
-        value: true
-      - key: DB_SEED_ADOPT_EXISTING
-        value: true
-
-  - type: worker
-    name: rideconnect-queue
-    runtime: docker
-    plan: free
-    rootDir: .
-    dockerfilePath: ./Dockerfile
-    dockerContext: ./
-    startCommand: php artisan queue:work --tries=3 --timeout=90
-    envVars:
-      - key: APP_ENV
-        value: production
-      - key: APP_DEBUG
-        value: false
-      - key: APP_URL
-        value: https://rideconnect-emp0.onrender.com
-      - key: CACHE_DRIVER
-        value: redis
-      - key: SESSION_DRIVER
-        value: redis
-      - key: QUEUE_CONNECTION
-        value: redis
-      - key: REDIS_CLIENT
-        value: predis
-      - key: REDIS_HOST
-        value: rideconnect-redis
-      - key: REDIS_PORT
-        value: 6379
-
-  - type: worker
-    name: rideconnect-scheduler
-    runtime: docker
-    plan: free
-    rootDir: .
-    dockerfilePath: ./Dockerfile
-    dockerContext: ./
-    startCommand: php artisan schedule:work
-    envVars:
-      - key: APP_ENV
-        value: production
-      - key: APP_DEBUG
-        value: false
-      - key: APP_URL
-        value: https://rideconnect-emp0.onrender.com
-      - key: CACHE_DRIVER
-        value: redis
-      - key: SESSION_DRIVER
-        value: redis
-      - key: QUEUE_CONNECTION
-        value: redis
-      - key: REDIS_CLIENT
-        value: predis
-      - key: REDIS_HOST
-        value: rideconnect-redis
-      - key: REDIS_PORT
-        value: 6379
-
-  - type: redis
-    name: rideconnect-redis
-    plan: free
+        value: "8001"
+      - key: MODEL_PATH
+        value: /app/Matching_Modal_tflite_learn_1013157_3.tflite
+    healthCheckPath: /health

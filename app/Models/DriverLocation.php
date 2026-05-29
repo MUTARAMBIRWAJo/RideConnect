@@ -16,7 +16,6 @@ class DriverLocation extends Model
         'speed_kmh',
         'heading',
         'accuracy',
-        'updated_at',
         'last_activity_at',
         'is_online',
     ];
@@ -36,6 +35,6 @@ class DriverLocation extends Model
 
     public function driver()
     {
-        return $this->belongsTo(Driver::class, 'driver_id');
+        return $this->belongsTo(MobileUser::class, 'driver_id');
     }
 }

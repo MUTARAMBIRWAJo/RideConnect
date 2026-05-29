@@ -22,6 +22,7 @@ return Application::configure(basePath: dirname(__DIR__))
         $middleware->alias([
             'role' => \App\Http\Middleware\RoleMiddleware::class,
             'auth.partial' => \App\Http\Middleware\PartialAuth::class,
+            'mobile' => \App\Http\Middleware\EnsureMobileUser::class,
         ]);
 
         $middleware->api(prepend: [

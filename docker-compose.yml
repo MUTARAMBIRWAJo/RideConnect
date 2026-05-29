@@ -33,8 +33,13 @@ services:
       REDIS_PORT: 6379
       EVENT_BUS_DRIVER: database
       QUEUE_CONNECTION: database
+      TFLITE_ENDPOINT: http://ml-service:8001
+      TFLITE_TIMEOUT: 15
     depends_on:
-      - redis
+      redis:
+        condition: service_started
+      ml-service:
+        condition: service_healthy
     networks:
       - rideconnect
 
@@ -68,9 +73,15 @@ services:
       REDIS_HOST: redis
       REDIS_PORT: 6379
       QUEUE_CONNECTION: database
+      TFLITE_ENDPOINT: http://ml-service:8001
+      TFLITE_TIMEOUT: 15
     depends_on:
-      - app
-      - redis
+      app:
+        condition: service_started
+      redis:
+        condition: service_started
+      ml-service:
+        condition: service_healthy
     networks:
       - rideconnect
 
@@ -109,6 +120,26 @@ services:
     volumes:
       - redis_data:/data
     command: redis-server --appendonly yes --maxmemory 256mb --maxmemory-policy allkeys-lru
+    networks:
+      - rideconnect
+
+  ml-service:
+    build:
+      context: ./ml-service
+      dockerfile: Dockerfile
+    container_name: rideconnect_ml
+    ports:
+      - "8001:8001"
+    environment:
+      - PORT=8001
+      - MODEL_PATH=/app/Matching_Modal_tflite_learn_1013157_3.tflite
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:8001/health')"]
+      interval: 30s
+      timeout: 10s
+      start_period: 60s
+      retries: 3
     networks:
       - rideconnect
 

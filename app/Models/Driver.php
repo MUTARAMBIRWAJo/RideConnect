@@ -48,6 +48,11 @@ class Driver extends Model
         return $this->belongsTo(User::class);
     }
 
+    public function mobileUser()
+    {
+        return $this->belongsTo(MobileUser::class, 'user_id');
+    }
+
     public function vehicles()
     {
         return $this->hasMany(Vehicle::class);

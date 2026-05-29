@@ -2,6 +2,7 @@
 
 return [
     'booking_to_trip_threshold_hours' => 6,
+    'max_driver_rejections' => env('TRIP_MAX_DRIVER_REJECTIONS', 5),
 
     'map_points' => [
         'remera_bus_park' => [

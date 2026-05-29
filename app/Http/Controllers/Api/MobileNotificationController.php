@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
+use App\Models\MobileUser;
 use App\Models\Notification;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
@@ -12,65 +13,25 @@ use Illuminate\Support\Collection;
 class MobileNotificationController extends Controller
 {
     /**
-     * GET /api/v1/notifications
+     * GET /api/v2/notifications
+     * Returns paginated notifications for the authenticated mobile user.
      */
     public function index(Request $request): JsonResponse
     {
         $user = $request->user();
+        $mobileUserId = $this->mobileUserId($request);
         $perPage = min(100, max(1, (int) $request->integer('per_page', 20)));
-        $currentPage = max(1, (int) $request->integer('page', 1));
-        $onlyClearable = $request->boolean('only_clearable');
-        $onlyActionRequired = $request->boolean('only_action_required');
 
-        $query = Notification::query()
-            ->where('user_id', $user->id)
+        $notifications = Notification::query()
+            ->where('user_id', $mobileUserId)
             ->orderByDesc('created_at')
-            ->orderByDesc('id');
-
-        if ($request->boolean('unread_only')) {
-            $query->where('is_read', false);
-        }
-
-        if ($onlyClearable || $onlyActionRequired) {
-            $all = $query->get();
-
-            $filtered = $all->filter(function (Notification $notification) use ($onlyClearable, $onlyActionRequired): bool {
-                $isActioned = $this->isActionedNotification($notification);
-
-                if ($onlyClearable && ! $isActioned) {
-                    return false;
-                }
-
-                if ($onlyActionRequired && $isActioned) {
-                    return false;
-                }
-
-                return true;
-            })->values();
-
-            $slice = $filtered->forPage($currentPage, $perPage)->values();
-            $notifications = new LengthAwarePaginator(
-                $slice,
-                $filtered->count(),
-                $perPage,
-                $currentPage,
-                ['path' => $request->url(), 'query' => $request->query()]
-            );
-        } else {
-            $notifications = $query->paginate($perPage);
-        }
+            ->paginate($perPage);
 
         return response()->json([
-            'success' => true,
-            'data' => Collection::make($notifications->items())
-                ->map(fn (Notification $notification) => $this->formatNotification($notification))
-                ->values(),
-            'pagination' => [
-                'current_page' => $notifications->currentPage(),
-                'per_page' => $notifications->perPage(),
-                'total' => $notifications->total(),
-                'last_page' => $notifications->lastPage(),
-            ],
+            'status'  => 'success',
+            'code'    => 200,
+            'message' => 'Notifications retrieved',
+            'data'    => $notifications->items(),
         ]);
     }
 
@@ -98,7 +59,7 @@ class MobileNotificationController extends Controller
     public function unreadCount(Request $request): JsonResponse
     {
         $count = Notification::query()
-            ->where('user_id', $request->user()->id)
+            ->where('user_id', $this->mobileUserId($request))
             ->where('is_read', false)
             ->count();
 
@@ -111,13 +72,18 @@ class MobileNotificationController extends Controller
     }
 
     /**
-     * PUT /api/v1/notifications/{id}/read
+     * PUT /api/v2/notifications/{id}/read
+     * Marks a single notification as read.
      */
     public function markAsRead(Request $request, int $id): JsonResponse
     {
+        $user = $request->user();
+        $mobileUserId = $this->mobileUserId($request);
+
         $notification = Notification::query()
-            ->where('user_id', $request->user()->id)
-            ->findOrFail($id);
+            ->where('id', $id)
+            ->where('user_id', $mobileUserId)
+            ->firstOrFail();
 
         if (! $notification->is_read) {
             $notification->update([
@@ -127,8 +93,10 @@ class MobileNotificationController extends Controller
         }
 
         return response()->json([
-            'success' => true,
+            'status'  => 'success',
+            'code'    => 200,
             'message' => 'Notification marked as read',
+            'data'    => $notification,
         ]);
     }
 
@@ -138,7 +106,7 @@ class MobileNotificationController extends Controller
     public function markAllAsRead(Request $request): JsonResponse
     {
         Notification::query()
-            ->where('user_id', $request->user()->id)
+            ->where('user_id', $this->mobileUserId($request))
             ->where('is_read', false)
             ->update([
                 'is_read' => true,
@@ -158,7 +126,7 @@ class MobileNotificationController extends Controller
     public function destroy(Request $request, int $id): JsonResponse
     {
         $notification = Notification::query()
-            ->where('user_id', $request->user()->id)
+            ->where('user_id', $this->mobileUserId($request))
             ->findOrFail($id);
 
         if (! $this->isActionedNotification($notification)) {
@@ -184,7 +152,7 @@ class MobileNotificationController extends Controller
     public function clearActioned(Request $request): JsonResponse
     {
         $notifications = Notification::query()
-            ->where('user_id', $request->user()->id)
+            ->where('user_id', $this->mobileUserId($request))
             ->get(['id', 'type', 'data']);
 
         $actionedIds = $notifications
@@ -195,7 +163,7 @@ class MobileNotificationController extends Controller
         $deletedCount = 0;
         if ($actionedIds->isNotEmpty()) {
             $deletedCount = Notification::query()
-                ->where('user_id', $request->user()->id)
+                ->where('user_id', $this->mobileUserId($request))
                 ->whereIn('id', $actionedIds->all())
                 ->delete();
         }
@@ -269,5 +237,15 @@ class MobileNotificationController extends Controller
         }
 
         return false;
+    }
+
+    private function mobileUserId(Request $request): int
+    {
+        $user = $request->user();
+        if ($user->mobile_user_id) {
+            return (int) $user->mobile_user_id;
+        }
+
+        return (int) (MobileUser::query()->where('email', $user->email)->value('id') ?? $user->id);
     }
 }

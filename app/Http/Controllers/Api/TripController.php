@@ -11,15 +11,22 @@ use App\Events\Domain\TripMatched;
 use App\Events\Domain\TripStarted;
 use App\Exceptions\DomainException;
 use App\Http\Controllers\Controller;
+use App\Jobs\FindAndNotifyDriverJob;
 use App\Models\Booking;
+use App\Models\MatchingSession;
 use App\Models\MobileUser;
 use App\Models\Ride;
+use App\Models\RideEvent;
 use App\Models\Trip;
+use App\Models\TripStatusEvent;
 use App\Models\User;
 use App\Services\AITrainingDataLogger;
 use App\Services\DriverAssignmentService;
+use App\Services\FareCalculatorService;
 use App\Services\Location\TripLocationService;
 use App\Services\MobileNotificationService;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Str;
 use App\Services\TripCompletionService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
@@ -71,6 +78,7 @@ class TripController extends Controller
         private readonly TripLocationService $tripLocationService,
         private readonly DriverAssignmentService $driverAssignmentService,
         private readonly TripCompletionService $tripCompletionService,
+        private readonly FareCalculatorService $fareCalculatorService,
     ) {}
 
     /**
@@ -207,201 +215,131 @@ class TripController extends Controller
      */
     public function store(Request $request): JsonResponse
     {
-        DomainGuard::assertUsingPolicy(__METHOD__);
-
-        $user = $request->user();
-
-        // Check if user is approved
-        if (! $user->is_approved) {
-            return response()->json([
-                'success' => false,
-                'message' => 'Your account must be approved to request trips',
-            ], 403);
-        }
-
-        // Normalize alternate location payload shapes to expected keys
-        $payload = $request->all();
-        if (! isset($payload['pickup_lat']) && isset($payload['pickup']) && is_array($payload['pickup'])) {
-            if (isset($payload['pickup']['lat'])) {
-                $request->merge(['pickup_lat' => $payload['pickup']['lat']]);
-            }
-            if (isset($payload['pickup']['lng'])) {
-                $request->merge(['pickup_lng' => $payload['pickup']['lng']]);
-            }
-            if (isset($payload['pickup']['latitude'])) {
-                $request->merge(['pickup_lat' => $payload['pickup']['latitude']]);
-            }
-            if (isset($payload['pickup']['longitude'])) {
-                $request->merge(['pickup_lng' => $payload['pickup']['longitude']]);
-            }
-        }
-        if (! isset($payload['dropoff_lat']) && isset($payload['dropoff']) && is_array($payload['dropoff'])) {
-            if (isset($payload['dropoff']['lat'])) {
-                $request->merge(['dropoff_lat' => $payload['dropoff']['lat']]);
-            }
-            if (isset($payload['dropoff']['lng'])) {
-                $request->merge(['dropoff_lng' => $payload['dropoff']['lng']]);
-            }
-            if (isset($payload['dropoff']['latitude'])) {
-                $request->merge(['dropoff_lat' => $payload['dropoff']['latitude']]);
-            }
-            if (isset($payload['dropoff']['longitude'])) {
-                $request->merge(['dropoff_lng' => $payload['dropoff']['longitude']]);
-            }
-        }
-
-        // Accept camelCase variants
-        if (! isset($payload['pickup_lat']) && isset($payload['pickupLatitude'])) {
-            $request->merge(['pickup_lat' => $payload['pickupLatitude']]);
-        }
-        if (! isset($payload['pickup_lng']) && isset($payload['pickupLongitude'])) {
-            $request->merge(['pickup_lng' => $payload['pickupLongitude']]);
-        }
-        if (! isset($payload['dropoff_lat']) && isset($payload['dropoffLatitude'])) {
-            $request->merge(['dropoff_lat' => $payload['dropoffLatitude']]);
-        }
-        if (! isset($payload['dropoff_lng']) && isset($payload['dropoffLongitude'])) {
-            $request->merge(['dropoff_lng' => $payload['dropoffLongitude']]);
-        }
-
-        // Coerce numeric strings to numbers where possible
-        foreach (['pickup_lat','pickup_lng','dropoff_lat','dropoff_lng'] as $k) {
-            if ($request->has($k) && is_string($request->input($k))) {
-                $val = $request->input($k);
-                if (is_numeric($val)) {
-                    $request->merge([$k => (float) $val]);
-                }
-            }
-        }
-
         $validator = Validator::make($request->all(), [
-            'ride_id' => 'required|exists:rides,id',
-            'pickup_location' => 'required|string|min:3',
+            'passenger_id' => 'required|integer|exists:mobile_users,id',
+            'pickup_location' => 'required|string',
+            'dropoff_location' => 'required|string',
             'pickup_lat' => 'required|numeric|between:-90,90',
             'pickup_lng' => 'required|numeric|between:-180,180',
-            'pickup_place_name' => 'nullable|string|max:255',
-            'dropoff_location' => 'required|string|min:3',
             'dropoff_lat' => 'required|numeric|between:-90,90',
             'dropoff_lng' => 'required|numeric|between:-180,180',
+            'transport_type' => 'required|in:moto,car,bus',
+            'payment_method' => 'required|string',
+            'pickup_place_name' => 'nullable|string|max:255',
             'dropoff_place_name' => 'nullable|string|max:255',
-            'fare' => 'required|numeric|min:0',
+            'pickup_zone' => 'nullable|string|max:64',
+            'dropoff_zone' => 'nullable|string|max:64',
+            'idempotency_key' => 'nullable|string|max:255',
         ]);
 
         if ($validator->fails()) {
             return response()->json([
                 'status' => 'error',
-                'message' => 'Pickup and dropoff locations are required',
+                'code' => 422,
+                'message' => 'Validation failed',
                 'errors' => $validator->errors(),
             ], 422);
         }
 
         $validated = $validator->validated();
-        $passengerMobileUserId = $this->resolvePassengerMobileUserId($user);
 
-        $ride = Ride::query()->with('driver.vehicles')->findOrFail((int) $validated['ride_id']);
+        if (! empty($validated['idempotency_key'])) {
+            $existing = Trip::query()
+                ->with(['matchingSession', 'passenger:id,first_name,last_name,phone'])
+                ->where('passenger_id', $validated['passenger_id'])
+                ->where('idempotency_key', $validated['idempotency_key'])
+                ->first();
 
-        // Enforce transport-type and travel-mode structural invariants first
-        try {
-            RidePolicy::assertTransportRules($ride);
-        } catch (DomainException $e) {
-            return response()->json([
-                'success' => false,
-                'message' => $e->getMessage(),
-                'error_code' => $e->getErrorCode(),
-            ], 422);
-        }
-
-        // ❌ BUS trips MUST come from booking — use POST /api/passenger/trips/create-from-booking
-        if ($ride->isBus()) {
-            // Maintain backward-compatible error message expected by tests.
-            return response()->json([
-                'success' => false,
-                'message' => 'BUS trips must be created from a booking',
-            ], 422);
-        }
-
-        // ❌ SCHEDULED rides must use booking flow — use POST /api/passenger/trips/create-from-booking
-        if ($ride->isScheduled()) {
-            return response()->json([
-                'success' => false,
-                'message' => 'SCHEDULED rides require booking. Use POST /api/passenger/trips/create-from-booking',
-                'error_code' => 'SCHEDULED_REQUIRES_BOOKING',
-            ], 422);
-        }
-
-        // ❌ Only private on-demand (CAR/MOTORCYCLE + ON_DEMAND) may create trips directly
-        try {
-            RidePolicy::assertTripAllowed($ride);
-        } catch (DomainException $e) {
-            return response()->json([
-                'success' => false,
-                'message' => $e->getMessage(),
-                'error_code' => $e->getErrorCode(),
-            ], 422);
-        }
-
-        if (! $ride->driver) {
-            return response()->json([
-                'status' => 'error',
-                'message' => 'No active driver available for this ride',
-            ], 422);
-        }
-
-        if (strtolower((string) $ride->driver->status) !== 'approved') {
-            return response()->json([
-                'status' => 'error',
-                'message' => 'Assigned ride driver is not approved',
-            ], 422);
-        }
-
-        $activeVehicle = $ride->driver->vehicles->first(fn ($vehicle) => $vehicle->is_active);
-        if (! $activeVehicle) {
-            return response()->json([
-                'status' => 'error',
-                'message' => 'No active vehicle is available for the selected ride',
-            ], 422);
-        }
-
-        // Create trip in PENDING state first
-        $trip = new Trip([
-            ...$validated,
-            'passenger_id' => $passengerMobileUserId,
-            'driver_id' => null,  // Will be assigned below
-            'status' => 'PENDING',
-            'requested_at' => now(),
-        ]);
-        $trip->validateForExecution();
-        $trip->save();
-
-        // Auto-assign best available driver
-        $assignedTrip = $this->driverAssignmentService->autoAssign($trip, $ride);
-
-        if (! $assignedTrip) {
-            // Fallback: if the ride already has an assigned driver who is approved
-            // and has an active vehicle, bind them to the trip directly.
-            if ($ride->driver && strtolower((string) $ride->driver->status) === 'approved') {
-                $assignedTrip = $this->driverAssignmentService->assignDriver($trip, $ride->driver);
-            } else {
-                // No driver available - keep trip in PENDING, driver will be found later
-                $assignedTrip = $trip;
+            if ($existing) {
+                return response()->json([
+                    'status' => 'success',
+                    'code' => 200,
+                    'message' => 'Trip already exists',
+                    'data' => $existing,
+                ]);
             }
         }
 
-        app(AITrainingDataLogger::class)->logRideRequest($assignedTrip);
+        $trip = DB::transaction(function () use ($validated): Trip {
+            $now = now();
+            $fare = $this->fareCalculatorService->estimate(
+                (float) $validated['pickup_lat'],
+                (float) $validated['pickup_lng'],
+                (float) $validated['dropoff_lat'],
+                (float) $validated['dropoff_lng'],
+                $validated['transport_type'],
+            );
+
+            $matchingSession = MatchingSession::query()->create([
+                'matching_session_id' => (string) Str::uuid(),
+                'passenger_id' => $validated['passenger_id'],
+                'transport_type' => $validated['transport_type'],
+                'pickup_lat' => $validated['pickup_lat'],
+                'pickup_lng' => $validated['pickup_lng'],
+                'dropoff_lat' => $validated['dropoff_lat'],
+                'dropoff_lng' => $validated['dropoff_lng'],
+                'status' => 'searching',
+                'expires_at' => $now->copy()->addMinutes(5),
+            ]);
+
+            $trip = Trip::query()->create([
+                'passenger_id' => $validated['passenger_id'],
+                'pickup_location' => $validated['pickup_location'],
+                'dropoff_location' => $validated['dropoff_location'],
+                'pickup_lat' => $validated['pickup_lat'],
+                'pickup_lng' => $validated['pickup_lng'],
+                'dropoff_lat' => $validated['dropoff_lat'],
+                'dropoff_lng' => $validated['dropoff_lng'],
+                'pickup_place_name' => $validated['pickup_place_name'] ?? null,
+                'dropoff_place_name' => $validated['dropoff_place_name'] ?? null,
+                'pickup_zone' => $validated['pickup_zone'] ?? null,
+                'dropoff_zone' => $validated['dropoff_zone'] ?? null,
+                'transport_type' => $validated['transport_type'],
+                'fare' => $fare,
+                'status' => 'requested',
+                'payment_status' => 'unpaid',
+                'assignment_status' => 'unassigned',
+                'rejected_drivers_count' => 0,
+                'matching_session_id' => $matchingSession->matching_session_id,
+                'idempotency_key' => $validated['idempotency_key'] ?? null,
+                'requested_at' => $now,
+            ]);
+
+            TripStatusEvent::query()->create([
+                'trip_id' => $trip->id,
+                'actor_type' => 'passenger',
+                'actor_id' => $validated['passenger_id'],
+                'old_status' => null,
+                'new_status' => 'requested',
+                'created_at' => $now,
+            ]);
+
+            RideEvent::query()->create([
+                'trip_id' => $trip->id,
+                'passenger_id' => $validated['passenger_id'],
+                'event_type' => 'trip_requested',
+                'event_time' => $now,
+            ]);
+
+            DB::table('demand_logs')->insert([
+                'trip_id' => $trip->id,
+                'pickup_lat' => $validated['pickup_lat'],
+                'pickup_lng' => $validated['pickup_lng'],
+                'request_time' => $now,
+                'created_at' => $now,
+                'updated_at' => $now,
+            ]);
+
+            DB::afterCommit(fn () => FindAndNotifyDriverJob::dispatch((int) $trip->id));
+
+            return $trip;
+        });
 
         return response()->json([
-            'success' => true,
-            'message' => 'Trip request created successfully',
-            'data' => [
-                'id' => $assignedTrip->id,
-                'booking_id' => $assignedTrip->booking_id,
-                'ride_id' => $assignedTrip->ride_id,
-                'driver_id' => $assignedTrip->driver_id,
-                'status' => $assignedTrip->status,
-                'trip_state' => $assignedTrip->status,
-                'driver_location' => $this->tripLocationService->getCurrentLocation($assignedTrip),
-                'eta' => 12,
-            ],
+            'status' => 'success',
+            'code' => 201,
+            'message' => 'Trip created',
+            'data' => $trip->fresh(['matchingSession', 'passenger:id,first_name,last_name,phone']),
         ], 201);
     }
 

@@ -10,57 +10,66 @@ class Trip extends Model
     use HasFactory;
 
     private const STATUS_MAP = [
-        'pending' => 'PENDING',
-        'accepted' => 'ACCEPTED',
-        'started' => 'STARTED',
-        'in_progress' => 'STARTED',
-        'completed' => 'COMPLETED',
-        'cancelled' => 'CANCELLED',
+        'pending' => 'requested',
+        'requested' => 'requested',
+        'assigning' => 'assigning',
+        'accepted' => 'accepted',
+        'started' => 'in_progress',
+        'enroute_to_pickup' => 'enroute_to_pickup',
+        'arrived_at_pickup' => 'arrived_at_pickup',
+        'in_progress' => 'in_progress',
+        'completed' => 'completed',
+        'cancelled' => 'cancelled',
     ];
 
     protected $fillable = [
-        'booking_id',
-        'ride_id',
         'passenger_id',
         'driver_id',
-        'transport_type',
-        'matching_session_id',
-        'idempotency_key',
-        'route_state_id',
-        'weather_condition_id',
         'pickup_location',
-        'pickup_place_name',
+        'dropoff_location',
         'pickup_lat',
         'pickup_lng',
-        'pickup_zone',
-        'dropoff_location',
-        'dropoff_place_name',
         'dropoff_lat',
         'dropoff_lng',
+        'pickup_zone',
         'dropoff_zone',
+        'pickup_place_name',
+        'dropoff_place_name',
         'fare',
+        'actual_fare',
+        'actual_distance',
         'actual_pickup_lat',
         'actual_pickup_lng',
         'actual_dropoff_lat',
         'actual_dropoff_lng',
-        'actual_distance',
-        'actual_fare',
         'status',
         'payment_status',
         'assignment_status',
+        'transport_type',
+        'matching_session_id',
+        'idempotency_key',
+        'ride_id',
+        'booking_id',
+        'driver_behavior_id',
+        'passenger_behavior_id',
+        'route_state_id',
+        'weather_condition_id',
         'current_assignment_attempt_id',
-        'requested_at',
-        'accepted_at',
-        'pickup_verified_at',
-        'rejected_at',
-        'rejection_reason',
-        'started_at',
-        'completed_at',
-        'admin_completed_by',
-        'admin_completion_reason',
-        'paid_to_driver_at',
+        'trip_quality_score',
+        'eta_deviation_minutes',
+        'rejected_drivers_count',
         'ranker_score',
         'ranker_version',
+        'admin_completed_by',
+        'admin_completion_reason',
+        'requested_at',
+        'accepted_at',
+        'started_at',
+        'completed_at',
+        'rejected_at',
+        'rejection_reason',
+        'paid_to_driver_at',
+        'pickup_verified_at',
     ];
 
     protected $casts = [
@@ -69,20 +78,23 @@ class Trip extends Model
         'dropoff_lat' => 'decimal:7',
         'dropoff_lng' => 'decimal:7',
         'fare' => 'decimal:2',
+        'actual_fare' => 'decimal:2',
+        'actual_distance' => 'decimal:2',
         'actual_pickup_lat' => 'decimal:7',
         'actual_pickup_lng' => 'decimal:7',
         'actual_dropoff_lat' => 'decimal:7',
         'actual_dropoff_lng' => 'decimal:7',
-        'actual_distance' => 'decimal:2',
-        'actual_fare' => 'decimal:2',
+        'ranker_score' => 'decimal:4',
+        'trip_quality_score' => 'decimal:4',
+        'rejected_drivers_count' => 'integer',
+        'eta_deviation_minutes' => 'integer',
         'requested_at' => 'datetime',
         'accepted_at' => 'datetime',
-        'rejected_at' => 'datetime',
         'started_at' => 'datetime',
         'completed_at' => 'datetime',
+        'rejected_at' => 'datetime',
         'pickup_verified_at' => 'datetime',
         'paid_to_driver_at' => 'datetime',
-        'ranker_score' => 'decimal:4',
     ];
 
     public function passenger()
@@ -135,6 +147,11 @@ class Trip extends Model
         return $this->belongsTo(TripAssignmentAttempt::class, 'current_assignment_attempt_id');
     }
 
+    public function matchingSession()
+    {
+        return $this->belongsTo(MatchingSession::class, 'matching_session_id', 'matching_session_id');
+    }
+
     public function seatReservations()
     {
         return $this->hasMany(SeatReservation::class);
@@ -160,7 +177,7 @@ class Trip extends Model
 
         $normalized = strtolower(trim((string) $value));
 
-        $this->attributes['status'] = self::STATUS_MAP[$normalized] ?? strtoupper((string) $value);
+        $this->attributes['status'] = self::STATUS_MAP[$normalized] ?? $normalized;
     }
 
     protected static function booting(): void

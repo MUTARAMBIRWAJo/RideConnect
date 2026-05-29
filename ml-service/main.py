@@ -1,210 +1,154 @@
-from __future__ import annotations
-
-import glob
 import os
-from pathlib import Path
-from typing import Any
+import time
+from typing import List
 
 import numpy as np
 from fastapi import FastAPI, HTTPException
-from pydantic import BaseModel, Field, model_validator
+from fastapi.middleware.cors import CORSMiddleware
+from pydantic import BaseModel
 
-FEATURE_ORDER = [
-    "distance_km",
-    "predicted_eta_min",
-    "driver_rating",
-    "acceptance_rate",
-    "cancellation_rate",
-    "on_time_rate",
-    "behavior_score",
-    "total_rides",
-    "driver_idle_minutes",
-    "vehicle_match",
-    "same_zone",
-    "is_rush_hour",
-    "traffic_level",
-    "weather_severity",
-    "request_hour",
-]
+MODEL_PATH = os.environ.get(
+    "MODEL_PATH",
+    os.path.join(os.path.dirname(__file__), "Matching_Modal_tflite_learn_1013157_3.tflite"),
+)
 
 try:
-    from tflite_runtime.interpreter import Interpreter as TFLiteInterpreter
+    import tflite_runtime.interpreter as tflite
+
+    interpreter = tflite.Interpreter(model_path=MODEL_PATH)
+    _backend = "tflite_runtime"
 except ImportError:
-    try:
-        from ai_edge_litert.interpreter import Interpreter as TFLiteInterpreter
-    except ImportError:
-        try:
-            from tensorflow.lite import Interpreter as TFLiteInterpreter
-        except ImportError:
-            TFLiteInterpreter = None
+    import tensorflow as tf
 
-app = FastAPI(title="RideConnect TFLite Matching Service", version="1.0.0")
+    interpreter = tf.lite.Interpreter(model_path=MODEL_PATH)
+    _backend = "tensorflow"
 
-MODEL_PATH: Path | None = None
-INTERPRETER = None
-INPUT_INDEX = None
-OUTPUT_INDEX = None
-INPUT_SHAPE = None
-MODEL_LOADED = False
+interpreter.allocate_tensors()
+input_details = interpreter.get_input_details()
+output_details = interpreter.get_output_details()
+
+MODEL_VERSION = "Matching_Modal_tflite_learn_1013157_3"
+
+print(f"[RideConnect ML] Model loaded via {_backend}")
+print(f"[RideConnect ML] Input  shape: {input_details[0]['shape']}")
+print(f"[RideConnect ML] Output shape: {output_details[0]['shape']}")
 
 
-class CandidateFeatures(BaseModel):
-    distance_km: float = Field(..., ge=0)
-    predicted_eta_min: float = Field(..., ge=0)
-    driver_rating: float = Field(..., ge=0)
-    acceptance_rate: float = Field(..., ge=0)
-    cancellation_rate: float = Field(..., ge=0)
-    on_time_rate: float = Field(..., ge=0)
-    behavior_score: float = Field(..., ge=0)
-    total_rides: float = Field(..., ge=0)
-    driver_idle_minutes: float = Field(..., ge=0)
-    vehicle_match: float = Field(..., ge=0)
-    same_zone: float = Field(..., ge=0)
-    is_rush_hour: float = Field(..., ge=0)
-    traffic_level: float = Field(..., ge=0)
-    weather_severity: float = Field(..., ge=0)
-    request_hour: float = Field(..., ge=0)
+class CandidateDriver(BaseModel):
+    driver_id: int
+    distance_km: float
+    rating: float
+    total_rides: int
+    acceptance_rate: float
+    cancellation_rate: float
 
 
-class MatchingCandidate(BaseModel):
-    driver_id: int | str
-    features: dict[str, float]
-
-    @model_validator(mode="after")
-    def validate_required_features(self) -> "MatchingCandidate":
-        missing = [feature for feature in FEATURE_ORDER if feature not in self.features]
-        if missing:
-            raise ValueError(f"Missing required features: {', '.join(missing)}")
-        return self
+class RankRequest(BaseModel):
+    trip_id: int
+    transport_type: str
+    pickup_lat: float
+    pickup_lng: float
+    candidates: List[CandidateDriver]
 
 
-class MatchingRequest(BaseModel):
-    trip_id: int | str
-    matching_session_id: str | None = None
-    candidates: list[MatchingCandidate]
-
-    @model_validator(mode="after")
-    def validate_candidates(self) -> "MatchingRequest":
-        if not self.candidates:
-            raise ValueError("At least one candidate is required")
-        return self
+class RankedDriver(BaseModel):
+    driver_id: int
+    score: float
+    score_breakdown: dict
 
 
-class MatchingResponse(BaseModel):
-    selected_driver_id: int | str
-    ranked: list[dict[str, Any]]
+class RankResponse(BaseModel):
+    ranked_drivers: List[RankedDriver]
+    model_version: str
+    backend: str
+    latency_ms: int
 
 
-def _discover_model_path() -> Path | None:
-    env_model_path = os.getenv("MODEL_PATH")
-    if env_model_path:
-        model_path = Path(env_model_path)
-        if not model_path.exists():
-            raise FileNotFoundError(f"MODEL_PATH not found: {model_path}")
-        return model_path
-
-    model_dir = Path(os.getenv("MODEL_DIR", "model"))
-    model_dir.mkdir(parents=True, exist_ok=True)
-    matches = sorted(model_dir.glob("*.tflite"))
-    if not matches:
-        return None
-    return matches[0]
+TRANSPORT_MAP = {"moto": 0, "car": 1, "bus": 2}
 
 
-@app.on_event("startup")
-def startup() -> None:
-    global MODEL_PATH, INTERPRETER, INPUT_INDEX, OUTPUT_INDEX, INPUT_SHAPE, MODEL_LOADED
+def build_feature_vector(c: CandidateDriver, req: RankRequest) -> np.ndarray:
+    """
+    Feature order MUST match training. Current order:
+      [distance_km_norm, rating_norm, total_rides_norm,
+       acceptance_rate, inverted_cancellation_rate, transport_type_norm]
+    If model was trained with a different column order, adjust here.
+    """
+    return np.array(
+        [
+            min(c.distance_km / 5.0, 1.0),
+            c.rating / 5.0,
+            min(c.total_rides / 1000.0, 1.0),
+            c.acceptance_rate,
+            1.0 - c.cancellation_rate,
+            TRANSPORT_MAP.get(req.transport_type, 0) / 2.0,
+        ],
+        dtype=np.float32,
+    )
 
-    try:
-        MODEL_PATH = _discover_model_path()
-    except FileNotFoundError as exc:
-        print(f"MODEL discovery failed: {exc}")
-        MODEL_PATH = None
 
-    if MODEL_PATH is None:
-        print("No .tflite model found. The service will keep running, but ranking requests will return 503 until a model is available.")
-        MODEL_LOADED = False
-        INTERPRETER = None
-        INPUT_INDEX = None
-        OUTPUT_INDEX = None
-        INPUT_SHAPE = None
-        return
+def run_single_inference(features: np.ndarray) -> float:
+    expected_shape = input_details[0]["shape"]
+    input_data = features.reshape(expected_shape)
+    interpreter.set_tensor(input_details[0]["index"], input_data)
+    interpreter.invoke()
+    output = interpreter.get_tensor(output_details[0]["index"])
+    return float(np.squeeze(output))
 
-    if TFLiteInterpreter is None:
-        raise RuntimeError(
-            "No TFLite interpreter available. Install tflite-runtime, ai-edge-litert, or tensorflow.lite."
-        )
 
-    try:
-        interpreter = TFLiteInterpreter(str(MODEL_PATH))
-        interpreter.allocate_tensors()
-        input_details = interpreter.get_input_details()
-        output_details = interpreter.get_output_details()
+app = FastAPI(title="RideConnect Matching Service", version="1.0.0")
 
-        INPUT_INDEX = input_details[0]["index"]
-        OUTPUT_INDEX = output_details[0]["index"]
-        INPUT_SHAPE = tuple(input_details[0]["shape"])
-
-        INTERPRETER = interpreter
-        MODEL_LOADED = True
-        print(f"Loaded TFLite model from {MODEL_PATH} with input shape {INPUT_SHAPE}")
-    except Exception as exc:
-        MODEL_LOADED = False
-        INTERPRETER = None
-        INPUT_INDEX = None
-        OUTPUT_INDEX = None
-        INPUT_SHAPE = None
-        raise RuntimeError(f"Failed to load TFLite model: {exc}") from exc
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["*"],
+    allow_methods=["GET", "POST"],
+    allow_headers=["*"],
+)
 
 
 @app.get("/health")
-def health() -> dict[str, str]:
-    return {"status": "ok"}
+def health():
+    return {
+        "status": "ok",
+        "model": MODEL_VERSION,
+        "backend": _backend,
+        "input_shape": input_details[0]["shape"].tolist(),
+    }
 
 
-@app.post("/rank-drivers")
-@app.post("/ml/rank-drivers")
-def rank_drivers(payload: MatchingRequest) -> MatchingResponse:
-    if not MODEL_LOADED or INTERPRETER is None or INPUT_INDEX is None or OUTPUT_INDEX is None:
-        raise HTTPException(status_code=503, detail="TFLite model is not loaded")
+@app.post("/rank-drivers", response_model=RankResponse)
+def rank_drivers(req: RankRequest):
+    if not req.candidates:
+        raise HTTPException(status_code=422, detail="No candidates provided")
 
-    accept_index = int(os.getenv("ACCEPT_INDEX", "0"))
-    ranked_results: list[dict[str, Any]] = []
+    t_start = time.time()
+    ranked = []
 
-    for candidate in payload.candidates:
-        feature_values = [float(candidate.features[feature]) for feature in FEATURE_ORDER]
-        input_array = np.asarray(feature_values, dtype=np.float32).reshape(1, len(FEATURE_ORDER))
-
-        INTERPRETER.set_tensor(INPUT_INDEX, input_array)
-        INTERPRETER.invoke()
-
-        output = np.asarray(INTERPRETER.get_tensor(OUTPUT_INDEX))
-        if output.ndim == 0:
-            probabilities = np.asarray([float(output)], dtype=np.float32)
-        else:
-            probabilities = np.asarray(output[0], dtype=np.float32)
-
-        # Edge Impulse sorts classes alphabetically. For this 2-class export,
-        # the accepted class is the alphabetically first class, typically index 0.
-        # Verify the correct class index on the Edge Impulse Classifier page if
-        # the ranking looks inverted in production.
-        if accept_index < 0 or accept_index >= len(probabilities):
-            raise HTTPException(
-                status_code=500,
-                detail=f"ACCEPT_INDEX {accept_index} is out of range for model output length {len(probabilities)}",
+    for c in req.candidates:
+        features = build_feature_vector(c, req)
+        score = run_single_inference(features)
+        ranked.append(
+            RankedDriver(
+                driver_id=c.driver_id,
+                score=round(score, 6),
+                score_breakdown={
+                    "distance_km": c.distance_km,
+                    "rating": c.rating,
+                    "total_rides": c.total_rides,
+                    "acceptance_rate": c.acceptance_rate,
+                    "cancellation_rate": c.cancellation_rate,
+                    "transport_type": req.transport_type,
+                    "raw_score": score,
+                },
             )
-
-        score = float(probabilities[accept_index])
-        ranked_results.append(
-            {
-                "driver_id": candidate.driver_id,
-                "score": round(score, 4),
-            }
         )
 
-    ranked_results.sort(key=lambda item: item["score"], reverse=True)
-    for rank, item in enumerate(ranked_results, start=1):
-        item["rank"] = rank
+    ranked.sort(key=lambda d: d.score, reverse=True)
+    latency_ms = int((time.time() - t_start) * 1000)
 
-    top_driver = ranked_results[0]
-    return MatchingResponse(selected_driver_id=top_driver["driver_id"], ranked=ranked_results)
+    return RankResponse(
+        ranked_drivers=ranked,
+        model_version=MODEL_VERSION,
+        backend=_backend,
+        latency_ms=latency_ms,
+    )

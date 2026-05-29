@@ -1,55 +1,17 @@
-# Multi-stage build for production
-FROM python:3.11-slim as builder
-
-WORKDIR /build
-
-# Copy requirements
-COPY requirements.txt .
-
-# Create virtual environment and install dependencies
-RUN python -m venv /opt/venv && \
-    /opt/venv/bin/pip install --upgrade pip setuptools wheel && \
-    /opt/venv/bin/pip install --no-cache-dir -r requirements.txt
-
-# Production stage
 FROM python:3.11-slim
 
 WORKDIR /app
 
-# Copy virtual environment from builder
-COPY --from=builder /opt/venv /opt/venv
+COPY requirements.txt .
+RUN pip install --no-cache-dir -r requirements.txt
 
-# Copy application code
-COPY ./app ./app
-COPY ./models ./models
-COPY ./scripts ./scripts
+COPY Matching_Modal_tflite_learn_1013157_3.tflite .
+COPY main.py .
 
-# Set environment variables
-ENV PATH="/opt/venv/bin:$PATH" \
-    PYTHONUNBUFFERED=1 \
-    PYTHONDONTWRITEBYTECODE=1 \
-    TF_CPP_MIN_LOG_LEVEL=2 \
-    TF_ENABLE_ONEDNN_OPTS=1 \
-    OMP_NUM_THREADS=1 \
-    TF_NUM_INTRAOP_THREADS=1 \
-    TF_NUM_INTEROP_THREADS=1 \
-    MODEL_PATH=/app/models/trained/rideconnect_v2_best.keras \
-    MODEL_DIR=/app/models/trained \
-    SCALER_PATH=/app/models/trained/feature_scaler.pkl \
-    INFERENCE_TIMEOUT=5.0 \
-    ACTIVE_MODEL=v1 \
-    ML_SERVICE_WORKERS=1
+ENV PORT=8001
+EXPOSE ${PORT}
 
-# Create non-root user for security
-RUN useradd -m -u 1000 appuser && chown -R appuser:appuser /app
-USER appuser
+HEALTHCHECK --interval=30s --timeout=10s --start-period=60s --retries=3 \
+  CMD python -c "import os, urllib.request; urllib.request.urlopen(f'http://localhost:{os.environ.get(\"PORT\", \"8001\")}/health')"
 
-# Health check
-HEALTHCHECK --interval=30s --timeout=10s --start-period=5s --retries=3 \
-    CMD python -c "import urllib.request; urllib.request.urlopen('http://localhost:8000/health', timeout=5).read()" || exit 1
-
-# Expose port
-EXPOSE 8000
-
-# Run application
-CMD ["sh", "-c", "uvicorn app.main:app --host 0.0.0.0 --port ${PORT:-8000} --workers ${ML_SERVICE_WORKERS:-1} --timeout-keep-alive 15"]
+CMD ["sh", "-c", "uvicorn main:app --host 0.0.0.0 --port ${PORT}"]

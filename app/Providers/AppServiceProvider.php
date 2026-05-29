@@ -51,6 +51,8 @@ class AppServiceProvider extends ServiceProvider
         $this->app->singleton(RoleAccessService::class, function ($app) {
             return new RoleAccessService;
         });
+
+        $this->app->singleton(\App\Services\TfliteMatchingService::class);
     }
 
     /**
@@ -58,6 +60,14 @@ class AppServiceProvider extends ServiceProvider
      */
     public function boot(): void
     {
+        if (app()->environment('production')) {
+            try {
+                app(\App\Services\TfliteMatchingService::class)->warmUp();
+            } catch (\Throwable) {
+                // Never let ML warmup crash the app.
+            }
+        }
+
         // Register Trip observer for zone assignment
         Trip::observe(TripObserver::class);
         if (app()->environment('production')) {

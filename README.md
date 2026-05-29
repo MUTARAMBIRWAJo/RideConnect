@@ -103,3 +103,26 @@ Environment flags:
 - `DB_SEED_MARKER=rideconnect-production`
 - `DB_FORCE_SEED_ON_BOOT=true|false` (force re-run even when marker exists)
 - `DB_SEED_SKIP_RESET=true` (recommended for data retention)
+
+## ML Model Setup
+
+Place the TFLite model file at:
+
+```text
+storage/ml/Matching_Modal_tflite_learn_1013157_3.tflite
+```
+
+The docker-compose `ml-service` mounts this path read-only into the container. For local development without Docker, point `TFLITE_ENDPOINT` to a running instance:
+
+```bash
+python -m uvicorn main:app --app-dir ml --port 8001 --reload
+```
+
+Feature vector order in `ml/main.py` `build_feature_vector()` MUST match training:
+
+```text
+[distance_km_norm, rating_norm, total_rides_norm, acceptance_rate,
+ (1 - cancellation_rate), transport_type_norm]
+```
+
+If your Edge Impulse / Colab training notebook used a different column order, update `build_feature_vector()` to match before deploying.

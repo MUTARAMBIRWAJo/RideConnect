@@ -18,6 +18,7 @@ use App\Http\Controllers\Api\DriverMatchingController;
 use App\Http\Controllers\Api\DriverController;
 use App\Http\Controllers\Api\DriverPublicBusController;
 use App\Http\Controllers\Api\DriverPublicTransportController;
+use App\Http\Controllers\Api\DriverTripController;
 use App\Http\Controllers\API\DriverLocationController;
 use App\Http\Controllers\Api\DriverTrackingController;
 use App\Http\Controllers\Api\Finance\ExportController;
@@ -38,6 +39,7 @@ use App\Http\Controllers\Api\RideController;
 use App\Http\Controllers\Api\RiderController;
 use App\Http\Controllers\Api\TicketController;
 use App\Http\Controllers\Api\TripController;
+use App\Http\Controllers\Api\TripStatusController;
 use App\Http\Controllers\Api\TripSyncController;
 use App\Http\Controllers\Api\UserController;
 use App\Http\Controllers\Api\Webhooks\MTNWebhookController;
@@ -81,6 +83,20 @@ Route::middleware(['auth:sanctum'])->group(function () {
     Route::get('/driver-tracking/trip/{tripId}', [DriverTrackingController::class, 'getTripDriverLocation']);
 });
 
+Route::prefix('v2')->middleware(['auth:sanctum', 'mobile'])->group(function () {
+    Route::post('trips', [TripController::class, 'store']);
+    Route::get('trips/{trip}', [TripController::class, 'show'])->whereNumber('trip');
+    Route::put('trips/{trip}/respond', [DriverTripController::class, 'respond'])->whereNumber('trip');
+    Route::put('trips/{trip}/status', [TripStatusController::class, 'update'])->whereNumber('trip');
+    Route::post('trips/{trip}/cancel', [TripController::class, 'cancel'])->whereNumber('trip');
+
+    Route::post('driver/location', [DriverLocationController::class, 'update']);
+    Route::get('driver/location/{driver_id}', [DriverLocationController::class, 'show'])->whereNumber('driver_id');
+
+    Route::get('notifications', [MobileNotificationController::class, 'index']);
+    Route::put('notifications/{id}/read', [MobileNotificationController::class, 'markAsRead'])->whereNumber('id');
+});
+
 Route::middleware(['auth:sanctum', 'role:super_admin,admin'])->prefix('admin')->group(function () {
     Route::get('/map-data', [MapDataController::class, 'index']);
     Route::get('/demand-heatmap', [DemandHeatmapController::class, 'index']);
@@ -119,6 +135,20 @@ Route::prefix('v1')->group(function () {
        =========================== */
 
     Route::middleware(['auth:sanctum'])->group(function () {
+
+        Route::middleware(['mobile'])->group(function () {
+            Route::post('/trips', [TripController::class, 'store']);
+            Route::get('/trips/{trip}', [TripController::class, 'show'])->whereNumber('trip');
+            Route::put('/trips/{trip}/respond', [DriverTripController::class, 'respond'])->whereNumber('trip');
+            Route::put('/trips/{trip}/status', [TripStatusController::class, 'update'])->whereNumber('trip');
+            Route::post('/trips/{trip}/cancel', [TripController::class, 'cancel'])->whereNumber('trip');
+
+            Route::post('/driver/location', [DriverLocationController::class, 'update']);
+            Route::get('/driver/location/{driver_id}', [DriverLocationController::class, 'show'])->whereNumber('driver_id');
+
+            Route::get('/notifications', [MobileNotificationController::class, 'index']);
+            Route::put('/notifications/{id}/read', [MobileNotificationController::class, 'markAsRead'])->whereNumber('id');
+        });
 
         /* ---- Authentication ---- */
         Route::prefix('auth')->group(function () {

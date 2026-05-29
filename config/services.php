@@ -96,6 +96,16 @@ return [
         'ranking_enabled' => env('ML_RANKING_ENABLED', true),
     ],
 
+    'tflite' => [
+        'endpoint' => env('TFLITE_ENDPOINT', 'http://localhost:8001'),
+        'timeout' => env('TFLITE_TIMEOUT', 15),
+    ],
+
+    'supabase' => [
+        'url' => env('SUPABASE_URL'),
+        'service_key' => env('SUPABASE_SERVICE_ROLE_KEY'),
+    ],
+
     'ocr_space' => [
         'endpoint' => env('OCR_SPACE_ENDPOINT', 'https://api.ocr.space/parse/image'),
         'api_key' => env('OCR_SPACE_API_KEY', 'helloworld'),

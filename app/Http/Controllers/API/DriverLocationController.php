@@ -3,65 +3,102 @@
 namespace App\Http\Controllers\API;
 
 use App\Http\Controllers\Controller;
+use App\Models\Driver;
+use App\Models\DriverLocation;
+use App\Models\MobileUser;
+use App\Models\Trip;
 use App\Services\AITrainingDataLogger;
 use App\Services\Location\DriverLocationService;
+use App\Services\SupabaseRealtimeService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Redis;
+use Illuminate\Support\Facades\Schema;
 
 class DriverLocationController extends Controller
 {
     public function __construct(
         private readonly AITrainingDataLogger $trainingDataLogger,
-        private readonly DriverLocationService $locationService
+        private readonly DriverLocationService $locationService,
+        private readonly SupabaseRealtimeService $supabase,
     ) {}
 
     public function update(Request $request): JsonResponse
     {
         $validated = $request->validate([
-            'driver_id' => 'required|integer|exists:drivers,id',
             'latitude' => 'required|numeric|between:-90,90',
             'longitude' => 'required|numeric|between:-180,180',
             'speed_kmh' => 'nullable|numeric|min:0|max:200',
             'heading' => 'nullable|numeric|between:0,360',
             'accuracy' => 'nullable|numeric|min:0|max:1000',
-            'is_online' => 'nullable|boolean',
-            'route_deviation_meters' => 'nullable|numeric|min:0|max:10000',
-            'trip_id' => 'nullable|integer|exists:trips,id',
         ]);
 
-        $location = $this->locationService->updateLocation(
-            driverId: (int) $validated['driver_id'],
-            latitude: (float) $validated['latitude'],
-            longitude: (float) $validated['longitude'],
-            speedKmh: isset($validated['speed_kmh']) ? (float) $validated['speed_kmh'] : null,
-            heading: isset($validated['heading']) ? (float) $validated['heading'] : null,
-            accuracy: isset($validated['accuracy']) ? (float) $validated['accuracy'] : null,
-            isOnline: $validated['is_online'] ?? true,
-            routeDeviationMeters: isset($validated['route_deviation_meters']) ? (float) $validated['route_deviation_meters'] : null,
-            tripId: isset($validated['trip_id']) ? (int) $validated['trip_id'] : null,
+        $mobileUserId = $this->mobileUserId($request);
+        $driver = Driver::query()->where('user_id', $mobileUserId)->firstOrFail();
+
+        $location = DriverLocation::query()->updateOrCreate(
+            ['driver_id' => $mobileUserId],
+            [
+                'latitude' => $validated['latitude'],
+                'longitude' => $validated['longitude'],
+                'speed_kmh' => $validated['speed_kmh'] ?? null,
+                'heading' => $validated['heading'] ?? null,
+                'accuracy' => $validated['accuracy'] ?? null,
+                'is_online' => true,
+                'last_activity_at' => now(),
+            ],
         );
+        $location->forceFill(['updated_at' => now()])->save();
+
+        $driver->update([
+            'current_latitude' => $validated['latitude'],
+            'current_longitude' => $validated['longitude'],
+            'last_online_at' => now(),
+        ]);
+
+        $activeTrip = Trip::query()
+            ->where('driver_id', $driver->id)
+            ->whereIn('status', ['accepted', 'enroute_to_pickup', 'arrived_at_pickup', 'in_progress'])
+            ->latest('updated_at')
+            ->first();
+
+        if ($activeTrip) {
+            $this->supabase->broadcast("trip:{$activeTrip->id}", 'driver_location_update', [
+                'event' => 'driver_location_update',
+                'lat' => (float) $validated['latitude'],
+                'lng' => (float) $validated['longitude'],
+                'speed_kmh' => isset($validated['speed_kmh']) ? (float) $validated['speed_kmh'] : null,
+                'heading' => isset($validated['heading']) ? (float) $validated['heading'] : null,
+            ]);
+
+            if ($this->shouldPersistTripLocation($mobileUserId) && Schema::hasTable('trip_locations')) {
+                DB::table('trip_locations')->insert([
+                    'trip_id' => $activeTrip->id,
+                    'lat' => $validated['latitude'],
+                    'lng' => $validated['longitude'],
+                    'speed' => $validated['speed_kmh'] ?? null,
+                    'heading' => $validated['heading'] ?? null,
+                    'recorded_at' => now(),
+                ]);
+            }
+        }
 
         $this->trainingDataLogger->logDriverLocation(
-            (int) $validated['driver_id'],
+            $driver->id,
             (float) $validated['latitude'],
             (float) $validated['longitude'],
         );
 
         return response()->json([
-            'success' => true,
-            'message' => 'Driver location updated successfully',
-            'data' => [
-                'driver_id' => (int) $location->driver_id,
-                'latitude' => (float) $location->latitude,
-                'longitude' => (float) $location->longitude,
-                'speed_kmh' => (float) $location->speed_kmh,
-                'heading' => (float) $location->heading,
-                'accuracy' => (float) $location->accuracy,
-                'is_online' => (bool) $location->is_online,
-                'updated_at' => $location->updated_at?->toIso8601String(),
-                'last_activity_at' => $location->last_activity_at?->toIso8601String(),
-            ],
+            'status' => 'success',
+            'data' => $location,
         ]);
+    }
+
+    public function show(Request $request, int $driver_id): JsonResponse
+    {
+        return $this->getLocation($request, $driver_id);
     }
 
     /**
@@ -69,7 +106,8 @@ class DriverLocationController extends Controller
      */
     public function getLocation(Request $request, int $driverId): JsonResponse
     {
-        $location = $this->locationService->getCurrentLocation($driverId);
+        $mobileUserDriverId = Driver::query()->where('id', $driverId)->value('user_id') ?: $driverId;
+        $location = DriverLocation::query()->where('driver_id', $mobileUserDriverId)->first();
 
         if (! $location) {
             return response()->json([
@@ -92,6 +130,28 @@ class DriverLocationController extends Controller
                 'last_activity_at' => $location->last_activity_at?->toIso8601String(),
             ],
         ]);
+    }
+
+    private function shouldPersistTripLocation(int $mobileUserId): bool
+    {
+        try {
+            $count = Redis::incr("driver_location_ping:{$mobileUserId}");
+            Redis::expire("driver_location_ping:{$mobileUserId}", 3600);
+
+            return $count % 3 === 0;
+        } catch (\Throwable) {
+            return now()->second % 3 === 0;
+        }
+    }
+
+    private function mobileUserId(Request $request): int
+    {
+        $user = $request->user();
+        if ($user->mobile_user_id) {
+            return (int) $user->mobile_user_id;
+        }
+
+        return (int) (MobileUser::query()->where('email', $user->email)->value('id') ?? $user->id);
     }
 
     /**
