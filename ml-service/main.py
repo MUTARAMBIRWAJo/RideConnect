@@ -9,7 +9,7 @@ from pydantic import BaseModel
 
 MODEL_PATH = os.environ.get(
     "MODEL_PATH",
-    os.path.join(os.path.dirname(__file__), "Matching_Modal_tflite_learn_1013157_3.tflite"),
+    os.path.join(os.path.dirname(__file__), "models", "Matching_Modal_tflite_learn_1013157_3.tflite"),
 )
 
 try:

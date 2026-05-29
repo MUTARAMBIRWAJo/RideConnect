@@ -5,7 +5,7 @@ WORKDIR /app
 COPY requirements.txt .
 RUN pip install --no-cache-dir -r requirements.txt
 
-COPY Matching_Modal_tflite_learn_1013157_3.tflite .
+COPY models/Matching_Modal_tflite_learn_1013157_3.tflite ./models/
 COPY main.py .
 
 ENV PORT=8001
