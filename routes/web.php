@@ -1,6 +1,7 @@
 <?php
 
 use App\Http\Controllers\Accountant\ReportDownloadController;
+use App\Http\Controllers\Admin\AdminTripController;
 use App\Http\Controllers\Admin\FinancialMatrixExportController;
 use App\Http\Controllers\Admin\GoogleMapsHealthController;
 use App\Http\Controllers\Admin\OperationsIntelligenceExportController;
@@ -83,6 +84,12 @@ Route::middleware(['auth'])->group(function () {
 Route::post('/admin/logout', [AuthController::class, 'logout'])->name('admin.logout');
 Route::post('/admin/filament-logout', [AuthController::class, 'logout'])
     ->name('filament.admin.auth.logout');
+
+// Admin Trip Management Routes (Blade-based)
+Route::middleware(['auth', 'role:super_admin,admin,officer'])->prefix('admin')->name('admin.')->group(function () {
+    Route::resource('trips', AdminTripController::class)
+        ->only(['index', 'create', 'store', 'show', 'edit', 'update']);
+});
 
 // Compatibility aliases for legacy admin view links.
 Route::middleware('auth')->group(function () {
