@@ -122,28 +122,40 @@ class DriverPublicTransportController extends Controller
         return response()->json(['success' => true, 'data' => $attempt]);
     }
 
-    public function pickupVerify(Request $request, Trip $trip): JsonResponse
+    public function pickupVerify(Request $request, int $trip): JsonResponse
     {
+        // Explicit model fetching to handle invalid IDs gracefully (including 0)
+        $tripModel = Trip::query()->find($trip);
+        if (! $tripModel) {
+            return response()->json(['success' => false, 'message' => 'Trip not found'], 404);
+        }
+
         $driver = $request->user()->driver;
-        if (! $driver || (int) $trip->driver_id !== (int) $driver->id) {
+        if (! $driver || (int) $tripModel->driver_id !== (int) $driver->id) {
             return response()->json(['success' => false, 'message' => 'Unauthorized'], 403);
         }
 
-        $trip->update(['pickup_verified_at' => now()]);
+        $tripModel->update(['pickup_verified_at' => now()]);
 
-        return response()->json(['success' => true, 'data' => $trip->fresh()]);
+        return response()->json(['success' => true, 'data' => $tripModel->fresh()]);
     }
 
-    public function start(Request $request, Trip $trip): JsonResponse
+    public function start(Request $request, int $trip): JsonResponse
     {
+        // Explicit model fetching to handle invalid IDs gracefully (including 0)
+        $tripModel = Trip::query()->find($trip);
+        if (! $tripModel) {
+            return response()->json(['success' => false, 'message' => 'Trip not found'], 404);
+        }
+
         $driver = $request->user()->driver;
-        if (! $driver || (int) $trip->driver_id !== (int) $driver->id) {
+        if (! $driver || (int) $tripModel->driver_id !== (int) $driver->id) {
             return response()->json(['success' => false, 'message' => 'Unauthorized'], 403);
         }
 
-        $trip = DB::transaction(function () use ($trip, $driver): Trip {
+        $trip_result = DB::transaction(function () use ($tripModel, $driver): Trip {
             $locked = Trip::query()
-                ->whereKey($trip->id)
+                ->whereKey($tripModel->id)
                 ->where('driver_id', $driver->id)
                 ->lockForUpdate()
                 ->firstOrFail();
@@ -168,20 +180,26 @@ class DriverPublicTransportController extends Controller
             return $locked->fresh();
         }, 2);
 
-        event(new TripStarted((int) $trip->id));
+        event(new TripStarted((int) $trip_result->id));
 
-        return response()->json(['success' => true, 'data' => $trip]);
+        return response()->json(['success' => true, 'data' => $trip_result]);
     }
 
-    public function complete(Request $request, Trip $trip): JsonResponse
+    public function complete(Request $request, int $trip): JsonResponse
     {
+        // Explicit model fetching to handle invalid IDs gracefully (including 0)
+        $tripModel = Trip::query()->find($trip);
+        if (! $tripModel) {
+            return response()->json(['success' => false, 'message' => 'Trip not found'], 404);
+        }
+
         $driver = $request->user()->driver;
-        if (! $driver || (int) $trip->driver_id !== (int) $driver->id) {
+        if (! $driver || (int) $tripModel->driver_id !== (int) $driver->id) {
             return response()->json(['success' => false, 'message' => 'Unauthorized'], 403);
         }
 
         try {
-            $trip = $this->completionService->complete((int) $trip->id, (int) $driver->id);
+            $trip_result = $this->completionService->complete((int) $tripModel->id, (int) $driver->id);
         } catch (DomainException $e) {
             return response()->json([
                 'success' => false,
@@ -190,6 +208,6 @@ class DriverPublicTransportController extends Controller
             ], 422);
         }
 
-        return response()->json(['success' => true, 'data' => $trip]);
+        return response()->json(['success' => true, 'data' => $trip_result]);
     }
 }

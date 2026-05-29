@@ -26,15 +26,21 @@ class OfficerPublicTransportController extends Controller
         return $this->publicTransportController->createTripRequest($request);
     }
 
-    public function reassign(Request $request, Trip $trip): JsonResponse
+    public function reassign(Request $request, int $trip): JsonResponse
     {
+        // Explicit model fetching to handle invalid IDs gracefully (including 0)
+        $tripModel = Trip::query()->find($trip);
+        if (! $tripModel) {
+            return response()->json(['success' => false, 'message' => 'Trip not found'], 404);
+        }
+
         $validated = $request->validate([
             'reason' => 'required|string|max:255',
         ]);
 
         try {
             $attempt = $this->reassignmentService->reassign(
-                (int) $trip->id,
+                (int) $tripModel->id,
                 $validated['reason'],
                 'officer:'.$request->user()->id
             );

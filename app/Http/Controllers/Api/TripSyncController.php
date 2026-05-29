@@ -13,8 +13,13 @@ use Illuminate\Http\Request;
 
 class TripSyncController extends Controller
 {
-    public function status(Request $request, Trip $trip): JsonResponse
+    public function status(Request $request, int $tripId): JsonResponse
     {
+        $trip = Trip::find($tripId);
+        if (! $trip) {
+            return response()->json(['success' => true, 'data' => null]);
+        }
+
         if (! $this->canAccessTrip($request, $trip)) {
             return response()->json(['success' => false, 'message' => 'Unauthorized'], 403);
         }
@@ -36,8 +41,13 @@ class TripSyncController extends Controller
         ]);
     }
 
-    public function matchingSession(Request $request, Trip $trip): JsonResponse
+    public function matchingSession(Request $request, int $tripId): JsonResponse
     {
+        $trip = Trip::find($tripId);
+        if (! $trip) {
+            return response()->json(['success' => true, 'data' => null]);
+        }
+
         if (! $this->canAccessTrip($request, $trip)) {
             return response()->json(['success' => false, 'message' => 'Unauthorized'], 403);
         }
@@ -71,8 +81,13 @@ class TripSyncController extends Controller
         ]);
     }
 
-    public function acknowledgeTrip(Request $request, Trip $trip): JsonResponse
+    public function acknowledgeTrip(Request $request, int $tripId): JsonResponse
     {
+        $trip = Trip::find($tripId);
+        if (! $trip) {
+            return response()->json(['success' => false, 'message' => 'Trip not found'], 404);
+        }
+
         if (! $this->canAccessTrip($request, $trip)) {
             return response()->json(['success' => false, 'message' => 'Unauthorized'], 403);
         }

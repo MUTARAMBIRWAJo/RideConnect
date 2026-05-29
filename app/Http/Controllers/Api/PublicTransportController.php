@@ -200,13 +200,19 @@ class PublicTransportController extends Controller
         return response()->json(['success' => true, 'data' => $trip]);
     }
 
-    public function ticket(Request $request, Trip $trip): JsonResponse
+    public function ticket(Request $request, int $trip): JsonResponse
     {
-        if ((int) $trip->passenger_id !== (int) $request->user()->mobile_user_id) {
+        // Explicit model fetching to handle invalid IDs gracefully (including 0)
+        $tripModel = Trip::query()->find($trip);
+        if (! $tripModel) {
+            return response()->json(['success' => false, 'message' => 'Trip not found'], 404);
+        }
+
+        if ((int) $tripModel->passenger_id !== (int) $request->user()->mobile_user_id) {
             return response()->json(['success' => false, 'message' => 'Unauthorized'], 403);
         }
 
-        $ticket = $trip->transportTicket ?: $this->ticketService->issueForTrip($trip);
+        $ticket = $tripModel->transportTicket ?: $this->ticketService->issueForTrip($tripModel);
 
         return response()->json([
             'success' => true,
@@ -220,9 +226,15 @@ class PublicTransportController extends Controller
         ]);
     }
 
-    public function feedback(Request $request, Trip $trip): JsonResponse
+    public function feedback(Request $request, int $trip): JsonResponse
     {
-        if ((int) $trip->passenger_id !== (int) $request->user()->mobile_user_id) {
+        // Explicit model fetching to handle invalid IDs gracefully (including 0)
+        $tripModel = Trip::query()->find($trip);
+        if (! $tripModel) {
+            return response()->json(['success' => false, 'message' => 'Trip not found'], 404);
+        }
+
+        if ((int) $tripModel->passenger_id !== (int) $request->user()->mobile_user_id) {
             return response()->json(['success' => false, 'message' => 'Unauthorized'], 403);
         }
 
@@ -232,10 +244,10 @@ class PublicTransportController extends Controller
         ]);
 
         $review = Review::query()->updateOrCreate(
-            ['booking_id' => $trip->booking_id, 'user_id' => $request->user()->id],
+            ['booking_id' => $tripModel->booking_id, 'user_id' => $request->user()->id],
             [
-                'driver_id' => $trip->driver_id,
-                'ride_id' => $trip->ride_id,
+                'driver_id' => $tripModel->driver_id,
+                'ride_id' => $tripModel->ride_id,
                 'rating' => $validated['rating'],
                 'comment' => $validated['comment'] ?? null,
                 'reviewer_type' => 'passenger',
