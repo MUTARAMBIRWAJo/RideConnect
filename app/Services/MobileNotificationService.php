@@ -5,8 +5,10 @@ namespace App\Services;
 use App\Models\Booking;
 use App\Models\Driver;
 use App\Models\Notification;
+use App\Models\NotificationDelivery;
 use App\Models\Trip;
 use App\Models\User;
+use Illuminate\Support\Facades\Schema;
 
 class MobileNotificationService
 {
@@ -248,6 +250,21 @@ class MobileNotificationService
             'data' => $data,
             'is_read' => false,
         ]);
+
+        if (Schema::hasTable('notification_deliveries')) {
+            NotificationDelivery::query()->create([
+                'notification_id' => $notification->id,
+                'user_id' => $userId,
+                'channel' => 'push',
+                'status' => 'queued',
+                'payload' => [
+                    'type' => $type,
+                    'title' => $title,
+                    'message' => $message,
+                    'data' => $data,
+                ],
+            ]);
+        }
 
         $user = User::query()->find($userId);
         if ($user) {

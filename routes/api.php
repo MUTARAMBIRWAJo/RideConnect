@@ -38,6 +38,7 @@ use App\Http\Controllers\Api\RideController;
 use App\Http\Controllers\Api\RiderController;
 use App\Http\Controllers\Api\TicketController;
 use App\Http\Controllers\Api\TripController;
+use App\Http\Controllers\Api\TripSyncController;
 use App\Http\Controllers\Api\UserController;
 use App\Http\Controllers\Api\Webhooks\MTNWebhookController;
 use App\Http\Controllers\Api\Webhooks\StripeWebhookController;
@@ -181,6 +182,8 @@ Route::prefix('v1')->group(function () {
             // Trips
             Route::get('/trips', [TripController::class, 'myTrips']);
             Route::get('/trips/{id}', [TripController::class, 'show'])->whereNumber('id');
+            Route::get('/trips/{trip}/status', [TripSyncController::class, 'status'])->whereNumber('trip');
+            Route::get('/trips/{trip}/matching-session', [TripSyncController::class, 'matchingSession'])->whereNumber('trip');
             Route::post('/trips', [TripController::class, 'store']); // ON_DEMAND only
             Route::post('/trips/create-from-booking', [TripController::class, 'createFromBooking']); // SCHEDULED only
             Route::put('/trips/{id}/cancel', [TripController::class, 'cancel'])->whereNumber('id');
@@ -287,9 +290,11 @@ Route::prefix('v1')->group(function () {
         Route::get('/notifications', [MobileNotificationController::class, 'index']);
         Route::get('/notifications/unread-count', [MobileNotificationController::class, 'unreadCount']);
         Route::put('/notifications/{id}/read', [MobileNotificationController::class, 'markAsRead']);
+        Route::post('/notifications/{id}/acknowledged', [TripSyncController::class, 'acknowledgeNotification'])->whereNumber('id');
         Route::put('/notifications/read-all', [MobileNotificationController::class, 'markAllAsRead']);
         Route::delete('/notifications/clear-actioned', [MobileNotificationController::class, 'clearActioned']);
         Route::delete('/notifications/{id}', [MobileNotificationController::class, 'destroy']);
+        Route::post('/trips/{trip}/acknowledge', [TripSyncController::class, 'acknowledgeTrip'])->whereNumber('trip');
 
         // Mobile push token registration (FCM/APNs)
         Route::post('/devices/push-token', [DeviceTokenController::class, 'store']);

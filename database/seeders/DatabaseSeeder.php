@@ -102,6 +102,10 @@ class DatabaseSeeder extends Seeder
         }
 
         $this->call($fintechSeeders);
+
+        $this->call([
+            MobileTripE2eUseCaseSeeder::class,
+        ]);
     }
 
     /**
