@@ -71,28 +71,6 @@ class TripResource extends Resource
                                     ->all();
                             })
                             ->helperText('Only BUS public-transport rides are shown. Private transport (CAR/MOTO) cannot create trips directly.')
-                            ->rules(
-                                function (string $attribute, mixed $value, \Closure $fail): void {
-                                if (! $value) {
-                                    return;
-                                }
-
-                                $ride = Ride::query()->with('driver.vehicles')->find((int) $value);
-
-                                if (! $ride) {
-                                    $fail('The selected ride no longer exists.');
-
-                                    return;
-                                }
-
-                                // Enforce: only public-transport (BUS + SCHEDULED + route) in trip form
-                                if (! RidePolicy::isPublicTransport($ride)) {
-                                    $fail(
-                                        'Only BUS public-transport rides linked to a scheduled route can be used to create trips. '
-                                        . 'CAR and MOTORCYCLE rides must use the booking / request flow.'
-                                    );
-                                }
-                                })
                             ->afterStateUpdated(function ($state, callable $set, callable $get): void {
                                 if (! $state) {
                                     return;
