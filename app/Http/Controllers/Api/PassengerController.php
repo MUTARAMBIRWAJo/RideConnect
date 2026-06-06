@@ -95,7 +95,8 @@ class PassengerController extends Controller
     }
 
     /**
-     * Update passenger profile.
+     * Update passenger profile with comprehensive fields.
+     * PUT /api/v1/passenger/profile
      */
     public function updateProfile(Request $request): JsonResponse
     {
@@ -109,12 +110,40 @@ class PassengerController extends Controller
             ], 403);
         }
 
+        // Validate incoming data
         $validated = $request->validate([
             'name' => 'sometimes|string|max:255',
-            'phone' => 'sometimes|string|max:20',
+            'phone' => 'sometimes|string|max:20|regex:/^\+?[1-9]\d{1,14}$/',
+            'profile_photo' => 'sometimes|nullable|string|max:1000',
+            'preferred_payment_method' => 'sometimes|string|in:card,mobile_money,cash,wallet',
+            'emergency_contact_name' => 'sometimes|nullable|string|max:255',
+            'emergency_contact_phone' => 'sometimes|nullable|string|max:20|regex:/^\+?[1-9]\d{1,14}$/',
         ]);
 
+        // Handle profile photo upload if provided
+        if ($request->hasFile('profile_photo')) {
+            $file = $request->file('profile_photo');
+            $path = $file->store('profiles', 'public');
+            $validated['profile_photo'] = $path;
+        }
+
+        // Update user with validated data
         $user->update($validated);
+
+        // Retrieve updated profile with full statistics
+        $totalBookings = $user->bookings()->count();
+        $completedBookings = $user->bookings()->where('status', 'COMPLETED')->count();
+        $totalTrips = $user->tripsAsPassenger()->count();
+        $totalSpent = $user->bookings()
+            ->where('status', '!=', 'CANCELLED')
+            ->sum('total_price') ?? 0;
+
+        $passengerBehavior = \App\Models\PassengerBehavior::where('user_id', $user->id)->first();
+        $rating = $passengerBehavior?->rating ?? 5.0;
+        $reliabilityScore = $passengerBehavior?->reliability_score ?? 1.0;
+        $cancellationRate = $passengerBehavior?->cancellation_rate ?? 0.0;
+
+        $averageSpent = $totalBookings > 0 ? round($totalSpent / $totalBookings, 2) : 0;
 
         return response()->json([
             'success' => true,
@@ -124,6 +153,33 @@ class PassengerController extends Controller
                 'name' => $user->name,
                 'email' => $user->email,
                 'phone' => $user->phone,
+                'role' => $user->role->value,
+                'profile_photo' => $user->profile_photo,
+                'is_approved' => $user->is_approved,
+                'is_verified' => $user->is_verified,
+                'member_since' => $user->created_at->toIso8601String(),
+                'statistics' => [
+                    'total_trips' => $totalTrips,
+                    'total_bookings' => $totalBookings,
+                    'completed_bookings' => $completedBookings,
+                    'total_spent' => (float) $totalSpent,
+                    'average_spent_per_trip' => $averageSpent,
+                    'rating' => (float) $rating,
+                    'reliability_score' => (float) $reliabilityScore,
+                    'cancellation_rate' => (float) $cancellationRate,
+                ],
+                'preferences' => [
+                    'preferred_payment_method' => $user->preferred_payment_method ?? 'card',
+                    'emergency_contact_name' => $user->emergency_contact_name,
+                    'emergency_contact_phone' => $user->emergency_contact_phone,
+                    'saved_locations_count' => $user->savedLocations()?->count() ?? 0,
+                ],
+                'verification' => [
+                    'verified' => $user->is_verified,
+                    'approved' => $user->is_approved,
+                    'verified_at' => $user->email_verified_at?->toIso8601String(),
+                    'approved_at' => $user->approved_at?->toIso8601String(),
+                ],
             ],
         ]);
     }
