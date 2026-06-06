@@ -48,6 +48,9 @@ class User extends Authenticatable implements FilamentUser
         'last_login_ip',
         'last_login_user_agent',
         'last_login_at',
+        'preferred_payment_method',
+        'emergency_contact_name',
+        'emergency_contact_phone',
     ];
 
     /**
@@ -206,6 +209,19 @@ class User extends Authenticatable implements FilamentUser
     public function bookings()
     {
         return $this->hasMany(Booking::class);
+    }
+
+    /**
+     * Get saved locations for this user (if SavedLocation model exists)
+     */
+    public function savedLocations()
+    {
+        // Return empty collection if SavedLocation model doesn't exist
+        if (! class_exists('App\Models\SavedLocation')) {
+            return collect();
+        }
+
+        return $this->hasMany('App\Models\SavedLocation');
     }
 
     /**

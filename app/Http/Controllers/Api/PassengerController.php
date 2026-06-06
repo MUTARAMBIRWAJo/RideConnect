@@ -25,7 +25,7 @@ class PassengerController extends Controller
     ) {}
 
     /**
-     * Get passenger profile.
+     * Get passenger profile with comprehensive data.
      */
     public function profile(Request $request): JsonResponse
     {
@@ -39,6 +39,23 @@ class PassengerController extends Controller
             ], 403);
         }
 
+        // Get passenger statistics
+        $totalBookings = $user->bookings()->count();
+        $completedBookings = $user->bookings()->where('status', 'COMPLETED')->count();
+        $totalTrips = $user->tripsAsPassenger()->count();
+        $totalSpent = $user->bookings()
+            ->where('status', '!=', 'CANCELLED')
+            ->sum('total_price') ?? 0;
+
+        // Get passenger rating and behavior
+        $passengerBehavior = \App\Models\PassengerBehavior::where('user_id', $user->id)->first();
+        $rating = $passengerBehavior?->rating ?? 5.0;
+        $reliabilityScore = $passengerBehavior?->reliability_score ?? 1.0;
+        $cancellationRate = $passengerBehavior?->cancellation_rate ?? 0.0;
+
+        // Calculate average trip cost
+        $averageSpent = $totalBookings > 0 ? round($totalSpent / $totalBookings, 2) : 0;
+
         return response()->json([
             'success' => true,
             'data' => [
@@ -47,9 +64,32 @@ class PassengerController extends Controller
                 'email' => $user->email,
                 'phone' => $user->phone,
                 'role' => $user->role->value,
+                'profile_photo' => $user->profile_photo,
                 'is_approved' => $user->is_approved,
                 'is_verified' => $user->is_verified,
-                'created_at' => $user->created_at->toIso8601String(),
+                'member_since' => $user->created_at->toIso8601String(),
+                'statistics' => [
+                    'total_trips' => $totalTrips,
+                    'total_bookings' => $totalBookings,
+                    'completed_bookings' => $completedBookings,
+                    'total_spent' => (float) $totalSpent,
+                    'average_spent_per_trip' => $averageSpent,
+                    'rating' => (float) $rating,
+                    'reliability_score' => (float) $reliabilityScore,
+                    'cancellation_rate' => (float) $cancellationRate,
+                ],
+                'preferences' => [
+                    'preferred_payment_method' => $user->preferred_payment_method ?? 'card',
+                    'emergency_contact_name' => $user->emergency_contact_name,
+                    'emergency_contact_phone' => $user->emergency_contact_phone,
+                    'saved_locations_count' => $user->savedLocations()?->count() ?? 0,
+                ],
+                'verification' => [
+                    'verified' => $user->is_verified,
+                    'approved' => $user->is_approved,
+                    'verified_at' => $user->email_verified_at?->toIso8601String(),
+                    'approved_at' => $user->approved_at?->toIso8601String(),
+                ],
             ],
         ]);
     }
