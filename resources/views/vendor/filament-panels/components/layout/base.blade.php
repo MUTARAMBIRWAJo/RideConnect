@@ -53,6 +53,12 @@
             }
         </style>
 
+        {{-- Defensive local asset links keep Filament usable if the asset manager or Vite manifest is stale. --}}
+        <link rel="stylesheet" href="{{ asset('css/filament/support/support.css') }}">
+        <link rel="stylesheet" href="{{ asset('css/filament/forms/forms.css') }}">
+        <link rel="stylesheet" href="{{ asset('css/filament/filament/app.css') }}">
+        <link rel="stylesheet" href="{{ asset('build/assets/theme.css') }}">
+
         @filamentStyles
 
         {{ filament()->getTheme()->getHtml() }}

@@ -1,6 +1,10 @@
 <?php
 
 use App\Http\Controllers\Accountant\ReportDownloadController;
+use App\Http\Controllers\Admin\AdminCancellationController;
+use App\Http\Controllers\Admin\AdminDriverController;
+use App\Http\Controllers\Admin\AdminPaymentController;
+use App\Http\Controllers\Admin\AdminReviewController;
 use App\Http\Controllers\Admin\AdminTripController;
 use App\Http\Controllers\Admin\FinancialMatrixExportController;
 use App\Http\Controllers\Admin\GoogleMapsHealthController;
@@ -8,6 +12,7 @@ use App\Http\Controllers\Admin\OperationsIntelligenceExportController;
 use App\Http\Controllers\Api\Admin\LiveMapDataController;
 use App\Http\Controllers\AuthController;
 use App\Http\Controllers\DashboardController;
+use App\Http\Controllers\Manager\SettingsController as ManagerSettingsController;
 use Illuminate\Support\Facades\Route;
 
 /*
@@ -35,10 +40,19 @@ Route::get('/admin/login', function () {
     return redirect()->route('auth.login');
 })->name('admin.login');
 
+Route::get('/admin/register', [\App\Http\Controllers\Admin\AdminAuthController::class, 'showRegister'])
+    ->middleware(['auth', 'role:super_admin'])
+    ->name('admin.register');
+Route::post('/admin/register', [\App\Http\Controllers\Admin\AdminAuthController::class, 'register'])
+    ->middleware(['auth', 'role:super_admin']);
+
 // Filament login compatibility route
 Route::get('/admin/filament-login', function () {
     return redirect()->route('auth.login');
 })->name('filament.admin.auth.login');
+Route::get('/filament/login', function () {
+    return redirect()->route('auth.login');
+})->name('filament.auth.login');
 
 // Public authentication routes
 Route::middleware('guest')->group(function () {
@@ -67,6 +81,7 @@ Route::middleware(['auth', 'verified'])->prefix('/auth/mfa')->group(function () 
     Route::get('/settings', [\App\Http\Controllers\MfaSetupController::class, 'settings'])->name('mfa.settings');
     Route::get('/setup', [\App\Http\Controllers\MfaSetupController::class, 'show'])->name('mfa.setup');
     Route::post('/store', [\App\Http\Controllers\MfaSetupController::class, 'store'])->name('mfa.store');
+    Route::post('/setup/store', [\App\Http\Controllers\MfaSetupController::class, 'store'])->name('mfa.setup.store');
     Route::post('/disable', [\App\Http\Controllers\MfaSetupController::class, 'disable'])->name('mfa.disable');
     Route::get('/backup-codes', [\App\Http\Controllers\MfaSetupController::class, 'backupCodes'])->name('mfa.backup-codes');
 });
@@ -89,6 +104,42 @@ Route::post('/admin/filament-logout', [AuthController::class, 'logout'])
 Route::middleware(['auth', 'role:super_admin,admin,officer'])->prefix('admin')->name('admin.')->group(function () {
     Route::resource('trips', AdminTripController::class)
         ->only(['index', 'create', 'store', 'show', 'edit', 'update']);
+
+    Route::resource('reviews', AdminReviewController::class)
+        ->only(['index', 'create', 'store', 'show', 'destroy']);
+
+    Route::resource('payments', AdminPaymentController::class)
+        ->only(['index', 'show']);
+    Route::put('payments/{payment}/mark-paid', [AdminPaymentController::class, 'markPaid'])
+        ->name('payments.mark-paid');
+
+    Route::resource('cancellations', AdminCancellationController::class)
+        ->only(['index', 'show']);
+
+    Route::get('drivers/{driver}', [AdminDriverController::class, 'show'])
+        ->name('drivers.show');
+    Route::get('drivers/{driver}/earnings', [AdminDriverController::class, 'earnings'])
+        ->name('drivers.earnings');
+    Route::get('drivers/{driver}/behavior', [AdminDriverController::class, 'behavior'])
+        ->name('drivers.behavior');
+    Route::put('drivers/{driver}/availability', [AdminDriverController::class, 'updateAvailability'])
+        ->name('drivers.availability');
+});
+
+// Compatibility aliases for legacy Filament links that now point at Blade admin pages.
+Route::middleware(['auth', 'role:super_admin,admin,officer'])->group(function () {
+    Route::redirect('/admin/compat/filament/trips', '/admin/trips')
+        ->name('filament.admin.resources.trips.index');
+    Route::redirect('/admin/compat/filament/trips/create', '/admin/trips/create')
+        ->name('filament.admin.resources.trips.create');
+    Route::redirect('/admin/compat/filament/payments', '/admin/payments')
+        ->name('filament.admin.resources.payments.index');
+    Route::redirect('/admin/compat/filament/commissions', '/admin/payments')
+        ->name('filament.admin.resources.commissions.index');
+    Route::redirect('/admin/compat/filament/revenue', '/admin/payments')
+        ->name('filament.admin.resources.revenue.index');
+    Route::redirect('/admin/compat/filament/support-tickets', '/admin/tickets')
+        ->name('filament.admin.resources.support-tickets.index');
 });
 
 // Compatibility aliases for legacy admin view links.
@@ -128,6 +179,22 @@ Route::redirect('/forgot-password', '/auth/login')->name('password.request');
 Route::middleware(['auth'])
     ->get('/api/map/live-data', [LiveMapDataController::class, 'index'])
     ->name('api.map.live-data');
+
+Route::middleware(['auth'])
+    ->prefix('/manager/settings')
+    ->name('manager.settings.')
+    ->group(function () {
+        Route::get('/', [ManagerSettingsController::class, 'index'])->name('index');
+        Route::put('/', [ManagerSettingsController::class, 'update'])->name('update');
+        Route::post('/maintenance', [ManagerSettingsController::class, 'toggleMaintenance'])->name('maintenance');
+    });
+
+Route::middleware(['auth'])->group(function () {
+    Route::redirect('/officer/compat/filament/trips', '/admin/trips')
+        ->name('filament.officer.resources.trips.index');
+    Route::redirect('/officer/compat/filament/trips/create', '/admin/trips/create')
+        ->name('filament.officer.resources.trips.create');
+});
 
 Route::middleware(['auth'])
     ->get('/admin/google-maps-health/preflight', [GoogleMapsHealthController::class, 'preflight'])

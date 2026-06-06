@@ -25,7 +25,7 @@
         <div class="mt-3 grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
             @if (auth()->user()->can('view rides') || auth()->user()->can('manage rides'))
                 <a href="{{ route('filament.admin.resources.bookings.index') }}" class="rounded-xl border border-blue-200 bg-blue-50 p-4 text-sm text-blue-700">Booking Queue</a>
-                <a href="{{ route('filament.admin.resources.trips.index') }}" class="rounded-xl border border-green-200 bg-green-50 p-4 text-sm text-green-700">Trip Requests</a>
+                <a href="{{ route('admin.trips.index') }}" class="rounded-xl border border-green-200 bg-green-50 p-4 text-sm text-green-700">Trip Requests</a>
                 <a href="{{ route('filament.admin.resources.drivers.index') }}" class="rounded-xl border border-purple-200 bg-purple-50 p-4 text-sm text-purple-700">Driver Pool</a>
             @endif
             @if (auth()->user()->can('manage tickets'))

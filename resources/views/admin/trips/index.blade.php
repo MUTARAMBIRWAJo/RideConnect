@@ -1,170 +1,138 @@
 @extends('layouts.app')
 
-@section('title', 'All Trips - RideConnect Admin')
+@section('title', 'All Trips')
+@section('page-title', 'Trips')
 
 @section('content')
-    <!-- Page Header -->
-    <div class="bg-white border-b border-gray-200">
-        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
-            <div class="flex items-center justify-between">
+    <div class="space-y-6">
+        <div class="bg-white border border-gray-200 rounded-lg shadow-sm p-6">
+            <div class="flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
                 <div>
-                    <h1 class="text-3xl font-bold leading-tight text-gray-900">
-                        All Trips
-                    </h1>
-                    <p class="mt-2 text-sm text-gray-600">
-                        Admin and Super Admin monitor trip execution and booking-to-trip conversion.
+                    <h2 class="text-2xl font-bold text-gray-900">All Trips</h2>
+                    <p class="mt-1 text-sm text-gray-600">
+                        Monitor trip execution, driver assignment, and payment state.
                     </p>
                 </div>
-                <div class="flex space-x-3">
-                    <a href="{{ route('admin.trips.pending') }}" class="bg-yellow-100 text-yellow-700 hover:bg-yellow-200 px-4 py-2 rounded-md text-sm font-medium">
-                        PENDING Trips
+                <div class="flex flex-wrap gap-3">
+                    <a href="{{ route('admin.trips.create') }}" class="inline-flex items-center rounded-md bg-green-700 px-4 py-2 text-sm font-semibold text-white hover:bg-green-800">
+                        Add Trip
                     </a>
-                    <a href="{{ route('admin.trips.completed') }}" class="bg-green-100 text-green-700 hover:bg-green-200 px-4 py-2 rounded-md text-sm font-medium">
-                        COMPLETED Trips
+                    <a href="{{ route('admin.reviews.index') }}" class="inline-flex items-center rounded-md bg-gray-100 px-4 py-2 text-sm font-semibold text-gray-700 hover:bg-gray-200">
+                        Reviews
+                    </a>
+                    <a href="{{ route('admin.payments.index') }}" class="inline-flex items-center rounded-md bg-gray-100 px-4 py-2 text-sm font-semibold text-gray-700 hover:bg-gray-200">
+                        Payments
                     </a>
                 </div>
             </div>
         </div>
-    </div>
 
-    <!-- Main Content -->
-    <div class="py-6">
-        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-            <!-- Stats Cards -->
-            <div class="grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-4 mb-8">
-                <!-- Total Trips -->
-                <div class="bg-white overflow-hidden shadow rounded-lg">
-                    <div class="p-5">
-                        <div class="flex items-center">
-                            <div class="flex-shrink-0">
-                                <svg class="h-6 w-6 text-blue-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"/>
-                                </svg>
-                            </div>
-                            <div class="ml-5 w-0 flex-1">
-                                <dl>
-                                    <dt class="text-sm font-medium text-gray-500 truncate">Total Trips</dt>
-                                    <dd>
-                                        <div class="text-lg font-medium text-gray-900">1,234</div>
-                                    </dd>
-                                </dl>
-                            </div>
-                        </div>
-                    </div>
-                </div>
+        <div class="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-4">
+            @php
+                $cards = [
+                    ['label' => 'Total Trips', 'value' => $tripStats['total'] ?? 0, 'class' => 'text-blue-700'],
+                    ['label' => 'Requested', 'value' => $tripStats['requested'] ?? 0, 'class' => 'text-yellow-700'],
+                    ['label' => 'In Progress', 'value' => $tripStats['in_progress'] ?? 0, 'class' => 'text-indigo-700'],
+                    ['label' => 'Completed', 'value' => $tripStats['completed'] ?? 0, 'class' => 'text-green-700'],
+                ];
+            @endphp
 
-                <!-- Pending -->
-                <div class="bg-white overflow-hidden shadow rounded-lg">
-                    <div class="p-5">
-                        <div class="flex items-center">
-                            <div class="flex-shrink-0">
-                                <svg class="h-6 w-6 text-yellow-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/>
-                                </svg>
-                            </div>
-                            <div class="ml-5 w-0 flex-1">
-                                <dl>
-                                    <dt class="text-sm font-medium text-gray-500 truncate">Pending</dt>
-                                    <dd>
-                                        <div class="text-lg font-medium text-gray-900">45</div>
-                                    </dd>
-                                </dl>
-                            </div>
-                        </div>
-                    </div>
+            @foreach($cards as $card)
+                <div class="rounded-lg border border-gray-200 bg-white p-5 shadow-sm">
+                    <div class="text-sm font-medium text-gray-500">{{ $card['label'] }}</div>
+                    <div class="mt-2 text-2xl font-bold {{ $card['class'] }}">{{ number_format($card['value']) }}</div>
                 </div>
+            @endforeach
+        </div>
 
-                <!-- In Progress -->
-                <div class="bg-white overflow-hidden shadow rounded-lg">
-                    <div class="p-5">
-                        <div class="flex items-center">
-                            <div class="flex-shrink-0">
-                                <svg class="h-6 w-6 text-blue-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z"/>
-                                </svg>
-                            </div>
-                            <div class="ml-5 w-0 flex-1">
-                                <dl>
-                                    <dt class="text-sm font-medium text-gray-500 truncate">In Progress</dt>
-                                    <dd>
-                                        <div class="text-lg font-medium text-gray-900">23</div>
-                                    </dd>
-                                </dl>
-                            </div>
-                        </div>
-                    </div>
-                </div>
+        <div class="rounded-lg border border-gray-200 bg-white shadow-sm">
+            <form method="GET" class="grid gap-4 border-b border-gray-200 p-5 md:grid-cols-5">
+                <input
+                    type="search"
+                    name="search"
+                    value="{{ request('search') }}"
+                    placeholder="Search pickup or destination"
+                    class="rounded-md border-gray-300 text-sm"
+                >
 
-                <!-- Completed -->
-                <div class="bg-white overflow-hidden shadow rounded-lg">
-                    <div class="p-5">
-                        <div class="flex items-center">
-                            <div class="flex-shrink-0">
-                                <svg class="h-6 w-6 text-green-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/>
-                                </svg>
-                            </div>
-                            <div class="ml-5 w-0 flex-1">
-                                <dl>
-                                    <dt class="text-sm font-medium text-gray-500 truncate">Completed</dt>
-                                    <dd>
-                                        <div class="text-lg font-medium text-gray-900">1,166</div>
-                                    </dd>
-                                </dl>
-                            </div>
-                        </div>
-                    </div>
-                </div>
+                <select name="status" class="rounded-md border-gray-300 text-sm">
+                    <option value="">All statuses</option>
+                    @foreach($statusOptions as $status)
+                        <option value="{{ $status }}" @selected(request('status') === $status)>{{ Str::title(str_replace('_', ' ', $status)) }}</option>
+                    @endforeach
+                </select>
+
+                <select name="transport_type" class="rounded-md border-gray-300 text-sm">
+                    <option value="">All transport</option>
+                    @foreach($transportOptions as $transport)
+                        <option value="{{ $transport }}" @selected(request('transport_type') === $transport)>{{ Str::upper($transport) }}</option>
+                    @endforeach
+                </select>
+
+                <select name="payment_status" class="rounded-md border-gray-300 text-sm">
+                    <option value="">All payments</option>
+                    @foreach($paymentStatuses as $paymentStatus)
+                        <option value="{{ $paymentStatus }}" @selected(request('payment_status') === $paymentStatus)>{{ Str::title($paymentStatus) }}</option>
+                    @endforeach
+                </select>
+
+                <button class="rounded-md bg-slate-900 px-4 py-2 text-sm font-semibold text-white hover:bg-slate-800">
+                    Filter
+                </button>
+            </form>
+
+            <div class="overflow-x-auto">
+                <table class="min-w-full divide-y divide-gray-200">
+                    <thead class="bg-gray-50">
+                        <tr>
+                            <th class="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wide text-gray-500">Trip</th>
+                            <th class="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wide text-gray-500">Passenger</th>
+                            <th class="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wide text-gray-500">Driver</th>
+                            <th class="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wide text-gray-500">Pickup</th>
+                            <th class="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wide text-gray-500">Destination</th>
+                            <th class="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wide text-gray-500">Status</th>
+                            <th class="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wide text-gray-500">Payment</th>
+                            <th class="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wide text-gray-500">Fare</th>
+                            <th class="px-4 py-3"></th>
+                        </tr>
+                    </thead>
+                    <tbody class="divide-y divide-gray-200 bg-white">
+                        @forelse($trips as $trip)
+                            <tr>
+                                <td class="whitespace-nowrap px-4 py-3 text-sm font-semibold text-gray-900">#{{ $trip->id }}</td>
+                                <td class="whitespace-nowrap px-4 py-3 text-sm text-gray-700">
+                                    {{ $trip->passenger->first_name ?? $trip->passenger->name ?? '-' }}
+                                    {{ $trip->passenger->last_name ?? '' }}
+                                </td>
+                                <td class="whitespace-nowrap px-4 py-3 text-sm text-gray-700">
+                                    {{ $trip->driver->user->first_name ?? $trip->driver->user->name ?? '-' }}
+                                    {{ $trip->driver->user->last_name ?? '' }}
+                                </td>
+                                <td class="max-w-xs px-4 py-3 text-sm text-gray-700">{{ Str::limit($trip->pickup_location ?? $trip->pickup_place_name ?? '-', 42) }}</td>
+                                <td class="max-w-xs px-4 py-3 text-sm text-gray-700">{{ Str::limit($trip->dropoff_location ?? $trip->dropoff_place_name ?? '-', 42) }}</td>
+                                <td class="whitespace-nowrap px-4 py-3 text-sm">
+                                    <span class="inline-flex rounded-full bg-gray-100 px-2 py-1 text-xs font-semibold text-gray-700">
+                                        {{ Str::title(str_replace('_', ' ', $trip->status ?? '-')) }}
+                                    </span>
+                                </td>
+                                <td class="whitespace-nowrap px-4 py-3 text-sm text-gray-700">{{ Str::title($trip->payment_status ?? '-') }}</td>
+                                <td class="whitespace-nowrap px-4 py-3 text-sm text-gray-700">RWF {{ number_format((float) ($trip->fare ?? $trip->actual_fare ?? 0), 0) }}</td>
+                                <td class="whitespace-nowrap px-4 py-3 text-right text-sm font-semibold">
+                                    <a href="{{ route('admin.trips.show', $trip) }}" class="text-green-700 hover:text-green-800">View</a>
+                                    <a href="{{ route('admin.trips.edit', $trip) }}" class="ml-3 text-slate-700 hover:text-slate-900">Edit</a>
+                                </td>
+                            </tr>
+                        @empty
+                            <tr>
+                                <td colspan="9" class="px-4 py-8 text-center text-sm text-gray-500">No trips found.</td>
+                            </tr>
+                        @endforelse
+                    </tbody>
+                </table>
             </div>
 
-            <!-- Trips Table -->
-            <div class="bg-white shadow rounded-lg">
-                <div class="px-4 py-5 sm:px-6">
-                    <h3 class="text-lg leading-6 font-medium text-gray-900">Recent Trips</h3>
-                    <p class="mt-1 max-w-2xl text-sm text-gray-500">Latest trip requests and their current status.</p>
-                </div>
-                <div class="border-t border-gray-200">
-                    <div class="overflow-hidden">
-                        <div class="overflow-x-auto">
-                            <table class="min-w-full divide-y divide-gray-200">
-                                <thead class="bg-gray-50">
-                                    <tr>
-                                        <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Trip ID</th>
-                                        <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Passenger</th>
-                                        <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Driver</th>
-                                        <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Pickup</th>
-                                        <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Destination</th>
-                                        <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
-                                        <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Travel Type</th>
-                                        <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
-                                    </tr>
-                                </thead>
-                                <tbody class="bg-white divide-y divide-gray-200">
-                                    <!-- Sample Trip Row -->
-                                    <tr>
-                                        <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">#TRP001</td>
-                                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">John Doe</td>
-                                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">Jane Smith</td>
-                                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">City Center</td>
-                                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">Airport</td>
-                                        <td class="px-6 py-4 whitespace-nowrap">
-                                            <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-yellow-100 text-yellow-800">
-                                                PENDING
-                                            </span>
-                                        </td>
-                                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">TRIP</td>
-                                        <td class="px-6 py-4 whitespace-nowrap text-sm font-medium">
-                                            <a href="{{ route('admin.dashboard') }}" class="text-blue-600 hover:text-blue-900 mr-4">View</a>
-                                            <a href="{{ route('admin.dashboard') }}" class="text-green-600 hover:text-green-900 mr-4">Assign Driver</a>
-                                            <a href="{{ route('admin.dashboard') }}" class="text-red-600 hover:text-red-900">Force Cancel</a>
-                                        </td>
-                                    </tr>
-                                    <!-- Add more rows as needed -->
-                                </tbody>
-                            </table>
-                        </div>
-                    </div>
-                </div>
+            <div class="border-t border-gray-200 p-5">
+                {{ $trips->links() }}
             </div>
         </div>
     </div>

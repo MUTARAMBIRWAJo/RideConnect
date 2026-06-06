@@ -45,7 +45,7 @@
                         </div>
                         <p class="text-blue-700 dark:text-blue-300">Manage pending bookings and assignments.</p>
                     </a>
-                    <a href="{{ route('filament.admin.resources.trips.index') }}" class="group rounded-xl border border-green-200 bg-gradient-to-br from-green-50 to-emerald-50 p-4 sm:p-5 text-sm text-green-800 shadow-sm transition-all duration-200 hover:shadow-lg hover:scale-105 dark:border-green-800 dark:bg-gradient-to-br dark:from-green-900 dark:to-emerald-900 dark:text-green-200">
+                    <a href="{{ route('admin.trips.index') }}" class="group rounded-xl border border-green-200 bg-gradient-to-br from-green-50 to-emerald-50 p-4 sm:p-5 text-sm text-green-800 shadow-sm transition-all duration-200 hover:shadow-lg hover:scale-105 dark:border-green-800 dark:bg-gradient-to-br dark:from-green-900 dark:to-emerald-900 dark:text-green-200">
                         <div class="flex items-center gap-3 mb-3">
                             <div class="p-2 rounded-lg bg-green-100 dark:bg-green-800">
                                 <x-heroicon-o-map-pin class="w-5 h-5 text-green-600 dark:text-green-400" />

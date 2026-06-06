@@ -75,7 +75,23 @@ class Driver extends Model
 
     public function wallet()
     {
-        return $this->hasOne(DriverWallet::class);
+        return $this->hasOne(DriverWallet::class, 'driver_id');
+    }
+
+    public function earningsRecords()
+    {
+        return $this->hasMany(DriverEarning::class, 'driver_id');
+    }
+
+    public function behaviors()
+    {
+        return $this->hasMany(DriverBehavior::class, 'driver_id');
+    }
+
+    public function vehicle()
+    {
+        return $this->hasOne(Vehicle::class, 'driver_id')
+            ->where('is_active', true);
     }
 
     public function payouts()

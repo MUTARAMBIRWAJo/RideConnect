@@ -52,4 +52,9 @@ class Review extends Model
     {
         return $this->belongsTo(Ride::class);
     }
+
+    public function trip()
+    {
+        return $this->belongsTo(Trip::class, 'ride_id');
+    }
 }

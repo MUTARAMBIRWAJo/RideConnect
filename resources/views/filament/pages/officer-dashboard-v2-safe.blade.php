@@ -24,7 +24,7 @@
                         <p class="font-semibold">Booking Queue</p>
                         <p class="mt-1 text-blue-600 dark:text-blue-300">Manage pending bookings and assignments.</p>
                     </a>
-                    <a href="{{ route('filament.admin.resources.trips.index') }}" class="rounded-xl border border-green-200 bg-green-50 p-4 text-sm text-green-700 shadow-sm transition hover:bg-green-100 dark:border-green-800 dark:bg-green-900 dark:text-green-200 dark:hover:bg-green-800">
+                    <a href="{{ route('admin.trips.index') }}" class="rounded-xl border border-green-200 bg-green-50 p-4 text-sm text-green-700 shadow-sm transition hover:bg-green-100 dark:border-green-800 dark:bg-green-900 dark:text-green-200 dark:hover:bg-green-800">
                         <p class="font-semibold">Trip Requests</p>
                         <p class="mt-1 text-green-600 dark:text-green-300">Monitor active and pending trips.</p>
                     </a>

@@ -29,6 +29,8 @@ class TripResource extends Resource
 
     protected static ?string $navigationIcon = 'heroicon-o-map-pin';
 
+    protected static ?string $slug = 'filament-trips';
+
     protected static ?string $navigationLabel = 'Trips';
 
     protected static ?string $navigationGroup = 'Live Operations';

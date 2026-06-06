@@ -132,7 +132,7 @@ services:
       - "8001:8001"
     environment:
       - PORT=8001
-      - MODEL_PATH=/app/Matching_Modal_tflite_learn_1013157_3.tflite
+      - MODEL_PATH=/app/models/Matching_Modal_tflite_learn_1013157_3.tflite
     restart: unless-stopped
     healthcheck:
       test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:8001/health')"]

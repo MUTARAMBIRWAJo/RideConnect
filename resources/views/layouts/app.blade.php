@@ -7,6 +7,8 @@
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="{{ asset('css/filament/filament/app.css') }}">
+    <link rel="stylesheet" href="{{ asset('css/filament/forms/forms.css') }}">
     <style>
         :root {
             --rc-bg: #f2f4f8;
@@ -65,6 +67,8 @@
         .app-logo img {
             width: 32px;
             height: 32px;
+            max-width: 32px;
+            object-fit: contain;
             border-radius: 8px;
         }
 

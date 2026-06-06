@@ -39,6 +39,13 @@ class AdminTripController extends Controller
 
         $trips = $query->paginate(20)->withQueryString();
 
+        $tripStats = [
+            'total' => Trip::count(),
+            'requested' => Trip::whereIn('status', ['requested', 'pending'])->count(),
+            'in_progress' => Trip::whereIn('status', ['accepted', 'enroute_to_pickup', 'arrived_at_pickup', 'in_progress'])->count(),
+            'completed' => Trip::where('status', 'completed')->count(),
+        ];
+
         // Enum option lists — identical to Flutter dropdown values
         $statusOptions = [
             'requested', 'assigning', 'accepted', 'enroute_to_pickup',
@@ -48,7 +55,7 @@ class AdminTripController extends Controller
         $paymentStatuses   = ['unpaid', 'paid', 'refunded'];
 
         return view('admin.trips.index', compact(
-            'trips', 'statusOptions', 'transportOptions', 'paymentStatuses'
+            'trips', 'tripStats', 'statusOptions', 'transportOptions', 'paymentStatuses'
         ));
     }
 

@@ -118,6 +118,15 @@ class AdminPanelProvider extends PanelProvider
             ->brandLogoHeight('2.5rem')
             ->favicon(asset('images/favicon.png'))
             ->renderHook(
+                PanelsRenderHook::HEAD_START,
+                fn (): string => <<<'HTML'
+                    <link rel="stylesheet" href="/css/filament/support/support.css">
+                    <link rel="stylesheet" href="/css/filament/forms/forms.css">
+                    <link rel="stylesheet" href="/css/filament/filament/app.css">
+                    <link rel="stylesheet" href="/build/assets/theme.css">
+                HTML,
+            )
+            ->renderHook(
                 PanelsRenderHook::USER_MENU_BEFORE,
                 fn (): string => view('components.filament.role-badge')->render(),
             )

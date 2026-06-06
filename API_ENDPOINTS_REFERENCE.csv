@@ -1,0 +1,206 @@
+METHOD,ENDPOINT,CATEGORY,USER_TYPE,PARAMETERS,DESCRIPTION,AUTH_REQUIRED
+POST,/v1/auth/register,Authentication,Public,name;email;password;phone,Register new user,No
+POST,/v1/auth/register/driver,Authentication,Public,name;email;password;phone,Register new driver,No
+POST,/v1/auth/register/passenger,Authentication,Public,name;email;password;phone,Register new passenger,No
+POST,/v1/auth/mobile/login,Authentication,Public,email_or_phone;password,Mobile optimized login,No
+POST,/v1/auth/login,Authentication,Public,email;password,Standard login,No
+POST,/v1/auth/forgot-password,Authentication,Public,email,Request password reset,No
+POST,/v1/auth/reset-password,Authentication,Public,email;token;password;password_confirmation,Reset password,No
+GET,/v1/auth/verify-reset-token/{token},Authentication,Public,token in URL,Verify reset token,No
+POST,/v1/auth/logout,Authentication,Authenticated,none,Logout user,Yes
+POST,/v1/auth/session/clear,Authentication,Authenticated,none,Clear session,Yes
+GET,/v1/auth/token/validate,Authentication,Authenticated,none,Validate token,Yes
+GET,/v1/auth/profile,Authentication,Authenticated,none,Get authenticated user profile,Yes
+PUT,/v1/auth/profile,Authentication,Authenticated,name;phone;profile_image,Update profile,Yes
+POST,/v1/pricing/calculate,Pricing,Public,pickup_lat;pickup_lng;dropoff_lat;dropoff_lng;ride_type,Calculate ride price,No
+GET,/v1/locations/search,Location,Public,query;bounds;limit,Search locations,No
+GET,/v1/locations/place-details,Location,Public,place_id,Get place details,No
+GET,/v1/locations/reverse-geocode,Location,Public,latitude;longitude,Reverse geocode,No
+GET,/v1/locations/geocode,Location,Public,address,Geocode address,No
+GET,/v1/passenger/profile,Passenger,Passenger,none,Get passenger profile,Yes
+PUT,/v1/passenger/profile,Passenger,Passenger,name;phone;profile_image;preferred_contact,Update passenger profile,Yes
+GET,/v1/passenger/stats,Passenger,Passenger,none,Get passenger statistics,Yes
+GET,/v1/passenger/rides/available,Rides,Passenger,search (optional),Get available rides,Yes
+POST,/v1/passenger/rides,Rides,Passenger,ride_id;seats_count;special_instructions,Book a ride,Yes
+GET,/v1/passenger/rides,Rides,Passenger,status;limit;offset,Get ride history,Yes
+GET,/v1/passenger/rides/{id},Rides,Passenger,id in URL,Get ride details,Yes
+PUT,/v1/passenger/rides/{id}/cancel,Rides,Passenger,id in URL;reason (optional),Cancel ride,Yes
+POST,/v1/passenger/trip-requests,Trips,Passenger,pickup_lat;pickup_lng;dropoff_lat;dropoff_lng;trip_type;passenger_count,Request a trip,Yes
+GET,/v1/passenger/trips,Trips,Passenger,status;limit;offset,Get all trips,Yes
+GET,/v1/passenger/trips/{id},Trips,Passenger,id in URL,Get trip details,Yes
+POST,/v1/passenger/trips,Trips,Passenger,pickup_location;dropoff_location;trip_type;notes,Create trip,Yes
+PUT,/v1/passenger/trips/{id}/cancel,Trips,Passenger,id in URL;reason (optional),Cancel trip,Yes
+GET,/v1/passenger/trips/{id}/status,Trips,Passenger,id in URL,Check trip status,Yes
+GET,/v1/passenger/trips/{id}/matching-session,Trips,Passenger,id in URL,Get matching session,Yes
+GET,/v1/passenger/bookings,Bookings,Passenger,type;status;limit;offset,List bookings,Yes
+POST,/v1/passenger/bookings,Bookings,Passenger,ride_id;seats_count;special_instructions,Create booking,Yes
+GET,/v1/passenger/bookings/{id},Bookings,Passenger,id in URL,Get booking details,Yes
+PUT,/v1/passenger/bookings/{id},Bookings,Passenger,id in URL;seats_count;special_instructions,Update booking,Yes
+PUT,/v1/passenger/bookings/{id}/cancel,Bookings,Passenger,id in URL;reason (optional),Cancel booking,Yes
+GET,/v1/passenger/bookings/my,Bookings,Passenger,type;status,Get my bookings,Yes
+POST,/v1/passenger/payments,Payments,Passenger,trip_id;amount;payment_method;idempotency_key,Create payment,Yes
+GET,/v1/passenger/payments/history,Payments,Passenger,limit;offset;date_from;date_to,Get payment history,Yes
+GET,/v1/passenger/drivers/online,Driver,Passenger,limit;offset,Get online drivers,Yes
+GET,/v1/passenger/drivers/match,Driver,Passenger,pickup_lat;pickup_lng;dropoff_lat;dropoff_lng;ride_type,Get matched drivers,Yes
+GET,/v1/passenger/public-transport/corridors,Public Transport,Passenger,none,List corridors,Yes
+GET,/v1/passenger/public-transport/routes,Public Transport,Passenger,corridor_id (optional),List routes,Yes
+GET,/v1/passenger/public-transport/available,Public Transport,Passenger,from_location;to_location;date;time,Get available buses,Yes
+GET,/v1/passenger/trips/current,Public Transport,Passenger,none,Get current trip,Yes
+GET,/v1/passenger/trips/{trip}/ticket,Public Transport,Passenger,trip in URL,Get ticket,Yes
+POST,/v1/passenger/trips/{trip}/feedback,Public Transport,Passenger,trip in URL;rating;comment,Submit feedback,Yes
+GET,/v1/passenger/public-bus/corridors,Public Bus,Passenger,none,List bus corridors,Yes
+GET,/v1/passenger/public-bus/corridors/{corridor}/stops,Public Bus,Passenger,corridor in URL,Get stops,Yes
+GET,/v1/passenger/public-bus/corridors/{corridor}/active-buses,Public Bus,Passenger,corridor in URL,Get active buses,Yes
+POST,/v1/passenger/public-bus/book-seat,Public Bus,Passenger,bus_id;seat_number;pickup_stop_id;dropoff_stop_id,Book seat,Yes
+GET,/v1/passenger/public-bus/trips/current,Public Bus,Passenger,none,Get current bus trip,Yes
+GET,/v1/passenger/public-bus/tickets/{ticket},Public Bus,Passenger,ticket in URL,Get bus ticket,Yes
+GET,/v1/driver/profile,Driver,Driver,none,Get driver profile,Yes
+PUT,/v1/driver/profile,Driver,Driver,name;phone;vehicle_type;license_plate;bio,Update driver profile,Yes
+GET,/v1/driver/stats,Driver,Driver,none,Get driver statistics,Yes
+GET,/v1/driver/rides,Rides,Driver,status;limit;offset,Get driver rides,Yes
+POST,/v1/driver/rides,Rides,Driver,from_location;to_location;vehicle_type;capacity;fare_per_km;depart_time,Create new ride,Yes
+PUT,/v1/driver/rides/{id},Rides,Driver,id in URL;status;capacity;fare_per_km,Update ride,Yes
+DELETE,/v1/driver/rides/{id},Rides,Driver,id in URL,Delete ride,Yes
+GET,/v1/driver/trips,Trips,Driver,status;limit;offset,Get driver trips,Yes
+PUT,/v1/driver/trips/{id}/accept,Trips,Driver,id in URL,Accept trip,Yes
+PUT,/v1/driver/trips/{id}/start,Trips,Driver,id in URL;current_lat;current_lng,Start trip,Yes
+PUT,/v1/driver/trips/{id}/complete,Trips,Driver,id in URL;final_fare;notes,Complete trip,Yes
+PUT,/v1/driver/trips/{id}/cancel,Trips,Driver,id in URL;reason,Cancel trip,Yes
+PUT,/v1/driver/trips/{trip}/respond,Trips,Driver,trip in URL;action;reason,Respond to trip request,Yes
+PUT,/v1/driver/trips/{trip}/status,Trips,Driver,trip in URL;status;current_lat;current_lng,Update trip status,Yes
+GET,/v1/driver/trip-requests,Trips,Driver,status;limit;offset,Get trip requests,Yes
+PUT,/v1/driver/trip-requests/{id}/accept,Trips,Driver,id in URL,Accept request,Yes
+PUT,/v1/driver/trip-requests/{id}/reject,Trips,Driver,id in URL;reason,Reject request,Yes
+PUT,/v1/driver/trip-requests/{id}/complete,Trips,Driver,id in URL,Complete request,Yes
+GET,/v1/driver/bookings,Bookings,Driver,type;status,Get driver bookings,Yes
+PUT,/v1/driver/bookings/{id}/confirm,Bookings,Driver,id in URL,Confirm booking,Yes
+PUT,/v1/driver/bookings/{id}/cancel,Bookings,Driver,id in URL;reason,Cancel booking,Yes
+POST,/v1/driver/location,Location,Driver,latitude;longitude;accuracy;heading;speed,Update location,Yes
+GET,/v1/driver/location/{driver_id},Location,Driver,driver_id in URL,Get driver location,Yes
+GET,/v1/driver/earnings,Earnings,Driver,date_from;date_to,Get earnings,Yes
+GET,/v1/driver/earnings/monthly,Earnings,Driver,year;month,Get monthly earnings,Yes
+POST,/v1/driver/documents,Documents,Driver,document_type;file (multipart),Upload document,Yes
+GET,/v1/driver/documents,Documents,Driver,none,Get documents,Yes
+POST,/v1/driver/public-bus/location,Public Bus,Driver,latitude;longitude,Update bus location,Yes
+POST,/v1/driver/public-bus/arrived-stop,Public Bus,Driver,stop_id,Mark arrived at stop,Yes
+POST,/v1/driver/public-bus/passenger-boarded,Public Bus,Driver,boarding_id,Mark passenger boarded,Yes
+POST,/v1/driver/public-bus/passenger-completed,Public Bus,Driver,boarding_id,Mark passenger completed,Yes
+POST,/v1/driver/status,Public Bus,Driver,status (ACTIVE|INACTIVE|ON_BREAK),Update driver status,Yes
+GET,/v1/driver/assignment/current,Public Bus,Driver,none,Get current assignment,Yes
+POST,/v1/driver/assignments/{attempt}/accept,Public Bus,Driver,attempt in URL,Accept assignment,Yes
+POST,/v1/driver/assignments/{attempt}/reject,Public Bus,Driver,attempt in URL;reason,Reject assignment,Yes
+POST,/v1/driver/trips/{trip}/pickup-verify,Public Bus,Driver,trip in URL;verification_code,Verify pickup,Yes
+POST,/v1/driver/trips/{trip}/start,Public Bus,Driver,trip in URL,Start trip,Yes
+POST,/v1/driver/trips/{trip}/complete,Public Bus,Driver,trip in URL,Complete trip,Yes
+GET,/v1/mobile/rides,Mobile,Passenger,search;filter;limit;offset,Get rides (optimized),Yes
+POST,/v1/mobile/bookings,Mobile,Passenger,ride_id;seats_count;special_instructions;idempotency_key,Create booking (optimized),Yes
+POST,/v1/mobile/trips/request,Mobile,Passenger,pickup_lat;pickup_lng;dropoff_lat;dropoff_lng;trip_type;passenger_count;selected_driver_id,Request trip (optimized),Yes
+GET,/v1/mobile/trips/current,Mobile,Passenger,none,Get current trip,Yes
+GET,/v1/mobile/trips/{id}/track,Mobile,Passenger,id in URL,Track trip live,Yes
+PUT,/v1/mobile/trips/{id}/cancel,Mobile,Passenger,id in URL;reason,Cancel trip,Yes
+PUT,/v1/mobile/trips/{id}/complete,Mobile,Passenger,id in URL,Complete trip,Yes
+GET,/v1/mobile/drivers/match,Mobile,Passenger,pickup_lat;pickup_lng;dropoff_lat;dropoff_lng;ride_type,Get matched drivers (mobile),Yes
+POST,/v1/mobile/drivers/status,Mobile,Driver,status (ONLINE|OFFLINE|BREAK),Set driver status,Yes
+GET,/v1/mobile/drivers/trips,Mobile,Driver,limit;offset;transport_type,Get available trips,Yes
+POST,/v1/mobile/drivers/trips/{id}/accept,Mobile,Driver,id in URL,Accept trip,Yes
+POST,/v1/mobile/drivers/trips/{id}/reject,Mobile,Driver,id in URL;reason,Reject trip,Yes
+POST,/v1/mobile/drivers/location,Mobile,Driver,latitude;longitude;accuracy;heading;speed,Update location,Yes
+POST,/v1/mobile/drivers/live-location,Mobile,Driver,latitude;longitude;accuracy,Update live location,Yes
+PUT,/v1/mobile/drivers/trips/{id}/start,Mobile,Driver,id in URL;current_lat;current_lng,Start trip,Yes
+PUT,/v1/mobile/drivers/trips/{id}/complete,Mobile,Driver,id in URL;final_fare;notes,Complete trip,Yes
+PUT,/v1/mobile/drivers/trips/{id}/cancel,Mobile,Driver,id in URL;reason,Cancel trip,Yes
+GET,/v1/mobile/tracking/driver/{driverId},Tracking,Passenger,driverId in URL,Get driver location,Yes
+GET,/v1/mobile/tracking/trip/{tripId},Tracking,Passenger,tripId in URL,Get trip driver location,Yes
+GET,/v1/mobile/tracking/nearby,Tracking,Passenger,latitude;longitude;radius_km,Get nearby drivers,Yes
+GET,/v1/notifications,Notifications,Authenticated,limit;offset;status,Get notifications,Yes
+GET,/v1/notifications/unread-count,Notifications,Authenticated,none,Count unread notifications,Yes
+PUT,/v1/notifications/{id}/read,Notifications,Authenticated,id in URL,Mark as read,Yes
+PUT,/v1/notifications/read-all,Notifications,Authenticated,none,Mark all as read,Yes
+DELETE,/v1/notifications/{id},Notifications,Authenticated,id in URL,Delete notification,Yes
+DELETE,/v1/notifications/clear-actioned,Notifications,Authenticated,none,Clear actioned notifications,Yes
+POST,/v1/notifications/{id}/acknowledged,Notifications,Authenticated,id in URL,Acknowledge notification,Yes
+POST,/v1/devices/push-token,Notifications,Authenticated,token;device_type;device_id,Register push token,Yes
+DELETE,/v1/devices/push-token/{token},Notifications,Authenticated,token in URL,Unregister push token,Yes
+POST,/v1/trips/{trip}/acknowledge,Trips,Authenticated,trip in URL,Acknowledge trip,Yes
+POST,/v1/auth/session/clear,Auth,Authenticated,none,Clear session,Yes
+POST,/v1/ai/match-driver,AI,Admin,trip_id;passenger_location;dropoff_location,AI match driver,Yes
+POST,/v1/ai/predict-eta,AI,Admin,driver_lat;driver_lng;passenger_lat;passenger_lng,Predict ETA,Yes
+POST,/v1/ai/predict-demand,AI,Admin,latitude;longitude;time;day_of_week,Predict demand,Yes
+POST,/v1/ai/calculate-surge,AI,Admin,latitude;longitude;time,Calculate surge,Yes
+POST,/v1/ai/optimize-route,AI,Admin,pickup_lat;pickup_lng;dropoff_lat;dropoff_lng,Optimize route,Yes
+POST,/v1/ai/analyze-driver,AI,Admin,driver_id,Analyze driver,Yes
+POST,/v1/ai/detect-fare-anomaly,AI,Admin,trip_id;calculated_fare;final_fare,Detect fare anomaly,Yes
+GET,/v1/ai/driver-redistribution,AI,Admin,latitude;longitude,Get driver redistribution,Yes
+POST,/v1/ai/route-monitor,AI,Admin,trip_id,Monitor route,Yes
+GET,/v1/ai/driver-idle,AI,Admin,none,Get idle drivers,Yes
+GET,/v1/ai/cancellation-anomalies,AI,Admin,date_from;date_to,Get cancellation anomalies,Yes
+GET,/v1/ai/system-health,AI,Admin,none,Get system health,Yes
+POST,/v1/ml/predict-fare,ML,Admin,pickup_lat;pickup_lng;dropoff_lat;dropoff_lng;distance_km;time_of_day,Predict fare (ML),Yes
+POST,/v1/ml/rank-drivers,ML,Admin,trip_id;driver_ids,Rank drivers (ML),Yes
+POST,/v1/ml/predict-demand,ML,Admin,latitude;longitude;date;time,Predict demand (ML),Yes
+POST,/v1/ml/detect-anomaly,ML,Admin,trip_id;metrics,Detect anomaly (ML),Yes
+GET,/v1/ml/health,ML,Admin,none,ML service health,Yes
+POST,/v1/ml/reload-models,ML,Admin,none,Reload ML models,Yes
+POST,/v1/ml/retrain,ML,Admin,model_name;dataset_path,Retrain ML models,Yes
+GET,/v2/driver/{driverId}/location,Admin,Admin,driverId in URL,Get driver location (v2),Yes
+GET,/v2/drivers/nearby,Admin,Admin,latitude;longitude;radius_km,Get nearby drivers (v2),Yes
+GET,/api/admin/map-data,Admin,Admin,none,Get map data,Yes
+GET,/api/admin/demand-heatmap,Admin,Admin,date;time_range,Get demand heatmap,Yes
+GET,/api/admin/live-requests,Admin,Admin,none,Get live requests,Yes
+GET,/api/admin/rides/{ride}/route-history,Admin,Admin,ride in URL,Get route history,Yes
+GET,/v1/admin/dashboard,Admin,Admin,none,Admin dashboard,Yes
+GET,/v1/admin/logs,Admin,Admin,limit;offset;log_type,System logs,Yes
+GET,/v1/admin/users,Admin,Admin,limit;offset;role;search,List users,Yes
+POST,/v1/admin/users,Admin,Admin,name;email;password;role;phone,Create user,Yes
+GET,/v1/admin/users/{id},Admin,Admin,id in URL,Get user details,Yes
+PUT,/v1/admin/users/{id},Admin,Admin,id in URL;name;email;phone,Update user,Yes
+DELETE,/v1/admin/users/{id},Admin,Admin,id in URL,Delete user,Yes
+PUT,/v1/admin/users/{id}/role,Admin,Admin,id in URL;role,Update user role,Yes
+GET,/v1/admin/riders/pending,Admin,Admin,limit;offset,Get pending riders,Yes
+PUT,/v1/admin/riders/{id}/approve,Admin,Admin,id in URL,Approve rider,Yes
+PUT,/v1/admin/riders/{id}/reject,Admin,Admin,id in URL;reason,Reject rider,Yes
+GET,/v1/admin/rides,Admin,Admin,search;status;limit;offset,Admin ride list,Yes
+GET,/v1/admin/rides/{id},Admin,Admin,id in URL,Admin ride details,Yes
+POST,/v1/admin/rides/corridor,Admin,Admin,corridor_id;from_location;to_location;capacity;fare,Create ride with corridor,Yes
+GET,/v1/finance/summary,Finance,Accountant,date_from;date_to;booking_type,Revenue summary,Yes
+GET,/v1/finance/transactions,Finance,Accountant,date_from;date_to;limit;offset,Transactions list,Yes
+GET,/v1/finance/export,Finance,Accountant,date_from;date_to;format,Export data,Yes
+GET,/v1/finance/export/pdf,Finance,Accountant,date_from;date_to,Export PDF,Yes
+GET,/v1/finance/export/csv,Finance,Accountant,date_from;date_to,Export CSV,Yes
+GET,/v1/accountant/daily-earnings,Finance,Accountant,date;limit;offset,Daily earnings,Yes
+GET,/v1/accountant/daily-earnings/export,Finance,Accountant,date_from;date_to,Export earnings,Yes
+POST,/v1/accountant/payout/{driver},Finance,Accountant,driver in URL;amount;payment_method,Process payout,Yes
+POST,/v1/accountant/bulk-payout,Finance,Accountant,driver_ids;payment_method,Bulk payout,Yes
+GET,/v1/accountant/commissions,Finance,Accountant,date_from;date_to,Commission summary,Yes
+GET,/v1/analytics/revenue,Analytics,Admin,date_from;date_to;group_by,Revenue analytics,Yes
+GET,/v1/analytics/driver-performance,Analytics,Admin,date_from;date_to;driver_id,Driver performance,Yes
+GET,/v1/analytics/commission-trend,Analytics,Admin,date_from;date_to;interval,Commission trend,Yes
+GET,/v1/analytics/fraud-risk,Analytics,Admin,date_from;date_to;threshold,Fraud risk,Yes
+POST,/v1/tickets,Tickets,Officer,trip_id;passenger_id;amount;ticket_number,Create ticket,Yes
+GET,/v1/tickets,Tickets,Officer,limit;offset;status,List tickets,Yes
+GET,/v1/tickets/{id},Tickets,Officer,id in URL,Get ticket details,Yes
+PUT,/v1/tickets/{id},Tickets,Officer,id in URL;status;notes,Update ticket,Yes
+DELETE,/v1/tickets/{id},Tickets,Officer,id in URL,Delete ticket,Yes
+PUT,/v1/tickets/{id}/validate,Tickets,Officer,id in URL;verification_code,Validate ticket,Yes
+GET,/v1/officer/passengers,Officer,Officer,search;limit;offset,Get passengers,Yes
+POST,/v1/officer/passengers,Officer,Officer,name;phone;email,Create passenger,Yes
+GET,/v1/officer/public-transport/available,Officer,Officer,from;to;date;time,Available transport,Yes
+POST,/v1/officer/assisted-bookings,Officer,Officer,passenger_id;corridor_id;trip_id,Assisted booking,Yes
+POST,/v1/officer/trips/{trip}/reassign,Officer,Officer,trip in URL;driver_id,Reassign trip,Yes
+POST,/v1/officer/payments/{payment}/verify,Officer,Officer,payment in URL;verification_code,Verify payment,Yes
+GET,/v1/officer/seat-monitoring,Officer,Officer,corridor_id;date,Seat monitoring,Yes
+GET,/v1/officer/corridors,Officer,Officer,limit;offset,Get corridors,Yes
+GET,/v1/officer/locations/search,Officer,Officer,query;bounds,Search locations,Yes
+GET,/v1/officer/rides/available,Officer,Officer,search;limit;offset,Available rides,Yes
+POST,/v1/officer/bookings,Officer,Officer,passenger_id;ride_id;seats_count,Create booking,Yes
+POST,/v1/officer/trips,Officer,Officer,passenger_id;from_location;to_location;trip_type,Create trip,Yes
+POST,/v1/officer/public-bus/corridors,Officer,Officer,corridor_id;from_stop;to_stop,Bus corridors,Yes
+POST,/v1/officer/public-bus/stops,Officer,Officer,corridor_id,Bus stops,Yes
+POST,/v1/officer/public-bus/assign-driver,Officer,Officer,trip_id;driver_id,Assign driver,Yes
+GET,/v1/officer/public-bus/live-monitoring,Officer,Officer,corridor_id;date,Live monitoring,Yes
+GET,/v1/health/finance,Health,Public,none,Finance health check,No
+GET,/v1/health/settlement,Health,Public,none,Settlement health check,No
+GET,/v1/health/warehouse,Health,Public,none,Warehouse health check,No
+GET,/api/rides,Health,Public,none,Rides health check,No
+POST,/api/webhooks/stripe,Webhooks,Public,webhook_payload,Stripe webhook,No
+POST,/api/webhooks/mtn,Webhooks,Public,webhook_payload,MTN webhook,No
