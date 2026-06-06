@@ -67,6 +67,12 @@ class MotorcycleTripController extends Controller
                         'success' => false,
                         'error_code' => 'GEOCODING_FAILED',
                         'message' => 'Could not geocode pickup location: ' . $validated['pickup_location'],
+                        'help' => 'Provide pickup_lat and pickup_lng directly in the request',
+                        'example' => [
+                            'pickup_location' => 'Kigali, Rwanda',
+                            'pickup_lat' => -1.9536,
+                            'pickup_lng' => 30.0605,
+                        ],
                     ], 400);
                 }
                 $pickupLat = $pickupCoords['lat'];
@@ -75,6 +81,7 @@ class MotorcycleTripController extends Controller
                     'location' => $validated['pickup_location'],
                     'lat' => $pickupLat,
                     'lng' => $pickupLng,
+                    'formatted_address' => $pickupCoords['formatted_address'] ?? null,
                 ]);
             }
 
@@ -91,6 +98,12 @@ class MotorcycleTripController extends Controller
                         'success' => false,
                         'error_code' => 'GEOCODING_FAILED',
                         'message' => 'Could not geocode dropoff location: ' . $validated['dropoff_location'],
+                        'help' => 'Provide dropoff_lat and dropoff_lng directly in the request',
+                        'example' => [
+                            'dropoff_location' => 'Kigali International Airport',
+                            'dropoff_lat' => -1.9753,
+                            'dropoff_lng' => 30.1376,
+                        ],
                     ], 400);
                 }
                 $dropoffLat = $dropoffCoords['lat'];
@@ -99,6 +112,7 @@ class MotorcycleTripController extends Controller
                     'location' => $validated['dropoff_location'],
                     'lat' => $dropoffLat,
                     'lng' => $dropoffLng,
+                    'formatted_address' => $dropoffCoords['formatted_address'] ?? null,
                 ]);
             }
 
