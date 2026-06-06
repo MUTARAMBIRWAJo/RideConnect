@@ -157,7 +157,9 @@ class PublicBusMatchingService
      * Uses DistanceService for accurate distance calculations with Google Distance Matrix
      * API fallback to Haversine formula.
      *
-     * @param array $activeBuses List of active bus assignments
+     * Extracts bus location from latest_position or location fields in the bus data.
+     *
+     * @param array $activeBuses List of active bus assignments (formatted by PublicBusTransportService)
      * @param float $pickupLat Passenger pickup latitude
      * @param float $pickupLng Passenger pickup longitude
      * @return array|null Bus data with distance or null if no buses
@@ -174,32 +176,66 @@ class PublicBusMatchingService
         $busDataMap = [];
 
         foreach ($activeBuses as $index => $busData) {
-            // Get bus current location
-            $busLatitude = $busData['current_location']['latitude'] ?? $busData['bus']['latitude'] ?? null;
-            $busLongitude = $busData['current_location']['longitude'] ?? $busData['bus']['longitude'] ?? null;
+            // Extract bus location from latest_position or location field
+            $busLatitude = null;
+            $busLongitude = null;
 
-            if (!$busLatitude || !$busLongitude) {
-                Log::debug('Skipping bus without location', [
-                    'bus_id' => $busData['bus_id'] ?? $busData['bus']['id'] ?? null,
+            // Try latest_position first (from bus_position_updates)
+            if (isset($busData['latest_position']['latitude'], $busData['latest_position']['longitude'])) {
+                $busLatitude = (float) $busData['latest_position']['latitude'];
+                $busLongitude = (float) $busData['latest_position']['longitude'];
+            }
+            // Fallback to location field (from driver profile or bus_position)
+            elseif (isset($busData['location']['latitude'], $busData['location']['longitude'])) {
+                $busLatitude = (float) $busData['location']['latitude'];
+                $busLongitude = (float) $busData['location']['longitude'];
+            }
+
+            if ($busLatitude === null || $busLongitude === null) {
+                Log::debug('Skipping bus without location data', [
+                    'bus_id' => $busData['bus_id'] ?? null,
+                    'assignment_id' => $busData['assignment_id'] ?? null,
                 ]);
                 continue;
             }
 
-            $busId = $busData['bus_id'] ?? $busData['bus']['id'] ?? null;
+            // Validate coordinates
+            if ($busLatitude < -90 || $busLatitude > 90 || $busLongitude < -180 || $busLongitude > 180) {
+                Log::warning('Invalid bus coordinates', [
+                    'bus_id' => $busData['bus_id'] ?? null,
+                    'lat' => $busLatitude,
+                    'lng' => $busLongitude,
+                ]);
+                continue;
+            }
+
             $destinations[] = [
                 'id' => $index,
-                'lat' => (float) $busLatitude,
-                'lng' => (float) $busLongitude,
+                'lat' => $busLatitude,
+                'lng' => $busLongitude,
             ];
             $busDataMap[$index] = $busData;
+
+            Log::debug('Added bus to distance calculation', [
+                'bus_id' => $busData['bus_id'],
+                'lat' => $busLatitude,
+                'lng' => $busLongitude,
+            ]);
         }
 
         if (empty($destinations)) {
-            Log::warning('No valid bus coordinates found');
+            Log::warning('No valid bus coordinates found', [
+                'total_buses' => count($activeBuses),
+            ]);
             return null;
         }
 
         try {
+            Log::info('Starting batch distance calculation', [
+                'pickup_location' => ["lat" => $pickupLat, "lng" => $pickupLng],
+                'bus_count' => count($destinations),
+            ]);
+
             // Use DistanceService for batch distance calculation
             $sortedDestinations = $this->distanceService->calculateBatchDistances(
                 $pickupLat,
@@ -220,18 +256,20 @@ class PublicBusMatchingService
             $durationMinutes = $nearestDest['duration_minutes'];
 
             Log::info('Nearest bus found', [
+                'bus_id' => $busData['bus_id'],
                 'distance_km' => $distanceKm,
                 'duration_minutes' => $durationMinutes,
+                'eta_minutes' => $durationMinutes,
             ]);
 
             return [
-                'bus_id' => $busData['bus_id'] ?? $busData['bus']['id'] ?? null,
-                'vehicle_id' => $busData['bus']['id'] ?? $busData['bus_id'] ?? null,
-                'driver_id' => $busData['driver_id'] ?? $busData['driver']['id'] ?? null,
-                'vehicle_plate_number' => $busData['bus']['license_plate'] ?? $busData['bus']['plate_number'] ?? null,
-                'vehicle_capacity' => $busData['bus']['seats'] ?? $busData['bus']['capacity'] ?? null,
+                'bus_id' => $busData['bus_id'],
+                'vehicle_id' => $busData['bus_id'],
+                'driver_id' => $busData['driver']['id'] ?? null,
+                'vehicle_plate_number' => $busData['bus']['plate'] ?? $busData['bus']['license_plate'] ?? null,
+                'vehicle_capacity' => $busData['bus']['seats'] ?? 0,
                 'vehicle_available_seats' => $busData['available_seats'] ?? 0,
-                'driver_name' => $busData['driver']['user']['name'] ?? $busData['driver']['name'] ?? null,
+                'driver_name' => $busData['driver']['name'] ?? null,
                 'distance_to_passenger_km' => $distanceKm,
                 'eta_minutes' => $durationMinutes,
             ];
@@ -239,6 +277,7 @@ class PublicBusMatchingService
             Log::error('Error in findNearestBus', [
                 'error' => $e->getMessage(),
                 'bus_count' => count($destinations),
+                'trace' => $e->getTraceAsString(),
             ]);
             return null;
         }
