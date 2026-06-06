@@ -250,6 +250,9 @@ Route::prefix('v1')->group(function () {
                 Route::post('/arrived-stop', [DriverPublicBusController::class, 'arrivedStop']);
                 Route::post('/passenger-boarded', [DriverPublicBusController::class, 'passengerBoarded']);
                 Route::post('/passenger-completed', [DriverPublicBusController::class, 'passengerCompleted']);
+                // Trip request decision endpoints
+                Route::post('/trip-requests/{trip_request_id}/accept', [DriverPublicBusController::class, 'acceptTripRequest'])->whereNumber('trip_request_id');
+                Route::post('/trip-requests/{trip_request_id}/reject', [DriverPublicBusController::class, 'rejectTripRequest'])->whereNumber('trip_request_id');
             });
             Route::post('/status', [DriverPublicTransportController::class, 'updateStatus']);
             Route::get('/assignment/current', [DriverPublicTransportController::class, 'currentAssignment']);
