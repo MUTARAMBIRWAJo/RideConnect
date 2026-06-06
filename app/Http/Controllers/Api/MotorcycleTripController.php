@@ -55,29 +55,51 @@ class MotorcycleTripController extends Controller
 
             // Geocode if coordinates not provided
             if (!$pickupLat || !$pickupLng) {
+                Log::info('MotorcycleTripController: Geocoding pickup location', [
+                    'location' => $validated['pickup_location'],
+                ]);
                 $pickupCoords = $this->geocodingService->geocode($validated['pickup_location']);
                 if (!$pickupCoords) {
+                    Log::error('MotorcycleTripController: Geocoding failed for pickup location', [
+                        'location' => $validated['pickup_location'],
+                    ]);
                     return response()->json([
                         'success' => false,
                         'error_code' => 'GEOCODING_FAILED',
-                        'message' => 'Could not geocode pickup location',
+                        'message' => 'Could not geocode pickup location: ' . $validated['pickup_location'],
                     ], 400);
                 }
                 $pickupLat = $pickupCoords['lat'];
                 $pickupLng = $pickupCoords['lng'];
+                Log::info('MotorcycleTripController: Pickup location geocoded', [
+                    'location' => $validated['pickup_location'],
+                    'lat' => $pickupLat,
+                    'lng' => $pickupLng,
+                ]);
             }
 
             if (!$dropoffLat || !$dropoffLng) {
+                Log::info('MotorcycleTripController: Geocoding dropoff location', [
+                    'location' => $validated['dropoff_location'],
+                ]);
                 $dropoffCoords = $this->geocodingService->geocode($validated['dropoff_location']);
                 if (!$dropoffCoords) {
+                    Log::error('MotorcycleTripController: Geocoding failed for dropoff location', [
+                        'location' => $validated['dropoff_location'],
+                    ]);
                     return response()->json([
                         'success' => false,
                         'error_code' => 'GEOCODING_FAILED',
-                        'message' => 'Could not geocode dropoff location',
+                        'message' => 'Could not geocode dropoff location: ' . $validated['dropoff_location'],
                     ], 400);
                 }
                 $dropoffLat = $dropoffCoords['lat'];
                 $dropoffLng = $dropoffCoords['lng'];
+                Log::info('MotorcycleTripController: Dropoff location geocoded', [
+                    'location' => $validated['dropoff_location'],
+                    'lat' => $dropoffLat,
+                    'lng' => $dropoffLng,
+                ]);
             }
 
             // Estimate fare (placeholder - integrate with fare calculation service)
