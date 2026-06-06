@@ -2,8 +2,10 @@
 
 namespace App\Services;
 
+use App\Models\Notification;
 use App\Models\User;
 use App\Services\Realtime\RealtimeGateway;
+use Illuminate\Support\Facades\Log;
 
 /**
  * NotificationService handles push notifications and in-app notifications.
@@ -29,25 +31,50 @@ class NotificationService
 
     /**
      * Send in-app notification to user.
+     * Creates a record in the user_notifications table and broadcasts via real-time gateway.
      */
     public function sendInAppNotification(int $userId, string $type, string $title, string $message, array $data = []): void
     {
-        // Placeholder: Store in database or send via real-time
-        // For now, just use real-time gateway
+        try {
+            // Create notification record in database
+            $notification = Notification::create([
+                'user_id' => $userId,
+                'type' => $type,
+                'title' => $title,
+                'message' => $message,
+                'data' => $data,
+                'is_read' => false,
+            ]);
 
-        $payload = [
-            'type' => $type,
-            'title' => $title,
-            'message' => $message,
-            'data' => $data,
-        ];
+            // Broadcast notification via real-time gateway
+            $payload = [
+                'id' => $notification->id,
+                'type' => $type,
+                'title' => $title,
+                'message' => $message,
+                'data' => $data,
+                'created_at' => $notification->created_at->toIso8601String(),
+            ];
 
-        // Try to determine if user is driver or passenger
-        $user = User::find($userId);
-        if ($user && $user->driver) {
-            $this->realtimeGateway->notifyDriver($user->driver->id, $payload);
-        } elseif ($user && $user->mobile_user_id) {
-            $this->realtimeGateway->notifyPassenger($user->mobile_user_id, $payload);
+            // Try to determine if user is driver or passenger and notify
+            $user = User::find($userId);
+            if ($user && $user->driver) {
+                $this->realtimeGateway->notifyDriver($user->driver->id, $payload);
+            } elseif ($user && $user->mobile_user_id) {
+                $this->realtimeGateway->notifyPassenger($user->mobile_user_id, $payload);
+            }
+
+            Log::info('In-app notification created', [
+                'notification_id' => $notification->id,
+                'user_id' => $userId,
+                'type' => $type,
+            ]);
+        } catch (\Exception $e) {
+            Log::error('Failed to send in-app notification', [
+                'user_id' => $userId,
+                'type' => $type,
+                'error' => $e->getMessage(),
+            ]);
         }
     }
 
