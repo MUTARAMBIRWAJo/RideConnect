@@ -21,6 +21,7 @@ use App\Http\Controllers\Api\DriverPublicTransportController;
 use App\Http\Controllers\Api\DriverTripController;
 use App\Http\Controllers\Api\MotorcycleTripController;
 use App\Http\Controllers\Api\PublicBusTripController;
+use App\Http\Controllers\Api\RouteController;
 use App\Http\Controllers\API\DriverLocationController;
 use App\Http\Controllers\Api\DriverTrackingController;
 use App\Http\Controllers\Api\Finance\ExportController;
@@ -164,6 +165,16 @@ Route::prefix('v1')->group(function () {
             Route::get('/profile', [ApiAuthController::class, 'profile']);
             // Update profile
             Route::put('/profile', [ApiAuthController::class, 'updateProfile']);
+        });
+
+        /* ===========================
+           ROUTE & NAVIGATION APIs
+           =========================== */
+        Route::prefix('route')->group(function () {
+            Route::post('/compute', [RouteController::class, 'compute']);
+            Route::get('/distance', [RouteController::class, 'distance']);
+            Route::get('/duration', [RouteController::class, 'duration']);
+            Route::get('/polyline', [RouteController::class, 'polyline']);
         });
 
         /* ===========================

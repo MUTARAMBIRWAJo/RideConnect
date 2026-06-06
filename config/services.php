@@ -140,4 +140,16 @@ return [
         'redirect' => env('GOOGLE_REDIRECT_URL'),
     ],
 
+    /*
+    |--------------------------------------------------------------------------
+    | Google Maps & Routes API
+    |--------------------------------------------------------------------------
+    | Secure backend-only Google Maps integration for routing
+    */
+    'google_maps' => [
+        'key' => env('GOOGLE_MAPS_API_KEY'),
+        'routes_api_url' => 'https://routes.googleapis.com/v2:computeRoutes',
+        'timeout' => env('GOOGLE_MAPS_TIMEOUT', 10),
+    ],
+
 ];
