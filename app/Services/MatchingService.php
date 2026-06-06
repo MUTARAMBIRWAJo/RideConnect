@@ -23,24 +23,37 @@ class MatchingService
 
     /**
      * Match a motorcycle trip to an available driver
+     *
+     * @param MotorcycleTrip $trip
+     * @param array $excludeDriverIds Drivers to exclude from matching
+     * @param float $searchRadiusKm Search radius in kilometers (default: 5 km, max: 25 km)
      */
-    public function matchMotorcycleTrip(MotorcycleTrip $trip, array $excludeDriverIds = []): ?array
+    public function matchMotorcycleTrip(MotorcycleTrip $trip, array $excludeDriverIds = [], float $searchRadiusKm = 5): ?array
     {
         try {
+            // Ensure radius is within bounds
+            $searchRadiusKm = max(1, min(25, $searchRadiusKm));
+
             Log::info('Matching motorcycle trip', [
                 'trip_id' => $trip->id,
                 'pickup_lat' => $trip->pickup_lat,
                 'pickup_lng' => $trip->pickup_lng,
                 'exclude_drivers' => $excludeDriverIds,
+                'search_radius_km' => $searchRadiusKm,
             ]);
 
-            // Prepare payload
+            // Prepare ML service payload
             $payload = [
                 'trip_request_id' => $trip->id,
                 'vehicle_type' => 'MOTORCYCLE',
                 'pickup_lat' => (float) $trip->pickup_lat,
                 'pickup_lng' => (float) $trip->pickup_lng,
+                'dropoff_lat' => (float) $trip->dropoff_lat,
+                'dropoff_lng' => (float) $trip->dropoff_lng,
                 'exclude_drivers' => $excludeDriverIds,
+                'search_radius_km' => $searchRadiusKm,
+                'estimated_fare' => (float) $trip->estimated_fare,
+                'vehicle_type_filter' => 'MOTORCYCLE',
             ];
 
             // Call matching service
@@ -53,6 +66,7 @@ class MatchingService
                     'trip_id' => $trip->id,
                     'status' => $response->status(),
                     'body' => $response->body(),
+                    'payload' => $payload,
                 ]);
                 return null;
             }
@@ -64,6 +78,7 @@ class MatchingService
                 Log::warning('Matching service returned no driver', [
                     'trip_id' => $trip->id,
                     'response' => $data,
+                    'search_radius_km' => $searchRadiusKm,
                 ]);
                 return null;
             }

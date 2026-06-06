@@ -26,6 +26,12 @@ class MotorcycleTrip extends Model
         'actual_fare',
         'currency',
         'status',
+        'retry_count',
+        'max_retries',
+        'matching_status',
+        'last_retry_at',
+        'initial_search_radius_km',
+        'current_search_radius_km',
         'rejected_driver_id',
         'rejection_reason',
         'rejected_drivers',
@@ -50,6 +56,10 @@ class MotorcycleTrip extends Model
         'distance_km' => 'float',
         'estimated_fare' => 'float',
         'actual_fare' => 'float',
+        'initial_search_radius_km' => 'float',
+        'current_search_radius_km' => 'float',
+        'retry_count' => 'integer',
+        'max_retries' => 'integer',
         'rejected_drivers' => 'array',
         'metadata' => 'array',
         'requested_at' => 'datetime',
@@ -61,6 +71,7 @@ class MotorcycleTrip extends Model
         'completed_at' => 'datetime',
         'rejected_at' => 'datetime',
         'cancelled_at' => 'datetime',
+        'last_retry_at' => 'datetime',
     ];
 
     /**

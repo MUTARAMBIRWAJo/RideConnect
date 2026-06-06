@@ -2,6 +2,7 @@
 
 namespace App\Services;
 
+use App\Jobs\RetryTripMatchingJob;
 use App\Models\Driver;
 use App\Models\MotorcycleTrip;
 use App\Models\Notification;
@@ -90,84 +91,61 @@ class MotorcycleTripService
         try {
             $trip->update([
                 'status' => 'MATCHING',
+                'matching_status' => 'SEARCHING',
                 'matching_started_at' => now(),
+                'current_search_radius_km' => $trip->initial_search_radius_km ?? 5,
+                'retry_count' => 0,
+            ]);
+
+            Log::info('Starting trip matching', [
+                'trip_id' => $trip->id,
+                'initial_search_radius_km' => $trip->current_search_radius_km,
             ]);
 
             // Call matching service
             $match = $this->matchingService->matchMotorcycleTrip($trip);
 
-            if (!$match) {
-                Log::warning('No drivers available for matching', [
-                    'trip_id' => $trip->id,
-                ]);
-
-                $trip->update(['status' => 'EXPIRED']);
-
-                // Notify passenger
-                $this->notificationService->sendInAppNotification(
-                    $trip->passenger_id,
-                    'TRIP_EXPIRED',
-                    'No Drivers Available',
-                    'No drivers are currently available',
-                    ['trip_id' => $trip->id]
-                );
-
-                return [
-                    'success' => false,
-                    'error' => 'NO_DRIVERS_AVAILABLE',
-                    'message' => 'No drivers available',
-                ];
+            if ($match) {
+                // Driver found on first attempt
+                return $this->assignDriver($trip, $match);
             }
 
-            // Assign driver
-            $trip->update([
-                'driver_id' => $match['driver_id'],
-                'status' => 'ASSIGNED',
-                'assigned_at' => now(),
+            // No driver found - use retry system instead of immediate expiration
+            Log::warning('No drivers found on initial match attempt, scheduling retries', [
+                'trip_id' => $trip->id,
             ]);
 
-            // Mark driver unavailable
-            $driver = Driver::find($match['driver_id']);
-            if ($driver) {
-                $driver->update([
-                    'is_available' => false,
-                    'current_trip_id' => $trip->id,
-                ]);
-            }
+            // Update trip to MATCHING_PENDING state
+            $trip->update([
+                'status' => 'MATCHING_PENDING',
+                'matching_status' => 'RETRY_SCHEDULED',
+                'retry_count' => 0,
+                'max_retries' => 5,
+            ]);
 
-            // Notify driver
-            $this->notificationService->sendInAppNotification(
-                $driver->user_id,
-                'TRIP_ASSIGNED',
-                'New Motorcycle Trip Assigned',
-                "{$trip->pickup_location} → {$trip->dropoff_location}",
-                [
-                    'trip_id' => $trip->id,
-                    'fare' => $trip->estimated_fare,
-                    'pickup_lat' => $trip->pickup_lat,
-                    'pickup_lng' => $trip->pickup_lng,
-                ]
-            );
+            // Schedule first retry after 15 seconds
+            dispatch(new RetryTripMatchingJob($trip->id))->delay(now()->addSeconds(15));
 
-            // Notify passenger
+            Log::info('First retry scheduled for trip', [
+                'trip_id' => $trip->id,
+                'retry_delay_seconds' => 15,
+            ]);
+
+            // Notify passenger that we're still looking
             $this->notificationService->sendInAppNotification(
                 $trip->passenger_id,
-                'TRIP_ASSIGNED',
-                'Driver Found',
-                'A driver has been assigned',
+                'TRIP_MATCHING',
+                'Finding a driver...',
+                'We\'re searching for an available driver. Please wait.',
                 ['trip_id' => $trip->id]
             );
-
-            Log::info('Motorcycle trip matched and assigned', [
-                'trip_id' => $trip->id,
-                'driver_id' => $match['driver_id'],
-            ]);
 
             return [
                 'success' => true,
                 'trip_id' => $trip->id,
-                'driver_id' => $match['driver_id'],
                 'status' => $trip->status,
+                'matching_status' => 'RETRY_SCHEDULED',
+                'message' => 'Finding a driver...',
             ];
         } catch (\Exception $e) {
             Log::error('Failed to start matching', [
@@ -181,6 +159,64 @@ class MotorcycleTripService
                 'message' => 'Matching failed',
             ];
         }
+    }
+
+    /**
+     * Assign driver to trip (extracted for reuse)
+     */
+    private function assignDriver(MotorcycleTrip $trip, array $match): array
+    {
+        // Assign driver
+        $trip->update([
+            'driver_id' => $match['driver_id'],
+            'status' => 'ASSIGNED',
+            'matching_status' => 'DRIVER_FOUND',
+            'assigned_at' => now(),
+        ]);
+
+        // Mark driver unavailable
+        $driver = Driver::find($match['driver_id']);
+        if ($driver) {
+            $driver->update([
+                'is_available' => false,
+                'current_trip_id' => $trip->id,
+            ]);
+        }
+
+        // Notify driver
+        $this->notificationService->sendInAppNotification(
+            $driver->user_id,
+            'TRIP_ASSIGNED',
+            'New Motorcycle Trip Assigned',
+            "{$trip->pickup_location} → {$trip->dropoff_location}",
+            [
+                'trip_id' => $trip->id,
+                'fare' => $trip->estimated_fare,
+                'pickup_lat' => $trip->pickup_lat,
+                'pickup_lng' => $trip->pickup_lng,
+            ]
+        );
+
+        // Notify passenger
+        $this->notificationService->sendInAppNotification(
+            $trip->passenger_id,
+            'TRIP_ASSIGNED',
+            'Driver Found',
+            'A driver has been assigned',
+            ['trip_id' => $trip->id]
+        );
+
+        Log::info('Motorcycle trip matched and assigned', [
+            'trip_id' => $trip->id,
+            'driver_id' => $match['driver_id'],
+        ]);
+
+        return [
+            'success' => true,
+            'trip_id' => $trip->id,
+            'driver_id' => $match['driver_id'],
+            'status' => $trip->status,
+        ];
     }
 
     /**

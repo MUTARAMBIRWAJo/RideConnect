@@ -139,22 +139,29 @@ class MotorcycleTripController extends Controller
             $trip = MotorcycleTrip::find($result['trip_id']);
             $matchResult = $this->tripService->startMatching($trip);
 
-            if (!$matchResult['success']) {
+            // Refresh trip to get latest status
+            $trip = $trip->fresh();
+
+            if ($trip->status === 'ASSIGNED') {
+                // Driver found immediately
                 return response()->json([
                     'success' => true,
-                    'trip_id' => $result['trip_id'],
-                    'status' => $trip->fresh()->status,
-                    'matching_status' => 'NO_DRIVERS_AVAILABLE',
+                    'trip_id' => $trip->id,
+                    'status' => $trip->status,
+                    'driver_id' => $matchResult['driver_id'] ?? null,
+                    'estimated_fare' => $estimatedFare,
+                ], 201);
+            } else {
+                // No driver found yet, retry system activated (MATCHING_PENDING)
+                return response()->json([
+                    'success' => true,
+                    'trip_id' => $trip->id,
+                    'status' => $trip->status,
+                    'matching_status' => $trip->matching_status,
+                    'message' => 'Finding a driver... We will keep searching.',
+                    'estimated_fare' => $estimatedFare,
                 ], 202);
             }
-
-            return response()->json([
-                'success' => true,
-                'trip_id' => $result['trip_id'],
-                'status' => $trip->fresh()->status,
-                'driver_id' => $matchResult['driver_id'] ?? null,
-                'estimated_fare' => $estimatedFare,
-            ], 201);
         } catch (ValidationException $e) {
             return response()->json([
                 'success' => false,
