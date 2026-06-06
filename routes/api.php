@@ -170,7 +170,8 @@ Route::prefix('v1')->group(function () {
         Route::prefix('passenger')->group(function () {
             // Profile
             Route::get('/profile', [PassengerController::class, 'profile']);
-            Route::put('/profile', [PassengerController::class, 'updateProfile']);
+            Route::match(['put', 'patch'], '/profile', [PassengerController::class, 'updateProfile'])
+                ->name('passenger.profile.update');
             Route::get('/stats', [PassengerController::class, 'stats']);
             Route::prefix('public-bus')->group(function () {
                 Route::get('/corridors', [PassengerPublicBusController::class, 'corridors']);

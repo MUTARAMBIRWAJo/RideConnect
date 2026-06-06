@@ -26,6 +26,7 @@ class PassengerController extends Controller
 
     /**
      * Get passenger profile with comprehensive data.
+     * GET /api/v1/passenger/profile
      */
     public function profile(Request $request): JsonResponse
     {
@@ -56,6 +57,12 @@ class PassengerController extends Controller
         // Calculate average trip cost
         $averageSpent = $totalBookings > 0 ? round($totalSpent / $totalBookings, 2) : 0;
 
+        // Build profile photo URL if it exists
+        $profilePhotoUrl = null;
+        if ($user->profile_photo) {
+            $profilePhotoUrl = asset('storage/' . $user->profile_photo);
+        }
+
         return response()->json([
             'success' => true,
             'data' => [
@@ -64,7 +71,8 @@ class PassengerController extends Controller
                 'email' => $user->email,
                 'phone' => $user->phone,
                 'role' => $user->role->value,
-                'profile_photo' => $user->profile_photo,
+                'profile_photo' => $profilePhotoUrl,
+                'profile_photo_path' => $user->profile_photo,
                 'is_approved' => $user->is_approved,
                 'is_verified' => $user->is_verified,
                 'member_since' => $user->created_at->toIso8601String(),
@@ -97,6 +105,14 @@ class PassengerController extends Controller
     /**
      * Update passenger profile with comprehensive fields.
      * PUT /api/v1/passenger/profile
+     *
+     * Accepts both text fields and file uploads:
+     * - name: string (max 255)
+     * - phone: international or local format
+     * - profile_photo: image file (jpg, jpeg, png, max 2MB)
+     * - preferred_payment_method: card|mobile_money|cash|wallet
+     * - emergency_contact_name: string (max 255)
+     * - emergency_contact_phone: international or local format
      */
     public function updateProfile(Request $request): JsonResponse
     {
@@ -110,25 +126,43 @@ class PassengerController extends Controller
             ], 403);
         }
 
-        // Validate incoming data
-        $validated = $request->validate([
+        // Validate incoming data with improved phone validation
+        // Accepts formats: +250780126094, 0780126094, 250780126094
+        $rules = [
             'name' => 'sometimes|string|max:255',
-            'phone' => 'sometimes|string|max:20|regex:/^\+?[1-9]\d{1,14}$/',
-            'profile_photo' => 'sometimes|nullable|string|max:1000',
+            'phone' => 'sometimes|string|max:20|regex:/^(\+)?[0-9]{10,15}$/',
             'preferred_payment_method' => 'sometimes|string|in:card,mobile_money,cash,wallet',
             'emergency_contact_name' => 'sometimes|nullable|string|max:255',
-            'emergency_contact_phone' => 'sometimes|nullable|string|max:20|regex:/^\+?[1-9]\d{1,14}$/',
-        ]);
+            'emergency_contact_phone' => 'sometimes|nullable|string|max:20|regex:/^(\+)?[0-9]{10,15}$/',
+            'profile_photo' => 'sometimes|nullable|image|mimes:jpg,jpeg,png,gif|max:2048',
+        ];
+
+        $validated = $request->validate($rules);
 
         // Handle profile photo upload if provided
         if ($request->hasFile('profile_photo')) {
             $file = $request->file('profile_photo');
-            $path = $file->store('profiles', 'public');
+            $filename = $file->getClientOriginalName();
+            $filename = pathinfo($filename, PATHINFO_FILENAME) . '_' . time() . '.' . $file->getClientOriginalExtension();
+            $path = $file->storeAs('profiles', $filename, 'public');
             $validated['profile_photo'] = $path;
         }
 
-        // Update user with validated data
-        $user->update($validated);
+        // Update only allowed fields - prevent mass assignment vulnerabilities
+        $allowedFields = [
+            'name',
+            'phone',
+            'profile_photo',
+            'preferred_payment_method',
+            'emergency_contact_name',
+            'emergency_contact_phone',
+        ];
+
+        $updateData = array_intersect_key($validated, array_flip($allowedFields));
+        $user->update($updateData);
+
+        // Refresh the user instance to get updated data
+        $user->refresh();
 
         // Retrieve updated profile with full statistics
         $totalBookings = $user->bookings()->count();
@@ -145,6 +179,12 @@ class PassengerController extends Controller
 
         $averageSpent = $totalBookings > 0 ? round($totalSpent / $totalBookings, 2) : 0;
 
+        // Build profile photo URL if it exists
+        $profilePhotoUrl = null;
+        if ($user->profile_photo) {
+            $profilePhotoUrl = asset('storage/' . $user->profile_photo);
+        }
+
         return response()->json([
             'success' => true,
             'message' => 'Profile updated successfully',
@@ -154,7 +194,8 @@ class PassengerController extends Controller
                 'email' => $user->email,
                 'phone' => $user->phone,
                 'role' => $user->role->value,
-                'profile_photo' => $user->profile_photo,
+                'profile_photo' => $profilePhotoUrl,
+                'profile_photo_path' => $user->profile_photo,
                 'is_approved' => $user->is_approved,
                 'is_verified' => $user->is_verified,
                 'member_since' => $user->created_at->toIso8601String(),
