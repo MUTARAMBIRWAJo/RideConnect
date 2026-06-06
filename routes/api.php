@@ -248,6 +248,7 @@ Route::prefix('v1')->group(function () {
             Route::get('/stats', [DriverController::class, 'stats']);
             
             // Trip request decision endpoints - standardized API design
+            Route::get('/trip-requests/assigned', [PublicBusTripController::class, 'getAssigned']);
             Route::post('/trip-requests/{id}/accept', [PublicBusTripController::class, 'accept'])->whereNumber('id');
             Route::post('/trip-requests/{id}/reject', [PublicBusTripController::class, 'reject'])->whereNumber('id');
             
