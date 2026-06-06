@@ -1,0 +1,241 @@
+{
+    "info": {
+        "name": "RideConnect - Passenger Profile Complete Test",
+        "description": "Complete test suite for GET /v1/passenger/profile endpoint with real data example",
+        "version": "1.0.0"
+    },
+    "item": [
+        {
+            "name": "1. Login Passenger",
+            "event": [
+                {
+                    "listen": "test",
+                    "script": {
+                        "exec": [
+                            "if (pm.response.code === 200) {",
+                            "    var jsonData = pm.response.json();",
+                            "    pm.environment.set('passenger_token', jsonData.token);",
+                            "    pm.environment.set('passenger_id', jsonData.user.id);",
+                            "    console.log('✓ Token saved: ' + jsonData.token.substring(0, 20) + '...');",
+                            "}"
+                        ]
+                    }
+                }
+            ],
+            "request": {
+                "method": "POST",
+                "header": [
+                    {
+                        "key": "Content-Type",
+                        "value": "application/json"
+                    }
+                ],
+                "body": {
+                    "mode": "raw",
+                    "raw": "{\n  \"email_or_phone\": \"test.passenger@example.com\",\n  \"password\": \"Password123!\"\n}"
+                },
+                "url": {
+                    "raw": "{{base_url}}/api/v1/auth/mobile/login",
+                    "host": [
+                        "{{base_url}}"
+                    ],
+                    "path": [
+                        "api",
+                        "v1",
+                        "auth",
+                        "mobile",
+                        "login"
+                    ]
+                }
+            }
+        },
+        {
+            "name": "2. Get Passenger Profile",
+            "event": [
+                {
+                    "listen": "test",
+                    "script": {
+                        "exec": [
+                            "pm.test('Status code is 200', function () {",
+                            "    pm.response.to.have.status(200);",
+                            "});",
+                            "",
+                            "pm.test('Response has success flag', function () {",
+                            "    var jsonData = pm.response.json();",
+                            "    pm.expect(jsonData.success).to.be.true;",
+                            "});",
+                            "",
+                            "pm.test('Profile data contains all required fields', function () {",
+                            "    var jsonData = pm.response.json();",
+                            "    var profile = jsonData.data;",
+                            "    ",
+                            "    // Basic info",
+                            "    pm.expect(profile).to.have.property('id');",
+                            "    pm.expect(profile).to.have.property('name');",
+                            "    pm.expect(profile).to.have.property('email');",
+                            "    pm.expect(profile).to.have.property('phone');",
+                            "    pm.expect(profile).to.have.property('role');",
+                            "    pm.expect(profile.role).to.equal('PASSENGER');",
+                            "    ",
+                            "    // Statistics",
+                            "    pm.expect(profile).to.have.property('statistics');",
+                            "    pm.expect(profile.statistics).to.have.property('total_trips');",
+                            "    pm.expect(profile.statistics).to.have.property('total_bookings');",
+                            "    pm.expect(profile.statistics).to.have.property('total_spent');",
+                            "    pm.expect(profile.statistics).to.have.property('rating');",
+                            "    pm.expect(profile.statistics).to.have.property('reliability_score');",
+                            "    pm.expect(profile.statistics).to.have.property('cancellation_rate');",
+                            "    ",
+                            "    // Preferences",
+                            "    pm.expect(profile).to.have.property('preferences');",
+                            "    pm.expect(profile.preferences).to.have.property('preferred_payment_method');",
+                            "    pm.expect(profile.preferences).to.have.property('emergency_contact_name');",
+                            "    pm.expect(profile.preferences).to.have.property('saved_locations_count');",
+                            "    ",
+                            "    // Verification",
+                            "    pm.expect(profile).to.have.property('verification');",
+                            "    pm.expect(profile.verification).to.have.property('verified');",
+                            "    pm.expect(profile.verification).to.have.property('approved');",
+                            "});",
+                            "",
+                            "pm.test('Statistics values are valid', function () {",
+                            "    var jsonData = pm.response.json();",
+                            "    var stats = jsonData.data.statistics;",
+                            "    ",
+                            "    pm.expect(stats.total_trips).to.be.a('number');",
+                            "    pm.expect(stats.total_bookings).to.be.a('number');",
+                            "    pm.expect(stats.total_spent).to.be.a('number');",
+                            "    pm.expect(stats.rating).to.be.within(0, 5);",
+                            "    pm.expect(stats.reliability_score).to.be.within(0, 1);",
+                            "    pm.expect(stats.cancellation_rate).to.be.within(0, 1);",
+                            "});",
+                            "",
+                            "pm.test('Timestamps are valid ISO8601', function () {",
+                            "    var jsonData = pm.response.json();",
+                            "    var profile = jsonData.data;",
+                            "    ",
+                            "    // Check member_since is valid ISO8601",
+                            "    var memberSince = new Date(profile.member_since);",
+                            "    pm.expect(memberSince.getTime()).to.be.greaterThan(0);",
+                            "});"
+                        ]
+                    }
+                }
+            ],
+            "request": {
+                "method": "GET",
+                "header": [
+                    {
+                        "key": "Authorization",
+                        "value": "Bearer {{passenger_token}}"
+                    },
+                    {
+                        "key": "Content-Type",
+                        "value": "application/json"
+                    }
+                ],
+                "url": {
+                    "raw": "{{base_url}}/api/v1/passenger/profile",
+                    "host": [
+                        "{{base_url}}"
+                    ],
+                    "path": [
+                        "api",
+                        "v1",
+                        "passenger",
+                        "profile"
+                    ]
+                }
+            }
+        },
+        {
+            "name": "3. Verify Profile Statistics (Console Output)",
+            "event": [
+                {
+                    "listen": "test",
+                    "script": {
+                        "exec": [
+                            "var jsonData = pm.response.json();",
+                            "var profile = jsonData.data;",
+                            "var stats = profile.statistics;",
+                            "",
+                            "console.log('\\n========================================');",
+                            "console.log('PASSENGER PROFILE - REAL DATA RETRIEVED');",
+                            "console.log('========================================\\n');",
+                            "",
+                            "console.log('👤 BASIC INFORMATION');",
+                            "console.log('├─ Name: ' + profile.name);",
+                            "console.log('├─ Email: ' + profile.email);",
+                            "console.log('├─ Phone: ' + profile.phone);",
+                            "console.log('├─ Role: ' + profile.role);",
+                            "console.log('├─ Status: ' + (profile.is_approved ? '✓ Approved' : '✗ Not Approved') + ', ' + (profile.is_verified ? '✓ Verified' : '✗ Not Verified'));",
+                            "console.log('└─ Member Since: ' + profile.member_since);",
+                            "",
+                            "console.log('\\n📊 STATISTICS');",
+                            "console.log('├─ Total Trips: ' + stats.total_trips);",
+                            "console.log('├─ Total Bookings: ' + stats.total_bookings);",
+                            "console.log('├─ Completed Bookings: ' + stats.completed_bookings);",
+                            "console.log('├─ Total Spent: ' + stats.total_spent + ' (Currency)');",
+                            "console.log('├─ Average per Trip: ' + stats.average_spent_per_trip);",
+                            "console.log('├─ Rating: ⭐ ' + stats.rating + '/5');",
+                            "console.log('├─ Reliability Score: ' + (stats.reliability_score * 100).toFixed(1) + '%');",
+                            "console.log('└─ Cancellation Rate: ' + (stats.cancellation_rate * 100).toFixed(1) + '%');",
+                            "",
+                            "console.log('\\n🎯 PREFERENCES');",
+                            "console.log('├─ Payment Method: ' + profile.preferences.preferred_payment_method);",
+                            "console.log('├─ Emergency Contact: ' + profile.preferences.emergency_contact_name);",
+                            "console.log('├─ Emergency Phone: ' + profile.preferences.emergency_contact_phone);",
+                            "console.log('└─ Saved Locations: ' + profile.preferences.saved_locations_count);",
+                            "",
+                            "console.log('\\n✅ VERIFICATION');",
+                            "console.log('├─ Email Verified: ' + (profile.verification.verified ? 'Yes' : 'No'));",
+                            "console.log('├─ Account Approved: ' + (profile.verification.approved ? 'Yes' : 'No'));",
+                            "console.log('├─ Verified At: ' + (profile.verification.verified_at || 'N/A'));",
+                            "console.log('└─ Approved At: ' + (profile.verification.approved_at || 'N/A'));",
+                            "",
+                            "console.log('\\n========================================\\n');"
+                        ]
+                    }
+                }
+            ],
+            "request": {
+                "method": "GET",
+                "header": [
+                    {
+                        "key": "Authorization",
+                        "value": "Bearer {{passenger_token}}"
+                    }
+                ],
+                "url": {
+                    "raw": "{{base_url}}/api/v1/passenger/profile",
+                    "host": [
+                        "{{base_url}}"
+                    ],
+                    "path": [
+                        "api",
+                        "v1",
+                        "passenger",
+                        "profile"
+                    ]
+                }
+            }
+        }
+    ],
+    "variable": [
+        {
+            "key": "base_url",
+            "value": "http://localhost:8000",
+            "type": "string"
+        },
+        {
+            "key": "passenger_token",
+            "value": "",
+            "type": "string"
+        },
+        {
+            "key": "passenger_id",
+            "value": "",
+            "type": "string"
+        }
+    ]
+}
