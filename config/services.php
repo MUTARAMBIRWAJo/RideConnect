@@ -80,6 +80,10 @@ return [
 
     'google_maps' => [
         'key' => env('GOOGLE_MAPS_API_KEY', env('LARAMAP_GOOGLE_API_KEY')),
+        'timeout' => env('GOOGLE_MAPS_API_TIMEOUT', 10), // seconds
+        'retry_attempts' => env('GOOGLE_MAPS_RETRY_ATTEMPTS', 2), // retry count for failed requests
+        'region' => env('GOOGLE_MAPS_REGION', 'rw'), // Rwanda default region
+        'debug' => env('APP_DEBUG', false), // log all requests when debugging
     ],
 
     'ride_ai' => [

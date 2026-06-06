@@ -75,6 +75,11 @@ class GoogleMapsGeocodingService
     /**
      * Attempt to geocode using Google Maps API.
      *
+     * Strategy:
+     * 1. Try original location
+     * 2. If fails, retry with ", Kigali, Rwanda" appended
+     * 3. If still fails, return null for database fallback
+     *
      * @param  string  $location
      * @return array|null
      */
@@ -87,14 +92,49 @@ class GoogleMapsGeocodingService
             return null;
         }
 
+        // Try 1: Original location
+        $result = $this->queryGoogleGeocoding($location, $apiKey);
+        if ($result !== null) {
+            return $result;
+        }
+
+        // Try 2: Append Kigali, Rwanda context (common for Rwanda locations)
+        $locationWithContext = $location . ', Kigali, Rwanda';
+        Log::debug('Retrying with context appended', [
+            'original' => $location,
+            'with_context' => $locationWithContext,
+        ]);
+
+        $result = $this->queryGoogleGeocoding($locationWithContext, $apiKey);
+        if ($result !== null) {
+            return $result;
+        }
+
+        // All attempts failed
+        Log::debug('All Google Geocoding attempts failed', ['location' => $location]);
+        return null;
+    }
+
+    /**
+     * Execute a single Google Geocoding API query.
+     *
+     * @param  string  $address
+     * @param  string  $apiKey
+     * @return array|null
+     */
+    private function queryGoogleGeocoding(string $address, string $apiKey): ?array
+    {
         try {
-            Log::debug('Attempting Google Maps geocoding', ['location' => $location]);
+            Log::debug('Querying Google Maps Geocoding API', ['address' => $address]);
+
+            // URL encode the address for proper API handling
+            $encodedAddress = urlencode($address);
 
             $response = Http::timeout(self::API_TIMEOUT)
                 ->get(self::GOOGLE_GEOCODING_URL, [
-                    'address' => $location,
+                    'address' => $address,
                     'key' => $apiKey,
-                    'region' => 'rw', // Rwanda region
+                    'region' => config('services.google_maps.region', 'rw'),
                 ])
                 ->json();
 
@@ -106,24 +146,32 @@ class GoogleMapsGeocodingService
             // Check for successful response
             if ($response['status'] !== 'OK') {
                 if ($response['status'] === 'ZERO_RESULTS') {
-                    Log::debug('Google Maps returned ZERO_RESULTS', ['location' => $location]);
+                    Log::debug('Google Maps returned ZERO_RESULTS', ['address' => $address]);
                 } elseif ($response['status'] === 'OVER_QUERY_LIMIT') {
                     Log::warning('Google Maps API quota exceeded');
                 } else {
-                    Log::warning('Google Maps API error', ['status' => $response['status']]);
+                    Log::warning('Google Maps API error', [
+                        'status' => $response['status'],
+                        'address' => $address,
+                    ]);
                 }
                 return null;
             }
 
             // Extract first result
             if (empty($response['results'])) {
-                Log::debug('Google Maps returned empty results');
+                Log::debug('Google Maps returned empty results', ['address' => $address]);
                 return null;
             }
 
             $result = $response['results'][0];
             $location_obj = $result['geometry']['location'];
             $formatted_address = $result['formatted_address'] ?? null;
+
+            Log::debug('Google Maps geocoding successful', [
+                'address' => $address,
+                'formatted_address' => $formatted_address,
+            ]);
 
             return [
                 'lat' => (float) $location_obj['lat'],
@@ -132,7 +180,7 @@ class GoogleMapsGeocodingService
             ];
         } catch (\Exception $e) {
             Log::error('Google Maps geocoding exception', [
-                'location' => $location,
+                'address' => $address,
                 'error' => $e->getMessage(),
             ]);
             return null;

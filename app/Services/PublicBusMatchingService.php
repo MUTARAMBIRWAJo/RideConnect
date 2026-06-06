@@ -33,6 +33,7 @@ class PublicBusMatchingService
         private readonly GoogleMapsGeocodingService $googleMapsGeocodingService,
         private readonly FareCalculatorService $fareCalculatorService,
         private readonly PublicBusTransportService $busTransportService,
+        private readonly DistanceService $distanceService,
     ) {}
 
     /**
@@ -153,6 +154,9 @@ class PublicBusMatchingService
     /**
      * Find the nearest active bus to the passenger's pickup location.
      *
+     * Uses DistanceService for accurate distance calculations with Google Distance Matrix
+     * API fallback to Haversine formula.
+     *
      * @param array $activeBuses List of active bus assignments
      * @param float $pickupLat Passenger pickup latitude
      * @param float $pickupLng Passenger pickup longitude
@@ -160,42 +164,90 @@ class PublicBusMatchingService
      */
     private function findNearestBus(array $activeBuses, float $pickupLat, float $pickupLng): ?array
     {
-        $nearestBus = null;
-        $minDistance = PHP_FLOAT_MAX;
+        if (empty($activeBuses)) {
+            Log::warning('No active buses provided to findNearestBus');
+            return null;
+        }
 
-        foreach ($activeBuses as $busData) {
+        // Prepare destination coordinates for batch distance calculation
+        $destinations = [];
+        $busDataMap = [];
+
+        foreach ($activeBuses as $index => $busData) {
             // Get bus current location
             $busLatitude = $busData['current_location']['latitude'] ?? $busData['bus']['latitude'] ?? null;
             $busLongitude = $busData['current_location']['longitude'] ?? $busData['bus']['longitude'] ?? null;
 
-            if (! $busLatitude || ! $busLongitude) {
+            if (!$busLatitude || !$busLongitude) {
+                Log::debug('Skipping bus without location', [
+                    'bus_id' => $busData['bus_id'] ?? $busData['bus']['id'] ?? null,
+                ]);
                 continue;
             }
 
-            // Calculate distance to this bus
-            $distance = $this->calculateDistance($pickupLat, $pickupLng, $busLatitude, $busLongitude);
-
-            // Update if this is the nearest bus so far
-            if ($distance < $minDistance) {
-                $minDistance = $distance;
-                $nearestBus = [
-                    'bus_id' => $busData['bus_id'] ?? $busData['bus']['id'] ?? null,
-                    'vehicle_id' => $busData['bus']['id'] ?? $busData['bus_id'] ?? null,
-                    'driver_id' => $busData['driver_id'] ?? $busData['driver']['id'] ?? null,
-                    'vehicle_plate_number' => $busData['bus']['license_plate'] ?? $busData['bus']['plate_number'] ?? null,
-                    'vehicle_capacity' => $busData['bus']['seats'] ?? $busData['bus']['capacity'] ?? null,
-                    'vehicle_available_seats' => $busData['available_seats'] ?? 0,
-                    'driver_name' => $busData['driver']['user']['name'] ?? $busData['driver']['name'] ?? null,
-                    'distance_to_passenger_km' => round($minDistance, 2),
-                ];
-            }
+            $busId = $busData['bus_id'] ?? $busData['bus']['id'] ?? null;
+            $destinations[] = [
+                'id' => $index,
+                'lat' => (float) $busLatitude,
+                'lng' => (float) $busLongitude,
+            ];
+            $busDataMap[$index] = $busData;
         }
 
-        return $nearestBus;
+        if (empty($destinations)) {
+            Log::warning('No valid bus coordinates found');
+            return null;
+        }
+
+        try {
+            // Use DistanceService for batch distance calculation
+            $sortedDestinations = $this->distanceService->calculateBatchDistances(
+                $pickupLat,
+                $pickupLng,
+                $destinations
+            );
+
+            if (empty($sortedDestinations)) {
+                Log::warning('Distance calculation returned no results');
+                return null;
+            }
+
+            // Get the nearest bus (first in sorted array)
+            $nearestDest = $sortedDestinations[0];
+            $busIndex = $nearestDest['id'];
+            $busData = $busDataMap[$busIndex];
+            $distanceKm = $nearestDest['distance_km'];
+            $durationMinutes = $nearestDest['duration_minutes'];
+
+            Log::info('Nearest bus found', [
+                'distance_km' => $distanceKm,
+                'duration_minutes' => $durationMinutes,
+            ]);
+
+            return [
+                'bus_id' => $busData['bus_id'] ?? $busData['bus']['id'] ?? null,
+                'vehicle_id' => $busData['bus']['id'] ?? $busData['bus_id'] ?? null,
+                'driver_id' => $busData['driver_id'] ?? $busData['driver']['id'] ?? null,
+                'vehicle_plate_number' => $busData['bus']['license_plate'] ?? $busData['bus']['plate_number'] ?? null,
+                'vehicle_capacity' => $busData['bus']['seats'] ?? $busData['bus']['capacity'] ?? null,
+                'vehicle_available_seats' => $busData['available_seats'] ?? 0,
+                'driver_name' => $busData['driver']['user']['name'] ?? $busData['driver']['name'] ?? null,
+                'distance_to_passenger_km' => $distanceKm,
+                'eta_minutes' => $durationMinutes,
+            ];
+        } catch (\Exception $e) {
+            Log::error('Error in findNearestBus', [
+                'error' => $e->getMessage(),
+                'bus_count' => count($destinations),
+            ]);
+            return null;
+        }
     }
 
     /**
      * Calculate distance between two geographic points using Haversine formula.
+     *
+     * DEPRECATED: Use DistanceService instead for better API integration.
      *
      * @param float $lat1 Latitude of first point
      * @param float $lng1 Longitude of first point
@@ -232,7 +284,9 @@ class PublicBusMatchingService
     }
 
     /**
-     * Get route details (distance and duration) using Google Directions API.
+     * Get route details (distance and duration) using DistanceService.
+     *
+     * Uses Google Distance Matrix API for accurate calculations with Haversine fallback.
      *
      * @param float $pickupLat
      * @param float $pickupLng
@@ -246,53 +300,42 @@ class PublicBusMatchingService
         float $dropoffLat,
         float $dropoffLng
     ): array {
-        $apiKey = config('services.google.maps_api_key') ?? env('GOOGLE_MAPS_API_KEY');
+        try {
+            Log::debug('Calculating route details', [
+                'pickup' => ["lat" => $pickupLat, "lng" => $pickupLng],
+                'dropoff' => ["lat" => $dropoffLat, "lng" => $dropoffLng],
+            ]);
 
-        if (! $apiKey) {
-            Log::warning('Google Maps API key not configured for directions API');
+            $result = $this->distanceService->calculateDistance(
+                $pickupLat,
+                $pickupLng,
+                $dropoffLat,
+                $dropoffLng
+            );
+
+            Log::info('Route details calculated successfully', [
+                'distance_km' => $result['distance_km'],
+                'duration_minutes' => $result['duration_minutes'],
+            ]);
 
             return [
-                'distance_km' => $this->calculateDistance($pickupLat, $pickupLng, $dropoffLat, $dropoffLng),
-                'duration_minutes' => (int) round(
-                    ($this->calculateDistance($pickupLat, $pickupLng, $dropoffLat, $dropoffLng) / self::AVERAGE_BUS_SPEED_KMH) * 60
-                ),
+                'distance_km' => $result['distance_km'],
+                'duration_minutes' => $result['duration_minutes'],
+            ];
+        } catch (\Exception $e) {
+            Log::error('Error calculating route details', [
+                'error' => $e->getMessage(),
+                'pickup' => ["lat" => $pickupLat, "lng" => $pickupLng],
+                'dropoff' => ["lat" => $dropoffLat, "lng" => $dropoffLng],
+            ]);
+
+            // Fallback to Haversine calculation
+            $distanceKm = round($this->calculateDistance($pickupLat, $pickupLng, $dropoffLat, $dropoffLng), 2);
+            return [
+                'distance_km' => $distanceKm,
+                'duration_minutes' => $this->calculateEta($distanceKm, self::AVERAGE_BUS_SPEED_KMH),
             ];
         }
-
-        try {
-            $response = Http::timeout(10)
-                ->get(self::GOOGLE_DIRECTIONS_URL, [
-                    'origin' => "{$pickupLat},{$pickupLng}",
-                    'destination' => "{$dropoffLat},{$dropoffLng}",
-                    'mode' => 'driving',
-                    'key' => $apiKey,
-                    'language' => 'en',
-                    'region' => 'rw',
-                ]);
-
-            if ($response->successful() && ! empty($response->json('routes'))) {
-                $route = $response->json('routes')[0];
-                $leg = $route['legs'][0] ?? null;
-
-                if ($leg) {
-                    return [
-                        'distance_km' => round(($leg['distance']['value'] ?? 0) / 1000, 2),
-                        'duration_minutes' => (int) round(($leg['duration']['value'] ?? 0) / 60),
-                    ];
-                }
-            }
-        } catch (\Exception $e) {
-            Log::error('Google Directions API error', ['error' => $e->getMessage()]);
-        }
-
-        // Fallback to Haversine calculation
-        return [
-            'distance_km' => round($this->calculateDistance($pickupLat, $pickupLng, $dropoffLat, $dropoffLng), 2),
-            'duration_minutes' => $this->calculateEta(
-                $this->calculateDistance($pickupLat, $pickupLng, $dropoffLat, $dropoffLng),
-                self::AVERAGE_BUS_SPEED_KMH
-            ),
-        ];
     }
 
     /**
