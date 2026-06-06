@@ -12,19 +12,22 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::create('saved_locations', function (Blueprint $table) {
-            $table->id();
-            $table->string('name', 255)->unique();
-            $table->decimal('lat', 10, 8); // Latitude: -90 to 90
-            $table->decimal('lng', 11, 8); // Longitude: -180 to 180
-            $table->timestamps();
-            
-            // Index for LIKE queries
-            $table->index('name');
-        });
+        // Only create table if it doesn't already exist
+        if (!Schema::hasTable('saved_locations')) {
+            Schema::create('saved_locations', function (Blueprint $table) {
+                $table->id();
+                $table->string('name', 255)->unique();
+                $table->decimal('lat', 10, 8); // Latitude: -90 to 90
+                $table->decimal('lng', 11, 8); // Longitude: -180 to 180
+                $table->timestamps();
+                
+                // Index for LIKE queries
+                $table->index('name');
+            });
 
-        // Seed initial Rwanda locations for fallback geocoding
-        $this->seedRwandaLocations();
+            // Seed initial Rwanda locations for fallback geocoding
+            $this->seedRwandaLocations();
+        }
     }
 
     /**
