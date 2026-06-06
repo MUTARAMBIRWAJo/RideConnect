@@ -19,6 +19,7 @@ use App\Http\Controllers\Api\DriverController;
 use App\Http\Controllers\Api\DriverPublicBusController;
 use App\Http\Controllers\Api\DriverPublicTransportController;
 use App\Http\Controllers\Api\DriverTripController;
+use App\Http\Controllers\Api\MotorcycleTripController;
 use App\Http\Controllers\Api\PublicBusTripController;
 use App\Http\Controllers\API\DriverLocationController;
 use App\Http\Controllers\Api\DriverTrackingController;
@@ -195,6 +196,13 @@ Route::prefix('v1')->group(function () {
                 Route::get('/trips/current', [PassengerPublicBusController::class, 'currentTrip']);
                 Route::get('/tickets/{ticket}', [PassengerPublicBusController::class, 'ticket']);
             });
+
+            // Motorcycle/Motor-vehicle Trip Routes
+            Route::prefix('motor-vehicle')->group(function () {
+                Route::post('/trip-requests', [MotorcycleTripController::class, 'store']);
+                Route::post('/trip-requests/{id}/cancel', [MotorcycleTripController::class, 'cancel'])->whereNumber('id');
+            });
+
             Route::get('/public-transport/corridors', [PassengerController::class, 'corridors']);
             Route::get('/public-transport/routes', [PassengerController::class, 'routes']);
             Route::get('/public-transport/available', [PublicTransportController::class, 'available']);
@@ -258,6 +266,16 @@ Route::prefix('v1')->group(function () {
                 Route::post('/passenger-boarded', [DriverPublicBusController::class, 'passengerBoarded']);
                 Route::post('/passenger-completed', [DriverPublicBusController::class, 'passengerCompleted']);
             });
+
+            // Motorcycle/Motor-vehicle Trip Routes
+            Route::prefix('motor-vehicle')->group(function () {
+                Route::post('/trip-requests/{id}/accept', [MotorcycleTripController::class, 'accept'])->whereNumber('id');
+                Route::post('/trip-requests/{id}/reject', [MotorcycleTripController::class, 'reject'])->whereNumber('id');
+                Route::post('/trip-requests/{id}/arrived', [MotorcycleTripController::class, 'arrived'])->whereNumber('id');
+                Route::post('/trip-requests/{id}/start', [MotorcycleTripController::class, 'start'])->whereNumber('id');
+                Route::post('/trip-requests/{id}/complete', [MotorcycleTripController::class, 'complete'])->whereNumber('id');
+            });
+
             Route::post('/status', [DriverPublicTransportController::class, 'updateStatus']);
             Route::get('/assignment/current', [DriverPublicTransportController::class, 'currentAssignment']);
             Route::post('/assignments/{attempt}/accept', [DriverPublicTransportController::class, 'accept'])->whereNumber('attempt');
