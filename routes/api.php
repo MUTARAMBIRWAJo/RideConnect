@@ -185,6 +185,10 @@ Route::prefix('v1')->group(function () {
                 Route::get('/requests/{id}', [PassengerPublicBusController::class, 'showRequest'])
                     ->name('passenger.public-bus.show-request');
 
+                // Test geocoding endpoint
+                Route::get('/test-geocode', [PassengerPublicBusController::class, 'testGeocode'])
+                    ->name('passenger.public-bus.test-geocode');
+
                 // Seat booking
                 Route::post('/book-seat', [PassengerPublicBusController::class, 'bookSeat']);
                 Route::get('/trips/current', [PassengerPublicBusController::class, 'currentTrip']);

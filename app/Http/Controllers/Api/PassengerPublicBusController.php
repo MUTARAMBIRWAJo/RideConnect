@@ -3,20 +3,26 @@
 namespace App\Http\Controllers\Api;
 
 use App\Exceptions\DomainException;
+use App\Exceptions\GeocodingException;
 use App\Http\Controllers\Controller;
 use App\Models\MobileUser;
 use App\Models\PassengerRouteBoarding;
 use App\Models\TransportCorridor;
+use App\Services\GoogleMapsGeocodingService;
 use App\Services\PublicBusTransportService;
 use Illuminate\Auth\Access\AuthorizationException;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Gate;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Validation\ValidationException;
 
 class PassengerPublicBusController extends Controller
 {
-    public function __construct(private readonly PublicBusTransportService $busService) {}
+    public function __construct(
+        private readonly PublicBusTransportService $busService,
+        private readonly GoogleMapsGeocodingService $geocodingService,
+    ) {}
 
     public function corridors(): JsonResponse
     {
@@ -234,6 +240,74 @@ class PassengerPublicBusController extends Controller
                 'success' => false,
                 'message' => $e->getMessage(),
             ], 400);
+        }
+    }
+
+    /**
+     * GET /api/v1/test-geocode?location=Kimironko Market
+     * 
+     * Test geocoding endpoint - returns lat/lng for a location.
+     * This is a debug/testing endpoint to verify geocoding functionality.
+     * 
+     * Returns the coordinates from either Google Maps API or local database fallback.
+     */
+    public function testGeocode(Request $request): JsonResponse
+    {
+        $location = $request->query('location');
+
+        if (empty($location)) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Location parameter is required',
+                'error_code' => 'MISSING_LOCATION',
+            ], 400);
+        }
+
+        if (strlen($location) > 255) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Location name is too long (max 255 characters)',
+                'error_code' => 'LOCATION_TOO_LONG',
+            ], 400);
+        }
+
+        try {
+            Log::info('Test geocode request', ['location' => $location]);
+            
+            $result = $this->geocodingService->geocode($location);
+
+            return response()->json([
+                'success' => true,
+                'message' => 'Geocoding successful',
+                'data' => [
+                    'location_input' => $location,
+                    'formatted_address' => $result['formatted_address'] ?? $location,
+                    'latitude' => $result['lat'],
+                    'longitude' => $result['lng'],
+                ],
+            ]);
+        } catch (GeocodingException $e) {
+            Log::error('Test geocode failed', [
+                'location' => $location,
+                'error' => $e->getMessage(),
+            ]);
+
+            return response()->json([
+                'success' => false,
+                'message' => $e->getMessage(),
+                'error_code' => 'GEOCODING_FAILED',
+            ], 422);
+        } catch (\Exception $e) {
+            Log::error('Test geocode unexpected error', [
+                'location' => $location,
+                'error' => $e->getMessage(),
+            ]);
+
+            return response()->json([
+                'success' => false,
+                'message' => 'An unexpected error occurred',
+                'error_code' => 'SERVER_ERROR',
+            ], 500);
         }
     }
 

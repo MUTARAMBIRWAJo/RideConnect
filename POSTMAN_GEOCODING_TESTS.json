@@ -1,0 +1,259 @@
+{
+  "info": {
+    "name": "RideConnect - Geocoding System",
+    "description": "Test collection for the new Google Maps + Database Fallback Geocoding System",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "auth": {
+    "type": "bearer",
+    "bearer": [
+      {
+        "key": "token",
+        "value": "{{passenger_token}}",
+        "type": "string"
+      }
+    ]
+  },
+  "item": [
+    {
+      "name": "Test Geocoding - Kimironko Market (Database Fallback)",
+      "request": {
+        "method": "GET",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          },
+          {
+            "key": "Authorization",
+            "value": "Bearer {{passenger_token}}"
+          }
+        ],
+        "url": {
+          "raw": "{{base_url}}/api/v1/passenger/public-bus/test-geocode?location=Kimironko%20Market",
+          "host": ["{{base_url}}"],
+          "path": ["api", "v1", "passenger", "public-bus", "test-geocode"],
+          "query": [
+            {
+              "key": "location",
+              "value": "Kimironko Market",
+              "disabled": false
+            }
+          ]
+        },
+        "description": "Test geocoding using pre-seeded location from database fallback.\n\nExpected Result:\n- Success: true\n- Latitude: -1.948\n- Longitude: 30.0619"
+      },
+      "response": []
+    },
+    {
+      "name": "Test Geocoding - Nyabugogo Bus Park (Database Fallback)",
+      "request": {
+        "method": "GET",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          },
+          {
+            "key": "Authorization",
+            "value": "Bearer {{passenger_token}}"
+          }
+        ],
+        "url": {
+          "raw": "{{base_url}}/api/v1/passenger/public-bus/test-geocode?location=Nyabugogo%20Bus%20Park",
+          "host": ["{{base_url}}"],
+          "path": ["api", "v1", "passenger", "public-bus", "test-geocode"],
+          "query": [
+            {
+              "key": "location",
+              "value": "Nyabugogo Bus Park",
+              "disabled": false
+            }
+          ]
+        },
+        "description": "Test geocoding using another pre-seeded location.\n\nExpected Result:\n- Success: true\n- Latitude: -1.9487\n- Longitude: 30.0597"
+      },
+      "response": []
+    },
+    {
+      "name": "Test Geocoding - Custom Location (Google Maps API)",
+      "request": {
+        "method": "GET",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          },
+          {
+            "key": "Authorization",
+            "value": "Bearer {{passenger_token}}"
+          }
+        ],
+        "url": {
+          "raw": "{{base_url}}/api/v1/passenger/public-bus/test-geocode?location=Kigali%20Central%20Prison",
+          "host": ["{{base_url}}"],
+          "path": ["api", "v1", "passenger", "public-bus", "test-geocode"],
+          "query": [
+            {
+              "key": "location",
+              "value": "Kigali Central Prison",
+              "disabled": false
+            }
+          ]
+        },
+        "description": "Test geocoding with a custom location not in the database.\nThis will attempt Google Maps API if key is configured.\n\nIf GOOGLE_MAPS_API_KEY is set:\n- Google Maps API will be used\n- Returns coordinates from Google\n\nIf API fails or key not set:\n- Will attempt database fallback\n- If no match found, returns GEOCODING_FAILED error"
+      },
+      "response": []
+    },
+    {
+      "name": "Test Geocoding - Partial Match (LIKE Query)",
+      "request": {
+        "method": "GET",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          },
+          {
+            "key": "Authorization",
+            "value": "Bearer {{passenger_token}}"
+          }
+        ],
+        "url": {
+          "raw": "{{base_url}}/api/v1/passenger/public-bus/test-geocode?location=Nyabugogo",
+          "host": ["{{base_url}}"],
+          "path": ["api", "v1", "passenger", "public-bus", "test-geocode"],
+          "query": [
+            {
+              "key": "location",
+              "value": "Nyabugogo",
+              "disabled": false
+            }
+          ]
+        },
+        "description": "Test LIKE pattern matching in database fallback.\nSearches for locations containing 'Nyabugogo' (case-insensitive).\n\nExpected Result:\n- Matches 'Nyabugogo Bus Park'\n- Returns coordinates: [-1.9487, 30.0597]"
+      },
+      "response": []
+    },
+    {
+      "name": "Test Geocoding - Missing Location Parameter",
+      "request": {
+        "method": "GET",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          },
+          {
+            "key": "Authorization",
+            "value": "Bearer {{passenger_token}}"
+          }
+        ],
+        "url": {
+          "raw": "{{base_url}}/api/v1/passenger/public-bus/test-geocode",
+          "host": ["{{base_url}}"],
+          "path": ["api", "v1", "passenger", "public-bus", "test-geocode"]
+        },
+        "description": "Test error handling for missing location parameter.\n\nExpected Response:\n- Status: 400 Bad Request\n- Error Code: MISSING_LOCATION\n- Message: Location parameter is required"
+      },
+      "response": []
+    },
+    {
+      "name": "Test Geocoding - Invalid Location (Not Found)",
+      "request": {
+        "method": "GET",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          },
+          {
+            "key": "Authorization",
+            "value": "Bearer {{passenger_token}}"
+          }
+        ],
+        "url": {
+          "raw": "{{base_url}}/api/v1/passenger/public-bus/test-geocode?location=NonExistentPlaceXYZ123",
+          "host": ["{{base_url}}"],
+          "path": ["api", "v1", "passenger", "public-bus", "test-geocode"],
+          "query": [
+            {
+              "key": "location",
+              "value": "NonExistentPlaceXYZ123",
+              "disabled": false
+            }
+          ]
+        },
+        "description": "Test error handling for non-existent location.\n\nExpected Response:\n- Status: 422 Unprocessable Entity\n- Error Code: GEOCODING_FAILED\n- Message: Could not geocode location: NonExistentPlaceXYZ123"
+      },
+      "response": []
+    },
+    {
+      "name": "Test Trip Request - With Location Names",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          },
+          {
+            "key": "Authorization",
+            "value": "Bearer {{passenger_token}}"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"corridor_id\": 1,\n  \"pickup_location\": \"Kimironko Market\",\n  \"dropoff_location\": \"Nyabugogo Bus Park\"\n}"
+        },
+        "url": {
+          "raw": "{{base_url}}/api/v1/passenger/public-bus/request",
+          "host": ["{{base_url}}"],
+          "path": ["api", "v1", "passenger", "public-bus", "request"]
+        },
+        "description": "Test the full trip request flow with geocoding.\n\nThis endpoint uses GoogleMapsGeocodingService internally:\n1. Validates corridor exists\n2. Geocodes 'Kimironko Market' → [-1.948, 30.0619]\n3. Geocodes 'Nyabugogo Bus Park' → [-1.9487, 30.0597]\n4. Finds nearest active bus\n5. Calculates ETA and route details\n6. Estimates fare\n7. Creates trip request\n8. Returns matched bus details\n\nExpected Response (201 Created):\n{\n  \"success\": true,\n  \"message\": \"Public bus match found\",\n  \"data\": {\n    \"trip_request_id\": \"...\",\n    \"corridor\": {...},\n    \"pickup\": {\n      \"name\": \"Kimironko Market\",\n      \"latitude\": -1.948,\n      \"longitude\": 30.0619\n    },\n    \"dropoff\": {...},\n    \"matched_bus\": {...},\n    \"estimated_fare\": 1500,\n    \"distance_to_bus_km\": 2.3,\n    \"bus_eta_minutes\": 5\n  }\n}"
+      },
+      "response": []
+    },
+    {
+      "name": "Test Trip Request - Invalid Location (Geocoding Fails)",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          },
+          {
+            "key": "Authorization",
+            "value": "Bearer {{passenger_token}}"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"corridor_id\": 1,\n  \"pickup_location\": \"InvalidPlaceXYZ\",\n  \"dropoff_location\": \"Nyabugogo Bus Park\"\n}"
+        },
+        "url": {
+          "raw": "{{base_url}}/api/v1/passenger/public-bus/request",
+          "host": ["{{base_url}}"],
+          "path": ["api", "v1", "passenger", "public-bus", "request"]
+        },
+        "description": "Test error handling when geocoding fails.\n\nExpected Response (422 Unprocessable Entity):\n{\n  \"success\": false,\n  \"message\": \"Could not geocode location: InvalidPlaceXYZ\",\n  \"error_code\": \"MATCHING_FAILED\"\n}"
+      },
+      "response": []
+    }
+  ],
+  "variable": [
+    {
+      "key": "base_url",
+      "value": "http://localhost:8000",
+      "type": "string"
+    },
+    {
+      "key": "passenger_token",
+      "value": "",
+      "type": "string",
+      "description": "Bearer token for authenticated passenger. Get from login endpoint."
+    }
+  ]
+}

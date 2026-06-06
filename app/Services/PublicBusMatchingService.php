@@ -2,11 +2,11 @@
 
 namespace App\Services;
 
+use App\Exceptions\GeocodingException;
 use App\Models\BusRouteAssignment;
 use App\Models\TransportCorridor;
 use App\Models\TripRequest;
 use App\Models\User;
-use App\Services\Location\GeocodingService;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
 
@@ -30,7 +30,7 @@ class PublicBusMatchingService
     private const AVERAGE_BUS_SPEED_KMH = 40; // Default bus speed in km/h
 
     public function __construct(
-        private readonly GeocodingService $geocodingService,
+        private readonly GoogleMapsGeocodingService $googleMapsGeocodingService,
         private readonly FareCalculatorService $fareCalculatorService,
         private readonly PublicBusTransportService $busTransportService,
     ) {}
@@ -51,15 +51,19 @@ class PublicBusMatchingService
         // Step 1: Load corridor
         $corridor = TransportCorridor::query()->findOrFail($data['corridor_id']);
 
-        // Step 2: Geocode pickup location
-        $pickupCoords = $this->geocodingService->geocode($data['pickup_location'], 'rw');
-        if (! $pickupCoords) {
+        try {
+            // Step 2: Geocode pickup location using robust service with fallback
+            $pickupCoords = $this->googleMapsGeocodingService->geocode($data['pickup_location']);
+        } catch (GeocodingException $e) {
+            Log::error('Pickup geocoding failed', ['location' => $data['pickup_location']]);
             throw new \Exception("Could not geocode pickup location: {$data['pickup_location']}");
         }
 
-        // Step 3: Geocode dropoff location
-        $dropoffCoords = $this->geocodingService->geocode($data['dropoff_location'], 'rw');
-        if (! $dropoffCoords) {
+        try {
+            // Step 3: Geocode dropoff location using robust service with fallback
+            $dropoffCoords = $this->googleMapsGeocodingService->geocode($data['dropoff_location']);
+        } catch (GeocodingException $e) {
+            Log::error('Dropoff geocoding failed', ['location' => $data['dropoff_location']]);
             throw new \Exception("Could not geocode dropoff location: {$data['dropoff_location']}");
         }
 
