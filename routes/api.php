@@ -277,6 +277,9 @@ Route::prefix('v1')->group(function () {
             Route::put('/bookings/{id}/cancel', [BookingController::class, 'cancel']);
             Route::get('/trips', [DriverController::class, 'myTrips']);
             Route::get('/trip-requests', [RiderController::class, 'rideRequests']);
+            
+            // Legacy PUT routes (kept for backwards compatibility with older mobile clients)
+            // NOTE: POST routes for /trip-requests/{id}/accept|reject are defined above
             Route::put('/trip-requests/{id}/accept', [RiderController::class, 'acceptRequest']);
             Route::put('/trip-requests/{id}/reject', [RiderController::class, 'rejectRequest']);
             Route::put('/trip-requests/{id}/complete', [RiderController::class, 'completeRequest']);
