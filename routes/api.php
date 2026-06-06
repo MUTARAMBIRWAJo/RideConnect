@@ -19,6 +19,7 @@ use App\Http\Controllers\Api\DriverController;
 use App\Http\Controllers\Api\DriverPublicBusController;
 use App\Http\Controllers\Api\DriverPublicTransportController;
 use App\Http\Controllers\Api\DriverTripController;
+use App\Http\Controllers\Api\PublicBusTripController;
 use App\Http\Controllers\API\DriverLocationController;
 use App\Http\Controllers\Api\DriverTrackingController;
 use App\Http\Controllers\Api\Finance\ExportController;
@@ -245,14 +246,16 @@ Route::prefix('v1')->group(function () {
             Route::get('/profile', [DriverController::class, 'profile']);
             Route::put('/profile', [DriverController::class, 'updateProfile']);
             Route::get('/stats', [DriverController::class, 'stats']);
+            
+            // Trip request decision endpoints - standardized API design
+            Route::post('/trip-requests/{id}/accept', [PublicBusTripController::class, 'accept'])->whereNumber('id');
+            Route::post('/trip-requests/{id}/reject', [PublicBusTripController::class, 'reject'])->whereNumber('id');
+            
             Route::prefix('public-bus')->group(function () {
                 Route::post('/location', [DriverPublicBusController::class, 'location']);
                 Route::post('/arrived-stop', [DriverPublicBusController::class, 'arrivedStop']);
                 Route::post('/passenger-boarded', [DriverPublicBusController::class, 'passengerBoarded']);
                 Route::post('/passenger-completed', [DriverPublicBusController::class, 'passengerCompleted']);
-                // Trip request decision endpoints
-                Route::post('/trip-requests/{trip_request_id}/accept', [DriverPublicBusController::class, 'acceptTripRequest'])->whereNumber('trip_request_id');
-                Route::post('/trip-requests/{trip_request_id}/reject', [DriverPublicBusController::class, 'rejectTripRequest'])->whereNumber('trip_request_id');
             });
             Route::post('/status', [DriverPublicTransportController::class, 'updateStatus']);
             Route::get('/assignment/current', [DriverPublicTransportController::class, 'currentAssignment']);
