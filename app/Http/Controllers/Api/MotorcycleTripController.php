@@ -6,7 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Models\Driver;
 use App\Models\MotorcycleTrip;
 use App\Models\User;
-use App\Services\GeocodingService;
+use App\Services\Location\GeocodingService;
 use App\Services\MatchingService;
 use App\Services\MotorcycleTripService;
 use Illuminate\Http\JsonResponse;
