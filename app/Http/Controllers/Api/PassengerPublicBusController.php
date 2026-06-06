@@ -155,6 +155,88 @@ class PassengerPublicBusController extends Controller
         ]);
     }
 
+    /**
+     * POST /api/v1/passenger/public-bus/request
+     * Request a public bus trip with smart matching.
+     * 
+     * Accepts corridor_id, pickup_location (name), dropoff_location (name).
+     * Automatically geocodes locations and finds nearest active bus.
+     */
+    public function requestTrip(Request $request): JsonResponse
+    {
+        $user = $request->user();
+
+        if (! $user?->isPassenger()) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Only passengers can request public bus trips',
+            ], 403);
+        }
+
+        if (! $user->is_approved) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Your account must be approved to request a bus trip',
+            ], 403);
+        }
+
+        $validated = $request->validate([
+            'corridor_id' => 'required|integer|exists:transport_corridors,id',
+            'pickup_location' => 'required|string|min:3|max:255',
+            'dropoff_location' => 'required|string|min:3|max:255',
+        ]);
+
+        try {
+            /** @var \App\Services\PublicBusMatchingService $matchingService */
+            $matchingService = app(\App\Services\PublicBusMatchingService::class);
+            $result = $matchingService->requestTrip($user, $validated);
+
+            return response()->json($result, 201);
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => $e->getMessage(),
+                'error_code' => 'MATCHING_FAILED',
+            ], 422);
+        }
+    }
+
+    /**
+     * GET /api/v1/passenger/public-bus/requests/{id}
+     * Get trip request details and current status.
+     */
+    public function showRequest(Request $request, string $id): JsonResponse
+    {
+        $user = $request->user();
+
+        if (! $user?->isPassenger()) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Only passengers can view trip requests',
+            ], 403);
+        }
+
+        // Load trip request
+        $tripRequest = \App\Models\TripRequest::query()
+            ->where('id', $id)
+            ->where('passenger_id', $user->id)
+            ->with(['passenger', 'corridor', 'driver.user', 'vehicle'])
+            ->firstOrFail();
+
+        try {
+            /** @var \App\Services\PublicBusMatchingService $matchingService */
+            $matchingService = app(\App\Services\PublicBusMatchingService::class);
+            $result = $matchingService->getRequest($tripRequest);
+
+            return response()->json($result);
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => $e->getMessage(),
+            ], 400);
+        }
+    }
+
     private function boardingResponse(PassengerRouteBoarding $boarding): array
     {
         $boarding->loadMissing(['trip', 'corridor', 'boardingStop', 'destinationStop', 'busRouteAssignment.bus.driver.user']);

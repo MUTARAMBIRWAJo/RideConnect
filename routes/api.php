@@ -174,9 +174,18 @@ Route::prefix('v1')->group(function () {
                 ->name('passenger.profile.update');
             Route::get('/stats', [PassengerController::class, 'stats']);
             Route::prefix('public-bus')->group(function () {
+                // Corridor listing
                 Route::get('/corridors', [PassengerPublicBusController::class, 'corridors']);
                 Route::get('/corridors/{corridor}/stops', [PassengerPublicBusController::class, 'stops']);
                 Route::get('/corridors/{corridor}/active-buses', [PassengerPublicBusController::class, 'activeBuses']);
+
+                // Smart trip request and matching
+                Route::post('/request', [PassengerPublicBusController::class, 'requestTrip'])
+                    ->name('passenger.public-bus.request');
+                Route::get('/requests/{id}', [PassengerPublicBusController::class, 'showRequest'])
+                    ->name('passenger.public-bus.show-request');
+
+                // Seat booking
                 Route::post('/book-seat', [PassengerPublicBusController::class, 'bookSeat']);
                 Route::get('/trips/current', [PassengerPublicBusController::class, 'currentTrip']);
                 Route::get('/tickets/{ticket}', [PassengerPublicBusController::class, 'ticket']);

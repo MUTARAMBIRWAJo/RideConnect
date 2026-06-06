@@ -1,0 +1,234 @@
+{
+    "info": {
+        "name": "RideConnect - Public Bus Matching Flow",
+        "description": "Smart public bus trip request and matching API endpoints",
+        "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+    },
+    "auth": {
+        "type": "bearer",
+        "bearer": [
+            {
+                "key": "token",
+                "value": "{{passenger_token}}",
+                "type": "string"
+            }
+        ]
+    },
+    "item": [
+        {
+            "name": "1. Get Available Corridors",
+            "request": {
+                "method": "GET",
+                "header": [],
+                "url": {
+                    "raw": "{{base_url}}/api/v1/passenger/public-bus/corridors",
+                    "host": [
+                        "{{base_url}}"
+                    ],
+                    "path": [
+                        "api",
+                        "v1",
+                        "passenger",
+                        "public-bus",
+                        "corridors"
+                    ]
+                },
+                "description": "List all active public bus corridors"
+            },
+            "response": [
+                {
+                    "name": "Success",
+                    "originalRequest": {
+                        "method": "GET",
+                        "header": [],
+                        "url": {
+                            "raw": "http://localhost:8000/api/v1/passenger/public-bus/corridors",
+                            "protocol": "http",
+                            "host": [
+                                "localhost"
+                            ],
+                            "port": "8000",
+                            "path": [
+                                "api",
+                                "v1",
+                                "passenger",
+                                "public-bus",
+                                "corridors"
+                            ]
+                        }
+                    },
+                    "status": "OK",
+                    "code": 200,
+                    "_postman_previewlanguage": "json",
+                    "header": [
+                        {
+                            "key": "Content-Type",
+                            "value": "application/json"
+                        }
+                    ],
+                    "body": "{\n  \"success\": true,\n  \"data\": [\n    {\n      \"id\": 4,\n      \"corridor_code\": \"105\",\n      \"corridor_name\": \"REMERA BUS PARK -> NYABUGOGO BUS PARK (105)\",\n      \"transport_type\": \"BUS\",\n      \"status\": \"active\",\n      \"estimated_duration_minutes\": 30,\n      \"start_stop\": 1,\n      \"end_stop\": 10,\n      \"stops_count\": 10\n    }\n  ]\n}"
+                }
+            ]
+        },
+        {
+            "name": "2. Get Corridor Stops",
+            "request": {
+                "method": "GET",
+                "header": [],
+                "url": {
+                    "raw": "{{base_url}}/api/v1/passenger/public-bus/corridors/4/stops",
+                    "host": [
+                        "{{base_url}}"
+                    ],
+                    "path": [
+                        "api",
+                        "v1",
+                        "passenger",
+                        "public-bus",
+                        "corridors",
+                        "4",
+                        "stops"
+                    ]
+                },
+                "description": "Get all stops for a specific corridor"
+            },
+            "response": [
+                {
+                    "name": "Success",
+                    "originalRequest": {
+                        "method": "GET",
+                        "header": [],
+                        "url": {
+                            "raw": "http://localhost:8000/api/v1/passenger/public-bus/corridors/4/stops",
+                            "protocol": "http",
+                            "host": [
+                                "localhost"
+                            ],
+                            "port": "8000",
+                            "path": [
+                                "api",
+                                "v1",
+                                "passenger",
+                                "public-bus",
+                                "corridors",
+                                "4",
+                                "stops"
+                            ]
+                        }
+                    },
+                    "status": "OK",
+                    "code": 200,
+                    "_postman_previewlanguage": "json",
+                    "header": [
+                        {
+                            "key": "Content-Type",
+                            "value": "application/json"
+                        }
+                    ],
+                    "body": "{\n  \"success\": true,\n  \"data\": {\n    \"corridor\": {\n      \"id\": 4,\n      \"corridor_code\": \"105\",\n      \"corridor_name\": \"REMERA BUS PARK -> NYABUGOGO BUS PARK (105)\"\n    },\n    \"stops\": [\n      {\n        \"id\": 1,\n        \"stop_name\": \"Remera Bus Park\",\n        \"stop_order\": 1,\n        \"latitude\": -1.9479,\n        \"longitude\": 30.0888,\n        \"is_major_terminal\": true,\n        \"status\": \"active\"\n      },\n      {\n        \"id\": 2,\n        \"stop_name\": \"Kimironko Market\",\n        \"stop_order\": 2,\n        \"latitude\": -1.9499,\n        \"longitude\": 30.1265,\n        \"is_major_terminal\": false,\n        \"status\": \"active\"\n      }\n    ]\n  }\n}"
+                }
+            ]
+        },
+        {
+            "name": "3. Request Public Bus Trip (Smart Matching)",
+            "request": {
+                "method": "POST",
+                "header": [
+                    {
+                        "key": "Content-Type",
+                        "value": "application/json"
+                    }
+                ],
+                "body": {
+                    "mode": "raw",
+                    "raw": "{\n  \"corridor_id\": 4,\n  \"pickup_location\": \"Kimironko Market\",\n  \"dropoff_location\": \"Nyabugogo Bus Park\"\n}"
+                },
+                "url": {
+                    "raw": "{{base_url}}/api/v1/passenger/public-bus/request",
+                    "host": [
+                        "{{base_url}}"
+                    ],
+                    "path": [
+                        "api",
+                        "v1",
+                        "passenger",
+                        "public-bus",
+                        "request"
+                    ]
+                },
+                "description": "Request a public bus trip with automatic location geocoding and nearest bus matching"
+            },
+            "response": [
+                {
+                    "name": "Success - Match Found",
+                    "originalRequest": {
+                        "method": "POST",
+                        "header": [
+                            {
+                                "key": "Content-Type",
+                                "value": "application/json"
+                            }
+                        ],
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\n  \"corridor_id\": 4,\n  \"pickup_location\": \"Kimironko Market\",\n  \"dropoff_location\": \"Nyabugogo Bus Park\"\n}"
+                        },
+                        "url": {
+                            "raw": "http://localhost:8000/api/v1/passenger/public-bus/request",
+                            "protocol": "http",
+                            "host": [
+                                "localhost"
+                            ],
+                            "port": "8000",
+                            "path": [
+                                "api",
+                                "v1",
+                                "passenger",
+                                "public-bus",
+                                "request"
+                            ]
+                        }
+                    },
+                    "status": "Created",
+                    "code": 201,
+                    "_postman_previewlanguage": "json",
+                    "header": [
+                        {
+                            "key": "Content-Type",
+                            "value": "application/json"
+                        }
+                    ],
+                    "body": "{\n  \"success\": true,\n  \"message\": \"Public bus match found\",\n  \"data\": {\n    \"trip_request_id\": 123,\n    \"corridor\": {\n      \"id\": 4,\n      \"code\": \"105\",\n      \"name\": \"REMERA BUS PARK -> NYABUGOGO BUS PARK (105)\"\n    },\n    \"pickup\": {\n      \"name\": \"Kimironko Market\",\n      \"latitude\": -1.94995,\n      \"longitude\": 30.12647\n    },\n    \"dropoff\": {\n      \"name\": \"Nyabugogo Bus Park\",\n      \"latitude\": -1.93982,\n      \"longitude\": 30.08912\n    },\n    \"matched_bus\": {\n      \"vehicle_id\": 10,\n      \"plate_number\": \"RAD123A\",\n      \"capacity\": 65,\n      \"available_seats\": 18\n    },\n    \"driver\": {\n      \"id\": 9,\n      \"name\": \"Jean Claude\"\n    },\n    \"distance_to_bus_km\": 0.8,\n    \"bus_eta_minutes\": 4,\n    \"trip_distance_km\": 8.5,\n    \"trip_duration_minutes\": 22,\n    \"estimated_fare\": 650,\n    \"currency\": \"RWF\",\n    \"status\": \"PENDING_MATCH\"\n  }\n}"
+                },
+                {
+                    "name": "Error - No Active Buses",
+                    "originalRequest": {
+                        "method": "POST",
+                        "header": [
+                            {
+                                "key": "Content-Type",
+                                "value": "application/json"
+                            }
+                        ],
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\n  \"corridor_id\": 4,\n  \"pickup_location\": \"Kimironko Market\",\n  \"dropoff_location\": \"Nyabugogo Bus Park\"\n}"
+                        },
+                        "url": {
+                            "raw": "http://localhost:8000/api/v1/passenger/public-bus/request",
+                            "protocol": "http",
+                            "host": [
+                                "localhost"
+                            ],
+                            "port": "8000",
+                            "path": [
+                                "api",
+                                "v1",
+                                "passenger",
+                                "public-bus",
+                                "request"
+                            ]
+                        }
+                    },
+                    "status": "Unprocessable Entity",
+          "code\": 422,\n          \"_postman_previewlanguage\": \"json\",\n          \"header\": [\n            {\n              \"key\": \"Content-Type\",\n              \"value\": \"application/json\"\n            }\n          ],\n          \"body\": \"{\n  \\\"success\\\": false,\n  \\\"message\\\": \\\"No active buses found on this corridor\\\",\n  \\\"error_code\\\": \\\"MATCHING_FAILED\\\"\n}\"\n        }\n      ]\n    },\n    {\n      \"name\": \"4. Get Trip Request Status\",\n      \"request\": {\n        \"method\": \"GET\",\n        \"header\": [],\n        \"url\": {\n          \"raw\": \"{{base_url}}/api/v1/passenger/public-bus/requests/123\",\n          \"host\": [\n            \"{{base_url}}\"\n          ],\n          \"path\": [\n            \"api\",\n            \"v1\",\n            \"passenger\",\n            \"public-bus\",\n            \"requests\",\n            \"123\"\n          ]\n        },\n        \"description\": \"Get current status of a trip request\"\n      },\n      \"response\": [\n        {\n          \"name\": \"Success\",\n          \"originalRequest\": {\n            \"method\": \"GET\",\n            \"header\": [],\n            \"url\": {\n              \"raw\": \"http://localhost:8000/api/v1/passenger/public-bus/requests/123\",\n              \"protocol\": \"http\",\n              \"host\": [\n                \"localhost\"\n              ],\n              \"port\": \"8000\",\n              \"path\": [\n                \"api\",\n                \"v1\",\n                \"passenger\",\n                \"public-bus\",\n                \"requests\",\n                \"123\"\n              ]\n            }\n          },\n          \"status\": \"OK\",\n          \"code\": 200,\n          \"_postman_previewlanguage\": \"json\",\n          \"header\": [\n            {\n              \"key\": \"Content-Type\",\n              \"value\": \"application/json\"\n            }\n          ],\n          \"body\": \"{\n  \\\"success\\\": true,\n  \\\"message\\\": \\\"Public bus match found\\\",\n  \\\"data\\\": {\n    \\\"trip_request_id\\\": 123,\n    \\\"corridor\\\": {\n      \\\"id\\\": 4,\n      \\\"code\\\": \\\"105\\\",\n      \\\"name\\\": \\\"REMERA BUS PARK -> NYABUGOGO BUS PARK (105)\\\"\n    },\n    \\\"pickup\\\": {\n      \\\"name\\\": \\\"Kimironko Market\\\",\n      \\\"latitude\\\": -1.94995,\n      \\\"longitude\\\": 30.12647\n    },\n    \\\"dropoff\\\": {\n      \\\"name\\\": \\\"Nyabugogo Bus Park\\\",\n      \\\"latitude\\\": -1.93982,\n      \\\"longitude\\\": 30.08912\n    },\n    \\\"matched_bus\\\": {\n      \\\"vehicle_id\\\": 10,\n      \\\"plate_number\\\": \\\"RAD123A\\\",\n      \\\"capacity\\\": 65,\n      \\\"available_seats\\\": 18\n    },\n    \\\"driver\\\": {\n      \\\"id\\\": 9,\n      \\\"name\\\": \\\"Jean Claude\\\"\n    },\n    \\\"distance_to_bus_km\\\": 0.8,\n    \\\"bus_eta_minutes\\\": 4,\n    \\\"trip_distance_km\\\": 8.5,\n    \\\"trip_duration_minutes\\\": 22,\n    \\\"estimated_fare\\\": 650,\n    \\\"currency\\\": \\\"RWF\\\",\n    \\\"status\\\": \\\"BUS_ASSIGNED\\\"\n  }\n}\"\n        }\n      ]\n    }\n  ],\n  \"variable\": [\n    {\n      \"key\": \"base_url\",\n      \"value\": \"http://localhost:8000\",\n      \"type\": \"string\"\n    },\n    {\n      \"key\": \"passenger_token\",\n      \"value\": \"\",\n      \"type\": \"string\"\n    }\n  ]\n}\n
