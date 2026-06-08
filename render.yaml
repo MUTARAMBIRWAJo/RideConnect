@@ -3,10 +3,17 @@ services:
     name: rideconnect-api
     runtime: php
     buildCommand: composer install --no-dev --optimize-autoloader && php artisan config:cache && php artisan route:cache
-    startCommand: php artisan serve --host=0.0.0.0 --port=$PORT
+    # Run pending migrations, start a background queue worker (drains RetryTripMatchingJob
+    # so trips advance past SEARCHING), then serve the API in the foreground.
+    # NOTE: the worker shares the web instance. For higher volume, promote it to a dedicated
+    # Render `type: worker` service running the same `php artisan queue:work` command.
+    startCommand: php artisan migrate --force && (php artisan queue:work --tries=1 --sleep=3 --timeout=90 &) && php artisan serve --host=0.0.0.0 --port=$PORT
     envVars:
       - key: APP_ENV
         value: production
+      # Postgres-backed queue (jobs table) so delayed matching retries are actually processed.
+      - key: QUEUE_CONNECTION
+        value: database
       - key: APP_URL
         value: https://rideconnect-emp0.onrender.com
       - key: TFLITE_ENDPOINT
