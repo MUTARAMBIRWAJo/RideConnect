@@ -28,8 +28,9 @@ class PaymentController extends Controller
         $user = $request->user();
 
         $validated = $request->validate([
-            'type' => 'required|string|in:trip,booking',
+            'type' => 'required|string|in:trip,booking,motor_vehicle',
             'trip_id' => 'required_if:type,trip|nullable|exists:trips,id',
+            'motorcycle_trip_id' => 'required_if:type,motor_vehicle|nullable|exists:motorcycle_trips,id',
             'booking_id' => 'required_if:type,booking|nullable|exists:bookings,id',
             'amount' => 'required|numeric|min:0',
             'currency' => 'sometimes|string|size:3',
@@ -37,6 +38,46 @@ class PaymentController extends Controller
             'transaction_id' => 'nullable|string|max:255',
             'metadata' => 'nullable|array',
         ]);
+
+        // motor_vehicle payments settle a MotorcycleTrip (separate table from trips).
+        if ($validated['type'] === 'motor_vehicle') {
+            $motoTrip = \App\Models\MotorcycleTrip::findOrFail($validated['motorcycle_trip_id']);
+            if ((int) $motoTrip->passenger_id !== (int) $user->id) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'You can only pay for your own trips',
+                ], 403);
+            }
+
+            $payment = DB::transaction(function () use ($validated, $user, $motoTrip) {
+                return Payment::create([
+                    'user_id' => $user->id,
+                    'type' => 'motor_vehicle',
+                    'motorcycle_trip_id' => (int) $motoTrip->id,
+                    'amount' => $validated['amount'],
+                    'currency' => $validated['currency'] ?? ($motoTrip->currency ?: 'RWF'),
+                    'payment_method' => $validated['payment_method'],
+                    'transaction_id' => $validated['transaction_id'] ?? null,
+                    'status' => 'PENDING',
+                    'metadata' => $validated['metadata'] ?? [],
+                ]);
+            });
+
+            $motoTrip->forceFill(['actual_fare' => (float) $validated['amount']])->save();
+
+            return response()->json([
+                'success' => true,
+                'message' => 'Payment initiated successfully',
+                'data' => [
+                    'id' => $payment->id,
+                    'type' => $payment->type,
+                    'amount' => $payment->amount,
+                    'currency' => $payment->currency,
+                    'status' => $payment->status,
+                    'payment_method' => $payment->payment_method,
+                ],
+            ], 201);
+        }
 
         // Verify ownership
         $resolvedTripId = null;

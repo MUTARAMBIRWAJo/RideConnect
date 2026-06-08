@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Api;
 use App\Http\Controllers\Controller;
 use App\Models\Driver;
 use App\Models\MotorcycleTrip;
+use App\Models\Review;
 use App\Models\User;
 use App\Services\FareCalculationService;
 use App\Services\Location\GeocodingService;
@@ -312,6 +313,79 @@ class MotorcycleTripController extends Controller
                 'success' => false,
                 'error_code' => 'TRIP_FETCH_ERROR',
                 'message' => 'Failed to fetch trip',
+            ], 500);
+        }
+    }
+    /**
+     * POST /api/v1/passenger/motor-vehicle/trip-requests/{id}/rate
+     * Passenger rates the driver after a completed motor-vehicle trip.
+     */
+    public function rate(Request $request, int $id): JsonResponse
+    {
+        try {
+            $validated = $request->validate([
+                'rating' => 'required|integer|min:1|max:5',
+                'comment' => 'nullable|string|max:2000',
+            ]);
+
+            $trip = MotorcycleTrip::find($id);
+            if (!$trip) {
+                return response()->json([
+                    'success' => false,
+                    'error_code' => 'TRIP_NOT_FOUND',
+                    'message' => 'Trip not found',
+                ], 404);
+            }
+
+            $userId = auth()->id();
+            if ((int) $trip->passenger_id !== (int) $userId) {
+                return response()->json([
+                    'success' => false,
+                    'error_code' => 'FORBIDDEN',
+                    'message' => 'You can only rate your own trips',
+                ], 403);
+            }
+
+            if ($trip->status !== 'COMPLETED') {
+                return response()->json([
+                    'success' => false,
+                    'error_code' => 'INVALID_STATUS',
+                    'message' => 'You can only rate a completed trip',
+                ], 409);
+            }
+
+            $review = Review::updateOrCreate(
+                ['motorcycle_trip_id' => $trip->id, 'user_id' => $userId],
+                [
+                    'driver_id' => $trip->driver_id,
+                    'rating' => $validated['rating'],
+                    'comment' => $validated['comment'] ?? null,
+                    'reviewer_type' => 'passenger',
+                    'is_public' => false,
+                ]
+            );
+
+            return response()->json([
+                'success' => true,
+                'message' => 'Thank you for your feedback',
+                'data' => $review,
+            ], 200);
+        } catch (ValidationException $e) {
+            return response()->json([
+                'success' => false,
+                'error_code' => 'VALIDATION_ERROR',
+                'errors' => $e->errors(),
+            ], 422);
+        } catch (\Exception $e) {
+            Log::error('Error rating motorcycle trip', [
+                'trip_id' => $id,
+                'passenger_id' => auth()->id(),
+                'error' => $e->getMessage(),
+            ]);
+            return response()->json([
+                'success' => false,
+                'error_code' => 'RATE_ERROR',
+                'message' => 'Failed to submit rating',
             ], 500);
         }
     }

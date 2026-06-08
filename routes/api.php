@@ -215,6 +215,7 @@ Route::prefix('v1')->group(function () {
                 // Required because TripSyncController operates on the Trip model and cannot read motorcycle_trips.
                 Route::get('/trip-requests/{id}', [MotorcycleTripController::class, 'show'])->whereNumber('id');
                 Route::post('/trip-requests/{id}/cancel', [MotorcycleTripController::class, 'cancel'])->whereNumber('id');
+                Route::post('/trip-requests/{id}/rate', [MotorcycleTripController::class, 'rate'])->whereNumber('id');
             });
 
             Route::get('/public-transport/corridors', [PassengerController::class, 'corridors']);

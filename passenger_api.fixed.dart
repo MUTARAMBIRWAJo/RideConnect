@@ -244,6 +244,37 @@ class PassengerApi {
         if (reason != null && reason.isNotEmpty) 'reason': reason,
       });
 
+  /// Rate the driver after a COMPLETED motor-vehicle trip (1–5 + optional comment).
+  Future<Map<String, dynamic>> rateMotorVehicleTrip(
+    dynamic tripId, {
+    required int rating,
+    String? comment,
+  }) =>
+      _post('/motor-vehicle/trip-requests/$tripId/rate', {
+        'rating': rating,
+        if (comment != null && comment.isNotEmpty) 'comment': comment,
+      });
+
+  /// Pay for a completed motor-vehicle trip. Uses type 'motor_vehicle' so the
+  /// backend reconciles against the motorcycle_trips table (not trips).
+  Future<Map<String, dynamic>> payForMotorVehicleTrip({
+    required dynamic tripId,
+    required num amount,
+    required String paymentMethod, // card | cash | mobile_money | bank_transfer
+    String? currency,
+    String? transactionId,
+    Map<String, dynamic>? metadata,
+  }) =>
+      createPayment({
+        'type': 'motor_vehicle',
+        'motorcycle_trip_id': tripId,
+        'amount': amount,
+        'payment_method': paymentMethod,
+        if (currency != null) 'currency': currency,
+        if (transactionId != null) 'transaction_id': transactionId,
+        if (metadata != null) 'metadata': metadata,
+      });
+
   Future<Map<String, dynamic>> bookPublicBusSeat({
     required int corridorId,
     required int boardingStopId,

@@ -14,6 +14,7 @@ class Review extends Model
         'user_id',
         'driver_id',
         'ride_id',
+        'motorcycle_trip_id',
         'rating',
         'comment',
         'safety_rating',
@@ -56,5 +57,10 @@ class Review extends Model
     public function trip()
     {
         return $this->belongsTo(Trip::class, 'ride_id');
+    }
+
+    public function motorcycleTrip()
+    {
+        return $this->belongsTo(MotorcycleTrip::class, 'motorcycle_trip_id');
     }
 }
