@@ -211,6 +211,9 @@ Route::prefix('v1')->group(function () {
             // Motorcycle/Motor-vehicle Trip Routes
             Route::prefix('motor-vehicle')->group(function () {
                 Route::post('/trip-requests', [MotorcycleTripController::class, 'store']);
+                // Passenger-facing poll of a motorcycle/motor-vehicle trip (MotorcycleTrip model).
+                // Required because TripSyncController operates on the Trip model and cannot read motorcycle_trips.
+                Route::get('/trip-requests/{id}', [MotorcycleTripController::class, 'show'])->whereNumber('id');
                 Route::post('/trip-requests/{id}/cancel', [MotorcycleTripController::class, 'cancel'])->whereNumber('id');
             });
 

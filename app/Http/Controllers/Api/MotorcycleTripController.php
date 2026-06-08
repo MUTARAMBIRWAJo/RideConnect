@@ -227,6 +227,95 @@ class MotorcycleTripController extends Controller
      * POST /api/v1/driver/motor-vehicle/trip-requests/{id}/accept
      * Driver accepts a motorcycle trip
      */
+    /**
+     * GET /api/v1/passenger/motor-vehicle/trip-requests/{id}
+     * Passenger polls the live state of their motorcycle/motor-vehicle trip.
+     *
+     * This is the single source of truth the mobile app polls through the whole
+     * lifecycle (SEARCHING -> ASSIGNED -> DRIVER_ASSIGNED -> PASSENGER_WAITING ->
+     * IN_PROGRESS -> COMPLETED). The Trip-model endpoints (TripSyncController) cannot
+     * see this record because it lives in the motorcycle_trips table.
+     */
+    public function show(Request $request, int $id): JsonResponse
+    {
+        try {
+            $trip = MotorcycleTrip::with('driver.user')->find($id);
+
+            if (!$trip) {
+                return response()->json([
+                    'success' => false,
+                    'error_code' => 'TRIP_NOT_FOUND',
+                    'message' => 'Trip not found',
+                ], 404);
+            }
+
+            $userId = auth()->id();
+            if ((int) $trip->passenger_id !== (int) $userId) {
+                return response()->json([
+                    'success' => false,
+                    'error_code' => 'FORBIDDEN',
+                    'message' => 'You are not authorized to view this trip',
+                ], 403);
+            }
+
+            $driver = $trip->driver;
+            $driverBlock = $driver ? [
+                'id' => $driver->id,
+                'name' => $driver->user?->name,
+                'phone' => $driver->user?->phone,
+                'rating' => $driver->rating,
+                'vehicle_plate' => $driver->motorcycle_plate ?? $driver->license_plate,
+                'location' => [
+                    'lat' => $driver->current_latitude !== null ? (float) $driver->current_latitude : null,
+                    'lng' => $driver->current_longitude !== null ? (float) $driver->current_longitude : null,
+                ],
+            ] : null;
+
+            return response()->json([
+                'success' => true,
+                'data' => [
+                    'trip_id' => $trip->id,
+                    'status' => $trip->status,
+                    'matching_status' => $trip->matching_status,
+                    'retry_count' => $trip->retry_count,
+                    'max_retries' => $trip->max_retries,
+                    'pickup_location' => $trip->pickup_location,
+                    'dropoff_location' => $trip->dropoff_location,
+                    'pickup_lat' => $trip->pickup_lat,
+                    'pickup_lng' => $trip->pickup_lng,
+                    'dropoff_lat' => $trip->dropoff_lat,
+                    'dropoff_lng' => $trip->dropoff_lng,
+                    'estimated_fare' => $trip->estimated_fare,
+                    'actual_fare' => $trip->actual_fare,
+                    'currency' => $trip->currency,
+                    'driver' => $driverBlock,
+                    'timestamps' => [
+                        'requested_at' => $trip->requested_at?->toIso8601String(),
+                        'matching_started_at' => $trip->matching_started_at?->toIso8601String(),
+                        'assigned_at' => $trip->assigned_at?->toIso8601String(),
+                        'accepted_at' => $trip->accepted_at?->toIso8601String(),
+                        'driver_arrived_at' => $trip->driver_arrived_at?->toIso8601String(),
+                        'started_at' => $trip->started_at?->toIso8601String(),
+                        'completed_at' => $trip->completed_at?->toIso8601String(),
+                        'cancelled_at' => $trip->cancelled_at?->toIso8601String(),
+                    ],
+                    'updated_at' => $trip->updated_at?->toIso8601String(),
+                ],
+            ], 200);
+        } catch (\Exception $e) {
+            Log::error('Error fetching motorcycle trip', [
+                'trip_id' => $id,
+                'passenger_id' => auth()->id(),
+                'error' => $e->getMessage(),
+            ]);
+            return response()->json([
+                'success' => false,
+                'error_code' => 'TRIP_FETCH_ERROR',
+                'message' => 'Failed to fetch trip',
+            ], 500);
+        }
+    }
+
     public function accept(Request $request, int $id): JsonResponse
     {
         try {
