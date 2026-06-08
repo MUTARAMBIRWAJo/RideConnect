@@ -116,6 +116,21 @@ return new class extends Migration
                 'created_at' => now(),
                 'updated_at' => now(),
             ],
+            // City-level locations for broader geocoding support
+            [
+                'name' => 'Kigali, Rwanda',
+                'lat' => -1.9536,
+                'lng' => 30.0605,
+                'created_at' => now(),
+                'updated_at' => now(),
+            ],
+            [
+                'name' => 'Kigali International Airport',
+                'lat' => -1.9717,
+                'lng' => 30.1388,
+                'created_at' => now(),
+                'updated_at' => now(),
+            ],
         ]);
     }
 };
