@@ -29,6 +29,28 @@ class CreatePublicBusTripRequest extends FormRequest
     }
 
     /**
+     * Prepare the data for validation.
+     */
+    protected function prepareForValidation(): void
+    {
+        if (! empty($this->all())) {
+            return;
+        }
+
+        $rawContent = $this->getContent();
+        if (! is_string($rawContent) || trim($rawContent) === '') {
+            return;
+        }
+
+        $decoded = json_decode($rawContent, true);
+        if (json_last_error() !== JSON_ERROR_NONE || ! is_array($decoded)) {
+            return;
+        }
+
+        $this->merge($decoded);
+    }
+
+    /**
      * Get custom messages for validation errors.
      */
     public function messages(): array

@@ -217,7 +217,6 @@ Route::prefix('v1')->group(function () {
             Route::get('/public-transport/corridors', [PassengerController::class, 'corridors']);
             Route::get('/public-transport/routes', [PassengerController::class, 'routes']);
             Route::get('/public-transport/available', [PublicTransportController::class, 'available']);
-            Route::post('/trip-requests', [PublicTransportController::class, 'createTripRequest']);
             Route::get('/trips/current', [PublicTransportController::class, 'currentTrip']);
             Route::get('/trips/{trip}/ticket', [PublicTransportController::class, 'ticket'])->whereNumber('trip');
             Route::post('/trips/{trip}/feedback', [PublicTransportController::class, 'feedback'])->whereNumber('trip');

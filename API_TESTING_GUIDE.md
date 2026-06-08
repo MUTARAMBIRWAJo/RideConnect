@@ -143,7 +143,7 @@ Copy `token` from response → Paste into `{{token}}` variable
 2. Login → POST /v1/auth/mobile/login
 3. Get Profile → GET /v1/passenger/profile
 4. View Available Rides → GET /v1/passenger/rides/available
-5. Request Trip → POST /v1/passenger/trip-requests
+5. Request Trip → POST /v1/passenger/public-bus/request
 6. Get Current Trip → GET /v1/mobile/trips/current
 7. Payment → POST /v1/passenger/payments
 ```
@@ -201,7 +201,7 @@ X-Requested-With: XMLHttpRequest
 ### Passenger - Find & Book Ride
 ```
 GET    /v1/passenger/rides/available          → See rides
-POST   /v1/passenger/trip-requests            → Request trip
+POST   /v1/passenger/public-bus/request       → Request public bus trip
 GET    /v1/passenger/drivers/match            → Find drivers
 POST   /v1/passenger/bookings                 → Book ride
 POST   /v1/passenger/payments                 → Pay for ride

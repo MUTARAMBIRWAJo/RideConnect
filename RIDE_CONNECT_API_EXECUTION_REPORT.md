@@ -155,7 +155,7 @@ Final Status:
 COMPLETED
 
 Execution Trace:
-- Passenger booking requested through /api/v1/passenger/trip-requests
+- Passenger booking requested through /api/v1/passenger/public-bus/request
 - AI matching evaluated via /api/v1/ai/match-driver
 - Driver assigned through mobile driver trip acceptance pipeline /api/v1/mobile/drivers/trips/{id}/accept
 - Tracking started and updated successfully

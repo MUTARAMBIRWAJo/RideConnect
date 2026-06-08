@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Api;
 use App\Exceptions\DomainException;
 use App\Exceptions\GeocodingException;
 use App\Http\Controllers\Controller;
+use App\Http\Requests\Passenger\CreatePublicBusTripRequest;
 use App\Models\MobileUser;
 use App\Models\PassengerRouteBoarding;
 use App\Models\TransportCorridor;
@@ -168,7 +169,7 @@ class PassengerPublicBusController extends Controller
      * Accepts corridor_id, pickup_location (name), dropoff_location (name).
      * Automatically geocodes locations and finds nearest active bus.
      */
-    public function requestTrip(Request $request): JsonResponse
+    public function requestTrip(CreatePublicBusTripRequest $request): JsonResponse
     {
         $user = $request->user();
 
@@ -186,11 +187,7 @@ class PassengerPublicBusController extends Controller
             ], 403);
         }
 
-        $validated = $request->validate([
-            'corridor_id' => 'required|integer|exists:transport_corridors,id',
-            'pickup_location' => 'required|string|min:3|max:255',
-            'dropoff_location' => 'required|string|min:3|max:255',
-        ]);
+        $validated = $request->validated();
 
         try {
             /** @var \App\Services\PublicBusMatchingService $matchingService */

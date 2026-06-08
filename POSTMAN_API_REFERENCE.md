@@ -148,14 +148,14 @@
 ### Trip Requests
 | Method | Endpoint | Purpose |
 |--------|----------|---------|
-| POST | `/v1/passenger/trip-requests` | Request a new trip |
+| POST | `/v1/passenger/public-bus/request` | Request a public bus trip |
 | GET | `/v1/passenger/trips` | Get all trips |
 | GET | `/v1/passenger/trips/{id}` | Get trip details |
 | POST | `/v1/passenger/trips` | Create trip |
 | PUT | `/v1/passenger/trips/{id}/cancel` | Cancel trip |
 | GET | `/v1/passenger/trips/{id}/status` | Check trip status |
 
-**POST** `/v1/passenger/trip-requests`
+**POST** `/v1/passenger/public-bus/request`
 ```json
 {
   "pickup_lat": 0.3149,
