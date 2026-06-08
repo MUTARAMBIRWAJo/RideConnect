@@ -182,6 +182,7 @@ class MotorcycleTripController extends Controller
                         'duration_minutes' => $fareResult['duration_minutes'],
                         'currency' => $fareResult['currency'],
                         'cached' => $fareResult['cached'],
+                        'fallback' => $fareResult['fallback'] ?? false,
                     ],
                 ], 201);
             } else {
@@ -199,6 +200,7 @@ class MotorcycleTripController extends Controller
                         'duration_minutes' => $fareResult['duration_minutes'],
                         'currency' => $fareResult['currency'],
                         'cached' => $fareResult['cached'],
+                        'fallback' => $fareResult['fallback'] ?? false,
                     ],
                 ], 202);
             }

@@ -2,7 +2,6 @@
 
 namespace App\Services;
 
-use App\Models\MotorcycleTrip;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Log;
 
@@ -42,6 +41,7 @@ class FareCalculationService
 
     private const CACHE_TTL = 300; // 5 minutes
     private const CURRENCY = 'RWF';
+    private const FALLBACK_AVERAGE_SPEED_KMH = 25;
 
     public function __construct(GoogleRouteService $routeService)
     {
@@ -105,11 +105,20 @@ class FareCalculationService
             );
 
             if (!$routeData || !$routeData['success']) {
-                Log::error('FareCalculationService: Failed to get route data', [
+                Log::warning('FareCalculationService: Route data unavailable, using coordinate fallback', [
                     'pickup' => ['lat' => $pickupLat, 'lng' => $pickupLng],
                     'dropoff' => ['lat' => $dropoffLat, 'lng' => $dropoffLng],
+                    'route_error' => $routeData['error'] ?? null,
                 ]);
-                return null;
+
+                return $this->fallbackFare(
+                    $pickupLat,
+                    $pickupLng,
+                    $dropoffLat,
+                    $dropoffLng,
+                    $vehicleType,
+                    $cacheKey
+                );
             }
 
             // Extract distance and duration
@@ -120,6 +129,24 @@ class FareCalculationService
             $durationStr = $routeData['duration'] ?? '0s';
             $durationSeconds = (int) filter_var($durationStr, FILTER_SANITIZE_NUMBER_INT);
             $durationMinutes = (int) ceil($durationSeconds / 60);
+
+            if ($distanceKm <= 0 || $durationMinutes <= 0) {
+                Log::warning('FareCalculationService: Route data incomplete, using coordinate fallback', [
+                    'pickup' => ['lat' => $pickupLat, 'lng' => $pickupLng],
+                    'dropoff' => ['lat' => $dropoffLat, 'lng' => $dropoffLng],
+                    'distance_km' => $distanceKm,
+                    'duration_minutes' => $durationMinutes,
+                ]);
+
+                return $this->fallbackFare(
+                    $pickupLat,
+                    $pickupLng,
+                    $dropoffLat,
+                    $dropoffLng,
+                    $vehicleType,
+                    $cacheKey
+                );
+            }
 
             // Calculate fare
             $fare = $this->calculateFareAmount($distanceKm, $durationMinutes, $vehicleType);
@@ -179,6 +206,63 @@ class FareCalculationService
             'time_cost' => $timeCost,
             'total' => $totalFare,
         ];
+    }
+
+    private function fallbackFare(
+        float $pickupLat,
+        float $pickupLng,
+        float $dropoffLat,
+        float $dropoffLng,
+        string $vehicleType,
+        string $cacheKey
+    ): array {
+        $distanceKm = max(0.1, round($this->haversineDistance($pickupLat, $pickupLng, $dropoffLat, $dropoffLng), 1));
+        $durationMinutes = max(1, (int) ceil(($distanceKm / self::FALLBACK_AVERAGE_SPEED_KMH) * 60));
+        $fare = $this->calculateFareAmount($distanceKm, $durationMinutes, $vehicleType);
+
+        $response = [
+            'distance_km' => $distanceKm,
+            'duration_minutes' => $durationMinutes,
+            'vehicle_type' => $vehicleType,
+            'fare_breakdown' => $fare,
+            'currency' => self::CURRENCY,
+            'cached' => false,
+            'fallback' => true,
+        ];
+
+        Cache::put($cacheKey, [
+            'distance_km' => $distanceKm,
+            'duration_minutes' => $durationMinutes,
+            'vehicle_type' => $vehicleType,
+            'fare_breakdown' => $fare,
+            'currency' => self::CURRENCY,
+            'fallback' => true,
+        ], self::CACHE_TTL);
+
+        Log::info('FareCalculationService: Calculated fallback fare', [
+            'distance_km' => $distanceKm,
+            'duration_minutes' => $durationMinutes,
+            'vehicle_type' => $vehicleType,
+            'total_fare' => $fare['total'],
+        ]);
+
+        return $response;
+    }
+
+    private function haversineDistance(float $lat1, float $lng1, float $lat2, float $lng2): float
+    {
+        $earthRadiusKm = 6371;
+
+        $dLat = deg2rad($lat2 - $lat1);
+        $dLng = deg2rad($lng2 - $lng1);
+
+        $a = sin($dLat / 2) * sin($dLat / 2)
+            + cos(deg2rad($lat1)) * cos(deg2rad($lat2))
+            * sin($dLng / 2) * sin($dLng / 2);
+
+        $c = 2 * atan2(sqrt($a), sqrt(1 - $a));
+
+        return $earthRadiusKm * $c;
     }
 
     /**
