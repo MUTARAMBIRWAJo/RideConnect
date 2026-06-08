@@ -6,6 +6,7 @@ use App\Jobs\RetryTripMatchingJob;
 use App\Models\Driver;
 use App\Models\MotorcycleTrip;
 use App\Models\Notification;
+use App\Services\Matching\RadiusExpansionService;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 
@@ -102,8 +103,16 @@ class MotorcycleTripService
                 'initial_search_radius_km' => $trip->current_search_radius_km,
             ]);
 
-            // Call matching service
-            $match = $this->matchingService->matchMotorcycleTrip($trip);
+            // Fast local match on the critical path (no ML/route HTTP — never hangs
+            // on a cold ML dyno). In debug mode, assign the nearest driver anywhere.
+            $debug = config('matching.mode') === 'debug';
+            $initialRadius = $debug
+                ? RadiusExpansionService::MAX_RADIUS_KM
+                : (float) ($trip->initial_search_radius_km ?? 5);
+
+            $match = config('matching.fast_match', true) || $debug
+                ? $this->matchingService->fastLocalMatch($trip, [], $initialRadius)
+                : $this->matchingService->matchMotorcycleTrip($trip);
 
             if ($match) {
                 // Driver found on first attempt
@@ -164,6 +173,66 @@ class MotorcycleTripService
     /**
      * Assign driver to trip (extracted for reuse)
      */
+    /**
+     * Attempt a single fast match for a still-searching trip. Safe to call
+     * repeatedly (e.g. from the status poll) — this is what drives matching to
+     * completion without depending on a queue worker. Returns a small result
+     * describing the attempt; persists candidate count + radius for the API.
+     *
+     * @return array{success:bool,driver_id?:int,candidate_count:int,radius_km:float}
+     */
+    public function attemptMatch(MotorcycleTrip $trip, float $radiusKm, bool $debug = false): array
+    {
+        // Only pre-assignment trips are matchable.
+        if (! in_array($trip->status, ['REQUESTED', 'MATCHING', 'MATCHING_PENDING'], true) || $trip->driver_id) {
+            return ['success' => false, 'candidate_count' => 0, 'radius_km' => $radiusKm];
+        }
+
+        $radius = $debug ? RadiusExpansionService::MAX_RADIUS_KM : $radiusKm;
+        $excluded = $this->rejectedDriverIds($trip);
+
+        $match = $this->matchingService->fastLocalMatch($trip, $excluded, $radius);
+        $candidateCount = $match['candidate_count'] ?? 0;
+
+        // Record progress so the status endpoint can report radius/candidates.
+        $trip->forceFill([
+            'current_search_radius_km' => $radius,
+            'metadata' => array_merge($trip->metadata ?? [], [
+                'last_candidate_count' => $candidateCount,
+                'last_search_radius_km' => $radius,
+            ]),
+        ])->save();
+
+        if ($match && ! empty($match['driver_id'])) {
+            $this->assignDriver($trip, $match);
+            return ['success' => true, 'driver_id' => $match['driver_id'], 'candidate_count' => $candidateCount, 'radius_km' => $radius];
+        }
+
+        // Keep the trip in a searchable state for the next poll/retry.
+        $trip->forceFill([
+            'status' => 'MATCHING_PENDING',
+            'matching_status' => 'SEARCHING',
+        ])->save();
+
+        return ['success' => false, 'candidate_count' => $candidateCount, 'radius_km' => $radius];
+    }
+
+    /**
+     * Normalize rejected_drivers (cast to array, but tolerate legacy JSON strings).
+     */
+    private function rejectedDriverIds(MotorcycleTrip $trip): array
+    {
+        $rejected = $trip->rejected_drivers;
+        if (is_array($rejected)) {
+            return $rejected;
+        }
+        if (is_string($rejected) && $rejected !== '') {
+            $decoded = json_decode($rejected, true);
+            return is_array($decoded) ? $decoded : [];
+        }
+        return [];
+    }
+
     private function assignDriver(MotorcycleTrip $trip, array $match): array
     {
         // Assign driver

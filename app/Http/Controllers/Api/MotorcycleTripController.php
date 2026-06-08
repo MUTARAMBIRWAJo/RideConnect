@@ -9,6 +9,7 @@ use App\Models\Review;
 use App\Models\User;
 use App\Services\FareCalculationService;
 use App\Services\Location\GeocodingService;
+use App\Services\Matching\RadiusExpansionService;
 use App\Services\MatchingService;
 use App\Services\MotorcycleTripService;
 use Illuminate\Http\JsonResponse;
@@ -22,17 +23,20 @@ class MotorcycleTripController extends Controller
     private MatchingService $matchingService;
     private GeocodingService $geocodingService;
     private FareCalculationService $fareService;
+    private RadiusExpansionService $radiusService;
 
     public function __construct(
         MotorcycleTripService $tripService,
         MatchingService $matchingService,
         GeocodingService $geocodingService,
-        FareCalculationService $fareService
+        FareCalculationService $fareService,
+        RadiusExpansionService $radiusService
     ) {
         $this->tripService = $tripService;
         $this->matchingService = $matchingService;
         $this->geocodingService = $geocodingService;
         $this->fareService = $fareService;
+        $this->radiusService = $radiusService;
     }
 
     /**
@@ -259,6 +263,24 @@ class MotorcycleTripController extends Controller
                 ], 403);
             }
 
+            // Poll-driven matching: every status poll attempts a fast local match
+            // with a radius that widens by how long the passenger has waited. This
+            // converges within one poll interval and needs no queue worker.
+            if (in_array($trip->status, ['REQUESTED', 'MATCHING', 'MATCHING_PENDING'], true) && empty($trip->driver_id)) {
+                $elapsed = $trip->requested_at ? (int) abs(now()->diffInSeconds($trip->requested_at)) : 0;
+                $radius = $this->radiusService->radiusForElapsedSeconds($elapsed);
+                $debug = config('matching.mode') === 'debug';
+                try {
+                    $this->tripService->attemptMatch($trip, $radius, $debug);
+                } catch (\Throwable $e) {
+                    Log::warning('Poll-driven match attempt failed', [
+                        'trip_id' => $trip->id,
+                        'error' => $e->getMessage(),
+                    ]);
+                }
+                $trip->refresh()->loadMissing('driver.user');
+            }
+
             $driver = $trip->driver;
             $driverBlock = $driver ? [
                 'id' => $driver->id,
@@ -272,6 +294,19 @@ class MotorcycleTripController extends Controller
                 ],
             ] : null;
 
+            // Rough pickup ETA from driver -> pickup (assume ~25 km/h moto in city).
+            $etaMinutes = null;
+            if ($driver && $driver->current_latitude !== null && $driver->current_longitude !== null
+                && $trip->pickup_lat !== null && $trip->pickup_lng !== null) {
+                $km = $this->matchingService->haversineKm(
+                    (float) $driver->current_latitude,
+                    (float) $driver->current_longitude,
+                    (float) $trip->pickup_lat,
+                    (float) $trip->pickup_lng,
+                );
+                $etaMinutes = max(1, (int) ceil(($km / 25) * 60));
+            }
+
             return response()->json([
                 'success' => true,
                 'data' => [
@@ -280,6 +315,9 @@ class MotorcycleTripController extends Controller
                     'matching_status' => $trip->matching_status,
                     'retry_count' => $trip->retry_count,
                     'max_retries' => $trip->max_retries,
+                    'search_radius_km' => $trip->current_search_radius_km,
+                    'candidate_count' => (int) ($trip->metadata['last_candidate_count'] ?? 0),
+                    'eta_minutes' => $etaMinutes,
                     'pickup_location' => $trip->pickup_location,
                     'dropoff_location' => $trip->dropoff_location,
                     'pickup_lat' => $trip->pickup_lat,

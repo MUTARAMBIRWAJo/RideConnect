@@ -33,6 +33,40 @@ class MatchingService
      * @param array $excludeDriverIds Drivers to exclude from matching
      * @param float $searchRadiusKm Search radius in kilometers (default: 5 km, max: 25 km)
      */
+    /**
+     * Fast, ML-free match: query nearby eligible drivers and pick the best by a
+     * distance-dominant local score. No ML/route HTTP calls, so it returns in
+     * tens of milliseconds and never hangs on a cold ML dyno. Use this on the
+     * passenger's critical path; treat ML as optional background refinement.
+     *
+     * @return array{driver_id:int,score:float,reason:string,distance_km:float,candidate_count:int}|null
+     */
+    public function fastLocalMatch(MotorcycleTrip $trip, array $excludeDriverIds = [], float $searchRadiusKm = 5.0): ?array
+    {
+        $searchRadiusKm = max(1.0, min(\App\Services\Matching\RadiusExpansionService::MAX_RADIUS_KM, $searchRadiusKm));
+
+        $eligible = $this->buildEligibleDriversList($trip, $excludeDriverIds, $searchRadiusKm);
+        if (empty($eligible)) {
+            return null;
+        }
+
+        usort($eligible, function ($a, $b) {
+            $sa = ($a['preliminary_distance_score'] * 0.8) + ($a['preliminary_rating_score'] * 0.2);
+            $sb = ($b['preliminary_distance_score'] * 0.8) + ($b['preliminary_rating_score'] * 0.2);
+            return $sb <=> $sa;
+        });
+
+        $best = $eligible[0];
+
+        return [
+            'driver_id' => (int) $best['id'],
+            'score' => round((($best['preliminary_distance_score'] * 0.8) + ($best['preliminary_rating_score'] * 0.2)) * 100, 1),
+            'reason' => 'fast local match (nearest eligible driver)',
+            'distance_km' => $best['distance_from_pickup_km'],
+            'candidate_count' => count($eligible),
+        ];
+    }
+
     public function matchMotorcycleTrip(MotorcycleTrip $trip, array $excludeDriverIds = [], float $searchRadiusKm = 5): ?array
     {
         try {
@@ -305,6 +339,12 @@ class MatchingService
      * Calculate distance between two coordinates using Haversine formula
      * Returns distance in kilometers
      */
+    /** Public great-circle distance in km (used for ETA estimates). */
+    public function haversineKm(float $lat1, float $lng1, float $lat2, float $lng2): float
+    {
+        return $this->haversineDistance($lat1, $lng1, $lat2, $lng2);
+    }
+
     private function haversineDistance(float $lat1, float $lng1, float $lat2, float $lng2): float
     {
         $earthRadiusKm = 6371;
