@@ -3,7 +3,9 @@
 namespace App\Services;
 
 use App\Models\Driver;
+use App\Models\DriverLocation;
 use App\Models\MotorcycleTrip;
+use App\Models\Ride;
 use App\Models\Vehicle;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
@@ -24,6 +26,9 @@ class MatchingService
     /**
      * Match a motorcycle trip to an available driver
      *
+     * Enhanced with weighted ML scoring:
+     * - final_score = (distance_score × 0.4) + (eta_score × 0.3) + (availability_score × 0.2) + (rating_score × 0.1)
+     *
      * @param MotorcycleTrip $trip
      * @param array $excludeDriverIds Drivers to exclude from matching
      * @param float $searchRadiusKm Search radius in kilometers (default: 5 km, max: 25 km)
@@ -34,7 +39,7 @@ class MatchingService
             // Ensure radius is within bounds
             $searchRadiusKm = max(1, min(25, $searchRadiusKm));
 
-            Log::info('Matching motorcycle trip', [
+            Log::info('Matching motorcycle trip with enhanced scoring', [
                 'trip_id' => $trip->id,
                 'pickup_lat' => $trip->pickup_lat,
                 'pickup_lng' => $trip->pickup_lng,
@@ -42,7 +47,31 @@ class MatchingService
                 'search_radius_km' => $searchRadiusKm,
             ]);
 
-            // Prepare ML service payload
+            // Build eligible drivers list with scoring data
+            $eligibleDrivers = $this->buildEligibleDriversList($trip, $excludeDriverIds, $searchRadiusKm);
+
+            if (empty($eligibleDrivers)) {
+                Log::warning('No eligible drivers found for trip', [
+                    'trip_id' => $trip->id,
+                    'search_radius_km' => $searchRadiusKm,
+                ]);
+                return null;
+            }
+
+            // Get route data for ETA calculation
+            $routeService = app(GoogleRouteService::class);
+            $routeData = $routeService->computeRoute(
+                ['lat' => $trip->pickup_lat, 'lng' => $trip->pickup_lng],
+                ['lat' => $trip->dropoff_lat, 'lng' => $trip->dropoff_lng]
+            );
+
+            $tripDurationStr = $routeData['duration'] ?? '0s';
+            $tripDurationSeconds = (int) filter_var($tripDurationStr, FILTER_SANITIZE_NUMBER_INT);
+            $tripDurationMinutes = (int) ceil($tripDurationSeconds / 60);
+            $tripDistanceMeters = $routeData['distance_meters'] ?? 0;
+            $tripDistanceKm = $tripDistanceMeters / 1000;
+
+            // Prepare enhanced ML service payload with weighted scoring
             $payload = [
                 'trip_request_id' => $trip->id,
                 'vehicle_type' => 'MOTORCYCLE',
@@ -50,11 +79,26 @@ class MatchingService
                 'pickup_lng' => (float) $trip->pickup_lng,
                 'dropoff_lat' => (float) $trip->dropoff_lat,
                 'dropoff_lng' => (float) $trip->dropoff_lng,
+                'trip_distance_km' => $tripDistanceKm,
+                'trip_duration_minutes' => $tripDurationMinutes,
                 'exclude_drivers' => $excludeDriverIds,
                 'search_radius_km' => $searchRadiusKm,
                 'estimated_fare' => (float) $trip->estimated_fare,
                 'vehicle_type_filter' => 'MOTORCYCLE',
+                'drivers' => $eligibleDrivers,
+                'weights' => [
+                    'distance_weight' => 0.4,
+                    'eta_weight' => 0.3,
+                    'availability_weight' => 0.2,
+                    'rating_weight' => 0.1,
+                ],
             ];
+
+            Log::debug('ML matching payload prepared', [
+                'eligible_drivers_count' => count($eligibleDrivers),
+                'trip_distance_km' => $tripDistanceKm,
+                'trip_duration_minutes' => $tripDurationMinutes,
+            ]);
 
             // Call matching service
             $response = Http::timeout($this->timeout)
@@ -66,13 +110,12 @@ class MatchingService
                     'trip_id' => $trip->id,
                     'status' => $response->status(),
                     'body' => $response->body(),
-                    'payload' => $payload,
                 ]);
-                return null;
+                return $this->bestLocalMatch($eligibleDrivers, 'ML service unavailable; selected nearest eligible driver');
             }
 
             $data = $response->json();
-            $driverId = $data['driver_id'] ?? null;
+            $driverId = $data['selected_driver_id'] ?? $data['driver_id'] ?? null;
 
             if (!$driverId) {
                 Log::warning('Matching service returned no driver', [
@@ -80,28 +123,30 @@ class MatchingService
                     'response' => $data,
                     'search_radius_km' => $searchRadiusKm,
                 ]);
-                return null;
+                return $this->bestLocalMatch($eligibleDrivers, 'ML service returned no driver; selected nearest eligible driver');
             }
 
-            // Verify driver is eligible
+            // Verify driver is still eligible
             if (!$this->isDriverEligible($driverId)) {
                 Log::warning('Driver from matching service is not eligible', [
                     'trip_id' => $trip->id,
                     'driver_id' => $driverId,
                 ]);
                 // Request next match excluding this driver
-                return $this->matchMotorcycleTrip($trip, array_merge($excludeDriverIds, [$driverId]));
+                return $this->matchMotorcycleTrip($trip, array_merge($excludeDriverIds, [$driverId]), $searchRadiusKm);
             }
 
-            Log::info('Matching service returned eligible driver', [
+            Log::info('Matching service returned eligible driver with enhanced scoring', [
                 'trip_id' => $trip->id,
                 'driver_id' => $driverId,
                 'score' => $data['score'] ?? null,
+                'reason' => $data['reason'] ?? null,
             ]);
 
             return [
                 'driver_id' => $driverId,
                 'score' => $data['score'] ?? 0,
+                'reason' => $data['reason'] ?? 'Selected by ML engine',
                 'metadata' => $data,
             ];
         } catch (\Exception $e) {
@@ -134,15 +179,19 @@ class MatchingService
             return false;
         }
 
-        // Check driver is active
-        if (!$driver->is_active) {
-            Log::warning('Driver is not active', ['driver_id' => $driverId]);
+        if (!$this->isDriverApproved($driver)) {
+            Log::warning('Driver is not approved for matching', [
+                'driver_id' => $driverId,
+                'status' => $driver->status,
+            ]);
             return false;
         }
 
-        // Check driver is available
-        if (!$driver->is_available) {
-            Log::warning('Driver is not available', ['driver_id' => $driverId]);
+        if (!$this->isDriverAvailable($driver)) {
+            Log::warning('Driver is not available', [
+                'driver_id' => $driverId,
+                'availability_status' => $driver->availability_status,
+            ]);
             return false;
         }
 
@@ -153,10 +202,7 @@ class MatchingService
         }
 
         // Check driver has motorcycle
-        $hasMotorcycle = $driver->vehicles()
-            ->where('vehicle_type', 'MOTORCYCLE')
-            ->where('is_active', true)
-            ->exists();
+        $hasMotorcycle = $this->hasActiveMotorcycle($driver);
 
         if (!$hasMotorcycle) {
             Log::warning('Driver has no active motorcycle', ['driver_id' => $driverId]);
@@ -164,6 +210,189 @@ class MatchingService
         }
 
         return true;
+    }
+
+    /**
+     * Build list of eligible drivers with scoring data
+     *
+     * Calculates preliminary scores for ML engine:
+     * - distance_score: 1 / (1 + distance_km)
+     * - eta_score: 1 / (1 + travel_time_minutes)
+     * - availability_score: 1 (always available if eligible)
+     * - rating_score: driver_rating / 5
+     */
+    private function buildEligibleDriversList(MotorcycleTrip $trip, array $excludeDriverIds, float $searchRadiusKm): array
+    {
+        $drivers = [];
+
+        try {
+            // Get eligible drivers within search radius
+            $eligibleDrivers = Driver::with('vehicles')
+                ->where('status', 'approved')
+                ->whereIn('availability_status', ['online', 'available'])
+                ->whereNotIn('id', $excludeDriverIds)
+                ->whereDoesntHave('motorcycleTrips', function ($query) {
+                    $query->whereIn('status', ['ASSIGNED', 'DRIVER_ASSIGNED', 'PASSENGER_WAITING', 'IN_PROGRESS']);
+                })
+                ->get();
+
+            // Filter by search radius and vehicle type
+            foreach ($eligibleDrivers as $driver) {
+                // Check if driver has motorcycle
+                if (!$this->hasActiveMotorcycle($driver)) {
+                    continue;
+                }
+
+                // Get driver location
+                [$driverLat, $driverLng] = $this->driverCoordinates($driver);
+
+                if (!$driverLat || !$driverLng) {
+                    continue; // Skip if no location
+                }
+
+                // Calculate distance using Haversine formula
+                $distance = $this->haversineDistance(
+                    $trip->pickup_lat,
+                    $trip->pickup_lng,
+                    $driverLat,
+                    $driverLng
+                );
+
+                // Filter by search radius
+                if ($distance > $searchRadiusKm) {
+                    continue;
+                }
+
+                // Calculate preliminary scores
+                $distanceScore = 1 / (1 + $distance);
+                $availabilityScore = 1; // Always 1 for eligible drivers
+
+                // Get driver rating (default 4.5 if not set)
+                $driverRating = $driver->rating ?? 4.5;
+                $ratingScore = min($driverRating / 5, 1.0); // Cap at 1.0
+
+                $drivers[] = [
+                    'id' => $driver->id,
+                    'lat' => (float) $driverLat,
+                    'lng' => (float) $driverLng,
+                    'rating' => (float) $driverRating,
+                    'available' => true,
+                    'distance_from_pickup_km' => round($distance, 2),
+                    'preliminary_distance_score' => round($distanceScore, 3),
+                    'preliminary_availability_score' => $availabilityScore,
+                    'preliminary_rating_score' => round($ratingScore, 3),
+                ];
+            }
+
+            Log::debug('Eligible drivers list built', [
+                'trip_id' => $trip->id,
+                'search_radius_km' => $searchRadiusKm,
+                'eligible_drivers_count' => count($drivers),
+            ]);
+
+            return $drivers;
+        } catch (\Exception $e) {
+            Log::error('Exception building eligible drivers list', [
+                'trip_id' => $trip->id,
+                'error' => $e->getMessage(),
+                'trace' => $e->getTraceAsString(),
+            ]);
+            return [];
+        }
+    }
+
+    /**
+     * Calculate distance between two coordinates using Haversine formula
+     * Returns distance in kilometers
+     */
+    private function haversineDistance(float $lat1, float $lng1, float $lat2, float $lng2): float
+    {
+        $earthRadiusKm = 6371;
+
+        $dLat = deg2rad($lat2 - $lat1);
+        $dLng = deg2rad($lng2 - $lng1);
+
+        $a = sin($dLat / 2) * sin($dLat / 2) +
+             cos(deg2rad($lat1)) * cos(deg2rad($lat2)) *
+             sin($dLng / 2) * sin($dLng / 2);
+
+        $c = 2 * atan2(sqrt($a), sqrt(1 - $a));
+
+        return $earthRadiusKm * $c;
+    }
+
+    private function isDriverApproved(Driver $driver): bool
+    {
+        return strtolower((string) $driver->status) === 'approved';
+    }
+
+    private function isDriverAvailable(Driver $driver): bool
+    {
+        if (! in_array((string) $driver->availability_status, ['online', 'available'], true)) {
+            return false;
+        }
+
+        if ($driver->current_trip_id) {
+            return false;
+        }
+
+        return $driver->is_available === null || (bool) $driver->is_available;
+    }
+
+    private function hasActiveMotorcycle(Driver $driver): bool
+    {
+        return $driver->vehicles
+            ->contains(fn (Vehicle $vehicle): bool => $vehicle->is_active
+                && TransportMappingService::isCompatible($vehicle->vehicle_type, Ride::TRANSPORT_MOTORCYCLE));
+    }
+
+    /**
+     * @return array{0: float|null, 1: float|null}
+     */
+    private function driverCoordinates(Driver $driver): array
+    {
+        $locationDriverIds = array_filter(array_unique([
+            (int) $driver->id,
+            (int) $driver->user_id,
+            (int) ($driver->user?->mobile_user_id ?? 0),
+        ]));
+
+        $latestLocation = DriverLocation::query()
+            ->whereIn('driver_id', $locationDriverIds)
+            ->orderByDesc('id')
+            ->first();
+
+        $lat = $latestLocation?->latitude ?? $latestLocation?->lat ?? $driver->current_latitude ?? $driver->last_location_lat;
+        $lng = $latestLocation?->longitude ?? $latestLocation?->lng ?? $driver->current_longitude ?? $driver->last_location_lng;
+
+        return [
+            $lat !== null ? (float) $lat : null,
+            $lng !== null ? (float) $lng : null,
+        ];
+    }
+
+    private function bestLocalMatch(array $eligibleDrivers, string $reason): ?array
+    {
+        if (empty($eligibleDrivers)) {
+            return null;
+        }
+
+        usort(
+            $eligibleDrivers,
+            fn (array $a, array $b): int => ($a['distance_from_pickup_km'] ?? INF) <=> ($b['distance_from_pickup_km'] ?? INF)
+        );
+
+        $driver = $eligibleDrivers[0];
+
+        return [
+            'driver_id' => (int) $driver['id'],
+            'score' => (float) ($driver['preliminary_distance_score'] ?? 0),
+            'reason' => $reason,
+            'metadata' => [
+                'fallback' => true,
+                'distance_from_pickup_km' => $driver['distance_from_pickup_km'] ?? null,
+            ],
+        ];
     }
 
     /**
@@ -195,6 +424,7 @@ class MatchingService
             $driver->update([
                 'is_available' => false,
                 'current_trip_id' => $trip->id,
+                'availability_status' => 'busy',
             ]);
         }
 

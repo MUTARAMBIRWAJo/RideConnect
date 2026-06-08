@@ -5,6 +5,7 @@ namespace App\Models;
 use App\Models\TripAssignmentAttempt;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Support\Str;
 
@@ -18,9 +19,13 @@ class Driver extends Model
         'license_plate',
         'status',
         'availability_status',
+        'is_available',
+        'current_trip_id',
         'is_test',
         'current_latitude',
         'current_longitude',
+        'last_location_lat',
+        'last_location_lng',
         'last_online_at',
         'online_since',
         'total_rides',
@@ -41,6 +46,7 @@ class Driver extends Model
         'total_rides' => 'integer',
         'rating_count' => 'integer',
         'is_test' => 'boolean',
+        'is_available' => 'boolean',
     ];
 
     public function user()
@@ -71,6 +77,18 @@ class Driver extends Model
     public function trips()
     {
         return $this->hasMany(Trip::class);
+    }
+
+    public function motorcycleTrips(): HasMany
+    {
+        return $this->hasMany(MotorcycleTrip::class, 'driver_id');
+    }
+
+    public function hasActiveMotoTrip(): bool
+    {
+        return $this->motorcycleTrips()
+            ->whereIn('status', ['ASSIGNED', 'DRIVER_ASSIGNED', 'PASSENGER_WAITING', 'IN_PROGRESS'])
+            ->exists();
     }
 
     public function wallet()

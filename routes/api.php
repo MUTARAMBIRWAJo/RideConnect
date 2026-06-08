@@ -287,6 +287,12 @@ Route::prefix('v1')->group(function () {
                 Route::post('/trip-requests/{id}/complete', [MotorcycleTripController::class, 'complete'])->whereNumber('id');
             });
 
+            // Location Tracking Routes
+            Route::prefix('location')->group(function () {
+                Route::post('/update', [DriverLocationController::class, 'update']);
+                Route::get('/current', [DriverLocationController::class, 'current']);
+            });
+
             Route::post('/status', [DriverPublicTransportController::class, 'updateStatus']);
             Route::get('/assignment/current', [DriverPublicTransportController::class, 'currentAssignment']);
             Route::post('/assignments/{attempt}/accept', [DriverPublicTransportController::class, 'accept'])->whereNumber('attempt');

@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Models\Driver;
 use App\Models\MotorcycleTrip;
 use App\Models\User;
+use App\Services\FareCalculationService;
 use App\Services\Location\GeocodingService;
 use App\Services\MatchingService;
 use App\Services\MotorcycleTripService;
@@ -19,15 +20,18 @@ class MotorcycleTripController extends Controller
     private MotorcycleTripService $tripService;
     private MatchingService $matchingService;
     private GeocodingService $geocodingService;
+    private FareCalculationService $fareService;
 
     public function __construct(
         MotorcycleTripService $tripService,
         MatchingService $matchingService,
-        GeocodingService $geocodingService
+        GeocodingService $geocodingService,
+        FareCalculationService $fareService
     ) {
         $this->tripService = $tripService;
         $this->matchingService = $matchingService;
         $this->geocodingService = $geocodingService;
+        $this->fareService = $fareService;
     }
 
     /**
@@ -116,8 +120,30 @@ class MotorcycleTripController extends Controller
                 ]);
             }
 
-            // Estimate fare (placeholder - integrate with fare calculation service)
-            $estimatedFare = $validated['estimated_fare'] ?? $this->estimateFare($pickupLat, $pickupLng, $dropoffLat, $dropoffLng);
+            // Calculate fare using FareCalculationService
+            $fareResult = $this->fareService->calculateFare(
+                $pickupLat,
+                $pickupLng,
+                $dropoffLat,
+                $dropoffLng,
+                'MOTORCYCLE'
+            );
+
+            if (!$fareResult) {
+                Log::warning('MotorcycleTripController: Fare calculation failed', [
+                    'pickup_lat' => $pickupLat,
+                    'pickup_lng' => $pickupLng,
+                    'dropoff_lat' => $dropoffLat,
+                    'dropoff_lng' => $dropoffLng,
+                ]);
+                return response()->json([
+                    'success' => false,
+                    'error_code' => 'FARE_CALCULATION_FAILED',
+                    'message' => 'Could not calculate fare for this trip',
+                ], 503);
+            }
+
+            $estimatedFare = $fareResult['fare_breakdown']['total'];
 
             // Create trip
             $result = $this->tripService->createTrip(
@@ -150,6 +176,13 @@ class MotorcycleTripController extends Controller
                     'status' => $trip->status,
                     'driver_id' => $matchResult['driver_id'] ?? null,
                     'estimated_fare' => $estimatedFare,
+                    'fare_breakdown' => $fareResult['fare_breakdown'],
+                    'fare_details' => [
+                        'distance_km' => $fareResult['distance_km'],
+                        'duration_minutes' => $fareResult['duration_minutes'],
+                        'currency' => $fareResult['currency'],
+                        'cached' => $fareResult['cached'],
+                    ],
                 ], 201);
             } else {
                 // No driver found yet, retry system activated (MATCHING_PENDING)
@@ -160,6 +193,13 @@ class MotorcycleTripController extends Controller
                     'matching_status' => $trip->matching_status,
                     'message' => 'Finding a driver... We will keep searching.',
                     'estimated_fare' => $estimatedFare,
+                    'fare_breakdown' => $fareResult['fare_breakdown'],
+                    'fare_details' => [
+                        'distance_km' => $fareResult['distance_km'],
+                        'duration_minutes' => $fareResult['duration_minutes'],
+                        'currency' => $fareResult['currency'],
+                        'cached' => $fareResult['cached'],
+                    ],
                 ], 202);
             }
         } catch (ValidationException $e) {

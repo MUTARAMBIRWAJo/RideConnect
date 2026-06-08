@@ -180,6 +180,7 @@ class MotorcycleTripService
             $driver->update([
                 'is_available' => false,
                 'current_trip_id' => $trip->id,
+                'availability_status' => 'busy',
             ]);
         }
 
@@ -330,6 +331,7 @@ class MotorcycleTripService
                 $driver->update([
                     'is_available' => true,
                     'current_trip_id' => null,
+                    'availability_status' => 'available',
                 ]);
             }
 
@@ -517,6 +519,7 @@ class MotorcycleTripService
                 $driver->update([
                     'is_available' => true,
                     'current_trip_id' => null,
+                    'availability_status' => 'available',
                 ]);
             }
 
@@ -604,6 +607,7 @@ class MotorcycleTripService
                     $driver->update([
                         'is_available' => true,
                         'current_trip_id' => null,
+                        'availability_status' => 'available',
                     ]);
                 }
 
