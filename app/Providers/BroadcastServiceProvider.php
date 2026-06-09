@@ -7,9 +7,6 @@ use Illuminate\Foundation\Support\Providers\AuthServiceProvider;
 use Illuminate\Support\Facades\Gate;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\ServiceProvider;
-use Illuminate\Support\Facades\Gate;
-use Illuminate\Support\Facades\Log;
-use Illuminate\Support\ServiceProvider;
 
 class BroadcastServiceProvider extends ServiceProvider
 {
@@ -30,7 +27,6 @@ class BroadcastServiceProvider extends ServiceProvider
                 if (! $trip) {
                     throw new AuthorizationException('Trip not found');
                 }
-                // Owner (passenger) or assigned driver may view.
                 if ((int) $trip->passenger_id === (int) $user->id) {
                     return true;
                 }
@@ -49,7 +45,6 @@ class BroadcastServiceProvider extends ServiceProvider
         });
 
         Gate::define('view-driver-channel', function ($user, int $driverId) {
-            // A driver may only subscribe to their own channel.
             if ((int) $user->driver?->id !== (int) $driverId) {
                 throw new AuthorizationException('Not your driver channel');
             }
