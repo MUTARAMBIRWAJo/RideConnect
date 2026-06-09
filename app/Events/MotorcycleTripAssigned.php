@@ -3,43 +3,23 @@
 namespace App\Events;
 
 use App\Models\MotorcycleTrip;
-use Illuminate\Broadcasting\PrivateChannel;
+use Illuminate\Broadcasting\Channel;
+use Illuminate\Broadcasting\InteractsWithSockets;
+use Illuminate\Broadcasting\PresenceChannel;
 use Illuminate\Contracts\Broadcasting\ShouldBroadcast;
 use Illuminate\Foundation\Events\Dispatchable;
 use Illuminate\Queue\SerializesModels;
 
-class MotorcycleTripAssigned implements ShouldBroadcast
+/**
+ * Dispatched the moment a driver is assigned to a motorcycle trip.
+ * Listened by: passenger (trip.{tripId}), driver (driver.{driverId})
+ */
+class MotorcycleTripAssigned extends MotorcycleTripLifecycleEvent
 {
-    use Dispatchable, SerializesModels;
+    use Dispatchable, InteractsWithSockets, SerializesModels;
 
-    use \Illuminate\Broadcasting\InteractsWithBroadcasting;
-
-    public function __construct(
-        public MotorcycleTrip $trip,
-    ) {}
-
-    public function broadcastOn(): array
+    public static function dispatch(MotorcycleTrip $trip, ?int $driverId = null, ?array $payload = null): static
     {
-        return [
-            new PrivateChannel("driver.{$this->trip->driver_id}"),
-            new PrivateChannel("passenger.{$this->trip->passenger_id}"),
-        ];
-    }
-
-    public function broadcastAs(): string
-    {
-        return 'motorcycle.trip.assigned';
-    }
-
-    public function broadcastWith(): array
-    {
-        return [
-            'trip_id' => $this->trip->id,
-            'status' => $this->trip->status,
-            'pickup_location' => $this->trip->pickup_location,
-            'dropoff_location' => $this->trip->dropoff_location,
-            'estimated_fare' => $this->trip->estimated_fare,
-            'message' => 'Trip assigned',
-        ];
+        return event(new static($trip, 'DriverAssigned', $driverId, $payload));
     }
 }

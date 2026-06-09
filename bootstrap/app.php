@@ -14,6 +14,9 @@ return Application::configure(basePath: dirname(__DIR__))
         commands: __DIR__.'/../routes/console.php',
         health: '/up',
     )
+    ->withProviders([
+        \App\Providers\BroadcastServiceProvider::class,
+    ])
     ->withCommands([
         __DIR__.'/../app/Console/Commands',
     ])

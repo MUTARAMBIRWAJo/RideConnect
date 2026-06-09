@@ -708,6 +708,17 @@ class MotorcycleTripService
         } catch (\Throwable $e) {
             Log::warning('Passenger notification failed', ['trip_id' => $trip->id, 'event' => $event, 'error' => $e->getMessage()]);
         }
+
+        // Broadcast via Reverb when enabled (falls back to log when not).
+        if (config('realtime.enabled')) {
+            try {
+                event(new \App\Events\MotorcycleTripLifecycleEvent(
+                    $trip, $event, $trip->driver_id, array_merge(['title' => $title, 'body' => $body], $payload)
+                ));
+            } catch (\Throwable $e) {
+                Log::debug('Broadcast skipped (realtime disabled or failed)', ['error' => $e->getMessage()]);
+            }
+        }
     }
 
     private function notifyDriver(int $userId, string $event, string $title, string $body, array $payload = []): void
@@ -716,6 +727,21 @@ class MotorcycleTripService
             $this->notificationService->sendInAppNotification($userId, $event, $title, $body, $payload);
         } catch (\Throwable $e) {
             Log::warning('Driver notification failed', ['user_id' => $userId, 'event' => $event, 'error' => $e->getMessage()]);
+        }
+
+        if (config('realtime.enabled')) {
+            try {
+                $driver = Driver::find($userId);
+                $tripId = $payload['trip_id'] ?? 0;
+                $trip = $tripId ? MotorcycleTrip::find($tripId) : null;
+                if ($trip) {
+                    event(new \App\Events\MotorcycleTripLifecycleEvent(
+                        $trip, $event, $driver?->id, array_merge(['title' => $title, 'body' => $body], $payload)
+                    ));
+                }
+            } catch (\Throwable $e) {
+                Log::debug('Driver broadcast skipped', ['error' => $e->getMessage()]);
+            }
         }
     }
 

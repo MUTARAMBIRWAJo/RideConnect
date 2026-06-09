@@ -133,6 +133,9 @@ Route::prefix('v1')->group(function () {
     });
     // Shared pricing calculator for UI auto pricing
     Route::post('/pricing/calculate', [PricingController::class, 'calculate']);
+
+    // Realtime config — Flutter calls this to decide WS vs polling.
+    Route::get('/realtime/config', [\App\Http\Controllers\Api\RealtimeConfigController::class, '__invoke']);
     /* ===========================
        MOBILE APP - SANCTUM AUTHENTICATED
        =========================== */
