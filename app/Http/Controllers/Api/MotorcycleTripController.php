@@ -344,6 +344,7 @@ class MotorcycleTripController extends Controller
                         'started_at' => $trip->started_at?->toIso8601String(),
                         'completed_at' => $trip->completed_at?->toIso8601String(),
                         'cancelled_at' => $trip->cancelled_at?->toIso8601String(),
+                        'rejected_at' => $trip->rejected_at?->toIso8601String(),
                     ],
                     'updated_at' => $trip->updated_at?->toIso8601String(),
                 ],
@@ -456,7 +457,7 @@ class MotorcycleTripController extends Controller
                 ], 404);
             }
 
-            $result = $this->tripService->acceptTrip($trip, $driverId);
+            $result = $this->tripService->acceptTripWithCache($trip, $driverId);
 
             if (!$result['success']) {
                 $statusCode = match ($result['error'] ?? 'UNKNOWN') {
@@ -511,7 +512,7 @@ class MotorcycleTripController extends Controller
                 ], 404);
             }
 
-            $result = $this->tripService->rejectTrip($trip, $driverId, $validated['reason'] ?? 'No reason provided');
+            $result = $this->tripService->rejectTripWithCache($trip, $driverId, $validated['reason'] ?? 'No reason provided');
 
             if (!$result['success']) {
                 return response()->json($result, 500);
@@ -563,7 +564,7 @@ class MotorcycleTripController extends Controller
                 ], 404);
             }
 
-            $result = $this->tripService->driverArrived($trip, $driverId);
+            $result = $this->tripService->driverArrivedWithCache($trip, $driverId);
 
             if (!$result['success']) {
                 return response()->json($result, 400);
@@ -659,7 +660,7 @@ class MotorcycleTripController extends Controller
                 ], 404);
             }
 
-            $result = $this->tripService->completeTrip($trip, $driverId, $validated['actual_fare'] ?? null);
+            $result = $this->tripService->completeTripWithCache($trip, $driverId, $validated['actual_fare'] ?? null);
 
             if (!$result['success']) {
                 return response()->json($result, 400);
@@ -708,7 +709,7 @@ class MotorcycleTripController extends Controller
                 ], 404);
             }
 
-            $result = $this->tripService->cancelByPassenger($trip, $passengerId, $validated['reason'] ?? null);
+            $result = $this->tripService->cancelByPassengerWithCache($trip, $passengerId, $validated['reason'] ?? null);
 
             if (!$result['success']) {
                 $statusCode = match ($result['error'] ?? 'UNKNOWN') {

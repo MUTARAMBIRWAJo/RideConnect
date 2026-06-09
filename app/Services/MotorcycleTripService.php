@@ -6,21 +6,18 @@ use App\Jobs\RetryTripMatchingJob;
 use App\Models\Driver;
 use App\Models\MotorcycleTrip;
 use App\Models\Notification;
+use App\Services\DriverAvailabilityCacheService;
 use App\Services\Matching\RadiusExpansionService;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 
 class MotorcycleTripService
 {
-    private MatchingService $matchingService;
-    private NotificationService $notificationService;
-
     public function __construct(
-        MatchingService $matchingService,
-        NotificationService $notificationService
+        private MatchingService $matchingService,
+        private NotificationService $notificationService,
+        private DriverAvailabilityCacheService $driverCache,
     ) {
-        $this->matchingService = $matchingService;
-        $this->notificationService = $notificationService;
     }
 
     /**
@@ -84,9 +81,6 @@ class MotorcycleTripService
         }
     }
 
-    /**
-     * Start matching process for a trip
-     */
     public function startMatching(MotorcycleTrip $trip): array
     {
         try {
@@ -173,14 +167,6 @@ class MotorcycleTripService
     /**
      * Assign driver to trip (extracted for reuse)
      */
-    /**
-     * Attempt a single fast match for a still-searching trip. Safe to call
-     * repeatedly (e.g. from the status poll) — this is what drives matching to
-     * completion without depending on a queue worker. Returns a small result
-     * describing the attempt; persists candidate count + radius for the API.
-     *
-     * @return array{success:bool,driver_id?:int,candidate_count:int,radius_km:float}
-     */
     public function attemptMatch(MotorcycleTrip $trip, float $radiusKm, bool $debug = false): array
     {
         // Only pre-assignment trips are matchable.
@@ -217,9 +203,6 @@ class MotorcycleTripService
         return ['success' => false, 'candidate_count' => $candidateCount, 'radius_km' => $radius];
     }
 
-    /**
-     * Normalize rejected_drivers (cast to array, but tolerate legacy JSON strings).
-     */
     private function rejectedDriverIds(MotorcycleTrip $trip): array
     {
         $rejected = $trip->rejected_drivers;
@@ -235,58 +218,56 @@ class MotorcycleTripService
 
     private function assignDriver(MotorcycleTrip $trip, array $match): array
     {
-        // Assign driver
-        $trip->update([
-            'driver_id' => $match['driver_id'],
-            'status' => 'ASSIGNED',
-            'matching_status' => 'DRIVER_FOUND',
-            'assigned_at' => now(),
-        ]);
-
-        // Mark driver unavailable
-        $driver = Driver::find($match['driver_id']);
-        if ($driver) {
-            $driver->update([
-                'is_available' => false,
-                'current_trip_id' => $trip->id,
-                'availability_status' => 'busy',
+        return DB::transaction(function () use ($trip, $match) {
+            $trip->update([
+                'driver_id' => $match['driver_id'],
+                'status' => 'ASSIGNED',
+                'matching_status' => 'DRIVER_FOUND',
+                'assigned_at' => now(),
+                'matched_via' => $match['matched_via'] ?? 'fast_local',
+                'candidate_count' => $match['candidate_count'] ?? 0,
+                'matching_metadata' => array_merge($trip->matching_metadata ?? [], [
+                    'matched_at' => now()->toIso8601String(),
+                    'score' => $match['score'] ?? null,
+                    'reason' => $match['reason'] ?? '',
+                ]),
             ]);
-        }
 
-        // Notify driver
-        $this->notificationService->sendInAppNotification(
-            $driver->user_id,
-            'TRIP_ASSIGNED',
-            'New Motorcycle Trip Assigned',
-            "{$trip->pickup_location} → {$trip->dropoff_location}",
-            [
+            $driver = Driver::with('user')->find($match['driver_id']);
+            if ($driver) {
+                $driver->update([
+                    'is_available' => false,
+                    'current_trip_id' => $trip->id,
+                    'availability_status' => 'busy',
+                ]);
+                $this->driverCache->markBusy($driver->id);
+            }
+
+            // Task 5: in-app notification (FCM push path activates when FCM key is set)
+            $this->notifyPassenger($trip, 'DRIVER_FOUND', 'Driver Found',
+                'A driver has been assigned to your trip',
+                ['trip_id' => $trip->id, 'driver_id' => $match['driver_id']]);
+            if ($driver) {
+                $this->notifyDriver($driver->user_id, 'TRIP_ASSIGNED',
+                    'New Motorcycle Trip Assigned',
+                    "{$trip->pickup_location} → {$trip->dropoff_location}",
+                    ['trip_id' => $trip->id, 'fare' => $trip->estimated_fare,
+                     'pickup_lat' => $trip->pickup_lat, 'pickup_lng' => $trip->pickup_lng]);
+            }
+
+            Log::info('Motorcycle trip matched and assigned', [
                 'trip_id' => $trip->id,
-                'fare' => $trip->estimated_fare,
-                'pickup_lat' => $trip->pickup_lat,
-                'pickup_lng' => $trip->pickup_lng,
-            ]
-        );
+                'driver_id' => $match['driver_id'],
+                'matched_via' => $match['matched_via'] ?? 'fast_local',
+            ]);
 
-        // Notify passenger
-        $this->notificationService->sendInAppNotification(
-            $trip->passenger_id,
-            'TRIP_ASSIGNED',
-            'Driver Found',
-            'A driver has been assigned',
-            ['trip_id' => $trip->id]
-        );
-
-        Log::info('Motorcycle trip matched and assigned', [
-            'trip_id' => $trip->id,
-            'driver_id' => $match['driver_id'],
-        ]);
-
-        return [
-            'success' => true,
-            'trip_id' => $trip->id,
-            'driver_id' => $match['driver_id'],
-            'status' => $trip->status,
-        ];
+            return [
+                'success' => true,
+                'trip_id' => $trip->id,
+                'driver_id' => $match['driver_id'],
+                'status' => $trip->status,
+            ];
+        });
     }
 
     /**
@@ -295,66 +276,61 @@ class MotorcycleTripService
     public function acceptTrip(MotorcycleTrip $trip, int $driverId): array
     {
         try {
-            // Validate
-            if ($trip->driver_id !== $driverId) {
-                return [
-                    'success' => false,
-                    'error' => 'NOT_ASSIGNED_TO_DRIVER',
-                    'message' => 'Trip not assigned to this driver',
-                ];
-            }
+            $result = DB::transaction(function () use ($trip, $driverId) {
 
-            if ($trip->status !== 'ASSIGNED') {
-                return [
-                    'success' => false,
-                    'error' => 'INVALID_STATUS',
-                    'message' => 'Trip cannot be accepted in current status',
-                ];
-            }
+                // Task 8: idempotency guard — reload and recheck inside transaction
+                $trip->refresh();
+                if ($trip->driver_id !== $driverId) {
+                    return [
+                        'success' => false,
+                        'error' => 'NOT_ASSIGNED_TO_DRIVER',
+                        'message' => 'Trip not assigned to this driver',
+                    ];
+                }
 
-            // Update trip
-            $trip->update([
-                'status' => 'DRIVER_ASSIGNED',
-                'accepted_at' => now(),
-            ]);
+                if ($trip->status !== 'ASSIGNED') {
+                    return [
+                        'success' => false,
+                        'error' => 'INVALID_STATUS',
+                        'message' => 'Trip cannot be accepted in current status',
+                    ];
+                }
 
-            // Get driver with user
-            $driver = Driver::with('user')->find($driverId);
+                // Update trip
+                $trip->update([
+                    'status' => 'DRIVER_ASSIGNED',
+                    'accepted_at' => now(),
+                ]);
 
-            // Notify passenger
-            $this->notificationService->sendInAppNotification(
-                $trip->passenger_id,
-                'TRIP_ACCEPTED',
-                'Driver Accepted',
-                'Your driver has accepted the trip',
-                [
+                $driver = Driver::with('user')->find($driverId);
+
+                $this->notifyPassenger($trip, 'TRIP_ACCEPTED', 'Driver Accepted',
+                    'Your driver has accepted the trip',
+                    [
+                        'trip_id' => $trip->id,
+                        'driver_name' => $driver?->user?->name,
+                        'driver_phone' => $driver?->user?->phone,
+                        'vehicle_plate' => $driver?->motorcycle_plate ?? 'N/A',
+                        'estimated_arrival' => 5,
+                    ]);
+                if ($driver) {
+                    $this->notifyDriver($driver->user_id, 'TRIP_ACCEPTED', 'Trip Accepted',
+                        'Trip accepted successfully. Head to pickup location.',
+                        ['trip_id' => $trip->id]);
+                }
+
+                Log::info('Motorcycle trip accepted', [
                     'trip_id' => $trip->id,
-                    'driver_name' => $driver->user->name,
-                    'driver_phone' => $driver->user->phone,
-                    'vehicle_plate' => $driver->motorcycle_plate ?? 'N/A',
-                    'estimated_arrival' => 5, // minutes
-                ]
-            );
+                    'driver_id' => $driverId,
+                ]);
 
-            // Notify driver
-            $this->notificationService->sendInAppNotification(
-                $driver->user_id,
-                'TRIP_ACCEPTED',
-                'Trip Accepted',
-                'Trip accepted successfully. Head to pickup location.',
-                ['trip_id' => $trip->id]
-            );
-
-            Log::info('Motorcycle trip accepted', [
-                'trip_id' => $trip->id,
-                'driver_id' => $driverId,
-            ]);
-
-            return [
-                'success' => true,
-                'trip_id' => $trip->id,
-                'status' => $trip->status,
-            ];
+                return [
+                    'success' => true,
+                    'trip_id' => $trip->id,
+                    'status' => $trip->status,
+                ];
+            });
+            return $result;
         } catch (\Exception $e) {
             Log::error('Failed to accept trip', [
                 'trip_id' => $trip->id,
@@ -713,5 +689,116 @@ class MotorcycleTripService
                 'message' => 'Failed to cancel trip',
             ];
         }
+    }
+
+    // =========================================================================
+    // Task 5 — centralized notification helpers (FCM path activates when FCM key is set)
+    // =========================================================================
+
+    private function notifyPassenger(MotorcycleTrip $trip, string $event, string $title, string $body, array $payload = []): void
+    {
+        try {
+            $this->notificationService->sendInAppNotification(
+                $trip->passenger_id,
+                $event,
+                $title,
+                $body,
+                array_merge(['trip_id' => $trip->id], $payload),
+            );
+        } catch (\Throwable $e) {
+            Log::warning('Passenger notification failed', ['trip_id' => $trip->id, 'event' => $event, 'error' => $e->getMessage()]);
+        }
+    }
+
+    private function notifyDriver(int $userId, string $event, string $title, string $body, array $payload = []): void
+    {
+        try {
+            $this->notificationService->sendInAppNotification($userId, $event, $title, $body, $payload);
+        } catch (\Throwable $e) {
+            Log::warning('Driver notification failed', ['user_id' => $userId, 'event' => $event, 'error' => $e->getMessage()]);
+        }
+    }
+
+    // =========================================================================
+    // Task 3 — refresh availability cache on lifecycle transitions
+    // =========================================================================
+
+    private function refreshDriverCache(Driver $driver): void
+    {
+        try {
+            $this->driverCache->refreshFromDriver($driver);
+        } catch (\Throwable $e) {
+            Log::debug('Driver cache refresh failed (non-critical)', [
+                'driver_id' => $driver->id,
+                'error' => $e->getMessage(),
+            ]);
+        }
+    }
+
+    // Override lifecycle methods to also refresh cache after status transitions.
+    // These are thin decorators around the existing public methods — the public
+    // API signature is unchanged.
+
+    public function acceptTripWithCache(MotorcycleTrip $trip, int $driverId): array
+    {
+        $result = $this->acceptTrip($trip, $driverId);
+        if ($result['success']) {
+            $driver = Driver::find($driverId);
+            if ($driver) {
+                $this->refreshDriverCache($driver); // mark busy in cache
+            }
+        }
+        return $result;
+    }
+
+    public function rejectTripWithCache(MotorcycleTrip $trip, int $driverId, string $reason): array
+    {
+        $driver = Driver::find($driverId);
+        $result = $this->rejectTrip($trip, $driverId, $reason);
+        if ($driver) {
+            $this->refreshDriverCache($driver); // mark available again
+        }
+        return $result;
+    }
+
+    public function driverArrivedWithCache(MotorcycleTrip $trip, int $driverId): array
+    {
+        $result = $this->driverArrived($trip, $driverId);
+        if ($result['success']) {
+            $driver = Driver::find($driverId);
+            if ($driver) {
+                $this->refreshDriverCache($driver);
+            }
+        }
+        return $result;
+    }
+
+    public function startTripWithCache(MotorcycleTrip $trip, int $driverId): array
+    {
+        $result = $this->startTrip($trip, $driverId);
+        return $result;
+    }
+
+    public function completeTripWithCache(MotorcycleTrip $trip, int $driverId, float $actualFare = null): array
+    {
+        $driver = Driver::find($driverId);
+        $result = $this->completeTrip($trip, $driverId, $actualFare);
+        if ($result['success'] && $driver) {
+            $this->refreshDriverCache($driver); // mark available again
+        }
+        return $result;
+    }
+
+    public function cancelByPassengerWithCache(MotorcycleTrip $trip, int $passengerId, string $reason = null): array
+    {
+        $driverId = $trip->driver_id;
+        $result = $this->cancelByPassenger($trip, $passengerId, $reason);
+        if ($result['success'] && $driverId) {
+            $driver = Driver::find($driverId);
+            if ($driver) {
+                $this->refreshDriverCache($driver); // mark available
+            }
+        }
+        return $result;
     }
 }

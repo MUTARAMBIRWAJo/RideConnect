@@ -3,6 +3,7 @@
 namespace App\Services;
 
 use App\Models\Driver;
+use App\Models\DriverAvailabilityCache;
 use App\Models\DriverLocation;
 use App\Models\MotorcycleTrip;
 use App\Models\Ride;
@@ -41,9 +42,15 @@ class MatchingService
      *
      * @return array{driver_id:int,score:float,reason:string,distance_km:float,candidate_count:int}|null
      */
-    public function fastLocalMatch(MotorcycleTrip $trip, array $excludeDriverIds = [], float $searchRadiusKm = 5.0): ?array
+    public function fastLocalMatch(MotorcycleTrip $trip, array $excludeDriverIds = [], float $searchRadiusKm = 5.0, int $topN = 5): ?array
     {
         $searchRadiusKm = max(1.0, min(\App\Services\Matching\RadiusExpansionService::MAX_RADIUS_KM, $searchRadiusKm));
+
+        // Task 3: query driver availability cache first (indexed), fall back to DB.
+        $cacheResult = $this->queryAvailabilityCache($trip, $excludeDriverIds, $searchRadiusKm, $topN);
+        if (! empty($cacheResult)) {
+            return $cacheResult[0];
+        }
 
         $eligible = $this->buildEligibleDriversList($trip, $excludeDriverIds, $searchRadiusKm);
         if (empty($eligible)) {
@@ -64,10 +71,75 @@ class MatchingService
             'reason' => 'fast local match (nearest eligible driver)',
             'distance_km' => $best['distance_from_pickup_km'],
             'candidate_count' => count($eligible),
+            'candidates' => array_slice($eligible, 0, $topN),
         ];
     }
 
-    public function matchMotorcycleTrip(MotorcycleTrip $trip, array $excludeDriverIds = [], float $searchRadiusKm = 5): ?array
+    /**
+     * Task 3 — fast pre-filter from driver_availability_cache. Returns an array
+     * of match arrays (same shape as buildEligibleDriversList) for up to $topN
+     * candidates, already roughly distance-filtered by the bounding-box index.
+     * Returns empty array if the cache has nothing nearby.
+     */
+    private function queryAvailabilityCache(MotorcycleTrip $trip, array $excludeDriverIds, float $radiusKm, int $topN): array
+    {
+        try {
+            $excludeSet = array_flip($excludeDriverIds);
+            $rows = DriverAvailabilityCache::query()
+                ->where('is_online', true)
+                ->where('is_available', true)
+                ->when($trip->vehicle_type ?? 'MOTORCYCLE', fn ($q, $v) => $q->where('vehicle_type', $v))
+                ->get()
+                ->filter(fn ($r) => ! isset($excludeSet[$r->driver_id]))
+                ->map(fn ($r) => [
+                    'id' => $r->driver_id,
+                    'lat' => (float) $r->current_lat,
+                    'lng' => (float) $r->current_lng,
+                ])
+                ->filter(fn ($c) => $c['lat'] != 0.0 && $c['lng'] != 0.0)
+                ->map(fn ($c) => [
+                    ...$c,
+                    'distance_from_pickup_km' => $this->haversineKm(
+                        $trip->pickup_lat, $trip->pickup_lng, $c['lat'], $c['lng']
+                    ),
+                ])
+                ->filter(fn ($c) => $c['distance_from_pickup_km'] <= $radiusKm)
+                ->sortBy('distance_from_pickup_km')
+                ->take($topN)
+                ->values()
+                ->all();
+
+            if (empty($rows)) {
+                return [];
+            }
+
+            return array_map(function ($c) use ($trip) {
+                $driver = Driver::with('user')->find($c['id']);
+                $ratingScore = $driver && $driver->rating ? min((float) $driver->rating / 5, 1.0) : 0.9;
+                $distanceScore = 1 / (1 + $c['distance_from_pickup_km']);
+                return [
+                    'id' => $c['id'],
+                    'lat' => $c['lat'],
+                    'lng' => $c['lng'],
+                    'rating' => $driver?->rating ?? 4.5,
+                    'available' => true,
+                    'distance_from_pickup_km' => round($c['distance_from_pickup_km'], 2),
+                    'preliminary_distance_score' => round($distanceScore, 3),
+                    'preliminary_availability_score' => 1,
+                    'preliminary_rating_score' => round($ratingScore, 3),
+                ];
+            }, $rows);
+        } catch (\Throwable $e) {
+            Log::debug('Availability cache query failed, falling back to DB', [
+                'trip_id' => $trip->id,
+                'error' => $e->getMessage(),
+            ]);
+            return [];
+        }
+    }
+
+    // Task 9 — top-N ML ranking. Extends matchMotorcycleTrip with $topN parameter.
+    public function matchMotorcycleTrip(MotorcycleTrip $trip, array $excludeDriverIds = [], float $searchRadiusKm = 5, int $topN = 1): ?array
     {
         try {
             // Ensure radius is within bounds
@@ -119,6 +191,7 @@ class MatchingService
                 'search_radius_km' => $searchRadiusKm,
                 'estimated_fare' => (float) $trip->estimated_fare,
                 'vehicle_type_filter' => 'MOTORCYCLE',
+                'top_n' => $topN,
                 'drivers' => $eligibleDrivers,
                 'weights' => [
                     'distance_weight' => 0.4,
@@ -149,7 +222,17 @@ class MatchingService
             }
 
             $data = $response->json();
-            $driverId = $data['selected_driver_id'] ?? $data['driver_id'] ?? null;
+
+            // Task 9: ML now returns top_n ranked drivers; fall back to single result.
+            $ranked = $data['ranked_drivers'] ?? $data['drivers'] ?? [];
+            if (! empty($ranked) && is_array($ranked)) {
+                $selected = $this->selectFromRanked($ranked, $excludeDriverIds);
+                if ($selected) {
+                    return $selected;
+                }
+            }
+
+            $driverId = $data['selected_driver_id'] ?? $data['driver_id'] ?? ($ranked[0]['driver_id'] ?? $ranked[0]['id'] ?? null);
 
             if (!$driverId) {
                 Log::warning('Matching service returned no driver', [
@@ -166,8 +249,7 @@ class MatchingService
                     'trip_id' => $trip->id,
                     'driver_id' => $driverId,
                 ]);
-                // Request next match excluding this driver
-                return $this->matchMotorcycleTrip($trip, array_merge($excludeDriverIds, [$driverId]), $searchRadiusKm);
+                return $this->matchMotorcycleTrip($trip, array_merge($excludeDriverIds, [$driverId]), $searchRadiusKm, $topN);
             }
 
             Log::info('Matching service returned eligible driver with enhanced scoring', [
@@ -181,6 +263,7 @@ class MatchingService
                 'driver_id' => $driverId,
                 'score' => $data['score'] ?? 0,
                 'reason' => $data['reason'] ?? 'Selected by ML engine',
+                'matched_via' => 'ml',
                 'metadata' => $data,
             ];
         } catch (\Exception $e) {
@@ -189,8 +272,35 @@ class MatchingService
                 'error' => $e->getMessage(),
                 'trace' => $e->getTraceAsString(),
             ]);
-            return null;
+            return $this->bestLocalMatch($eligibleDrivers, 'ML exception; fallback to local best');
         }
+    }
+
+    /**
+     * Task 9: pick the best driver from an ML-returned ranked list, skipping any
+     * that have since become ineligible or already rejected.
+     */
+    private function selectFromRanked(array $ranked, array $excludeDriverIds): ?array
+    {
+        $excludeSet = array_flip($excludeDriverIds);
+        foreach ($ranked as $entry) {
+            $driverId = (int) ($entry['driver_id'] ?? $entry['id'] ?? 0);
+            if ($driverId <= 0 || isset($excludeSet[$driverId])) {
+                continue;
+            }
+            if (!$this->isDriverEligible($driverId)) {
+                continue;
+            }
+            $score = (float) ($entry['score'] ?? $entry['combined_score'] ?? 1);
+            return [
+                'driver_id' => $driverId,
+                'score' => $score,
+                'reason' => $entry['reason'] ?? 'ML ranked driver',
+                'matched_via' => 'ml',
+                'metadata' => $entry,
+            ];
+        }
+        return null;
     }
 
     /**
