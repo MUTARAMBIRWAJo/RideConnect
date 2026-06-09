@@ -7,14 +7,14 @@ use Illuminate\Foundation\Support\Providers\AuthServiceProvider;
 use Illuminate\Support\Facades\Gate;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\ServiceProvider;
-use Laravel\Sanctum\Sanctum;
+use Illuminate\Support\Facades\Gate;
+use Illuminate\Support\Facades\Log;
+use Illuminate\Support\ServiceProvider;
 
 class BroadcastServiceProvider extends ServiceProvider
 {
     public function boot(): void
     {
-        Sanctum::ignoreMigrations();
-
         /*
          * Channel authorization — called by Reverb / Echo when Flutter
          * subscribes to private-{channel}. Each subscriber sends the
