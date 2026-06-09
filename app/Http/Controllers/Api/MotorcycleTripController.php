@@ -282,6 +282,13 @@ class MotorcycleTripController extends Controller
             }
 
             $driver = $trip->driver;
+            // Use the same location source the matcher uses (driver_locations first,
+            // then drivers.current_latitude) so the displayed location/ETA are not
+            // skewed by a stale drivers row.
+            [$driverLat, $driverLng] = $driver
+                ? $this->matchingService->driverCoordinates($driver)
+                : [null, null];
+
             $driverBlock = $driver ? [
                 'id' => $driver->id,
                 'name' => $driver->user?->name,
@@ -289,18 +296,18 @@ class MotorcycleTripController extends Controller
                 'rating' => $driver->rating,
                 'vehicle_plate' => $driver->motorcycle_plate ?? $driver->license_plate,
                 'location' => [
-                    'lat' => $driver->current_latitude !== null ? (float) $driver->current_latitude : null,
-                    'lng' => $driver->current_longitude !== null ? (float) $driver->current_longitude : null,
+                    'lat' => $driverLat,
+                    'lng' => $driverLng,
                 ],
             ] : null;
 
             // Rough pickup ETA from driver -> pickup (assume ~25 km/h moto in city).
             $etaMinutes = null;
-            if ($driver && $driver->current_latitude !== null && $driver->current_longitude !== null
+            if ($driverLat !== null && $driverLng !== null
                 && $trip->pickup_lat !== null && $trip->pickup_lng !== null) {
                 $km = $this->matchingService->haversineKm(
-                    (float) $driver->current_latitude,
-                    (float) $driver->current_longitude,
+                    $driverLat,
+                    $driverLng,
                     (float) $trip->pickup_lat,
                     (float) $trip->pickup_lng,
                 );

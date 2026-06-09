@@ -387,9 +387,13 @@ class MatchingService
     }
 
     /**
+     * Resolve a driver's live coordinates (driver_locations first, then the
+     * driver row). Public so callers render the SAME location the matcher used,
+     * avoiding stale drivers.current_latitude values.
+     *
      * @return array{0: float|null, 1: float|null}
      */
-    private function driverCoordinates(Driver $driver): array
+    public function driverCoordinates(Driver $driver): array
     {
         $locationDriverIds = array_filter(array_unique([
             (int) $driver->id,
