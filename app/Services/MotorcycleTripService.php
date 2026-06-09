@@ -10,13 +10,16 @@ use App\Services\DriverAvailabilityCacheService;
 use App\Services\Matching\RadiusExpansionService;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
+use App\Services\FirebaseRealtimeService;
 
 class MotorcycleTripService
 {
+
     public function __construct(
         private MatchingService $matchingService,
         private NotificationService $notificationService,
         private DriverAvailabilityCacheService $driverCache,
+        private FirebaseRealtimeService $firebase,
     ) {
     }
 
@@ -459,6 +462,11 @@ class MotorcycleTripService
                 ['trip_id' => $trip->id]
             );
 
+            // Push to Firebase for realtime delivery
+            $this->firebase->pushTripEvent((string) $trip->id, 'DriverArrived', [
+                'driver_id' => $driverId,
+            ]);
+
             Log::info('Driver arrived at pickup', [
                 'trip_id' => $trip->id,
                 'driver_id' => $driverId,
@@ -511,6 +519,11 @@ class MotorcycleTripService
                 'Your trip has started',
                 ['trip_id' => $trip->id]
             );
+
+            // Push to Firebase for realtime delivery
+            $this->firebase->pushTripEvent((string) $trip->id, 'TripStarted', [
+                'driver_id' => $driverId,
+            ]);
 
             Log::info('Trip started', [
                 'trip_id' => $trip->id,
@@ -579,6 +592,12 @@ class MotorcycleTripService
                     'fare' => $trip->actual_fare ?? $trip->estimated_fare,
                 ]
             );
+
+            // Push to Firebase for realtime delivery
+            $this->firebase->pushTripEvent((string) $trip->id, 'TripCompleted', [
+                'driver_id' => $driverId,
+                'fare' => $trip->actual_fare ?? $trip->estimated_fare,
+            ]);
 
             // Notify driver
             $this->notificationService->sendInAppNotification(
@@ -666,6 +685,12 @@ class MotorcycleTripService
                 );
             }
 
+            // Push to Firebase for realtime delivery
+            $this->firebase->pushTripEvent((string) $trip->id, 'TripCancelled', [
+                'cancelled_by' => 'passenger',
+                'reason' => $reason,
+            ]);
+
             Log::info('Trip cancelled by passenger', [
                 'trip_id' => $trip->id,
                 'passenger_id' => $passengerId,
@@ -709,15 +734,11 @@ class MotorcycleTripService
             Log::warning('Passenger notification failed', ['trip_id' => $trip->id, 'event' => $event, 'error' => $e->getMessage()]);
         }
 
-        // Broadcast via Reverb when enabled (falls back to log when not).
-        if (config('realtime.enabled')) {
-            try {
-                event(new \App\Events\MotorcycleTripLifecycleEvent(
-                    $trip, $event, $trip->driver_id, array_merge(['title' => $title, 'body' => $body], $payload)
-                ));
-            } catch (\Throwable $e) {
-                Log::debug('Broadcast skipped (realtime disabled or failed)', ['error' => $e->getMessage()]);
-            }
+        // Push to Firebase for realtime delivery (Flutter listens on trip_events/{tripId}).
+        try {
+            $this->firebase->pushTripEvent((string) $trip->id, $event, array_merge(['title' => $title, 'body' => $body], $payload));
+        } catch (\Throwable $e) {
+            Log::debug('Firebase push failed (non-critical)', ['trip_id' => $trip->id, 'error' => $e->getMessage()]);
         }
     }
 
@@ -729,19 +750,11 @@ class MotorcycleTripService
             Log::warning('Driver notification failed', ['user_id' => $userId, 'event' => $event, 'error' => $e->getMessage()]);
         }
 
-        if (config('realtime.enabled')) {
-            try {
-                $driver = Driver::find($userId);
-                $tripId = $payload['trip_id'] ?? 0;
-                $trip = $tripId ? MotorcycleTrip::find($tripId) : null;
-                if ($trip) {
-                    event(new \App\Events\MotorcycleTripLifecycleEvent(
-                        $trip, $event, $driver?->id, array_merge(['title' => $title, 'body' => $body], $payload)
-                    ));
-                }
-            } catch (\Throwable $e) {
-                Log::debug('Driver broadcast skipped', ['error' => $e->getMessage()]);
-            }
+        try {
+            $tripId = (string) ($payload['trip_id'] ?? '0');
+            $this->firebase->pushTripEvent($tripId, $event, array_merge(['title' => $title, 'body' => $body], $payload));
+        } catch (\Throwable $e) {
+            Log::debug('Firebase driver push failed (non-critical)', ['user_id' => $userId, 'error' => $e->getMessage()]);
         }
     }
 

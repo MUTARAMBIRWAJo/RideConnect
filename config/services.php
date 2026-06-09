@@ -152,4 +152,18 @@ return [
         'timeout' => env('GOOGLE_MAPS_TIMEOUT', 10),
     ],
 
+    /*
+    |--------------------------------------------------------------------------
+    | Firebase Realtime Database
+    |--------------------------------------------------------------------------
+    | Used ONLY for realtime event delivery to the Flutter app.
+    | Supabase/PostgreSQL remains the source of truth for all data.
+    */
+    'firebase' => [
+        'project_id'            => env('FIREBASE_PROJECT_ID'),
+        'credentials'           => env('FIREBASE_CREDENTIALS'),
+        'database_url'          => env('FIREBASE_DATABASE_URL'),
+        'firestore_database'    => env('FIREBASE_FIRESTORE_DATABASE', '(default)'),
+    ],
+
 ];

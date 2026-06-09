@@ -58,3 +58,5 @@ dist/
 storage/logs/
 public/build/
 
+/storage/firebase/
+/firebase-admin.json
