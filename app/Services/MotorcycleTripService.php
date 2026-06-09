@@ -14,7 +14,6 @@ use App\Services\FirebaseRealtimeService;
 
 class MotorcycleTripService
 {
-
     public function __construct(
         private MatchingService $matchingService,
         private NotificationService $notificationService,
@@ -264,6 +263,13 @@ class MotorcycleTripService
                 'matched_via' => $match['matched_via'] ?? 'fast_local',
             ]);
 
+            $this->dispatchTripRealtimeEvent((string) $trip->id, 'DriverAssigned', [
+                'driver_id' => (int) $match['driver_id'],
+                'matched_via' => $match['matched_via'] ?? 'fast_local',
+                'candidate_count' => (int) ($match['candidate_count'] ?? 0),
+                'score' => $match['score'] ?? null,
+            ]);
+
             return [
                 'success' => true,
                 'trip_id' => $trip->id,
@@ -324,6 +330,10 @@ class MotorcycleTripService
 
                 Log::info('Motorcycle trip accepted', [
                     'trip_id' => $trip->id,
+                    'driver_id' => $driverId,
+                ]);
+
+                $this->dispatchTripRealtimeEvent((string) $trip->id, 'DriverAccepted', [
                     'driver_id' => $driverId,
                 ]);
 
@@ -440,43 +450,54 @@ class MotorcycleTripService
     public function driverArrived(MotorcycleTrip $trip, int $driverId): array
     {
         try {
-            if ($trip->driver_id !== $driverId || $trip->status !== 'DRIVER_ASSIGNED') {
+            return DB::transaction(function () use ($trip, $driverId) {
+                if ($trip->driver_id !== $driverId || $trip->status !== 'DRIVER_ASSIGNED') {
+                    return [
+                        'success' => false,
+                        'error' => 'INVALID_STATE',
+                        'message' => 'Cannot mark driver arrived in current state',
+                    ];
+                }
+
+                $trip->update([
+                    'status' => 'PASSENGER_WAITING',
+                    'driver_arrived_at' => now(),
+                ]);
+
+                // Notify passenger
+                $this->notificationService->sendInAppNotification(
+                    $trip->passenger_id,
+                    'DRIVER_ARRIVED',
+                    'Driver Arrived',
+                    'Your driver has arrived. Please go to the pickup location.',
+                    ['trip_id' => $trip->id]
+                );
+
+                try {
+                    $this->firebase->pushTripEvent((string) $trip->id, 'DriverArrived', [
+                        'trip_id' => $trip->id,
+                        'driver_id' => $driverId,
+                        'status' => $trip->status,
+                    ]);
+                } catch (\Throwable $e) {
+                    Log::debug('Firebase push failed (non-critical)', [
+                        'trip_id' => $trip->id,
+                        'event' => 'DriverArrived',
+                        'error' => $e->getMessage(),
+                    ]);
+                }
+
+                Log::info('Driver arrived at pickup', [
+                    'trip_id' => $trip->id,
+                    'driver_id' => $driverId,
+                ]);
+
                 return [
-                    'success' => false,
-                    'error' => 'INVALID_STATE',
-                    'message' => 'Cannot mark driver arrived in current state',
+                    'success' => true,
+                    'trip_id' => $trip->id,
+                    'status' => $trip->status,
                 ];
-            }
-
-            $trip->update([
-                'status' => 'PASSENGER_WAITING',
-                'driver_arrived_at' => now(),
-            ]);
-
-            // Notify passenger
-            $this->notificationService->sendInAppNotification(
-                $trip->passenger_id,
-                'DRIVER_ARRIVED',
-                'Driver Arrived',
-                'Your driver has arrived. Please go to the pickup location.',
-                ['trip_id' => $trip->id]
-            );
-
-            // Push to Firebase for realtime delivery
-            $this->firebase->pushTripEvent((string) $trip->id, 'DriverArrived', [
-                'driver_id' => $driverId,
-            ]);
-
-            Log::info('Driver arrived at pickup', [
-                'trip_id' => $trip->id,
-                'driver_id' => $driverId,
-            ]);
-
-            return [
-                'success' => true,
-                'trip_id' => $trip->id,
-                'status' => $trip->status,
-            ];
+            });
         } catch (\Exception $e) {
             Log::error('Failed to mark driver arrived', [
                 'trip_id' => $trip->id,
@@ -498,43 +519,44 @@ class MotorcycleTripService
     public function startTrip(MotorcycleTrip $trip, int $driverId): array
     {
         try {
-            if ($trip->driver_id !== $driverId || $trip->status !== 'PASSENGER_WAITING') {
+            return DB::transaction(function () use ($trip, $driverId) {
+                if ($trip->driver_id !== $driverId || $trip->status !== 'PASSENGER_WAITING') {
+                    return [
+                        'success' => false,
+                        'error' => 'INVALID_STATE',
+                        'message' => 'Cannot start trip in current state',
+                    ];
+                }
+
+                $trip->update([
+                    'status' => 'IN_PROGRESS',
+                    'started_at' => now(),
+                ]);
+
+                // Notify passenger
+                $this->notificationService->sendInAppNotification(
+                    $trip->passenger_id,
+                    'TRIP_STARTED',
+                    'Trip Started',
+                    'Your trip has started',
+                    ['trip_id' => $trip->id]
+                );
+
+                $this->dispatchTripRealtimeEvent((string) $trip->id, 'TripStarted', [
+                    'driver_id' => $driverId,
+                ]);
+
+                Log::info('Trip started', [
+                    'trip_id' => $trip->id,
+                    'driver_id' => $driverId,
+                ]);
+
                 return [
-                    'success' => false,
-                    'error' => 'INVALID_STATE',
-                    'message' => 'Cannot start trip in current state',
+                    'success' => true,
+                    'trip_id' => $trip->id,
+                    'status' => $trip->status,
                 ];
-            }
-
-            $trip->update([
-                'status' => 'IN_PROGRESS',
-                'started_at' => now(),
-            ]);
-
-            // Notify passenger
-            $this->notificationService->sendInAppNotification(
-                $trip->passenger_id,
-                'TRIP_STARTED',
-                'Trip Started',
-                'Your trip has started',
-                ['trip_id' => $trip->id]
-            );
-
-            // Push to Firebase for realtime delivery
-            $this->firebase->pushTripEvent((string) $trip->id, 'TripStarted', [
-                'driver_id' => $driverId,
-            ]);
-
-            Log::info('Trip started', [
-                'trip_id' => $trip->id,
-                'driver_id' => $driverId,
-            ]);
-
-            return [
-                'success' => true,
-                'trip_id' => $trip->id,
-                'status' => $trip->status,
-            ];
+            });
         } catch (\Exception $e) {
             Log::error('Failed to start trip', [
                 'trip_id' => $trip->id,
@@ -556,70 +578,73 @@ class MotorcycleTripService
     public function completeTrip(MotorcycleTrip $trip, int $driverId, float $actualFare = null): array
     {
         try {
-            if ($trip->driver_id !== $driverId || $trip->status !== 'IN_PROGRESS') {
-                return [
-                    'success' => false,
-                    'error' => 'INVALID_STATE',
-                    'message' => 'Cannot complete trip in current state',
-                ];
-            }
+            return DB::transaction(function () use ($trip, $driverId, $actualFare) {
+                if ($trip->driver_id !== $driverId || $trip->status !== 'IN_PROGRESS') {
+                    return [
+                        'success' => false,
+                        'error' => 'INVALID_STATE',
+                        'message' => 'Cannot complete trip in current state',
+                    ];
+                }
 
-            // Update trip
-            $trip->update([
-                'status' => 'COMPLETED',
-                'completed_at' => now(),
-                'actual_fare' => $actualFare ?? $trip->estimated_fare,
-            ]);
-
-            // Mark driver available
-            $driver = Driver::find($driverId);
-            if ($driver) {
-                $driver->update([
-                    'is_available' => true,
-                    'current_trip_id' => null,
-                    'availability_status' => 'available',
+                // Update trip
+                $trip->update([
+                    'status' => 'COMPLETED',
+                    'completed_at' => now(),
+                    'actual_fare' => $actualFare ?? $trip->estimated_fare,
                 ]);
-            }
 
-            // Notify passenger
-            $this->notificationService->sendInAppNotification(
-                $trip->passenger_id,
-                'TRIP_COMPLETED',
-                'Trip Completed',
-                'Your trip has been completed successfully',
-                [
-                    'trip_id' => $trip->id,
+                // Mark driver available
+                $driver = Driver::find($driverId);
+                if ($driver) {
+                    $driver->update([
+                        'is_available' => true,
+                        'current_trip_id' => null,
+                        'availability_status' => 'available',
+                    ]);
+                }
+
+                // Notify passenger
+                $this->notificationService->sendInAppNotification(
+                    $trip->passenger_id,
+                    'TRIP_COMPLETED',
+                    'Trip Completed',
+                    'Your trip has been completed successfully',
+                    [
+                        'trip_id' => $trip->id,
+                        'fare' => $trip->actual_fare ?? $trip->estimated_fare,
+                    ]
+                );
+
+                $this->dispatchTripRealtimeEvent((string) $trip->id, 'TripCompleted', [
+                    'driver_id' => $driverId,
                     'fare' => $trip->actual_fare ?? $trip->estimated_fare,
-                ]
-            );
+                ]);
 
-            // Push to Firebase for realtime delivery
-            $this->firebase->pushTripEvent((string) $trip->id, 'TripCompleted', [
-                'driver_id' => $driverId,
-                'fare' => $trip->actual_fare ?? $trip->estimated_fare,
-            ]);
+                // Notify driver
+                if ($driver) {
+                    $this->notificationService->sendInAppNotification(
+                        $driver->user_id,
+                        'TRIP_COMPLETED',
+                        'Trip Completed',
+                        'Trip completed successfully',
+                        ['trip_id' => $trip->id]
+                    );
+                }
 
-            // Notify driver
-            $this->notificationService->sendInAppNotification(
-                $driver->user_id,
-                'TRIP_COMPLETED',
-                'Trip Completed',
-                'Trip completed successfully',
-                ['trip_id' => $trip->id]
-            );
+                Log::info('Trip completed', [
+                    'trip_id' => $trip->id,
+                    'driver_id' => $driverId,
+                    'fare' => $trip->actual_fare ?? $trip->estimated_fare,
+                ]);
 
-            Log::info('Trip completed', [
-                'trip_id' => $trip->id,
-                'driver_id' => $driverId,
-                'fare' => $trip->actual_fare ?? $trip->estimated_fare,
-            ]);
-
-            return [
-                'success' => true,
-                'trip_id' => $trip->id,
-                'status' => $trip->status,
-                'fare' => $trip->actual_fare ?? $trip->estimated_fare,
-            ];
+                return [
+                    'success' => true,
+                    'trip_id' => $trip->id,
+                    'status' => $trip->status,
+                    'fare' => $trip->actual_fare ?? $trip->estimated_fare,
+                ];
+            });
         } catch (\Exception $e) {
             Log::error('Failed to complete trip', [
                 'trip_id' => $trip->id,
@@ -641,66 +666,69 @@ class MotorcycleTripService
     public function cancelByPassenger(MotorcycleTrip $trip, int $passengerId, string $reason = null): array
     {
         try {
-            if ($trip->passenger_id !== $passengerId) {
-                return [
-                    'success' => false,
-                    'error' => 'NOT_PASSENGER',
-                    'message' => 'Only passenger can cancel',
-                ];
-            }
-
-            if (in_array($trip->status, ['COMPLETED', 'CANCELLED_BY_PASSENGER', 'CANCELLED_BY_DRIVER'])) {
-                return [
-                    'success' => false,
-                    'error' => 'CANNOT_CANCEL',
-                    'message' => 'Cannot cancel trip in current status',
-                ];
-            }
-
-            // Update trip
-            $trip->update([
-                'status' => 'CANCELLED_BY_PASSENGER',
-                'cancelled_at' => now(),
-                'notes' => $reason,
-            ]);
-
-            // Mark driver available
-            if ($trip->driver_id) {
-                $driver = Driver::find($trip->driver_id);
-                if ($driver) {
-                    $driver->update([
-                        'is_available' => true,
-                        'current_trip_id' => null,
-                        'availability_status' => 'available',
-                    ]);
+            return DB::transaction(function () use ($trip, $passengerId, $reason) {
+                if ($trip->passenger_id !== $passengerId) {
+                    return [
+                        'success' => false,
+                        'error' => 'NOT_PASSENGER',
+                        'message' => 'Only passenger can cancel',
+                    ];
                 }
 
-                // Notify driver
-                $this->notificationService->sendInAppNotification(
-                    $driver->user_id,
-                    'TRIP_CANCELLED',
-                    'Trip Cancelled',
-                    'Trip was cancelled by passenger',
-                    ['trip_id' => $trip->id]
-                );
-            }
+                if (in_array($trip->status, ['COMPLETED', 'CANCELLED_BY_PASSENGER', 'CANCELLED_BY_DRIVER'])) {
+                    return [
+                        'success' => false,
+                        'error' => 'CANNOT_CANCEL',
+                        'message' => 'Cannot cancel trip in current status',
+                    ];
+                }
 
-            // Push to Firebase for realtime delivery
-            $this->firebase->pushTripEvent((string) $trip->id, 'TripCancelled', [
-                'cancelled_by' => 'passenger',
-                'reason' => $reason,
-            ]);
+                // Update trip
+                $trip->update([
+                    'status' => 'CANCELLED_BY_PASSENGER',
+                    'cancelled_at' => now(),
+                    'notes' => $reason,
+                ]);
 
-            Log::info('Trip cancelled by passenger', [
-                'trip_id' => $trip->id,
-                'passenger_id' => $passengerId,
-            ]);
+                // Mark driver available
+                if ($trip->driver_id) {
+                    $driver = Driver::find($trip->driver_id);
+                    if ($driver) {
+                        $driver->update([
+                            'is_available' => true,
+                            'current_trip_id' => null,
+                            'availability_status' => 'available',
+                        ]);
+                    }
 
-            return [
-                'success' => true,
-                'trip_id' => $trip->id,
-                'status' => $trip->status,
-            ];
+                    // Notify driver
+                    if (isset($driver)) {
+                        $this->notificationService->sendInAppNotification(
+                            $driver->user_id,
+                            'TRIP_CANCELLED',
+                            'Trip Cancelled',
+                            'Trip was cancelled by passenger',
+                            ['trip_id' => $trip->id]
+                        );
+                    }
+                }
+
+                $this->dispatchTripRealtimeEvent((string) $trip->id, 'TripCancelled', [
+                    'cancelled_by' => 'passenger',
+                    'reason' => $reason,
+                ]);
+
+                Log::info('Trip cancelled by passenger', [
+                    'trip_id' => $trip->id,
+                    'passenger_id' => $passengerId,
+                ]);
+
+                return [
+                    'success' => true,
+                    'trip_id' => $trip->id,
+                    'status' => $trip->status,
+                ];
+            });
         } catch (\Exception $e) {
             Log::error('Failed to cancel trip', [
                 'trip_id' => $trip->id,
@@ -734,12 +762,7 @@ class MotorcycleTripService
             Log::warning('Passenger notification failed', ['trip_id' => $trip->id, 'event' => $event, 'error' => $e->getMessage()]);
         }
 
-        // Push to Firebase for realtime delivery (Flutter listens on trip_events/{tripId}).
-        try {
-            $this->firebase->pushTripEvent((string) $trip->id, $event, array_merge(['title' => $title, 'body' => $body], $payload));
-        } catch (\Throwable $e) {
-            Log::debug('Firebase push failed (non-critical)', ['trip_id' => $trip->id, 'error' => $e->getMessage()]);
-        }
+        $this->dispatchTripRealtimeEvent((string) $trip->id, $event, array_merge(['title' => $title, 'body' => $body], $payload));
     }
 
     private function notifyDriver(int $userId, string $event, string $title, string $body, array $payload = []): void
@@ -750,12 +773,23 @@ class MotorcycleTripService
             Log::warning('Driver notification failed', ['user_id' => $userId, 'event' => $event, 'error' => $e->getMessage()]);
         }
 
-        try {
-            $tripId = (string) ($payload['trip_id'] ?? '0');
-            $this->firebase->pushTripEvent($tripId, $event, array_merge(['title' => $title, 'body' => $body], $payload));
-        } catch (\Throwable $e) {
-            Log::debug('Firebase driver push failed (non-critical)', ['user_id' => $userId, 'error' => $e->getMessage()]);
-        }
+        $tripId = (string) ($payload['trip_id'] ?? '0');
+        $this->dispatchTripRealtimeEvent($tripId, $event, array_merge(['title' => $title, 'body' => $body], $payload));
+    }
+
+    private function dispatchTripRealtimeEvent(string $tripId, string $event, array $payload = []): void
+    {
+        DB::afterCommit(function () use ($tripId, $event, $payload): void {
+            try {
+                $this->firebase->pushTripEvent($tripId, $event, $payload);
+            } catch (\Throwable $e) {
+                Log::debug('Firebase trip event failed (non-critical)', [
+                    'trip_id' => $tripId,
+                    'event' => $event,
+                    'error' => $e->getMessage(),
+                ]);
+            }
+        });
     }
 
     // =========================================================================

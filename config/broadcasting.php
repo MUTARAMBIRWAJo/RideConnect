@@ -69,20 +69,6 @@ return [
             'key' => env('SUPABASE_KEY'),
         ],
 
-        'reverb' => [
-            'driver' => 'pusher',
-            'key' => env('REVERB_APP_KEY', env('PUSHER_APP_KEY', '')),
-            'secret' => env('REVERB_APP_SECRET', env('PUSHER_APP_SECRET', '')),
-            'app_id' => env('REVERB_APP_ID', env('PUSHER_APP_ID', '')),
-            'options' => [
-                'host' => env('REVERB_HOST', parse_url(env('APP_URL', 'http://localhost'), PHP_URL_HOST)),
-                'port' => (int) env('REVERB_PORT', 443),
-                'scheme' => env('REVERB_SCHEME', 'https'),
-                'encrypted' => true,
-                'useTLS' => true,
-            ],
-        ],
-
     ],
 
 ];
