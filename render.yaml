@@ -14,6 +14,10 @@ services:
       # Postgres-backed queue (jobs table) so delayed matching retries are actually processed.
       - key: QUEUE_CONNECTION
         value: database
+      # 'debug' assigns the nearest available driver at the widest radius (great for demos).
+      # Switch to 'live' for production once real drivers are online.
+      - key: MATCHING_MODE
+        value: debug
       - key: APP_URL
         value: https://rideconnect-emp0.onrender.com
       - key: TFLITE_ENDPOINT

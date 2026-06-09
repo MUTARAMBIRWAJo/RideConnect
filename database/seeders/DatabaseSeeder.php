@@ -64,6 +64,7 @@ class DatabaseSeeder extends Seeder
             DriverSeeder::class,
             DriverLocationSeeder::class,
             VehicleSeeder::class,
+            MatchableTestDriverSeeder::class,
             MLTrainingVolumeSeeder::class,
             RideSeeder::class,
             BookingSeeder::class,

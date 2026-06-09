@@ -13,7 +13,7 @@ class MatchingTestDataSeeder extends Seeder
     private const PASSWORD = 'Test@12345';
 
     private const LOCATIONS = [
-        'Kimironko Market' => ['lat' => -1.94800000, 'lng' => 30.06190000, 'radius_km' => 5],
+        'Kimironko Market' => ['lat' => -1.94982170, 'lng' => 30.12618020, 'radius_km' => 5],
         'Remera Bus Park' => ['lat' => -1.95670000, 'lng' => 30.10560000, 'radius_km' => 5],
         'Kigali Convention Centre' => ['lat' => -1.95450000, 'lng' => 30.09330000, 'radius_km' => 5],
         'Kigali International Airport' => ['lat' => -1.96860000, 'lng' => 30.13950000, 'radius_km' => 8],

@@ -15,9 +15,11 @@ class TestDriversWithLocationAndVehiclesSeeder extends Seeder
 
     public function run(): void
     {
-        // Kigali coordinates around the test location from screenshot
-        $baseLatitude = -1.9399;
-        $baseLongitude = 29.7733;
+        // Central Kigali (near Kigali Heights / Kacyiru). The previous value
+        // (29.7733) sat ~39km west of every real Kigali pickup, so these drivers
+        // were never within matching radius.
+        $baseLatitude = -1.9529;
+        $baseLongitude = 30.0927;
 
         $driverData = [
             [
