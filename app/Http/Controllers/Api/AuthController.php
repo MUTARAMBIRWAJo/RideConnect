@@ -11,6 +11,7 @@ use App\Models\User;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Schema;
 use Illuminate\Support\Str;
 
@@ -135,11 +136,8 @@ class AuthController extends Controller
         try {
             $login = $request->validated('login');
 
-            // Build query safely - only query phone column if it exists
-            $query = User::query();
-            $query->where('email', $login);
-            
-            // Only add phone condition if the column exists
+            $query = User::query()->where('email', $login);
+
             if (Schema::hasColumn('users', 'phone')) {
                 $query->orWhere('phone', $login);
             }
@@ -187,7 +185,17 @@ class AuthController extends Controller
                     'token' => $token,
                     'token_type' => 'Bearer',
                 ],
-        ]);
+            ]);
+        } catch (\Throwable $throwable) {
+            Log::error('Mobile login failed', [
+                'error' => $throwable->getMessage(),
+            ]);
+
+            return response()->json([
+                'success' => false,
+                'message' => 'Unable to login at this time. Please try again.',
+            ], 500);
+        }
     }
 
     /**

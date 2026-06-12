@@ -5,8 +5,8 @@ namespace App\Services;
 use App\Events\TripAcceptedByDriver;
 use App\Events\TripAssignedToDriver;
 use App\Events\TripReassignedToNewDriver;
-use App\Models\Bus;
 use App\Models\TripRequest;
+use App\Models\Vehicle;
 use Illuminate\Http\Client\ConnectionException;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
@@ -31,7 +31,7 @@ class TripLifecycleService
     {
         try {
             // Validate trip is assigned
-            if ($trip->status !== 'ASSIGNED' && $trip->status !== 'PENDING_MATCH') {
+            if (! in_array($trip->status, ['BUS_ASSIGNED', 'PENDING_MATCH'], true)) {
                 return [
                     'success' => false,
                     'message' => "Trip cannot be accepted in {$trip->status} status",
@@ -50,13 +50,11 @@ class TripLifecycleService
 
             // Check if this is a public bus trip
             if ($trip->matched_vehicle_id) {
-                $bus = Bus::find($trip->matched_vehicle_id);
-                if ($bus && $bus->available_seats > 0) {
-                    // Decrement available seats
-                    $bus->decrement('available_seats');
-                    Log::info('Bus seat decremented', [
+                $bus = Vehicle::find($trip->matched_vehicle_id);
+                if ($bus && $bus->seats > 0) {
+                    Log::info('Bus capacity validated for trip request', [
                         'bus_id' => $bus->id,
-                        'available_seats' => $bus->available_seats,
+                        'capacity' => $bus->seats,
                         'trip_id' => $trip->id,
                     ]);
                 } elseif ($bus) {
@@ -78,8 +76,11 @@ class TripLifecycleService
             $driver = $trip->driver;
             $vehicle = $trip->vehicle;
 
-            $driverName = $driver ? "{$driver->user->first_name} {$driver->user->last_name}" : 'Driver';
-            $vehicleInfo = $vehicle ? "{$vehicle->registration_number}" : 'Vehicle';
+            $driverName = $driver?->user?->name ?? 'Driver';
+            $vehicleInfo = $vehicle
+                ? trim(sprintf('%s %s %s', $vehicle->year, $vehicle->make, $vehicle->model))
+                : 'Vehicle';
+            $vehicleInfo = $vehicleInfo !== '' ? $vehicleInfo : 'Vehicle';
             $etaMinutes = (int) ($trip->trip_duration_minutes ?? 0);
 
             // Broadcast event for real-time updates
@@ -94,7 +95,7 @@ class TripLifecycleService
                 [
                     'id' => $vehicle?->id,
                     'name' => $vehicleInfo,
-                    'available_seats' => $vehicle?->available_seats ?? 0,
+                    'available_seats' => $vehicle?->seats ?? 0,
                 ],
                 $etaMinutes
             ));
@@ -127,7 +128,7 @@ class TripLifecycleService
                     'vehicle' => [
                         'id' => $vehicle?->id,
                         'registration' => $vehicleInfo,
-                        'available_seats' => $vehicle?->available_seats ?? 0,
+                        'available_seats' => $vehicle?->seats ?? 0,
                     ],
                     'eta_minutes' => $etaMinutes,
                 ],
@@ -276,7 +277,7 @@ class TripLifecycleService
             // Update trip with new assignment
             $oldDriverId = $trip->matched_driver_id;
             $trip->update([
-                'status' => 'ASSIGNED',
+                'status' => 'BUS_ASSIGNED',
                 'matched_driver_id' => $newDriverId,
                 'matched_vehicle_id' => $newVehicleId,
             ]);
@@ -338,7 +339,7 @@ class TripLifecycleService
     {
         try {
             $trip->update([
-                'status' => 'ASSIGNED',
+                'status' => 'BUS_ASSIGNED',
                 'matched_driver_id' => $driverId,
                 'matched_vehicle_id' => $vehicleId,
             ]);
