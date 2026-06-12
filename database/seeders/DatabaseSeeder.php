@@ -197,45 +197,6 @@ class DatabaseSeeder extends Seeder
         }
     }
 
-    // private function resetDatabaseForSeeding(): bool
-    // {
-    //     $tables = [
-    //         'ledger_entries',
-    //         'ledger_transactions',
-    //         'ledger_accounts',
-    //         'fraud_flags',
-    //         'platform_commissions',
-    //         'driver_payouts',
-    //         'model_has_permissions',
-    //         'model_has_roles',
-    //         'role_has_permissions',
-    //         'permissions',
-    //         'roles',
-    //         'activity_logs',
-    //         'tickets',
-    //         'driver_earnings',
-    //         'payments_v2',
-    //         'trips',
-    //         'vehicles_v2',
-    //         'reviews',
-    //         'payments',
-    //         'bookings',
-    //         'rides',
-    //         'vehicles',
-    //         'drivers',
-    //         'notifications',
-    //         'user_notifications',
-    //         'mobile_device_tokens',
-    //         'driver_locations',
-    //         'mobile_users',
-    //         'managers',
-    //         'users',
-    //     ];
-
-    // Reset-style seed helpers are intentionally not kept in this project.
-    // Seeders must be idempotent and preserve all existing Supabase records.
-    // }
-
     private function withRetry(callable $operation, int $maxAttempts = 3): void
     {
         $attempt = 1;

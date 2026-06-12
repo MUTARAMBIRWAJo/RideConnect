@@ -102,15 +102,19 @@ class DriverLocationService
                 'last_location_lng' => $lng,
             ]);
 
-            // Store location history
+            // Store location history (dual-write lat/lng + latitude/longitude for compatibility)
             DriverLocation::create([
                 'driver_id' => $driver->id,
                 'trip_id' => $tripId,
                 'lat' => $lat,
                 'lng' => $lng,
+                'latitude' => $lat,
+                'longitude' => $lng,
                 'speed' => $speed,
+                'speed_kmh' => $speed,
                 'heading' => $heading,
                 'accuracy' => $accuracy,
+                'recorded_at' => now(),
             ]);
 
             // Broadcast location update if on active trip

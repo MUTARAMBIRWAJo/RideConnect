@@ -92,9 +92,22 @@ Render startup script supports:
 
 To keep production tables and baseline data consistent across deployments and restarts:
 
-- Startup runs `php artisan migrate --force` (non-destructive schema updates).
-- Startup runs `php artisan app:seed-database` with a marker, so baseline seed data is inserted once and not duplicated on every boot.
+- Startup runs `php artisan db:migrate-seed-protect` (migrate + idempotent seed + lock all tables).
+- `schema_table_locks` records every protected table; DROP/TRUNCATE is blocked at the Laravel layer (and via Postgres event trigger when available).
 - Production blocks destructive commands (`migrate:fresh`, `migrate:reset`, `migrate:rollback`, `db:wipe`).
+
+Local one-shot setup:
+
+```bash
+php artisan db:migrate-seed-protect
+php artisan db:protect-tables --list
+```
+
+Force a full idempotent reseed:
+
+```bash
+php artisan db:migrate-seed-protect --force-seed
+```
 
 Environment flags:
 
