@@ -11,6 +11,7 @@ use App\Models\User;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Facades\Schema;
 use Illuminate\Support\Str;
 
 class AuthController extends Controller
@@ -127,57 +128,65 @@ class AuthController extends Controller
 
     /**
      * Mobile login that accepts either email or phone.
+     * Safely handles missing columns and database errors.
      */
     public function mobileLogin(MobileLoginRequest $request): JsonResponse
     {
-        $login = $request->validated('login');
+        try {
+            $login = $request->validated('login');
 
-        $user = User::query()
-            ->where('email', $login)
-            ->orWhere('phone', $login)
-            ->first();
+            // Build query safely - only query phone column if it exists
+            $query = User::query();
+            $query->where('email', $login);
+            
+            // Only add phone condition if the column exists
+            if (Schema::hasColumn('users', 'phone')) {
+                $query->orWhere('phone', $login);
+            }
 
-        if (! $user || ! Hash::check($request->validated('password'), $user->password)) {
+            $user = $query->first();
+
+            if (! $user || ! Hash::check($request->validated('password'), $user->password)) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Invalid credentials',
+                ], 401);
+            }
+
+            if (! $user->isMobileUser()) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'This endpoint is for passenger/driver accounts only.',
+                ], 403);
+            }
+
+            if (! $user->is_approved) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Your account is pending approval. Please contact administrator.',
+                ], 403);
+            }
+
+            $user->tokens()->delete();
+
+            $tokenName = $request->validated('device_name') ?: 'flutter-mobile';
+            $token = $user->createToken($tokenName)->plainTextToken;
+
             return response()->json([
-                'success' => false,
-                'message' => 'Invalid credentials',
-            ], 401);
-        }
-
-        if (! $user->isMobileUser()) {
-            return response()->json([
-                'success' => false,
-                'message' => 'This endpoint is for passenger/driver accounts only.',
-            ], 403);
-        }
-
-        if (! $user->is_approved) {
-            return response()->json([
-                'success' => false,
-                'message' => 'Your account is pending approval. Please contact administrator.',
-            ], 403);
-        }
-
-        $user->tokens()->delete();
-
-        $tokenName = $request->validated('device_name') ?: 'flutter-mobile';
-        $token = $user->createToken($tokenName)->plainTextToken;
-
-        return response()->json([
-            'success' => true,
-            'message' => 'Login successful',
-            'data' => [
-                'user' => [
-                    'id' => $user->id,
-                    'name' => $user->name,
-                    'email' => $user->email,
-                    'role' => $user->role->value,
-                    'phone' => $user->phone,
-                    'is_approved' => $user->is_approved,
+                'success' => true,
+                'message' => 'Login successful',
+                'data' => [
+                    'user' => [
+                        'id' => $user->id,
+                        'name' => $user->name,
+                        'email' => $user->email,
+                        'role' => $user->role->value,
+                        'phone' => $user->phone ?? null,
+                        'is_approved' => $user->is_approved,
+                    ],
+                    'token' => $token,
+                    'token_type' => 'Bearer',
                 ],
-                'token' => $token,
-                'token_type' => 'Bearer',
-            ],
         ]);
     }
 

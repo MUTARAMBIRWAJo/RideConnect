@@ -17,29 +17,35 @@ class BusWorkflowSeeder extends Seeder
      */
     public function run(): void
     {
-        $corridor1 = TransportCorridor::create([
-            'corridor_code' => 'DWN-AIR',
-            'corridor_name' => 'Downtown - Airport Express',
-            'transport_type' => 'BUS',
-            'status' => 'active',
-            'estimated_duration_minutes' => 45,
-        ]);
+        $corridor1 = TransportCorridor::firstOrCreate(
+            ['corridor_code' => 'DWN-AIR'],
+            [
+                'corridor_name' => 'Downtown - Airport Express',
+                'transport_type' => 'BUS',
+                'status' => 'active',
+                'estimated_duration_minutes' => 45,
+            ]
+        );
 
-        $corridor2 = TransportCorridor::create([
-            'corridor_code' => 'CTY-WLS',
-            'corridor_name' => 'City Center - Westlands',
-            'transport_type' => 'BUS',
-            'status' => 'active',
-            'estimated_duration_minutes' => 30,
-        ]);
+        $corridor2 = TransportCorridor::firstOrCreate(
+            ['corridor_code' => 'CTY-WLS'],
+            [
+                'corridor_name' => 'City Center - Westlands',
+                'transport_type' => 'BUS',
+                'status' => 'active',
+                'estimated_duration_minutes' => 30,
+            ]
+        );
 
-        $corridor3 = TransportCorridor::create([
-            'corridor_code' => 'EAM-EMB',
-            'corridor_name' => 'East Africa Mall - Embakasi',
-            'transport_type' => 'BUS',
-            'status' => 'active',
-            'estimated_duration_minutes' => 25,
-        ]);
+        $corridor3 = TransportCorridor::firstOrCreate(
+            ['corridor_code' => 'EAM-EMB'],
+            [
+                'corridor_name' => 'East Africa Mall - Embakasi',
+                'transport_type' => 'BUS',
+                'status' => 'active',
+                'estimated_duration_minutes' => 25,
+            ]
+        );
 
         $stops1 = [
             ['stop_name' => 'Downtown Bus Station', 'stop_order' => 1, 'latitude' => -1.286389, 'longitude' => 36.817223, 'is_major_terminal' => true],
@@ -49,10 +55,13 @@ class BusWorkflowSeeder extends Seeder
         ];
 
         foreach ($stops1 as $stopData) {
-            CorridorStop::create(array_merge($stopData, [
-                'corridor_id' => $corridor1->id,
-                'status' => 'active',
-            ]));
+            CorridorStop::firstOrCreate(
+                ['corridor_id' => $corridor1->id, 'stop_order' => $stopData['stop_order']],
+                array_merge($stopData, [
+                    'corridor_id' => $corridor1->id,
+                    'status' => 'active',
+                ])
+            );
         }
 
         $stops2 = [
@@ -63,10 +72,13 @@ class BusWorkflowSeeder extends Seeder
         ];
 
         foreach ($stops2 as $stopData) {
-            CorridorStop::create(array_merge($stopData, [
-                'corridor_id' => $corridor2->id,
-                'status' => 'active',
-            ]));
+            CorridorStop::firstOrCreate(
+                ['corridor_id' => $corridor2->id, 'stop_order' => $stopData['stop_order']],
+                array_merge($stopData, [
+                    'corridor_id' => $corridor2->id,
+                    'status' => 'active',
+                ])
+            );
         }
 
         $stops3 = [
@@ -77,10 +89,13 @@ class BusWorkflowSeeder extends Seeder
         ];
 
         foreach ($stops3 as $stopData) {
-            CorridorStop::create(array_merge($stopData, [
-                'corridor_id' => $corridor3->id,
-                'status' => 'active',
-            ]));
+            CorridorStop::firstOrCreate(
+                ['corridor_id' => $corridor3->id, 'stop_order' => $stopData['stop_order']],
+                array_merge($stopData, [
+                    'corridor_id' => $corridor3->id,
+                    'status' => 'active',
+                ])
+            );
         }
 
         $user = User::firstOrCreate(
@@ -97,15 +112,14 @@ class BusWorkflowSeeder extends Seeder
             [
                 'user_id' => $user->id,
                 'license_number' => 'DRIVER-001',
-                'status' => 'active',
+                'status' => 'approved',
                 'availability_status' => 'available',
             ]
         );
 
         $vehicle = Vehicle::firstOrCreate(
-            ['license_plate' => 'KBA123ABC'],
+            ['driver_id' => $driver->id],
             [
-                'driver_id' => $driver->id,
                 'make' => 'Toyota',
                 'model' => 'Coaster',
                 'year' => 2019,

@@ -33,18 +33,30 @@ return new class extends Migration
         if (Schema::hasTable('motorcycle_trips') && ! Schema::hasColumn('motorcycle_trips', 'matching_duration_seconds')) {
             Schema::table('motorcycle_trips', function (Blueprint $table) {
                 $table->unsignedInteger('matching_duration_seconds')->nullable()->after('max_retries');
-                $table->unsignedInteger('candidate_count')->nullable()->after('matching_duration_seconds');
-                $table->string('matched_via', 32)->nullable()->after('candidate_count'); // fast_local|ml|fallback
-                $table->json('matching_metadata')->nullable()->after('matched_via');
+                if (! Schema::hasColumn('motorcycle_trips', 'candidate_count')) {
+                    $table->unsignedInteger('candidate_count')->nullable()->after('matching_duration_seconds');
+                }
+                if (! Schema::hasColumn('motorcycle_trips', 'matched_via')) {
+                    $table->string('matched_via', 32)->nullable()->after('candidate_count');
+                }
+                if (! Schema::hasColumn('motorcycle_trips', 'matching_metadata')) {
+                    $table->json('matching_metadata')->nullable()->after('matched_via');
+                }
             });
         }
 
         // Task 7: public bus trip lifecycle status — add to trips table if not present.
         if (Schema::hasTable('trips') && ! Schema::hasColumn('trips', 'passenger_waiting_at')) {
             Schema::table('trips', function (Blueprint $table) {
-                $table->timestamp('driver_arrived_at')->nullable()->after('accepted_at');
-                $table->timestamp('passenger_waiting_at')->nullable()->after('driver_arrived_at');
-                $table->timestamp('started_at')->nullable()->after('passenger_waiting_at');
+                if (! Schema::hasColumn('trips', 'driver_arrived_at')) {
+                    $table->timestamp('driver_arrived_at')->nullable()->after('accepted_at');
+                }
+                if (! Schema::hasColumn('trips', 'passenger_waiting_at')) {
+                    $table->timestamp('passenger_waiting_at')->nullable()->after('driver_arrived_at');
+                }
+                if (! Schema::hasColumn('trips', 'started_at')) {
+                    $table->timestamp('started_at')->nullable()->after('passenger_waiting_at');
+                }
             });
         }
 
@@ -52,7 +64,9 @@ return new class extends Migration
         if (Schema::hasTable('trips') && ! Schema::hasColumn('trips', 'driver_notification_batch_id')) {
             Schema::table('trips', function (Blueprint $table) {
                 $table->string('driver_notification_batch_id', 64)->nullable()->unique()->after('idempotency_key');
-                $table->timestamp('batch_dispatched_at')->nullable()->after('driver_notification_batch_id');
+                if (! Schema::hasColumn('trips', 'batch_dispatched_at')) {
+                    $table->timestamp('batch_dispatched_at')->nullable()->after('driver_notification_batch_id');
+                }
             });
         }
     }
