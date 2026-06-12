@@ -58,7 +58,7 @@ class PaymentController extends Controller
                     'currency' => $validated['currency'] ?? ($motoTrip->currency ?: 'RWF'),
                     'payment_method' => $validated['payment_method'],
                     'transaction_id' => $validated['transaction_id'] ?? null,
-                    'status' => 'PENDING',
+                    'status' => 'pending',
                     'metadata' => $validated['metadata'] ?? [],
                 ]);
             });
@@ -142,7 +142,7 @@ class PaymentController extends Controller
                 'currency' => $validated['currency'] ?? 'RWF',
                 'payment_method' => $validated['payment_method'],
                 'transaction_id' => $validated['transaction_id'] ?? null,
-                'status' => 'PENDING',
+                'status' => 'pending',
                 'metadata' => $validated['metadata'] ?? [],
             ]);
         });

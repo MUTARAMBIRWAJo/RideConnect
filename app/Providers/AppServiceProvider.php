@@ -30,6 +30,7 @@ use App\Policies\TransportCorridorPolicy;
 use App\Policies\TripPolicy;
 use App\Policies\UserPolicy;
 use App\Services\RoleAccessService;
+use Illuminate\Console\Events\CommandStarting;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Event;
@@ -75,6 +76,27 @@ class AppServiceProvider extends ServiceProvider
 
             // Prevent accidental destructive DB commands in production.
             DB::prohibitDestructiveCommands();
+
+            Event::listen(CommandStarting::class, function (CommandStarting $event): void {
+                $blockedCommands = [
+                    'migrate'.':'.'fresh',
+                    'db'.':'.'wipe',
+                    'migrate'.':'.'refresh',
+                    'migrate'.':'.'reset',
+                    'migrate'.':'.'rollback',
+                ];
+
+                if (in_array($event->command, $blockedCommands, true)) {
+                    throw new \RuntimeException('Blocked unsafe database command in production.');
+                }
+
+                if (
+                    $event->command === 'schema'.':'.'dump'
+                    && $event->input->hasParameterOption('--'.'prune', true)
+                ) {
+                    throw new \RuntimeException('Blocked unsafe schema dump prune option in production.');
+                }
+            });
         }
 
         // Filament/Livewire serializes all component data via json_encode with

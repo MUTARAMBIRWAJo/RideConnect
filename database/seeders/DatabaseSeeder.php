@@ -232,22 +232,8 @@ class DatabaseSeeder extends Seeder
     //         'users',
     //     ];
 
-    //     try {
-    //         foreach ($tables as $table) {
-    //             if (!Schema::hasTable($table)) {
-    //                 continue;
-    //             }
-
-    //             $this->withRetry(fn () => DB::statement("TRUNCATE TABLE {$table} CASCADE"));
-    //             $this->restartTableIdSequence($table);
-    //         }
-
-    //         return true;
-    //     } catch (Throwable $e) {
-    //         $this->command?->warn('Reset failure: ' . $e->getMessage());
-
-    //         return false;
-    //     }
+    // Reset-style seed helpers are intentionally not kept in this project.
+    // Seeders must be idempotent and preserve all existing Supabase records.
     // }
 
     private function withRetry(callable $operation, int $maxAttempts = 3): void

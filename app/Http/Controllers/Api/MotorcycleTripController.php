@@ -411,6 +411,18 @@ class MotorcycleTripController extends Controller
                 ]
             );
 
+            if ($trip->driver_id) {
+                $ratingStats = Review::query()
+                    ->where('driver_id', $trip->driver_id)
+                    ->selectRaw('AVG(rating) as average_rating, COUNT(*) as rating_count')
+                    ->first();
+
+                Driver::query()->whereKey($trip->driver_id)->update([
+                    'rating' => round((float) ($ratingStats->average_rating ?? 0), 2),
+                    'rating_count' => (int) ($ratingStats->rating_count ?? 0),
+                ]);
+            }
+
             return response()->json([
                 'success' => true,
                 'message' => 'Thank you for your feedback',

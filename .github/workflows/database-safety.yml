@@ -1,0 +1,64 @@
+name: Database Safety
+
+on:
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pull-requests: read
+
+jobs:
+  scan-dangerous-database-operations:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Scan changed files for blocked database operations
+        run: |
+          set -euo pipefail
+
+          if [ "${{ github.event_name }}" = "pull_request" ]; then
+            BASE_SHA="${{ github.event.pull_request.base.sha }}"
+          else
+            BASE_SHA="$(git rev-parse HEAD~1)"
+          fi
+          export BASE_SHA
+
+          php -r '
+          $base = getenv("BASE_SHA");
+          $files = array_filter(explode("\n", trim(shell_exec("git diff --name-only --diff-filter=ACMR {$base} HEAD"))));
+          $blocked = [
+              "migrate".":". "fresh",
+              "db".":". "wipe",
+              "DROP"." TABLE",
+              "TRUNCATE"." TABLE",
+          ];
+          $violations = [];
+
+          foreach ($files as $file) {
+              if (! is_file($file)) {
+                  continue;
+              }
+
+              $contents = file_get_contents($file);
+              foreach ($blocked as $needle) {
+                  if (stripos($contents, $needle) !== false) {
+                      $violations[] = "{$file}: {$needle}";
+                  }
+              }
+          }
+
+          if ($violations) {
+              fwrite(STDERR, "Blocked database operation references found:\n");
+              foreach ($violations as $violation) {
+                  fwrite(STDERR, "- {$violation}\n");
+              }
+              exit(1);
+          }
+          '
+        env:
+          BASE_SHA: ${{ github.event.pull_request.base.sha || github.sha }}

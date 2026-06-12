@@ -260,6 +260,7 @@ Route::prefix('v1')->group(function () {
             // Payments
             Route::post('/payments', [PaymentController::class, 'createPayment']);
             Route::get('/payments/history', [PaymentController::class, 'paymentHistory']);
+            Route::get('/payments/{id}', [PaymentController::class, 'show'])->whereNumber('id');
         });
 
         /* ===========================
