@@ -103,11 +103,18 @@ class FirebaseReconcileCommand extends Command
             $this->info('✓ No consistency issues found');
         }
 
-        // Fix issues if requested
+        // Fix issues if requested (skip if dry-run)
         if ($this->option('fix') && $totalIssues > 0) {
-            $this->newLine();
-            $this->info('Attempting to fix issues...');
-            $this->fixIssues($issues);
+            if ($this->option('dry-run')) {
+                $this->newLine();
+                $this->warn('Dry-run mode: Skipping actual fixes');
+                $this->info('Would fix the following:');
+                $this->displayFixPlan($issues);
+            } else {
+                $this->newLine();
+                $this->info('Attempting to fix issues...');
+                $this->fixIssues($issues);
+            }
         }
 
         return $totalIssues > 0 ? self::FAILURE : self::SUCCESS;
@@ -127,6 +134,21 @@ class FirebaseReconcileCommand extends Command
             }
         } else {
             $this->info("✓ {$title}: No issues found");
+        }
+    }
+
+    private function displayFixPlan(array $issues): void
+    {
+        if (!empty($issues['orphaned_supabase']['records'])) {
+            $this->line("  - Sync " . count($issues['orphaned_supabase']['records']) . " orphaned Supabase records to Firestore");
+        }
+        
+        if (!empty($issues['stale_locations']['locations'])) {
+            $this->line("  - Delete " . count($issues['stale_locations']['locations']) . " stale driver locations");
+        }
+        
+        if (!empty($issues['stale_trips']['trips'])) {
+            $this->line("  - Sync " . count($issues['stale_trips']['trips']) . " stale trip states");
         }
     }
 

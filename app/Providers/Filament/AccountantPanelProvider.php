@@ -117,10 +117,25 @@ class AccountantPanelProvider extends PanelProvider
             ->renderHook(
                 PanelsRenderHook::HEAD_START,
                 fn (): string => <<<'HTML'
-                    <link rel="stylesheet" href="/css/filament/support/support.css">
-                    <link rel="stylesheet" href="/css/filament/forms/forms.css">
-                    <link rel="stylesheet" href="/css/filament/filament/app.css">
-                    <link rel="stylesheet" href="/build/assets/theme.css">
+                    <style>
+                        /* Ensure basic visibility and interactivity */
+                        body {
+                            opacity: 1 !important;
+                            pointer-events: auto !important;
+                        }
+                        .fi-body {
+                            opacity: 1 !important;
+                            pointer-events: auto !important;
+                        }
+                        .fi-main {
+                            opacity: 1 !important;
+                            pointer-events: auto !important;
+                        }
+                        /* Fix any overlay issues */
+                        * {
+                            pointer-events: auto !important;
+                        }
+                    </style>
                 HTML,
             )
             ->renderHook(

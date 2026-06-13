@@ -10,10 +10,16 @@ use Kreait\Firebase\Exception\MessagingException;
 
 class DeviceTokenService
 {
+    private ?Messaging $messaging;
+    private readonly \App\Services\Firebase\FirebaseSyncService $firebaseSyncService;
+
     public function __construct(
-        private readonly Messaging $messaging,
-        private readonly \App\Services\Firebase\FirebaseSyncService $firebaseSyncService,
-    ) {}
+        Messaging $messaging = null,
+        \App\Services\Firebase\FirebaseSyncService $firebaseSyncService = null,
+    ) {
+        $this->messaging = $messaging;
+        $this->firebaseSyncService = $firebaseSyncService;
+    }
 
     /**
      * Register or update a device token for a user
@@ -86,7 +92,7 @@ class DeviceTokenService
     {
         $deleted = MobileDeviceToken::where('token', $token)->delete();
 
-        if ($deleted) {
+        if ($deleted && $this->messaging) {
             try {
                 // Unsubscribe from Firebase topic
                 $this->messaging->unsubscribeFromTopic($token, 'all-users');
@@ -138,6 +144,11 @@ class DeviceTokenService
      */
     public function validateToken(string $token): bool
     {
+        if (!$this->messaging) {
+            Log::warning('Firebase Messaging not available, skipping token validation');
+            return true; // Assume valid if Firebase not available
+        }
+
         try {
             $this->messaging->validateRegistrationTokens([$token]);
             return true;
@@ -177,6 +188,11 @@ class DeviceTokenService
      */
     public function subscribeToTopic(int $userId, string $topic): void
     {
+        if (!$this->messaging) {
+            Log::warning('Firebase Messaging not available, skipping topic subscription');
+            return;
+        }
+
         $tokens = $this->getUserTokens($userId);
         
         if ($tokens->isEmpty()) {
@@ -206,6 +222,11 @@ class DeviceTokenService
      */
     public function unsubscribeFromTopic(int $userId, string $topic): void
     {
+        if (!$this->messaging) {
+            Log::warning('Firebase Messaging not available, skipping topic unsubscription');
+            return;
+        }
+
         $tokens = $this->getUserTokens($userId);
         
         if ($tokens->isEmpty()) {
