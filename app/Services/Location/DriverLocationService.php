@@ -2,6 +2,7 @@
 
 namespace App\Services\Location;
 
+use App\Jobs\DriverLocationSyncJob;
 use App\Models\Driver;
 use App\Models\DriverLocation;
 use App\Services\Ml\MlAnomalyDetectionService;
@@ -15,9 +16,12 @@ class DriverLocationService
 
     private const LOCATION_CACHE_TTL_MINUTES = 10;
 
+    private const STALE_LOCATION_THRESHOLD_MINUTES = 15;
+
     public function __construct(
         private readonly RealtimeGateway $realtimeGateway,
         private readonly MlAnomalyDetectionService $anomalyDetectionService,
+        private readonly DriverLocationValidator $validator,
     ) {}
 
     /**
@@ -34,7 +38,52 @@ class DriverLocationService
         ?float $routeDeviationMeters = null,
         ?int $tripId = null,
     ): DriverLocation {
+        // Validate coordinates
+        $validation = $this->validator->validate($latitude, $longitude, $accuracy);
+        if (!$validation['valid']) {
+            Log::warning('Invalid driver location coordinates', [
+                'driver_id' => $driverId,
+                'errors' => $validation['errors'],
+            ]);
+            throw new \InvalidArgumentException('Invalid location coordinates: ' . implode(', ', $validation['errors']));
+        }
+
+        if (!empty($validation['warnings'])) {
+            Log::info('Driver location validation warnings', [
+                'driver_id' => $driverId,
+                'warnings' => $validation['warnings'],
+            ]);
+        }
+
         $previousLocation = DriverLocation::where('driver_id', $driverId)->first();
+
+        // Validate location sequence if previous location exists
+        if ($previousLocation) {
+            $sequenceValidation = $this->validator->validateSequence(
+                $previousLocation->latitude,
+                $previousLocation->longitude,
+                $previousLocation->updated_at,
+                $latitude,
+                $longitude,
+                $speedKmh
+            );
+
+            if (!$sequenceValidation['valid']) {
+                Log::warning('Invalid location sequence detected', [
+                    'driver_id' => $driverId,
+                    'errors' => $sequenceValidation['errors'],
+                ]);
+            }
+
+            if (!empty($sequenceValidation['warnings'])) {
+                Log::info('Location sequence warnings', [
+                    'driver_id' => $driverId,
+                    'warnings' => $sequenceValidation['warnings'],
+                    'distance_km' => $sequenceValidation['distance_km'] ?? null,
+                    'implied_speed_kmh' => $sequenceValidation['implied_speed_kmh'] ?? null,
+                ]);
+            }
+        }
 
         $location = DriverLocation::updateOrCreate(
             ['driver_id' => $driverId],
@@ -47,6 +96,7 @@ class DriverLocationService
                 'updated_at' => now(),
                 'last_activity_at' => now(),
                 'is_online' => $isOnline,
+                'trip_id' => $tripId,
             ]
         );
 
@@ -55,6 +105,15 @@ class DriverLocationService
 
         // Broadcast location update to passengers tracking this driver
         $this->broadcastLocationUpdate($driverId, $location);
+
+        // Sync to Firebase asynchronously
+        dispatch(new DriverLocationSyncJob(
+            driverId: $driverId,
+            latitude: $latitude,
+            longitude: $longitude,
+            accuracy: $accuracy,
+            tripId: $tripId,
+        ));
 
         $this->anomalyDetectionService->inspectLocationUpdate(
             driverId: $driverId,
@@ -92,11 +151,22 @@ class DriverLocationService
         // Try cache first for performance
         $cached = Cache::get($this->getCacheKey($driverId));
         if ($cached) {
-            return $cached;
+            // Check if cached location is stale
+            if ($cached->updated_at && $cached->updated_at->lt(now()->subMinutes(self::STALE_LOCATION_THRESHOLD_MINUTES))) {
+                Cache::forget($this->getCacheKey($driverId));
+            } else {
+                return $cached;
+            }
         }
 
         // Fallback to database
-        return DriverLocation::where('driver_id', $driverId)->first();
+        $location = DriverLocation::where('driver_id', $driverId)->first();
+        
+        if ($location) {
+            $this->cacheLocation($driverId, $location);
+        }
+        
+        return $location;
     }
 
     /**
@@ -104,11 +174,14 @@ class DriverLocationService
      */
     public function getNearbyDrivers(float $latitude, float $longitude, float $radiusKm = 5.0): array
     {
+        $staleThreshold = now()->subMinutes(self::STALE_LOCATION_THRESHOLD_MINUTES);
+        
         $drivers = DriverLocation::selectRaw('
                 driver_locations.*,
                 (6371 * acos(cos(radians(?)) * cos(radians(latitude)) * cos(radians(longitude) - radians(?)) + sin(radians(?)) * sin(radians(latitude)))) AS distance_km
             ', [$latitude, $longitude, $latitude])
             ->where('is_online', true)
+            ->where('last_activity_at', '>', $staleThreshold)
             ->having('distance_km', '<=', $radiusKm)
             ->orderBy('distance_km')
             ->get();
@@ -132,6 +205,11 @@ class DriverLocationService
 
         if ($updated > 0) {
             Log::info("Marked {$updated} drivers as offline due to inactivity");
+            // Clear cache for offline drivers
+            DriverLocation::where('is_online', false)
+                ->where('last_activity_at', '<', $staleThreshold)
+                ->pluck('driver_id')
+                ->each(fn ($id) => Cache::forget($this->getCacheKey($id)));
         }
 
         return $updated;
@@ -142,7 +220,45 @@ class DriverLocationService
      */
     public function getOnlineDriversCount(): int
     {
-        return DriverLocation::where('is_online', true)->count();
+        $staleThreshold = now()->subMinutes(self::STALE_LOCATION_THRESHOLD_MINUTES);
+        return DriverLocation::where('is_online', true)
+            ->where('last_activity_at', '>', $staleThreshold)
+            ->count();
+    }
+
+    /**
+     * Get driver last seen timestamp
+     */
+    public function getDriverLastSeen(int $driverId): ?\Carbon\Carbon
+    {
+        $location = DriverLocation::where('driver_id', $driverId)->first();
+        return $location?->last_activity_at;
+    }
+
+    /**
+     * Check if driver location is stale
+     */
+    public function isLocationStale(int $driverId, int $thresholdMinutes = null): bool
+    {
+        $threshold = $thresholdMinutes ?? self::STALE_LOCATION_THRESHOLD_MINUTES;
+        $lastSeen = $this->getDriverLastSeen($driverId);
+        
+        if (!$lastSeen) {
+            return true;
+        }
+        
+        return $lastSeen->lt(now()->subMinutes($threshold));
+    }
+
+    /**
+     * Get trip-specific driver location
+     */
+    public function getTripDriverLocation(int $tripId): ?DriverLocation
+    {
+        return DriverLocation::where('trip_id', $tripId)
+            ->where('is_online', true)
+            ->orderBy('last_activity_at', 'desc')
+            ->first();
     }
 
     /**

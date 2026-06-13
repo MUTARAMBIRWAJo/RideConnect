@@ -10,7 +10,7 @@ use App\Services\DriverAvailabilityCacheService;
 use App\Services\Matching\RadiusExpansionService;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
-use App\Services\FirebaseRealtimeService;
+use App\Services\Firebase\FirebaseSyncService;
 
 class MotorcycleTripService
 {
@@ -18,7 +18,7 @@ class MotorcycleTripService
         private MatchingService $matchingService,
         private NotificationService $notificationService,
         private DriverAvailabilityCacheService $driverCache,
-        private FirebaseRealtimeService $firebase,
+        private FirebaseSyncService $firebaseSyncService,
     ) {
     }
 
@@ -474,13 +474,14 @@ class MotorcycleTripService
                 );
 
                 try {
-                    $this->firebase->pushTripEvent((string) $trip->id, 'DriverArrived', [
+                    $this->firebaseSyncService->syncEvent('DriverAssigned', [
                         'trip_id' => $trip->id,
                         'driver_id' => $driverId,
-                        'status' => $trip->status,
+                        'passenger_id' => $trip->passenger_id,
+                        'event_type' => 'driver_arrived',
                     ]);
                 } catch (\Throwable $e) {
-                    Log::debug('Firebase push failed (non-critical)', [
+                    Log::debug('Firebase sync failed (non-critical)', [
                         'trip_id' => $trip->id,
                         'event' => 'DriverArrived',
                         'error' => $e->getMessage(),
@@ -781,7 +782,15 @@ class MotorcycleTripService
     {
         DB::afterCommit(function () use ($tripId, $event, $payload): void {
             try {
-                $this->firebase->pushTripEvent($tripId, $event, $payload);
+                // Map event names to FirebaseSyncService event types
+                $eventType = match($event) {
+                    'TripStarted' => 'TripStarted',
+                    'TripCompleted' => 'TripCompleted',
+                    'DriverAssigned' => 'DriverAssigned',
+                    default => $event,
+                };
+                
+                $this->firebaseSyncService->syncEvent($eventType, array_merge($payload, ['trip_id' => $tripId]));
             } catch (\Throwable $e) {
                 Log::debug('Firebase trip event failed (non-critical)', [
                     'trip_id' => $tripId,

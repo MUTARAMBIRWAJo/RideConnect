@@ -292,7 +292,7 @@ class PassengerController extends Controller
             $query->whereDate('created_at', '<=', $request->end_date);
         }
 
-        $perPage = $request->get('per_page', 15);
+        $perPage = $request->input('per_page', 15);
         $bookings = $query->paginate($perPage);
 
         return response()->json([
