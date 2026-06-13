@@ -95,4 +95,34 @@ return [
         'migrate:rollback',
     ],
 
+    /*
+    |--------------------------------------------------------------------------
+    | Migration Safety Guard
+    |--------------------------------------------------------------------------
+    |
+    | Production/staging guard for destructive migrations and artisan commands.
+    | Destructive actions require --approve-destructive (or MIGRATION_APPROVE_DESTRUCTIVE=true).
+    | Reports are written to storage/migration-reports/ before approval or when blocked.
+    |
+    */
+
+    'guard_environments' => array_filter(explode(',', env('DB_GUARD_ENVIRONMENTS', 'production,staging'))),
+
+    'require_approval_for_destructive' => env('DB_REQUIRE_DESTRUCTIVE_APPROVAL', true),
+
+    'block_destructive_pending_migrations' => env('DB_BLOCK_DESTRUCTIVE_PENDING_MIGRATIONS', true),
+
+    'reports_path' => storage_path('migration-reports'),
+
+    'always_blocked_in_production' => [
+        'migrate:fresh',
+        'db:wipe',
+        'migrate:refresh',
+        'migrate:reset',
+    ],
+
+    'approval_flag' => '--approve-destructive',
+
+    'enable_during_tests' => env('DB_PROTECTION_ENABLE_DURING_TESTS', false),
+
 ];

@@ -2,6 +2,7 @@
 
 namespace Database\Seeders;
 
+use Database\Seeders\Concerns\UsesIdempotentSeeding;
 use Illuminate\Database\Seeder;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
@@ -9,6 +10,7 @@ use Spatie\Permission\Models\Role;
 
 class CreateTestUsers extends Seeder
 {
+    use UsesIdempotentSeeding;
     public function run(): void
     {
         // Ensure roles exist
@@ -86,13 +88,8 @@ class CreateTestUsers extends Seeder
                 echo "✓ Updated user: {$email}\n";
             }
 
-            // Assign role (delete old, insert new)
-            DB::table('model_has_roles')->where(['model_id' => $userId, 'model_type' => 'App\\Models\\User'])->delete();
-            DB::table('model_has_roles')->insert([
-                'role_id' => $roleIds[$roleName],
-                'model_id' => $userId,
-                'model_type' => 'App\\Models\\User',
-            ]);
+            // Assign role without clearing unrelated assignments.
+            $this->syncModelRole($userId, $roleIds[$roleName]);
             echo "  → Synced role: {$roleName}\n";
         }
 

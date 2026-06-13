@@ -296,7 +296,7 @@ class TripController extends Controller
                 'dropoff_zone' => $validated['dropoff_zone'] ?? null,
                 'transport_type' => $validated['transport_type'],
                 'fare' => $fare,
-                'status' => 'requested',
+                'status' => 'PENDING',
                 'payment_status' => 'unpaid',
                 'assignment_status' => 'unassigned',
                 'rejected_drivers_count' => 0,
@@ -310,7 +310,7 @@ class TripController extends Controller
                 'actor_type' => 'passenger',
                 'actor_id' => $validated['passenger_id'],
                 'old_status' => null,
-                'new_status' => 'requested',
+                'new_status' => 'PENDING',
                 'created_at' => $now,
             ]);
 

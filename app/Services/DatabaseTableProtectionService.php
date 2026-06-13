@@ -11,6 +11,8 @@ use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Schema;
 use RuntimeException;
 
+/** @property-read MigrationSafetyService $migrationSafety */
+
 class DatabaseTableProtectionService
 {
     private const LOCKS_TABLE = 'schema_table_locks';
@@ -21,26 +23,45 @@ class DatabaseTableProtectionService
 
     private bool $queryGuardRegistered = false;
 
+    private bool $eventListenersRegistered = false;
+
+    public function __construct(
+        private readonly MigrationSafetyService $migrationSafety,
+    ) {
+    }
+
     public function isEnabled(): bool
     {
-        if (app()->runningUnitTests()) {
+        if (! config('database_protection.enabled', true)) {
             return false;
         }
 
-        return (bool) config('database_protection.enabled', true);
+        if (app()->runningUnitTests() && ! config('database_protection.enable_during_tests', false)) {
+            return false;
+        }
+
+        return true;
     }
 
     public function register(): void
     {
+        if ($this->eventListenersRegistered) {
+            return;
+        }
+
         if (! $this->isEnabled()) {
             return;
         }
 
-        DB::prohibitDestructiveCommands();
+        if ($this->migrationSafety->isProductionGuardActive()) {
+            DB::prohibitDestructiveCommands(app()->environment('production'));
+        }
 
         Event::listen(CommandStarting::class, function (CommandStarting $event): void {
             $this->assertCommandAllowed($event->command, $event->input);
         });
+
+        $this->eventListenersRegistered = true;
 
         Event::listen(CommandFinished::class, function (CommandFinished $event): void {
             if (
@@ -342,10 +363,71 @@ SQL);
             return;
         }
 
+        if (! $this->isEnabled()) {
+            return;
+        }
+
+        $approved = $this->migrationSafety->hasDestructiveApproval($input);
+        $guardActive = $this->migrationSafety->isProductionGuardActive();
+
+        $alwaysBlocked = config('database_protection.always_blocked_in_production', []);
+
+        if ($guardActive && in_array($command, $alwaysBlocked, true)) {
+            $reportPath = $this->migrationSafety->generateReport([], [
+                'action' => 'blocked_command',
+                'approved' => false,
+                'reason' => sprintf('Command "%s" is permanently blocked in guarded environments.', $command),
+            ]);
+
+            throw new RuntimeException(sprintf(
+                'Blocked unsafe database command "%s" in %s. Report: %s. Data wipes are never allowed automatically.',
+                $command,
+                app()->environment(),
+                $reportPath
+            ));
+        }
+
         $blocked = config('database_protection.blocked_commands', []);
 
         if (in_array($command, $blocked, true)) {
-            throw new RuntimeException('Blocked unsafe database command: '.$command);
+            $permanentlyBlocked = config('database_protection.always_blocked_in_production', []);
+
+            if (in_array($command, $permanentlyBlocked, true)) {
+                $reportPath = $this->migrationSafety->generateReport([], [
+                    'action' => 'blocked_command',
+                    'approved' => false,
+                    'reason' => sprintf('Command "%s" is permanently blocked and cannot be approved.', $command),
+                ]);
+
+                throw new RuntimeException(sprintf(
+                    'Blocked unsafe database command "%s". Report: %s',
+                    $command,
+                    $reportPath
+                ));
+            }
+
+            if ($approved) {
+                $this->migrationSafety->generateReport([], [
+                    'action' => $command,
+                    'approved' => true,
+                    'reason' => 'Operator explicitly approved destructive artisan command.',
+                ]);
+
+                return;
+            }
+
+            $reportPath = $this->migrationSafety->generateReport([], [
+                'action' => 'blocked_command',
+                'approved' => false,
+                'reason' => sprintf('Command "%s" requires %s before execution.', $command, config('database_protection.approval_flag')),
+            ]);
+
+            throw new RuntimeException(sprintf(
+                'Blocked unsafe database command "%s". Re-run with %s after reviewing report: %s',
+                $command,
+                config('database_protection.approval_flag'),
+                $reportPath
+            ));
         }
 
         if (
@@ -355,6 +437,55 @@ SQL);
             && $input->hasParameterOption('--prune', true)
         ) {
             throw new RuntimeException('Blocked unsafe schema dump prune option.');
+        }
+
+        if (
+            $guardActive
+            && config('database_protection.block_destructive_pending_migrations', true)
+            && $command === 'migrate'
+            && ! $approved
+        ) {
+            $destructivePending = $this->migrationSafety->pendingDestructiveUpMigrations();
+
+            if ($destructivePending !== []) {
+                $reportPath = $this->migrationSafety->generateReport($destructivePending, [
+                    'action' => 'blocked_pending_migrations',
+                    'approved' => false,
+                    'reason' => 'Pending migrations contain destructive up() operations.',
+                ]);
+
+                throw new RuntimeException(sprintf(
+                    'Blocked migrate: pending migrations include destructive up() changes. Review report %s and re-run with %s if intentional.',
+                    $reportPath,
+                    config('database_protection.approval_flag')
+                ));
+            }
+        }
+
+        if ($command === 'db:seed' && $guardActive && ! $approved) {
+            $this->assertSeederSafety();
+        }
+    }
+
+    private function assertSeederSafety(): void
+    {
+        if (filter_var(env('DB_SEED_ALLOW_DESTRUCTIVE', false), FILTER_VALIDATE_BOOL)) {
+            return;
+        }
+
+        $seedersPath = database_path('seeders');
+
+        foreach (glob($seedersPath.'/*.php') ?: [] as $file) {
+            $contents = file_get_contents($file) ?: '';
+
+            if (preg_match('/\btruncate\s*\(/i', $contents) || preg_match('/DB::table\([^)]+\)->delete\(\)/', $contents)) {
+                if (! preg_match('/model_has_roles/', $contents)) {
+                    throw new RuntimeException(sprintf(
+                        'Blocked db:seed in guarded environment: seeder %s contains truncate/delete-all patterns. Use updateOrCreate/firstOrCreate.',
+                        basename($file)
+                    ));
+                }
+            }
         }
     }
 

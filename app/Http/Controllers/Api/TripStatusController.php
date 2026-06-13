@@ -18,6 +18,8 @@ class TripStatusController extends Controller
         'enroute_to_pickup' => ['arrived_at_pickup', 'cancelled'],
         'arrived_at_pickup' => ['in_progress', 'cancelled'],
         'in_progress' => ['completed', 'cancelled'],
+        'ACCEPTED' => ['STARTED', 'CANCELLED'],
+        'STARTED' => ['COMPLETED', 'CANCELLED'],
     ];
 
     public function __construct(private readonly SupabaseRealtimeService $supabase) {}
@@ -25,7 +27,7 @@ class TripStatusController extends Controller
     public function update(Request $request, Trip $trip): JsonResponse
     {
         $validated = $request->validate([
-            'status' => 'required|in:enroute_to_pickup,arrived_at_pickup,in_progress,completed,cancelled',
+            'status' => 'required|in:PENDING,STARTED,COMPLETED,CANCELLED,enroute_to_pickup,arrived_at_pickup,in_progress,completed,cancelled',
             'metadata' => 'nullable|array',
         ]);
 
@@ -38,11 +40,20 @@ class TripStatusController extends Controller
         }
 
         DB::transaction(function () use ($trip, $oldStatus, $validated, $request): void {
-            $updates = ['status' => $validated['status']];
-            if ($validated['status'] === 'in_progress') {
+            $statusMap = [
+                'enroute_to_pickup' => 'STARTED',
+                'arrived_at_pickup' => 'STARTED',
+                'in_progress' => 'STARTED',
+                'completed' => 'COMPLETED',
+                'cancelled' => 'CANCELLED',
+            ];
+            
+            $newStatus = $statusMap[$validated['status']] ?? $validated['status'];
+            $updates = ['status' => $newStatus];
+            if ($validated['status'] === 'in_progress' || $newStatus === 'STARTED') {
                 $updates['started_at'] = now();
             }
-            if ($validated['status'] === 'completed') {
+            if ($validated['status'] === 'completed' || $newStatus === 'COMPLETED') {
                 $updates['completed_at'] = now();
             }
 
@@ -53,7 +64,7 @@ class TripStatusController extends Controller
                 'actor_type' => $request->user()?->isDriver() ? 'driver' : 'system',
                 'actor_id' => $request->user()?->id,
                 'old_status' => $oldStatus,
-                'new_status' => $validated['status'],
+                'new_status' => $newStatus,
                 'metadata' => $validated['metadata'] ?? null,
                 'created_at' => now(),
             ]);
@@ -68,7 +79,7 @@ class TripStatusController extends Controller
                     'cancelled' => 'trip_cancelled',
                     default => 'location_update',
                 },
-                'metadata' => ['status' => $validated['status']] + ($validated['metadata'] ?? []),
+                'metadata' => ['status' => $newStatus] + ($validated['metadata'] ?? []),
                 'event_time' => now(),
             ]);
         });

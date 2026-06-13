@@ -10,16 +10,25 @@ class Trip extends Model
     use HasFactory;
 
     private const STATUS_MAP = [
-        'pending' => 'requested',
-        'requested' => 'requested',
-        'assigning' => 'assigning',
-        'accepted' => 'accepted',
-        'started' => 'in_progress',
-        'enroute_to_pickup' => 'enroute_to_pickup',
-        'arrived_at_pickup' => 'arrived_at_pickup',
-        'in_progress' => 'in_progress',
-        'completed' => 'completed',
-        'cancelled' => 'cancelled',
+        'pending' => 'PENDING',
+        'requested' => 'PENDING',
+        'PENDING' => 'PENDING',
+        'assigning' => 'PENDING',
+        'ASSIGNED' => 'PENDING',
+        'DRIVER_ASSIGNED' => 'PENDING',
+        'PASSENGER_WAITING' => 'PENDING',
+        'accepted' => 'ACCEPTED',
+        'ACCEPTED' => 'ACCEPTED',
+        'started' => 'STARTED',
+        'enroute_to_pickup' => 'STARTED',
+        'arrived_at_pickup' => 'STARTED',
+        'in_progress' => 'STARTED',
+        'STARTED' => 'STARTED',
+        'IN_PROGRESS' => 'STARTED',
+        'completed' => 'COMPLETED',
+        'COMPLETED' => 'COMPLETED',
+        'cancelled' => 'CANCELLED',
+        'CANCELLED' => 'CANCELLED',
     ];
 
     protected $fillable = [

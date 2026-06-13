@@ -23,6 +23,9 @@ class TripStateMachine
      * Compatibility mapping from legacy statuses to canonical states.
      */
     private const LEGACY_MAP = [
+        'pending' => self::REQUESTED,
+        'requested' => self::REQUESTED,
+        'assigning' => self::REQUESTED,
         'PENDING' => self::REQUESTED,
     ];
 
