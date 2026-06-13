@@ -596,7 +596,6 @@ class PassengerController extends Controller
             ],
         ], 201);
     }
-}
 
     private function distanceKm(float $lat1, float $lng1, float $lat2, float $lng2): float
     {
