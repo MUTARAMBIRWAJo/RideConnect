@@ -108,7 +108,22 @@ class Trip extends Model
 
     public function passenger()
     {
-        return $this->belongsTo(MobileUser::class, 'passenger_id');
+        return $this->belongsTo(User::class, 'passenger_id');
+    }
+
+    /**
+     * Legacy mobile profile linked to the passenger user, when present.
+     */
+    public function passengerMobileProfile()
+    {
+        return $this->hasOneThrough(
+            MobileUser::class,
+            User::class,
+            'id',
+            'id',
+            'passenger_id',
+            'mobile_user_id'
+        );
     }
 
     public function ride()

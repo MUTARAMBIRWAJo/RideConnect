@@ -7,6 +7,7 @@ use App\Domain\Ride\RidePolicy;
 use App\Domain\Trip\TripStateMachine;
 use App\Events\Domain\TripMatched;
 use App\Exceptions\DomainException;
+use App\Http\Concerns\ResolvesCanonicalIdentity;
 use App\Http\Controllers\Controller;
 use App\Models\Booking;
 use App\Models\Ride;
@@ -29,6 +30,7 @@ use Illuminate\Support\Facades\Validator;
  */
 class MobilePassengerController extends Controller
 {
+    use ResolvesCanonicalIdentity;
     public function __construct(
         private readonly MobileNotificationService $notificationService,
         private readonly TripLocationService $tripLocationService,
@@ -550,11 +552,6 @@ class MobilePassengerController extends Controller
                 'trip_state' => $trip->status,
             ],
         ]);
-    }
-
-    private function resolvePassengerMobileUserId($user): int
-    {
-        return $user->mobile_user_id ?? throw new \Exception('Mobile user ID required');
     }
 
     private function distanceKm(float $lat1, float $lng1, float $lat2, float $lng2): float

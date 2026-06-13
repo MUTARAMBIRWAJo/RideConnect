@@ -43,4 +43,4 @@ services:
         value: "8001"
       - key: MODEL_PATH
         value: /app/Matching_Modal_tflite_learn_1013157_3.tflite
-    healthCheckPath: /health
+    healthCheckPath: /health/live

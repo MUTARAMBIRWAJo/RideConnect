@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers\Api;
 
+use App\Http\Concerns\ResolvesCanonicalIdentity;
 use App\Http\Controllers\Controller;
 use App\Models\Corridor;
 use App\Models\Driver;
@@ -17,6 +18,8 @@ use Illuminate\Validation\ValidationException;
 
 class PassengerController extends Controller
 {
+    use ResolvesCanonicalIdentity;
+
     private const TICKET_THRESHOLD_HOURS = 6;
 
     public function __construct(
@@ -593,25 +596,7 @@ class PassengerController extends Controller
             ],
         ], 201);
     }
-
-    private function resolvePassengerMobileUserId(User $user): int
-    {
-        if ($user->mobile_user_id) {
-            return (int) $user->mobile_user_id;
-        }
-
-        $mobileUserId = MobileUser::query()
-            ->where('email', $user->email)
-            ->value('id');
-
-        if ($mobileUserId) {
-            return (int) $mobileUserId;
-        }
-
-        throw ValidationException::withMessages([
-            'user' => 'Passenger mobile profile is not linked. Please contact support.',
-        ]);
-    }
+}
 
     private function distanceKm(float $lat1, float $lng1, float $lat2, float $lng2): float
     {

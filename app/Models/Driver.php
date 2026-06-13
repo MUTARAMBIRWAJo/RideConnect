@@ -54,9 +54,12 @@ class Driver extends Model
         return $this->belongsTo(User::class);
     }
 
+    /**
+     * @deprecated Legacy bridge — drivers.user_id references users.id via user().
+     */
     public function mobileUser()
     {
-        return $this->belongsTo(MobileUser::class, 'user_id');
+        return $this->belongsTo(User::class, 'user_id');
     }
 
     public function vehicles()

@@ -44,6 +44,6 @@ class DriverLocation extends Model
 
     public function driver()
     {
-        return $this->belongsTo(MobileUser::class, 'driver_id');
+        return $this->belongsTo(Driver::class, 'driver_id');
     }
 }

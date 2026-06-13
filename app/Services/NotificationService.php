@@ -3,6 +3,7 @@
 namespace App\Services;
 
 use App\Models\Notification;
+use App\Services\Identity\IdentityResolverService;
 use App\Models\User;
 use App\Services\Realtime\RealtimeGateway;
 use Illuminate\Support\Facades\Log;
@@ -16,6 +17,7 @@ class NotificationService
 {
     public function __construct(
         private readonly RealtimeGateway $realtimeGateway,
+        private readonly IdentityResolverService $identityResolver,
     ) {}
 
     /**
@@ -56,12 +58,18 @@ class NotificationService
                 'created_at' => $notification->created_at->toIso8601String(),
             ];
 
-            // Try to determine if user is driver or passenger and notify
+            // Broadcast via real-time gateway using canonical identity channels
             $user = User::find($userId);
             if ($user && $user->driver) {
-                $this->realtimeGateway->notifyDriver($user->driver->id, $payload);
-            } elseif ($user && $user->mobile_user_id) {
-                $this->realtimeGateway->notifyPassenger($user->mobile_user_id, $payload);
+                $driverChannelId = $this->identityResolver->realtimeDriverChannelId($user);
+                if ($driverChannelId) {
+                    $this->realtimeGateway->notifyDriver($driverChannelId, $payload);
+                }
+            } elseif ($user) {
+                $this->realtimeGateway->notifyPassenger(
+                    $this->identityResolver->realtimePassengerChannelId($user),
+                    $payload
+                );
             }
 
             Log::info('In-app notification created', [

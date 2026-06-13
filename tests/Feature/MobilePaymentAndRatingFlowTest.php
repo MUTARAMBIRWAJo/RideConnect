@@ -15,15 +15,13 @@ class MobilePaymentAndRatingFlowTest extends TestCase
 {
     public function test_passenger_can_create_and_fetch_trip_payment_with_schema_status(): void
     {
-        $mobilePassenger = MobileUser::factory()->create(['role' => 'PASSENGER', 'is_verified' => true]);
         $passenger = User::factory()->create([
             'role' => 'PASSENGER',
-            'mobile_user_id' => $mobilePassenger->id,
             'is_approved' => true,
         ]);
 
         $trip = Trip::factory()->create([
-            'passenger_id' => $mobilePassenger->id,
+            'passenger_id' => $passenger->id,
             'status' => 'COMPLETED',
             'booking_id' => null,
         ]);

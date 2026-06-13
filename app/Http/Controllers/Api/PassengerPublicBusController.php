@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Api;
 
 use App\Exceptions\DomainException;
 use App\Exceptions\GeocodingException;
+use App\Http\Concerns\ResolvesCanonicalIdentity;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Passenger\CreatePublicBusTripRequest;
 use App\Models\MobileUser;
@@ -20,6 +21,8 @@ use Illuminate\Validation\ValidationException;
 
 class PassengerPublicBusController extends Controller
 {
+    use ResolvesCanonicalIdentity;
+
     public function __construct(
         private readonly PublicBusTransportService $busService,
         private readonly GoogleMapsGeocodingService $geocodingService,
@@ -354,24 +357,5 @@ class PassengerPublicBusController extends Controller
             ],
             'ticket_qr' => $boarding->qr_payload,
         ];
-    }
-
-    private function resolvePassengerMobileUserId($user): int
-    {
-        if ($user->mobile_user_id) {
-            return (int) $user->mobile_user_id;
-        }
-
-        $mobileUserId = MobileUser::query()
-            ->where('email', $user->email)
-            ->value('id');
-
-        if ($mobileUserId) {
-            return (int) $mobileUserId;
-        }
-
-        throw ValidationException::withMessages([
-            'user' => 'Passenger mobile profile is not linked. Please contact support.',
-        ]);
     }
 }

@@ -16,7 +16,7 @@ use App\Models\StopArrivalEvent;
 use App\Models\TransportCorridor;
 use App\Models\Trip;
 use App\Models\User;
-use App\Models\MobileUser;
+use App\Services\Identity\IdentityResolverService;
 use App\Models\Vehicle;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Support\Collection;
@@ -28,6 +28,7 @@ class PublicBusTransportService
     public function __construct(
         private readonly TransportTicketService $ticketService,
         private readonly MLPredictionService $mlPredictionService,
+        private readonly IdentityResolverService $identityResolver,
     ) {}
 
     public function corridors(): Collection
@@ -120,7 +121,7 @@ class PublicBusTransportService
             }
 
             $seats = max(1, (int) ($data['seats_reserved'] ?? 1));
-            $passengerId = $this->resolvePassengerMobileUserId($user);
+            $passengerId = $this->identityResolver->passengerOwnerId($user);
             $selectedAssignmentId = isset($data['bus_route_assignment_id']) ? (int) $data['bus_route_assignment_id'] : null;
             $assignment = $this->resolveBookableAssignment($corridor, $boardingStop, $seats, $selectedAssignmentId);
 
@@ -630,23 +631,6 @@ class PublicBusTransportService
                 $destinationStop->id,
             ], JSON_THROW_ON_ERROR), (string) config('app.key')),
         ];
-    }
-
-    private function resolvePassengerMobileUserId(User $user): int
-    {
-        if ($user->mobile_user_id) {
-            return (int) $user->mobile_user_id;
-        }
-
-        $mobileUserId = MobileUser::query()
-            ->where('email', $user->email)
-            ->value('id');
-
-        if ($mobileUserId) {
-            return (int) $mobileUserId;
-        }
-
-        throw DomainException::make('Passenger mobile profile is not linked', 'PASSENGER_PROFILE_UNLINKED');
     }
 
     private function distanceKm(float $lat1, float $lng1, float $lat2, float $lng2): float

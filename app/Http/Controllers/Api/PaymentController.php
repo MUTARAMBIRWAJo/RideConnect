@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers\Api;
 
+use App\Http\Concerns\ResolvesCanonicalIdentity;
 use App\Http\Controllers\Controller;
 use App\Models\Booking;
 use App\Models\LedgerEntry;
@@ -15,6 +16,8 @@ use Illuminate\Validation\ValidationException;
 
 class PaymentController extends Controller
 {
+    use ResolvesCanonicalIdentity;
+
     public function __construct(
         private readonly LedgerService $ledgerService,
     ) {}
@@ -104,7 +107,7 @@ class PaymentController extends Controller
             $trip = Trip::query()->where('booking_id', $booking->id)->first();
 
             if (! $trip) {
-                $passengerId = $booking->user?->mobile_user_id ? (int) $booking->user->mobile_user_id : (int) $booking->user_id;
+                $passengerId = $this->passengerOwnerId($booking->user);
 
                 $trip = Trip::create([
                     'booking_id' => $booking->id,

@@ -6,11 +6,16 @@ use App\Models\Booking;
 use App\Models\Ride;
 use App\Models\Trip;
 use App\Models\User;
+use App\Services\Identity\IdentityResolverService;
 use Illuminate\Support\Facades\DB;
 
 class RideCategoryTransitionService
 {
     private const DEFAULT_TRIP_THRESHOLD_HOURS = 6;
+
+    public function __construct(
+        private readonly IdentityResolverService $identityResolver,
+    ) {}
 
     /**
      * A ride in <= 6 hours is treated as a Trip.
@@ -73,7 +78,7 @@ class RideCategoryTransitionService
             throw new \InvalidArgumentException('Pickup and dropoff locations are required for trip creation');
         }
 
-        $passengerId = $this->resolvePassengerMobileUserId($user);
+        $passengerId = $this->identityResolver->passengerOwnerId($user);
 
         return Trip::create([
             'booking_id' => null,
@@ -135,7 +140,7 @@ class RideCategoryTransitionService
                 return $existingTrip;
             }
 
-            $passengerId = $this->resolvePassengerMobileUserId($lockedBooking->user);
+            $passengerId = $this->identityResolver->passengerOwnerId($lockedBooking->user);
 
             $trip = Trip::create([
                 'booking_id' => $lockedBooking->id,
@@ -303,20 +308,6 @@ class RideCategoryTransitionService
             'cancelled' => 'CANCELLED',
             default => 'PENDING',
         };
-    }
-
-    private function resolvePassengerMobileUserId(?User $user): int
-    {
-        if (! $user) {
-            throw new \InvalidArgumentException('Cannot create trip without an associated user.');
-        }
-
-        if ($user->mobile_user_id) {
-            return (int) $user->mobile_user_id;
-        }
-
-        // Backward-compatible fallback for environments where IDs were historically aligned.
-        return (int) $user->id;
     }
 
     private function resolveWebUserIdFromPassengerId(int $passengerId): ?int

@@ -52,7 +52,7 @@ class TransportTicket extends Model
 
     public function passenger()
     {
-        return $this->belongsTo(MobileUser::class, 'passenger_id');
+        return $this->belongsTo(User::class, 'passenger_id');
     }
 
     public function driver()

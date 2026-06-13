@@ -38,6 +38,14 @@ class PassengerBehavior extends Model
 
     public function passenger()
     {
+        return $this->belongsTo(User::class, 'passenger_id');
+    }
+
+    /**
+     * Legacy mobile_users profile reference when passenger_id has not been backfilled.
+     */
+    public function passengerMobileProfile()
+    {
         return $this->belongsTo(MobileUser::class, 'passenger_id');
     }
 

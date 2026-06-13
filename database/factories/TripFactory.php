@@ -3,6 +3,7 @@
 namespace Database\Factories;
 
 use App\Models\MobileUser;
+use App\Models\User;
 use App\Models\Trip;
 use Illuminate\Database\Eloquent\Factories\Factory;
 
@@ -18,7 +19,7 @@ class TripFactory extends Factory
         $requestedAt = $this->faker->dateTimeBetween('-7 days', 'now');
 
         return [
-            'passenger_id' => MobileUser::factory(),
+            'passenger_id' => User::factory()->state(['role' => 'PASSENGER']),
             'driver_id' => null,
             'pickup_location' => $this->faker->address(),
             'pickup_lat' => $this->faker->latitude(),

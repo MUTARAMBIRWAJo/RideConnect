@@ -62,7 +62,7 @@ class DriverTripController extends Controller
             ]);
 
             $trip->update([
-                'status' => 'accepted',
+                'status' => 'ACCEPTED',
                 'assignment_status' => 'assigned',
                 'driver_id' => $driver->id,
                 'accepted_at' => now(),
@@ -72,8 +72,8 @@ class DriverTripController extends Controller
                 'trip_id' => $trip->id,
                 'actor_type' => 'driver',
                 'actor_id' => $driver->id,
-                'old_status' => 'assigning',
-                'new_status' => 'accepted',
+                'old_status' => $trip->status,
+                'new_status' => 'ACCEPTED',
                 'created_at' => now(),
             ]);
 

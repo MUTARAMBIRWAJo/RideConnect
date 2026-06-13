@@ -115,4 +115,49 @@ class FirebaseRealtimeService
     {
         return $this->enabled;
     }
+
+    /**
+     * @return array<string, mixed>
+     */
+    public function connectivityStatus(): array
+    {
+        if (! $this->enabled) {
+            return [
+                'firestore' => false,
+                'realtime_database' => false,
+                'message' => 'Firebase client not initialized',
+            ];
+        }
+
+        $firestoreOk = false;
+        $rtdbOk = false;
+
+        if ($this->firestore) {
+            try {
+                $this->firestore->collection('users')->limit(1)->documents();
+                $firestoreOk = true;
+            } catch (\Throwable $exception) {
+                return [
+                    'firestore' => false,
+                    'realtime_database' => false,
+                    'message' => 'Firestore probe failed: '.$exception->getMessage(),
+                ];
+            }
+        }
+
+        if ($this->database) {
+            try {
+                $this->database->getReference('.info/connected');
+                $rtdbOk = true;
+            } catch (\Throwable) {
+                $rtdbOk = false;
+            }
+        }
+
+        return [
+            'firestore' => $firestoreOk,
+            'realtime_database' => $rtdbOk,
+            'message' => 'Connectivity probe completed',
+        ];
+    }
 }

@@ -10,6 +10,7 @@ use App\Events\Domain\TripCompleted;
 use App\Events\Domain\TripMatched;
 use App\Events\Domain\TripStarted;
 use App\Exceptions\DomainException;
+use App\Http\Concerns\ResolvesCanonicalIdentity;
 use App\Http\Controllers\Controller;
 use App\Jobs\FindAndNotifyDriverJob;
 use App\Models\Booking;
@@ -73,6 +74,7 @@ use Illuminate\Support\Facades\Validator;
  */
 class TripController extends Controller
 {
+    use ResolvesCanonicalIdentity;
     public function __construct(
         private readonly MobileNotificationService $mobileNotificationService,
         private readonly TripLocationService $tripLocationService,
@@ -96,7 +98,7 @@ class TripController extends Controller
         } else {
             // Regular users can only see their own trips (as passenger or driver)
             $query->where(function ($q) use ($user) {
-                $passengerIds = array_filter([(int) $user->mobile_user_id, (int) $user->id]);
+                $passengerIds = $this->passengerOwnerIdsForQuery($user);
                 if (! empty($passengerIds)) {
                     $q->whereIn('passenger_id', $passengerIds);
                 }
@@ -158,7 +160,7 @@ class TripController extends Controller
         $user = request()->user();
 
         if (! $user->role->isSuperAdmin() && ! $user->role->isManager()) {
-            $passengerIds = array_filter([(int) $user->mobile_user_id, (int) $user->id]);
+            $passengerIds = $this->passengerOwnerIdsForQuery($user);
             $isPassenger = in_array((int) $trip->passenger_id, $passengerIds, true);
             $isDriver = $user->driver?->id && (int) $trip->driver_id === (int) $user->driver->id;
 
@@ -408,12 +410,12 @@ class TripController extends Controller
             ]);
         }
 
-        $passengerMobileUserId = $this->resolveOrCreatePassengerMobileUserId($booking->user);
+        $passengerOwnerId = $this->resolveOrCreatePassengerOwnerId($booking->user);
 
         $trip = new Trip([
             'booking_id' => $booking->id,
             'ride_id' => $booking->ride_id,
-            'passenger_id' => $passengerMobileUserId,
+            'passenger_id' => $passengerOwnerId,
             'driver_id' => null,
             'pickup_location' => $booking->pickup_address ?: $booking->ride?->origin_address,
             'pickup_place_name' => $booking->pickup_address ?: $booking->ride?->origin_address,
@@ -632,16 +634,8 @@ class TripController extends Controller
         $trip = Trip::findOrFail($id);
         $user = $request->user();
 
-        $passengerMobileUserId = null;
-        if ($user->isPassenger()) {
-            $passengerMobileUserId = $user->mobile_user_id
-                ? (int) $user->mobile_user_id
-                : (int) (MobileUser::query()->where('email', $user->email)->value('id') ?? 0);
-        }
-
-        // Check if user is passenger, driver, or admin
-        $isPassenger = $passengerMobileUserId > 0
-            && (int) $trip->passenger_id === (int) $passengerMobileUserId;
+        $isPassenger = $user->isPassenger()
+            && $this->userOwnsPassengerReference($user, (int) $trip->passenger_id);
         $isDriver = $trip->driver?->user_id === $user->id;
         $isAdmin = $user->role->isSuperAdmin() || $user->role->isManager();
 
@@ -689,9 +683,8 @@ class TripController extends Controller
     public function myTrips(Request $request): JsonResponse
     {
         $user = $request->user();
-        $passengerMobileUserId = $user->mobile_user_id ? (int) $user->mobile_user_id : null;
+        $passengerIds = $this->passengerOwnerIdsForQuery($user);
         $driverId = $user->driver?->id ? (int) $user->driver->id : null;
-        $passengerFallbackIds = array_filter([(int) $user->mobile_user_id, (int) $user->id]);
 
         $query = Trip::query();
 
@@ -699,14 +692,14 @@ class TripController extends Controller
         $type = $request->get('type', 'all'); // 'passenger', 'driver', or 'all'
 
         if ($type === 'passenger') {
-            if (empty($passengerFallbackIds)) {
+            if (empty($passengerIds)) {
                 return response()->json([
                     'success' => false,
                     'message' => 'Passenger mobile profile is not linked',
                 ], 422);
             }
 
-            $query->whereIn('passenger_id', $passengerFallbackIds);
+            $query->whereIn('passenger_id', $passengerIds);
         } elseif ($type === 'driver') {
             if (! $driverId) {
                 return response()->json([
@@ -717,9 +710,9 @@ class TripController extends Controller
 
             $query->where('driver_id', $driverId);
         } else {
-            $query->where(function ($q) use ($passengerFallbackIds, $driverId) {
-                if (! empty($passengerFallbackIds)) {
-                    $q->whereIn('passenger_id', $passengerFallbackIds);
+            $query->where(function ($q) use ($passengerIds, $driverId) {
+                if (! empty($passengerIds)) {
+                    $q->whereIn('passenger_id', $passengerIds);
                 }
 
                 if ($driverId) {
@@ -739,7 +732,7 @@ class TripController extends Controller
             'success' => true,
             'data' => $trips->map(fn ($trip) => [
                 'id' => $trip->id,
-                'type' => in_array((int) $trip->passenger_id, $passengerFallbackIds, true) ? 'passenger' : 'driver',
+                'type' => in_array((int) $trip->passenger_id, $passengerIds, true) ? 'passenger' : 'driver',
                 'passenger' => [
                     'id' => $trip->passenger?->id,
                     'name' => $trip->passenger?->name,
@@ -799,57 +792,5 @@ class TripController extends Controller
                 'requested_at' => $trip->requested_at?->toIso8601String(),
             ]),
         ]);
-    }
-
-    private function resolvePassengerMobileUserId($user): int
-    {
-        // Prefer explicit mobile_user_id when available.
-        if ($user->mobile_user_id) {
-            return (int) $user->mobile_user_id;
-        }
-
-        // Try to find a MobileUser with same email (legacy linkage)
-        $mobileUserId = MobileUser::query()
-            ->where('email', $user->email)
-            ->value('id');
-
-        if ($mobileUserId) {
-            return (int) $mobileUserId;
-        }
-
-        // Fallback to the application user id to remain compatible with existing
-        // booking/trip records that may have been stored with user ids instead
-        // of mobile_user ids. This avoids throwing exceptions and keeps the
-        // passenger able to view their trips.
-        return (int) $user->id;
-    }
-
-    private function resolveOrCreatePassengerMobileUserId(?User $user): int
-    {
-        if (! $user) {
-            throw new \InvalidArgumentException('Passenger user is required');
-        }
-
-        if ($user->mobile_user_id) {
-            return (int) $user->mobile_user_id;
-        }
-
-        $mobileUser = MobileUser::query()->firstOrCreate(
-            ['email' => $user->email],
-            [
-                'first_name' => trim((string) explode(' ', (string) $user->name)[0]) ?: 'Passenger',
-                'last_name' => trim((string) (explode(' ', (string) $user->name, 2)[1] ?? 'User')) ?: 'User',
-                'phone' => $user->phone ?? '+250700000000',
-                'password' => $user->password ?? bcrypt('password'),
-                'role' => 'PASSENGER',
-                'is_verified' => true,
-            ]
-        );
-
-        if (! $user->mobile_user_id) {
-            $user->forceFill(['mobile_user_id' => $mobileUser->id])->save();
-        }
-
-        return (int) $mobileUser->id;
     }
 }
