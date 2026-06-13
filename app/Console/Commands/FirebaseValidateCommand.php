@@ -27,7 +27,7 @@ class FirebaseValidateCommand extends Command
     public function __construct(
         private readonly FirebaseSyncService $firebaseSyncService,
         private readonly FirebaseBootstrapService $firebaseBootstrapService,
-        private readonly DeviceTokenService $deviceTokenService = null,
+        private ?DeviceTokenService $deviceTokenService,
     ) {
         parent::__construct();
     }

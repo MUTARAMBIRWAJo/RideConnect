@@ -53,6 +53,9 @@ class AppServiceProvider extends ServiceProvider
         });
 
         $this->app->singleton(\App\Services\TfliteMatchingService::class);
+
+        // Bind GuzzleHttp\ClientInterface to GuzzleHttp\Client
+        $this->app->bind(\GuzzleHttp\ClientInterface::class, \GuzzleHttp\Client::class);
     }
 
     /**

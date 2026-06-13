@@ -151,8 +151,10 @@ class PaymentReconciliationService
      */
     private function getDiscrepancyReason(string $status, Payment $payment, ?array $providerData): string
     {
+        $providerAmount = $providerData['amount'] ?? 'N/A';
+        
         return match ($status) {
-            'mismatched' => "Amount mismatch: system={$payment->amount}, provider={$providerData['amount'] ?? 'N/A'}",
+            'mismatched' => "Amount mismatch: system={$payment->amount}, provider={$providerAmount}",
             'missing' => 'Payment not found in provider system',
             default => 'Unknown discrepancy',
         };

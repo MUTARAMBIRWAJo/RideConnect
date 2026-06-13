@@ -7,6 +7,11 @@ use Illuminate\Foundation\Configuration\Middleware;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 
+// WSL Mode Detection - Prevent Windows CMD execution
+if (PHP_OS_FAMILY === 'Windows' && !getenv('WSL_MODE')) {
+    die('ERROR: This application must run inside WSL terminal, not Windows CMD. Open WSL terminal and run from there.');
+}
+
 return Application::configure(basePath: dirname(__DIR__))
     ->withRouting(
         web: __DIR__.'/../routes/web.php',

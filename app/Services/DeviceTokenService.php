@@ -11,7 +11,7 @@ use Kreait\Firebase\Exception\MessagingException;
 class DeviceTokenService
 {
     private ?Messaging $messaging;
-    private readonly \App\Services\Firebase\FirebaseSyncService $firebaseSyncService;
+    private ?\App\Services\Firebase\FirebaseSyncService $firebaseSyncService;
 
     public function __construct(
         Messaging $messaging = null,
