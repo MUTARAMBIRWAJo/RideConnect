@@ -47,6 +47,7 @@ use App\Http\Controllers\Api\TripSyncController;
 use App\Http\Controllers\Api\UserController;
 use App\Http\Controllers\Api\Webhooks\MTNWebhookController;
 use App\Http\Controllers\Api\Webhooks\StripeWebhookController;
+use App\Http\Controllers\Api\PaymentVerificationController;
 use App\Models\Manager;
 use Illuminate\Support\Facades\Route;
 
@@ -261,6 +262,12 @@ Route::prefix('v1')->group(function () {
             Route::post('/payments', [PaymentController::class, 'createPayment']);
             Route::get('/payments/history', [PaymentController::class, 'paymentHistory']);
             Route::get('/payments/{id}', [PaymentController::class, 'show'])->whereNumber('id');
+            
+            // Payment Verification (MTN MoMo Pay Code)
+            Route::get('/payment-verification/trips/{tripId}/instructions', [PaymentVerificationController::class, 'getPaymentInstructions'])->whereNumber('tripId');
+            Route::post('/payment-verification/submit', [PaymentVerificationController::class, 'submitPaymentEvidence']);
+            Route::get('/payment-verification/submissions/{submissionId}', [PaymentVerificationController::class, 'getSubmissionStatus'])->whereNumber('submissionId');
+            Route::get('/payment-verification/submissions', [PaymentVerificationController::class, 'getUserSubmissions']);
         });
 
         /* ===========================

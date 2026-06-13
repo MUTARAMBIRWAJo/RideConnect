@@ -6,33 +6,34 @@ use App\Models\Trip;
 use App\Models\MotorcycleTrip;
 use App\Models\Driver;
 use App\Models\User;
+use App\Services\Firebase\FirebaseSyncService;
 use Illuminate\Support\Facades\Log;
 
 /**
- * DEPRECATED: This service is being replaced by FirebaseSyncService
- * 
- * All Firestore writes should now go through FirebaseSyncService::syncEvent()
- * This service is kept for backward compatibility during migration
- * 
+ * FirebaseEventDispatcher - COMPATIBILITY WRAPPER
+ *
+ * DEPRECATED: This service is now a thin wrapper delegating to FirebaseSyncService
+ * All Firestore writes now go through FirebaseSyncService::syncEvent()
+ *
  * @deprecated Use App\Services\Firebase\FirebaseSyncService instead
  */
 class FirebaseEventDispatcher
 {
     public function __construct(
-        private readonly FirebaseSync $firebaseSync,
-        private readonly FirebaseRealtimeService $firebaseRealtime,
+        private readonly FirebaseSyncService $firebaseSyncService,
     ) {
         Log::warning('[FirebaseEventDispatcher] DEPRECATED - Use FirebaseSyncService instead');
     }
 
     /**
      * Dispatch trip creation event to Firebase
+     * @deprecated Use FirebaseSyncService::syncEvent('TripCreated', ...)
      */
     public function dispatchTripCreated(Trip $trip): void
     {
         try {
-            $this->firebaseSync->syncTripCreation($trip);
-            $this->firebaseRealtime->pushTripEvent($trip->id, 'trip_created', [
+            $this->firebaseSyncService->syncEvent('TripCreated', [
+                'trip_id' => $trip->id,
                 'created_at' => now()->toIso8601String(),
             ]);
         } catch (\Throwable $e) {
@@ -45,16 +46,16 @@ class FirebaseEventDispatcher
 
     /**
      * Dispatch driver assignment event to Firebase
+     * @deprecated Use FirebaseSyncService::syncEvent('DriverAssigned', ...)
      */
     public function dispatchDriverAssigned(int $tripId, int $driverId): void
     {
         try {
-            $this->firebaseRealtime->pushTripEvent($tripId, 'driver_assigned', [
+            $this->firebaseSyncService->syncEvent('DriverAssigned', [
+                'trip_id' => $tripId,
                 'driver_id' => $driverId,
                 'assigned_at' => now()->toIso8601String(),
             ]);
-            
-            $this->firebaseSync->syncDriverStatus($driverId, 'on_trip');
         } catch (\Throwable $e) {
             Log::error('Failed to dispatch driver assigned event', [
                 'trip_id' => $tripId,
@@ -66,11 +67,13 @@ class FirebaseEventDispatcher
 
     /**
      * Dispatch driver accepted event to Firebase
+     * @deprecated Use FirebaseSyncService::syncEvent('DriverAccepted', ...)
      */
     public function dispatchDriverAccepted(int $tripId, int $driverId): void
     {
         try {
-            $this->firebaseRealtime->pushTripEvent($tripId, 'driver_accepted', [
+            $this->firebaseSyncService->syncEvent('DriverAccepted', [
+                'trip_id' => $tripId,
                 'driver_id' => $driverId,
                 'accepted_at' => now()->toIso8601String(),
             ]);
@@ -85,11 +88,13 @@ class FirebaseEventDispatcher
 
     /**
      * Dispatch driver rejected event to Firebase
+     * @deprecated Use FirebaseSyncService::syncEvent('DriverRejected', ...)
      */
     public function dispatchDriverRejected(int $tripId, int $driverId, string $reason): void
     {
         try {
-            $this->firebaseRealtime->pushTripEvent($tripId, 'driver_rejected', [
+            $this->firebaseSyncService->syncEvent('DriverRejected', [
+                'trip_id' => $tripId,
                 'driver_id' => $driverId,
                 'reason' => $reason,
                 'rejected_at' => now()->toIso8601String(),
@@ -105,13 +110,15 @@ class FirebaseEventDispatcher
 
     /**
      * Dispatch driver arrived event to Firebase
+     * @deprecated Use FirebaseSyncService::syncEvent('DriverAssigned', ...) with event_type
      */
     public function dispatchDriverArrived(int $tripId, int $driverId): void
     {
         try {
-            $this->firebaseSync->syncTripStatusUpdate($tripId, 'driver_arrived');
-            $this->firebaseRealtime->pushTripEvent($tripId, 'driver_arrived', [
+            $this->firebaseSyncService->syncEvent('DriverAssigned', [
+                'trip_id' => $tripId,
                 'driver_id' => $driverId,
+                'event_type' => 'driver_arrived',
                 'arrived_at' => now()->toIso8601String(),
             ]);
         } catch (\Throwable $e) {
@@ -125,12 +132,13 @@ class FirebaseEventDispatcher
 
     /**
      * Dispatch trip started event to Firebase
+     * @deprecated Use FirebaseSyncService::syncEvent('TripStarted', ...)
      */
     public function dispatchTripStarted(int $tripId): void
     {
         try {
-            $this->firebaseSync->syncTripStatusUpdate($tripId, 'in_progress');
-            $this->firebaseRealtime->pushTripEvent($tripId, 'trip_started', [
+            $this->firebaseSyncService->syncEvent('TripStarted', [
+                'trip_id' => $tripId,
                 'started_at' => now()->toIso8601String(),
             ]);
         } catch (\Throwable $e) {
@@ -143,12 +151,13 @@ class FirebaseEventDispatcher
 
     /**
      * Dispatch trip completed event to Firebase
+     * @deprecated Use FirebaseSyncService::syncEvent('TripCompleted', ...)
      */
     public function dispatchTripCompleted(int $tripId, array $paymentData = []): void
     {
         try {
-            $this->firebaseSync->syncTripCompletion($tripId, $paymentData);
-            $this->firebaseRealtime->pushTripEvent($tripId, 'trip_completed', [
+            $this->firebaseSyncService->syncEvent('TripCompleted', [
+                'trip_id' => $tripId,
                 'completed_at' => now()->toIso8601String(),
                 'payment_data' => $paymentData,
             ]);
@@ -162,11 +171,13 @@ class FirebaseEventDispatcher
 
     /**
      * Dispatch payment completed event to Firebase
+     * @deprecated Use FirebaseSyncService::syncEvent('PaymentCompleted', ...)
      */
     public function dispatchPaymentCompleted(int $tripId, int $paymentId): void
     {
         try {
-            $this->firebaseRealtime->pushTripEvent($tripId, 'payment_completed', [
+            $this->firebaseSyncService->syncEvent('PaymentCompleted', [
+                'trip_id' => $tripId,
                 'payment_id' => $paymentId,
                 'completed_at' => now()->toIso8601String(),
             ]);
@@ -181,14 +192,14 @@ class FirebaseEventDispatcher
 
     /**
      * Dispatch rating submitted event to Firebase
+     * @deprecated Use FirebaseSyncService::syncEvent('RatingSubmitted', ...)
      */
     public function dispatchRatingSubmitted(int $driverId, array $ratingData): void
     {
         try {
-            $this->firebaseSync->syncRatingCreation($driverId, $ratingData);
-            $this->firebaseRealtime->pushTripEvent($ratingData['trip_id'] ?? 0, 'rating_submitted', [
+            $this->firebaseSyncService->syncEvent('RatingSubmitted', [
                 'driver_id' => $driverId,
-                'rating' => $ratingData['rating'] ?? 0,
+                'rating_data' => $ratingData,
                 'submitted_at' => now()->toIso8601String(),
             ]);
         } catch (\Throwable $e) {
@@ -201,11 +212,17 @@ class FirebaseEventDispatcher
 
     /**
      * Dispatch user profile update to Firebase
+     * @deprecated Use FirebaseSyncService::syncEvent('UserUpdated', ...)
      */
     public function dispatchUserUpdated(User $user): void
     {
         try {
-            $this->firebaseSync->syncUserProfileUpdate($user);
+            $this->firebaseSyncService->syncEvent('UserUpdated', [
+                'user_id' => $user->id,
+                'email' => $user->email,
+                'name' => $user->name,
+                'phone' => $user->phone,
+            ]);
         } catch (\Throwable $e) {
             Log::error('Failed to dispatch user updated event', [
                 'user_id' => $user->id,
@@ -216,11 +233,14 @@ class FirebaseEventDispatcher
 
     /**
      * Dispatch driver profile update to Firebase
+     * @deprecated Use FirebaseSyncService::syncEvent('DriverCreated', ...)
      */
     public function dispatchDriverUpdated(Driver $driver): void
     {
         try {
-            $this->firebaseSync->syncDriverProfileCreation($driver);
+            $this->firebaseSyncService->syncEvent('DriverCreated', [
+                'driver_id' => $driver->user_id,
+            ]);
         } catch (\Throwable $e) {
             Log::error('Failed to dispatch driver updated event', [
                 'driver_id' => $driver->user_id,
@@ -231,11 +251,12 @@ class FirebaseEventDispatcher
 
     /**
      * Dispatch driver location update to Firebase
+     * @deprecated Use FirebaseSyncService::syncDriverLocation()
      */
     public function dispatchDriverLocationUpdated(int $driverId, float $latitude, float $longitude, float $accuracy = 0): void
     {
         try {
-            $this->firebaseSync->syncDriverLocation($driverId, $latitude, $longitude, $accuracy);
+            $this->firebaseSyncService->syncDriverLocation($driverId, $latitude, $longitude, $accuracy);
         } catch (\Throwable $e) {
             Log::error('Failed to dispatch driver location updated event', [
                 'driver_id' => $driverId,

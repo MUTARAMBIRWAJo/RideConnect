@@ -4,15 +4,21 @@ namespace App\Services;
 
 use Kreait\Firebase\Factory;
 use Illuminate\Support\Facades\Log;
+use App\Services\Firebase\FirebaseSyncService;
 
 /**
- * Firestore event-delivery layer.
+ * FirebaseRealtimeService - COMPATIBILITY WRAPPER (Read-Only)
  *
- * Contracts:
- *   POST Laravel     → writes Firestore doc → Flutter listens on a snapshot listener
- *   POST Laravel     → pushTripEvent()
+ * CRITICAL ARCHITECTURE RULE:
+ * This service NO LONGER writes to Firestore directly.
+ * All writes MUST go through FirebaseSyncService::syncEvent()
  *
- * Public API — read-only for the rest of the backend. Never throws on failure.
+ * This service is now ONLY for:
+ * - Connectivity status checks
+ * - Realtime Database read operations (legacy)
+ * - Health monitoring
+ *
+ * @deprecated Use FirebaseSyncService for all Firestore writes
  */
 class FirebaseRealtimeService
 {
@@ -20,8 +26,11 @@ class FirebaseRealtimeService
     private ?\Kreait\Firebase\Firestore $firestore = null;
     private bool $enabled = false;
 
-    public function __construct()
-    {
+    public function __construct(
+        private readonly FirebaseSyncService $firebaseSyncService,
+    ) {
+        Log::warning('[FirebaseRealtimeService] DEPRECATED - Use FirebaseSyncService for writes');
+
         $projectId     = config('services.firebase.project_id');
         $credentials   = config('services.firebase.credentials');
         $databaseUrl   = config('services.firebase.database_url');   // Realtime DB only
@@ -47,7 +56,7 @@ class FirebaseRealtimeService
             }
 
             $this->enabled = true;
-            Log::info('FirebaseRealtimeService: initialised', [
+            Log::info('FirebaseRealtimeService: initialised (read-only mode)', [
                 'project_id' => $projectId,
                 'firestore_db' => $firestoreDb ?? '(default)',
                 'database_url' => $databaseUrl,
@@ -61,54 +70,37 @@ class FirebaseRealtimeService
     /**
      * Push a trip lifecycle event into Firestore.
      *
-     * Collection: trip_events
-     * Document ID: auto
-     * Fields: event, trip_id, payload, timestamp
+     * DEPRECATED: Now routes through FirebaseSyncService
+     *
+     * @deprecated Use FirebaseSyncService::syncEvent() instead
      */
     public function pushTripEvent(string $tripId, string $event, array $payload = []): void
     {
-        if (! $this->enabled || ! $this->firestore) {
-            return;
-        }
+        Log::warning('[FirebaseRealtimeService] pushTripEvent called - DEPRECATED. Use FirebaseSyncService::syncEvent() instead', [
+            'trip_id' => $tripId,
+            'event' => $event,
+        ]);
 
-        try {
-            $this->firestore->collection('trip_events')->add([
-                'trip_id'    => (int) $tripId,
-                'event'      => $event,
-                'payload'    => $payload,
-                'timestamp'  => now()->toIso8601String(),
-            ]);
-        } catch (\Throwable $e) {
-            Log::debug('Firestore pushTripEvent failed (non-critical)', [
-                'trip_id' => $tripId, 'event' => $event, 'error' => $e->getMessage(),
-            ]);
-        }
+        // Route through FirebaseSyncService
+        $this->firebaseSyncService->syncEvent($event, array_merge($payload, ['trip_id' => $tripId]));
     }
 
     /**
-     * Push an in-app notification into Firestore (for Flutter badge count).
+     * Push an in-app notification into Firestore.
+     *
+     * DEPRECATED: Now routes through FirebaseSyncService
+     *
+     * @deprecated Use FirebaseSyncService for notification sync
      */
     public function pushNotification(string $userId, string $type, string $title, string $body, array $data = []): void
     {
-        if (! $this->enabled || ! $this->firestore) {
-            return;
-        }
+        Log::warning('[FirebaseRealtimeService] pushNotification called - DEPRECATED. Use FirebaseSyncService for notifications', [
+            'user_id' => $userId,
+        ]);
 
-        try {
-            $this->firestore->collection('notifications')->add([
-                'user_id'  => (int) $userId,
-                'type'     => $type,
-                'title'    => $title,
-                'body'     => $body,
-                'data'     => $data,
-                'read'     => false,
-                'timestamp'=> now()->toIso8601String(),
-            ]);
-        } catch (\Throwable $e) {
-            Log::debug('Firestore pushNotification failed', [
-                'user_id' => $userId, 'error' => $e->getMessage(),
-            ]);
-        }
+        // Notifications are handled by FirebaseSyncService internally via sendNotification()
+        // This method is kept for backward compatibility only
+        // No-op - notifications are now sent automatically by FirebaseSyncService event handlers
     }
 
     public function isEnabled(): bool
@@ -159,5 +151,14 @@ class FirebaseRealtimeService
             'realtime_database' => $rtdbOk,
             'message' => 'Connectivity probe completed',
         ];
+    }
+
+    /**
+     * Health check - delegates to FirebaseSyncService
+     * @deprecated Use FirebaseSyncService::healthCheck()
+     */
+    public function healthCheck(): array
+    {
+        return $this->firebaseSyncService->healthCheck();
     }
 }

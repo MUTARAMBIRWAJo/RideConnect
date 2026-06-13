@@ -12,6 +12,8 @@ return [
 
     'enabled' => env('FIREBASE_ENABLED', true),
 
+    'bootstrap_enabled' => env('FIREBASE_BOOTSTRAP_ENABLED', false),
+
     'project_id' => env('FIREBASE_PROJECT_ID'),
 
     'credentials' => env('FIREBASE_CREDENTIALS_PATH', storage_path('firebase/credentials.json')),

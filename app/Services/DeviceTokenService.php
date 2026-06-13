@@ -12,6 +12,7 @@ class DeviceTokenService
 {
     public function __construct(
         private readonly Messaging $messaging,
+        private readonly \App\Services\Firebase\FirebaseSyncService $firebaseSyncService,
     ) {}
 
     /**
@@ -19,6 +20,11 @@ class DeviceTokenService
      */
     public function registerToken(User $user, string $token, string $platform = 'android', string $appVersion = '1.0.0'): MobileDeviceToken
     {
+        // Remove token from other users (prevent duplicates)
+        MobileDeviceToken::where('token', $token)
+            ->where('user_id', '!=', $user->id)
+            ->delete();
+
         // Check if token already exists for this user
         $existingToken = MobileDeviceToken::where('token', $token)->first();
 
@@ -32,11 +38,14 @@ class DeviceTokenService
                 'last_used_at' => now(),
             ]);
             
+            // Sync to Firestore
+            $this->syncToFirestore($user, $token, $platform);
+            
             return $existingToken->fresh();
         }
 
         // Create new token
-        return MobileDeviceToken::create([
+        $deviceToken = MobileDeviceToken::create([
             'user_id' => $user->id,
             'token' => $token,
             'platform' => $platform,
@@ -44,6 +53,30 @@ class DeviceTokenService
             'active' => true,
             'last_used_at' => now(),
         ]);
+
+        // Sync to Firestore
+        $this->syncToFirestore($user, $token, $platform);
+
+        return $deviceToken;
+    }
+
+    /**
+     * Sync device token to Firestore
+     */
+    private function syncToFirestore(User $user, string $token, string $platform): void
+    {
+        try {
+            $this->firebaseSyncService->syncDeviceToken($user->id, $token, $platform);
+            Log::info('Device token synced to Firestore', [
+                'user_id' => $user->id,
+                'platform' => $platform,
+            ]);
+        } catch (\Exception $e) {
+            Log::warning('Failed to sync device token to Firestore', [
+                'user_id' => $user->id,
+                'error' => $e->getMessage(),
+            ]);
+        }
     }
 
     /**
@@ -57,6 +90,9 @@ class DeviceTokenService
             try {
                 // Unsubscribe from Firebase topic
                 $this->messaging->unsubscribeFromTopic($token, 'all-users');
+                
+                // Remove from Firestore
+                $this->removeFromFirestore($token);
             } catch (MessagingException $e) {
                 Log::warning('Failed to unsubscribe token from topic', [
                     'token' => substr($token, 0, 20) . '...',
@@ -66,6 +102,24 @@ class DeviceTokenService
         }
 
         return $deleted > 0;
+    }
+
+    /**
+     * Remove device token from Firestore
+     */
+    private function removeFromFirestore(string $token): void
+    {
+        try {
+            $this->firebaseSyncService->removeDeviceToken($token);
+            Log::info('Device token removed from Firestore', [
+                'token' => substr($token, 0, 20) . '...',
+            ]);
+        } catch (\Exception $e) {
+            Log::warning('Failed to remove device token from Firestore', [
+                'token' => substr($token, 0, 20) . '...',
+                'error' => $e->getMessage(),
+            ]);
+        }
     }
 
     /**

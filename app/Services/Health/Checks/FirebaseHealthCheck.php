@@ -2,12 +2,14 @@
 
 namespace App\Services\Health\Checks;
 
+use App\Services\Firebase\FirebaseSyncService;
 use App\Services\FirebaseRealtimeService;
 
 class FirebaseHealthCheck
 {
     public function __construct(
-        private readonly FirebaseRealtimeService $firebase,
+        private readonly FirebaseSyncService $firebaseSyncService,
+        private readonly FirebaseRealtimeService $firebaseRealtimeService,
     ) {
     }
 
@@ -38,7 +40,7 @@ class FirebaseHealthCheck
             }
 
             $credentialsExist = is_string($credentials) && $credentials !== '' && file_exists($credentials);
-            $adminInitialized = $this->firebase->isEnabled();
+            $adminInitialized = $this->firebaseSyncService->isEnabled();
 
             $details = [
                 'enabled' => true,
@@ -47,6 +49,7 @@ class FirebaseHealthCheck
                 'admin_sdk_initialized' => $adminInitialized,
                 'realtime_database_configured' => filled($databaseUrl),
                 'firestore_configured' => filled(config('services.firebase.firestore_database')),
+                'bootstrap_enabled' => config('firebase.bootstrap_enabled', false),
             ];
 
             if (! $credentialsExist) {
@@ -68,7 +71,8 @@ class FirebaseHealthCheck
             }
 
             if ($extended) {
-                $details['connectivity'] = $this->firebase->connectivityStatus();
+                $details['connectivity'] = $this->firebaseRealtimeService->connectivityStatus();
+                $details['health_check'] = $this->firebaseSyncService->healthCheck();
             }
 
             return [

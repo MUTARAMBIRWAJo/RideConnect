@@ -34,6 +34,7 @@ class MobileDriverController extends Controller
         private readonly TransportMappingService $transportMappingService,
         private readonly MobileNotificationService $mobileNotificationService,
         private readonly TripCompletionService $tripCompletionService,
+        private readonly \App\Services\Firebase\FirebaseSyncService $firebaseSyncService,
     ) {}
 
     /**
@@ -72,6 +73,23 @@ class MobileDriverController extends Controller
         $driver->availability_status = $validated['is_online'] ? 'available' : 'offline';
         $driver->last_online_at = now();
         $driver->save();
+
+        // Sync presence to Firestore
+        try {
+            $this->firebaseSyncService->syncPresence(
+                $driver->user_id,
+                $validated['is_online'],
+                $validated['is_online'] ? [
+                    'latitude' => $driver->last_location_lat ?? 0,
+                    'longitude' => $driver->last_location_lng ?? 0,
+                ] : null
+            );
+        } catch (\Exception $e) {
+            \Illuminate\Support\Facades\Log::warning('Failed to sync driver presence to Firestore', [
+                'driver_id' => $driver->user_id,
+                'error' => $e->getMessage(),
+            ]);
+        }
 
         return response()->json([
             'status' => 'success',

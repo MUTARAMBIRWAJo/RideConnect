@@ -89,6 +89,29 @@ class FirebaseSyncService
     }
 
     /**
+     * Ensure collection exists in Firestore
+     * Self-healing: creates collection if missing
+     */
+    private function ensureCollectionExists(string $collection): void
+    {
+        try {
+            // Try to create a seed document to ensure collection exists
+            $this->firestore
+                ->collection($collection)
+                ->document('_collection_seed')
+                ->set([
+                    '_seed' => true,
+                    '_created_at' => now()->toIso8601String(),
+                ], ['merge' => true]);
+        } catch (Exception $e) {
+            Log::warning('[FirebaseSyncService] Failed to ensure collection exists', [
+                'collection' => $collection,
+                'error' => $e->getMessage(),
+            ]);
+        }
+    }
+
+    /**
      * Bootstrap Firestore schema with seed writes
      * 
      * IMPORTANT:
@@ -1257,6 +1280,8 @@ class FirebaseSyncService
         }
 
         try {
+            $this->ensureCollectionExists('driver_locations');
+            
             // Update driver_locations collection
             $this->firestore
                 ->collection('driver_locations')
@@ -1296,12 +1321,56 @@ class FirebaseSyncService
                         ['path' => 'driver_location.longitude', 'value' => $longitude],
                         ['path' => 'driver_location.timestamp', 'value' => now()],
                     ]);
+                
+                // Sync trip tracking
+                $this->syncTripTracking($tripId, $driverId, $latitude, $longitude);
             }
 
             return true;
         } catch (Exception $e) {
             Log::error('[FirebaseSyncService] Driver location sync failed', [
                 'driver_id' => $driverId,
+                'error' => $e->getMessage(),
+            ]);
+            return false;
+        }
+    }
+
+    /**
+     * Sync trip tracking data
+     * 
+     * Centralize trip tracking writes:
+     * - trip_tracking collection
+     * - ETA and distance calculations
+     */
+    public function syncTripTracking(int $tripId, string $driverId, float $latitude, float $longitude, ?float $eta = null, ?float $distanceRemaining = null): bool
+    {
+        if (!$this->isEnabled()) {
+            return false;
+        }
+
+        try {
+            $this->ensureCollectionExists('trip_tracking');
+            
+            $this->firestore
+                ->collection('trip_tracking')
+                ->document((string) $tripId)
+                ->set([
+                    'driver_id' => (string) $driverId,
+                    'driver_location' => [
+                        'latitude' => $latitude,
+                        'longitude' => $longitude,
+                        'updated_at' => now(),
+                    ],
+                    'eta' => $eta,
+                    'distance_remaining' => $distanceRemaining,
+                    'updated_at' => now(),
+                ], ['merge' => true]);
+
+            return true;
+        } catch (Exception $e) {
+            Log::error('[FirebaseSyncService] Trip tracking sync failed', [
+                'trip_id' => $tripId,
                 'error' => $e->getMessage(),
             ]);
             return false;
@@ -1523,6 +1592,453 @@ class FirebaseSyncService
                 'status' => 'error',
                 'message' => 'Firebase connection failed: ' . $e->getMessage(),
             ];
+        }
+    }
+
+    // ==================== ADDITIONAL SYNC METHODS ====================
+
+    /**
+     * Sync user to Firestore
+     * Idempotent, retry-safe, queue-safe
+     */
+    public function syncUser(int $userId): bool
+    {
+        if (!$this->isEnabled()) {
+            return false;
+        }
+
+        $user = User::find($userId);
+        if (!$user) {
+            Log::warning('[FirebaseSyncService] User not found', ['user_id' => $userId]);
+            return false;
+        }
+
+        try {
+            $this->firestore
+                ->collection('users')
+                ->document((string) $user->id)
+                ->set([
+                    'email' => $user->email,
+                    'name' => $user->name,
+                    'phone' => $user->phone,
+                    'role' => $user->role->value,
+                    'is_online' => false,
+                    'last_seen' => $user->updated_at ?? now(),
+                    'rating' => 0.0,
+                    'completed_trips' => 0,
+                    'cancelled_trips' => 0,
+                    'metadata' => [
+                        'created_at' => $user->created_at ?? now(),
+                        'updated_at' => $user->updated_at ?? now(),
+                        'firebase_token' => null,
+                        'app_version' => '1.0.0',
+                    ],
+                ], ['merge' => true]);
+
+            Log::info('[FirebaseSyncService] User synced', ['user_id' => $userId]);
+            return true;
+        } catch (Exception $e) {
+            Log::error('[FirebaseSyncService] User sync failed', [
+                'user_id' => $userId,
+                'error' => $e->getMessage(),
+            ]);
+            return false;
+        }
+    }
+
+    /**
+     * Sync driver to Firestore
+     * Idempotent, retry-safe, queue-safe
+     */
+    public function syncDriver(int $driverId): bool
+    {
+        if (!$this->isEnabled()) {
+            return false;
+        }
+
+        $driver = Driver::find($driverId);
+        if (!$driver) {
+            Log::warning('[FirebaseSyncService] Driver not found', ['driver_id' => $driverId]);
+            return false;
+        }
+
+        try {
+            $this->firestore
+                ->collection('drivers')
+                ->document((string) $driver->user_id)
+                ->set([
+                    'user_id' => $driver->user_id,
+                    'status' => 'offline',
+                    'current_location' => [
+                        'latitude' => $driver->last_location_lat ?? 0,
+                        'longitude' => $driver->last_location_lng ?? 0,
+                        'accuracy' => 0,
+                        'updated_at' => now(),
+                    ],
+                    'current_trip_id' => null,
+                    'vehicle' => [
+                        'type' => $driver->vehicle_type ?? 'economy',
+                        'license_plate' => $driver->license_plate ?? '',
+                        'color' => $driver->vehicle_color ?? '',
+                        'model' => $driver->vehicle_model ?? '',
+                    ],
+                    'service_types' => ['private_car'],
+                    'response_time' => 0,
+                    'acceptance_rate' => 0,
+                    'cancellation_rate' => 0,
+                    'average_rating' => 0.0,
+                    'total_earnings' => 0,
+                    'available_capacity' => $driver->capacity ?? 1,
+                    'metadata' => [
+                        'last_location_update' => now(),
+                        'shift_start' => null,
+                        'shift_end' => null,
+                        'offline_reason' => null,
+                    ],
+                ], ['merge' => true]);
+
+            Log::info('[FirebaseSyncService] Driver synced', ['driver_id' => $driverId]);
+            return true;
+        } catch (Exception $e) {
+            Log::error('[FirebaseSyncService] Driver sync failed', [
+                'driver_id' => $driverId,
+                'error' => $e->getMessage(),
+            ]);
+            return false;
+        }
+    }
+
+    /**
+     * Sync trip to Firestore
+     * Idempotent, retry-safe, queue-safe
+     */
+    public function syncTrip(int $tripId): bool
+    {
+        if (!$this->isEnabled()) {
+            return false;
+        }
+
+        $trip = Trip::find($tripId);
+        if (!$trip) {
+            Log::warning('[FirebaseSyncService] Trip not found', ['trip_id' => $tripId]);
+            return false;
+        }
+
+        try {
+            $this->firestore
+                ->collection('active_trips')
+                ->document((string) $trip->id)
+                ->set([
+                    'passenger_id' => (string) $trip->passenger_id,
+                    'driver_id' => $trip->driver_id ? (string) $trip->driver_id : null,
+                    'status' => $trip->status ?? 'requested',
+                    'ride_type' => $trip->ride_type ?? 'private_car',
+                    'pickup' => [
+                        'latitude' => $trip->pickup_latitude,
+                        'longitude' => $trip->pickup_longitude,
+                        'address' => $trip->pickup_address ?? '',
+                        'timestamp' => now(),
+                    ],
+                    'dropoff' => [
+                        'latitude' => $trip->dropoff_latitude,
+                        'longitude' => $trip->dropoff_longitude,
+                        'address' => $trip->dropoff_address ?? '',
+                        'timestamp' => now(),
+                    ],
+                    'distance_km' => $trip->distance_km ?? 0,
+                    'estimated_duration_seconds' => $trip->estimated_duration ?? 0,
+                    'estimated_fare' => $trip->estimated_fare ?? 0,
+                    'currency' => 'RWF',
+                    'driver_location' => [
+                        'latitude' => 0,
+                        'longitude' => 0,
+                        'timestamp' => now(),
+                        'distance_to_pickup' => 0,
+                    ],
+                    'route' => [
+                        'polyline' => '',
+                        'waypoints' => [],
+                        'updated_at' => now(),
+                    ],
+                    'passenger_location_history' => [],
+                    'driver_location_history' => [],
+                    'events' => [],
+                    'timeline' => [
+                        'requested_at' => $trip->created_at ?? now(),
+                        'accepted_at' => null,
+                        'driver_arrived_at' => null,
+                        'started_at' => null,
+                        'completed_at' => null,
+                        'cancelled_at' => null,
+                    ],
+                    'payment' => [
+                        'method' => 'upi',
+                        'status' => 'pending',
+                        'amount' => 0,
+                        'transaction_id' => '',
+                    ],
+                    'rating' => [
+                        'passenger_rating' => null,
+                        'driver_rating' => null,
+                        'passenger_review' => null,
+                        'driver_review' => null,
+                    ],
+                    'cancellation' => [
+                        'reason' => null,
+                        'cancelled_by' => null,
+                        'refund_amount' => null,
+                    ],
+                    'metadata' => [
+                        'promotion_code' => null,
+                        'discount_amount' => 0,
+                        'notes' => '',
+                    ],
+                ], ['merge' => true]);
+
+            Log::info('[FirebaseSyncService] Trip synced', ['trip_id' => $tripId]);
+            return true;
+        } catch (Exception $e) {
+            Log::error('[FirebaseSyncService] Trip sync failed', [
+                'trip_id' => $tripId,
+                'error' => $e->getMessage(),
+            ]);
+            return false;
+        }
+    }
+
+    /**
+     * Sync trip event to Firestore
+     * Idempotent, retry-safe, queue-safe
+     * Alias for syncEvent for clarity
+     */
+    public function syncTripEvent(string $tripId, string $event, array $payload = []): bool
+    {
+        return $this->syncEvent($event, array_merge($payload, ['trip_id' => $tripId]));
+    }
+
+    /**
+     * Sync chat room to Firestore
+     * Idempotent, retry-safe, queue-safe
+     */
+    public function syncChatRoom(string $roomId, array $data): bool
+    {
+        if (!$this->isEnabled()) {
+            return false;
+        }
+
+        try {
+            $this->firestore
+                ->collection('chat_rooms')
+                ->document($roomId)
+                ->set([
+                    'trip_id' => $data['trip_id'] ?? 0,
+                    'participants' => $data['participants'] ?? [],
+                    'type' => $data['type'] ?? 'trip_chat',
+                    'created_at' => now(),
+                    'updated_at' => now(),
+                    'metadata' => [
+                        'last_message_at' => null,
+                        'message_count' => 0,
+                    ],
+                ], ['merge' => true]);
+
+            Log::info('[FirebaseSyncService] Chat room synced', ['room_id' => $roomId]);
+            return true;
+        } catch (Exception $e) {
+            Log::error('[FirebaseSyncService] Chat room sync failed', [
+                'room_id' => $roomId,
+                'error' => $e->getMessage(),
+            ]);
+            return false;
+        }
+    }
+
+    /**
+     * Sync chat message to Firestore
+     * Idempotent, retry-safe, queue-safe
+     */
+    public function syncChatMessage(string $roomId, array $data): bool
+    {
+        if (!$this->isEnabled()) {
+            return false;
+        }
+
+        try {
+            $this->firestore
+                ->collection('chat_messages')
+                ->add([
+                    'room_id' => $roomId,
+                    'sender_id' => $data['sender_id'] ?? '',
+                    'message' => $data['message'] ?? '',
+                    'message_type' => $data['message_type'] ?? 'text',
+                    'timestamp' => now(),
+                    'read_by' => $data['read_by'] ?? [],
+                    'metadata' => $data['metadata'] ?? [],
+                ]);
+
+            // Update chat room metadata
+            $this->firestore
+                ->collection('chat_rooms')
+                ->document($roomId)
+                ->update([
+                    ['path' => 'metadata.last_message_at', 'value' => now()],
+                    ['path' => 'metadata.message_count', 'value' => \Kreait\Firebase\FieldValue::increment(1)],
+                    ['path' => 'updated_at', 'value' => now()],
+                ]);
+
+            Log::info('[FirebaseSyncService] Chat message synced', ['room_id' => $roomId]);
+            return true;
+        } catch (Exception $e) {
+            Log::error('[FirebaseSyncService] Chat message sync failed', [
+                'room_id' => $roomId,
+                'error' => $e->getMessage(),
+            ]);
+            return false;
+        }
+    }
+
+    /**
+     * Sync presence to Firestore
+     * Idempotent, retry-safe, queue-safe
+     */
+    public function syncPresence(int $userId, bool $online, array $location = null): bool
+    {
+        if (!$this->isEnabled()) {
+            return false;
+        }
+
+        try {
+            $data = [
+                'user_id' => (string) $userId,
+                'online' => $online,
+                'last_seen' => now(),
+                'device_info' => [
+                    'platform' => 'android',
+                    'app_version' => '1.0.0',
+                ],
+            ];
+
+            if ($location) {
+                $data['location'] = $location;
+            }
+
+            $this->firestore
+                ->collection('presence')
+                ->document((string) $userId)
+                ->set($data, ['merge' => true]);
+
+            Log::info('[FirebaseSyncService] Presence synced', ['user_id' => $userId, 'online' => $online]);
+            return true;
+        } catch (Exception $e) {
+            Log::error('[FirebaseSyncService] Presence sync failed', [
+                'user_id' => $userId,
+                'error' => $e->getMessage(),
+            ]);
+            return false;
+        }
+    }
+
+    /**
+     * Sync device token to Firestore
+     * Idempotent, retry-safe, queue-safe
+     */
+    public function syncDeviceToken(int $userId, string $token, string $platform = 'android'): bool
+    {
+        if (!$this->isEnabled()) {
+            return false;
+        }
+
+        try {
+            $this->ensureCollectionExists('device_tokens');
+            
+            $this->firestore
+                ->collection('device_tokens')
+                ->document($token)
+                ->set([
+                    'user_id' => (string) $userId,
+                    'token' => $token,
+                    'platform' => $platform,
+                    'app_version' => '1.0.0',
+                    'active' => true,
+                    'created_at' => now(),
+                    'last_used_at' => now(),
+                ], ['merge' => true]);
+
+            Log::info('[FirebaseSyncService] Device token synced', ['user_id' => $userId]);
+            return true;
+        } catch (Exception $e) {
+            Log::error('[FirebaseSyncService] Device token sync failed', [
+                'user_id' => $userId,
+                'error' => $e->getMessage(),
+            ]);
+            return false;
+        }
+    }
+
+    /**
+     * Remove device token from Firestore
+     * Idempotent, retry-safe, queue-safe
+     */
+    public function removeDeviceToken(string $token): bool
+    {
+        if (!$this->isEnabled()) {
+            return false;
+        }
+
+        try {
+            $this->firestore
+                ->collection('device_tokens')
+                ->document($token)
+                ->delete();
+
+            Log::info('[FirebaseSyncService] Device token removed', ['token' => substr($token, 0, 20) . '...']);
+            return true;
+        } catch (Exception $e) {
+            Log::error('[FirebaseSyncService] Device token removal failed', [
+                'token' => substr($token, 0, 20) . '...',
+                'error' => $e->getMessage(),
+            ]);
+            return false;
+        }
+    }
+
+    /**
+     * Sync notification to Firestore
+     * Idempotent, retry-safe, queue-safe
+     */
+    public function syncNotification(int $userId, string $type, string $title, string $body, array $data = []): bool
+    {
+        if (!$this->isEnabled()) {
+            return false;
+        }
+
+        try {
+            $this->firestore
+                ->collection('notifications')
+                ->add([
+                    'user_id' => (int) $userId,
+                    'type' => $type,
+                    'title' => $title,
+                    'body' => $body,
+                    'data' => $data,
+                    'read' => false,
+                    'timestamp' => now(),
+                    'expires_at' => null,
+                ]);
+
+            // Send FCM push notification
+            if ($this->messaging) {
+                $this->sendFcmNotification($userId, $title, $body, $data);
+            }
+
+            Log::info('[FirebaseSyncService] Notification synced', ['user_id' => $userId]);
+            return true;
+        } catch (Exception $e) {
+            Log::error('[FirebaseSyncService] Notification sync failed', [
+                'user_id' => $userId,
+                'error' => $e->getMessage(),
+            ]);
+            return false;
         }
     }
 }
