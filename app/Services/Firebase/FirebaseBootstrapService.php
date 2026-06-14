@@ -352,6 +352,8 @@ class FirebaseBootstrapService
                 'collections_ready' => [],
                 'missing' => self::REQUIRED_COLLECTIONS,
                 'warnings' => [],
+                'total_collections' => count(self::REQUIRED_COLLECTIONS),
+                'ready_collections' => 0,
             ];
         }
 
@@ -402,6 +404,8 @@ class FirebaseBootstrapService
                 'collections_ready' => [],
                 'missing' => self::REQUIRED_COLLECTIONS,
                 'warnings' => [$e->getMessage()],
+                'total_collections' => count(self::REQUIRED_COLLECTIONS),
+                'ready_collections' => 0,
             ];
         }
     }

@@ -2041,4 +2041,106 @@ class FirebaseSyncService
             return false;
         }
     }
+
+    /**
+     * Sync payment to Firestore
+     * Idempotent, retry-safe, queue-safe
+     */
+    public function syncPayment(int $paymentId): bool
+    {
+        if (!$this->isEnabled()) {
+            return false;
+        }
+
+        $payment = Payment::find($paymentId);
+        if (!$payment) {
+            Log::warning('[FirebaseSyncService] Payment not found', ['payment_id' => $paymentId]);
+            return false;
+        }
+
+        try {
+            $this->ensureCollectionExists('payments');
+            
+            $this->firestore
+                ->collection('payments')
+                ->document((string) $payment->id)
+                ->set([
+                    'id' => (int) $payment->id,
+                    'trip_id' => $payment->trip_id ? (string) $payment->trip_id : null,
+                    'user_id' => (string) $payment->user_id,
+                    'amount' => (float) $payment->amount,
+                    'currency' => 'RWF',
+                    'status' => $payment->status ?? 'pending',
+                    'method' => $payment->method ?? 'momo',
+                    'transaction_id' => $payment->transaction_id ?? '',
+                    'created_at' => $payment->created_at ?? now(),
+                    'updated_at' => $payment->updated_at ?? now(),
+                    'metadata' => [
+                        'reference' => $payment->reference ?? '',
+                        'verified_at' => $payment->verified_at ?? null,
+                    ],
+                ], ['merge' => true]);
+
+            Log::info('[FirebaseSyncService] Payment synced', ['payment_id' => $paymentId]);
+            return true;
+        } catch (Exception $e) {
+            Log::error('[FirebaseSyncService] Payment sync failed', [
+                'payment_id' => $paymentId,
+                'error' => $e->getMessage(),
+            ]);
+            return false;
+        }
+    }
+
+    /**
+     * Sync rating to Firestore
+     * Idempotent, retry-safe, queue-safe
+     */
+    public function syncRating(int $ratingId): bool
+    {
+        if (!$this->isEnabled()) {
+            return false;
+        }
+
+        $rating = Review::find($ratingId);
+        if (!$rating) {
+            Log::warning('[FirebaseSyncService] Rating not found', ['rating_id' => $ratingId]);
+            return false;
+        }
+
+        try {
+            $this->ensureCollectionExists('ratings');
+            
+            $this->firestore
+                ->collection('ratings')
+                ->document((string) $rating->id)
+                ->set([
+                    'id' => (int) $rating->id,
+                    'trip_id' => $rating->trip_id ? (string) $rating->trip_id : null,
+                    'driver_id' => $rating->driver_id ? (string) $rating->driver_id : null,
+                    'passenger_id' => $rating->passenger_id ? (string) $rating->passenger_id : null,
+                    'rating' => (float) $rating->rating,
+                    'review' => $rating->review ?? '',
+                    'categories' => $rating->categories ?? [],
+                    'created_at' => $rating->created_at ?? now(),
+                    'metadata' => [
+                        'anonymous' => $rating->anonymous ?? false,
+                    ],
+                ], ['merge' => true]);
+
+            // Update driver average rating
+            if ($rating->driver_id) {
+                $this->updateDriverAverageRating((string) $rating->driver_id);
+            }
+
+            Log::info('[FirebaseSyncService] Rating synced', ['rating_id' => $ratingId]);
+            return true;
+        } catch (Exception $e) {
+            Log::error('[FirebaseSyncService] Rating sync failed', [
+                'rating_id' => $ratingId,
+                'error' => $e->getMessage(),
+            ]);
+            return false;
+        }
+    }
 }

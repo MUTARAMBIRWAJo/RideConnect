@@ -30,6 +30,7 @@ class FirebaseValidateCommand extends Command
         private ?DeviceTokenService $deviceTokenService,
     ) {
         parent::__construct();
+        $this->app = app();
     }
 
     /**
@@ -217,17 +218,19 @@ class FirebaseValidateCommand extends Command
         $issues = [];
 
         try {
-            if (config('firebase.fcm.enabled')) {
+            // FCM uses Firebase Admin SDK (service account credentials)
+            // Check if Firebase is enabled
+            if (config('firebase.enabled')) {
                 $score += 5;
             } else {
-                $issues[] = 'FCM not enabled in configuration';
+                $issues[] = 'Firebase not enabled in configuration';
             }
 
-            // Check if FCM server key is configured
-            if (config('firebase.fcm.server_key')) {
+            // Check if Messaging is available via Admin SDK
+            if ($this->app->bound(\Kreait\Firebase\Contract\Messaging::class)) {
                 $score += 5;
             } else {
-                $issues[] = 'FCM server key not configured';
+                $issues[] = 'Firebase Admin SDK Messaging not available (check credentials)';
             }
         } catch (\Exception $e) {
             $issues[] = 'Exception: ' . $e->getMessage();
@@ -252,8 +255,8 @@ class FirebaseValidateCommand extends Command
                 return ['score' => 0, 'max_score' => $maxScore, 'issues' => $issues];
             }
 
-            $tokenCount = \App\Models\MobileDeviceToken::where('active', true)->count();
-            
+            $tokenCount = \App\Models\MobileDeviceToken::where('is_active', true)->count();
+
             if ($tokenCount > 0) {
                 $score += 5;
             } else {

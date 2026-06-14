@@ -27,12 +27,12 @@ class DeviceTokenService
     public function registerToken(User $user, string $token, string $platform = 'android', string $appVersion = '1.0.0'): MobileDeviceToken
     {
         // Remove token from other users (prevent duplicates)
-        MobileDeviceToken::where('token', $token)
+        MobileDeviceToken::where('device_token', $token)
             ->where('user_id', '!=', $user->id)
             ->delete();
 
         // Check if token already exists for this user
-        $existingToken = MobileDeviceToken::where('token', $token)->first();
+        $existingToken = MobileDeviceToken::where('device_token', $token)->first();
 
         if ($existingToken) {
             // Update existing token
@@ -40,7 +40,7 @@ class DeviceTokenService
                 'user_id' => $user->id,
                 'platform' => $platform,
                 'app_version' => $appVersion,
-                'active' => true,
+                'is_active' => true,
                 'last_used_at' => now(),
             ]);
             
@@ -53,10 +53,10 @@ class DeviceTokenService
         // Create new token
         $deviceToken = MobileDeviceToken::create([
             'user_id' => $user->id,
-            'token' => $token,
+            'device_token' => $token,
             'platform' => $platform,
             'app_version' => $appVersion,
-            'active' => true,
+            'is_active' => true,
             'last_used_at' => now(),
         ]);
 
@@ -90,7 +90,7 @@ class DeviceTokenService
      */
     public function removeToken(string $token): bool
     {
-        $deleted = MobileDeviceToken::where('token', $token)->delete();
+        $deleted = MobileDeviceToken::where('device_token', $token)->delete();
 
         if ($deleted && $this->messaging) {
             try {
@@ -134,7 +134,7 @@ class DeviceTokenService
     public function getUserTokens(int $userId): \Illuminate\Database\Eloquent\Collection
     {
         return MobileDeviceToken::where('user_id', $userId)
-            ->where('active', true)
+            ->where('is_active', true)
             ->where('last_used_at', '>', now()->subDays(30))
             ->get();
     }
@@ -159,7 +159,7 @@ class DeviceTokenService
             ]);
             
             // Mark token as inactive
-            MobileDeviceToken::where('token', $token)->update(['active' => false]);
+            MobileDeviceToken::where('device_token', $token)->update(['is_active' => false]);
             
             return false;
         }
@@ -173,7 +173,7 @@ class DeviceTokenService
         $threshold = now()->subDays(90);
         
         $deleted = MobileDeviceToken::where('last_used_at', '<', $threshold)
-            ->orWhere('active', false)
+            ->orWhere('is_active', false)
             ->delete();
 
         if ($deleted > 0) {
@@ -201,7 +201,7 @@ class DeviceTokenService
 
         try {
             $this->messaging->subscribeToTopic(
-                $tokens->pluck('token')->toArray(),
+                $tokens->pluck('device_token')->toArray(),
                 $topic
             );
             
@@ -235,7 +235,7 @@ class DeviceTokenService
 
         try {
             $this->messaging->unsubscribeFromTopic(
-                $tokens->pluck('token')->toArray(),
+                $tokens->pluck('device_token')->toArray(),
                 $topic
             );
             

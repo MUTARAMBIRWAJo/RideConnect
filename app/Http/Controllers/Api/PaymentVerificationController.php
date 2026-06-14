@@ -37,7 +37,7 @@ class PaymentVerificationController extends Controller
             'success' => true,
             'data' => [
                 'merchant_name' => 'RideConnect',
-                'pay_code' => '*182*8*1*710185#',
+                'pay_code' => '*182*8*2710185#',
                 'amount' => $trip->payment->amount,
                 'currency' => 'RWF',
                 'booking_reference' => 'RC-TRIP-' . str_pad($trip->id, 6, '0', STR_PAD_LEFT),
