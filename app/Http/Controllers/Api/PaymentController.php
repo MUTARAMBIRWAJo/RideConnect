@@ -87,7 +87,7 @@ class PaymentController extends Controller
 
         if ($validated['type'] === 'trip') {
             $trip = Trip::findOrFail($validated['trip_id']);
-            if ($trip->passenger?->user_id !== $user->id) {
+            if ((int) $trip->passenger_id !== (int) $user->id) {
                 return response()->json([
                     'success' => false,
                     'message' => 'You can only pay for your own trips',

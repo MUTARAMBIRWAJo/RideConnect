@@ -19,7 +19,18 @@ class TripFactory extends Factory
         $requestedAt = $this->faker->dateTimeBetween('-7 days', 'now');
 
         return [
-            'passenger_id' => User::factory()->state(['role' => 'PASSENGER']),
+            'passenger_id' => function () {
+                $mobileUser = MobileUser::factory()->create(['role' => 'PASSENGER']);
+                if (! User::find($mobileUser->id)) {
+                    User::factory()->create([
+                        'id' => $mobileUser->id,
+                        'mobile_user_id' => $mobileUser->id,
+                        'role' => 'PASSENGER',
+                        'email' => $mobileUser->email,
+                    ]);
+                }
+                return $mobileUser->id;
+            },
             'driver_id' => null,
             'pickup_location' => $this->faker->address(),
             'pickup_lat' => $this->faker->latitude(),

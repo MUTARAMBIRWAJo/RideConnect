@@ -57,6 +57,12 @@ class IdentityServicesTest extends TestCase
 
     public function test_orphan_trip_passenger_is_detected(): void
     {
+        MobileUser::factory()->create([
+            'id' => 999999,
+            'role' => 'PASSENGER',
+            'email' => 'orphan_mobile@example.com',
+            'phone' => '+250700000999'
+        ]);
         Trip::factory()->create(['passenger_id' => 999999]);
 
         $report = app(IdentityConsistencyService::class)->generateReport();
@@ -66,8 +72,27 @@ class IdentityServicesTest extends TestCase
 
     public function test_valid_identity_graph_scores_high(): void
     {
-        $passenger = User::factory()->create(['role' => 'PASSENGER', 'is_approved' => true]);
-        $driverUser = User::factory()->create(['role' => 'DRIVER', 'is_approved' => true]);
+        MobileUser::factory()->create([
+            'id' => 888888,
+            'role' => 'PASSENGER',
+            'email' => 'passenger_mobile@example.com',
+            'phone' => '+250700000888'
+        ]);
+        $passenger = User::factory()->create([
+            'id' => 888888,
+            'role' => 'PASSENGER',
+            'is_approved' => true,
+            'mobile_user_id' => 888888,
+            'email' => 'passenger_canonical@example.com',
+            'phone' => '+250700000111'
+        ]);
+
+        $driverUser = User::factory()->create([
+            'role' => 'DRIVER',
+            'is_approved' => true,
+            'email' => 'driver_canonical@example.com',
+            'phone' => '+250700000222'
+        ]);
         $driver = Driver::factory()->create(['user_id' => $driverUser->id]);
 
         $trip = Trip::factory()->create([

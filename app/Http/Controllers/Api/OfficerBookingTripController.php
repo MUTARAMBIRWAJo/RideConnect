@@ -262,7 +262,7 @@ class OfficerBookingTripController extends Controller
         }
 
         $validated = $request->validate([
-            'passenger_id'       => 'required|integer|exists:mobile_users,id',
+            'passenger_id'       => 'required|integer|exists:users,id',
             'driver_id'          => 'required|integer|exists:drivers,id',
             'ride_id'            => 'required|integer|exists:rides,id',
             'pickup_location'    => 'required|string|max:255',

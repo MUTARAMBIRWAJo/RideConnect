@@ -77,7 +77,7 @@ class FirebaseServiceProvider extends ServiceProvider
                 return $factory->createFirestore($firestoreDb);
             });
         } else {
-            Log::info('[FirebaseServiceProvider] ext-grpc not installed — Firestore binding skipped. Auth and Messaging are available.');
+            Log::warning('gRPC extension not installed. Using fallback transport.');
         }
     }
 

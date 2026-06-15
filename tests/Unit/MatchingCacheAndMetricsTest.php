@@ -4,7 +4,7 @@ namespace Tests\Unit;
 
 use App\Services\DriverAvailabilityCacheService;
 use App\Services\Matching\RadiusExpansionService;
-use PHPUnit\Framework\TestCase;
+use Tests\TestCase;
 
 class MatchingCacheAndMetricsTest extends TestCase
 {

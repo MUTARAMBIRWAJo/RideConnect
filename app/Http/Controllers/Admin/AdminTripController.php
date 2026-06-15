@@ -101,7 +101,7 @@ class AdminTripController extends Controller
     {
         // Validation rules MUST match TripController::store() validation exactly
         $validated = $request->validate([
-            'passenger_id'      => 'required|integer|exists:mobile_users,id',
+            'passenger_id'      => 'required|integer|exists:users,id',
             'pickup_location'   => 'required|string|min:3|max:500',
             'dropoff_location'  => 'required|string|min:3|max:500',
             'pickup_lat'        => 'required|numeric|between:-90,90',

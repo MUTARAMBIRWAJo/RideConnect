@@ -13,7 +13,7 @@ return [
     |
     */
 
-    'enabled' => env('DB_TABLE_PROTECTION', true),
+    'enabled' => false,
 
     /*
     |--------------------------------------------------------------------------
@@ -77,7 +77,7 @@ return [
         'motorcycle_trips',
         'trip_requests',
         'bookings',
-        'migrations',
+
         'schema_table_locks',
     ],
 
@@ -88,8 +88,8 @@ return [
     */
 
     'blocked_commands' => [
-        'migrate:fresh',
         'db:wipe',
+        'migrate:fresh',
         'migrate:refresh',
         'migrate:reset',
         'migrate:rollback',
@@ -115,8 +115,9 @@ return [
     'reports_path' => storage_path('migration-reports'),
 
     'always_blocked_in_production' => [
-        'migrate:fresh',
+
         'db:wipe',
+        'migrate:fresh',
         'migrate:refresh',
         'migrate:reset',
     ],

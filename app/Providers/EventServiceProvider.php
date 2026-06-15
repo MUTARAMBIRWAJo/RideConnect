@@ -48,9 +48,16 @@ class EventServiceProvider extends ServiceProvider
             \App\Listeners\Firebase\UnifiedFirebaseSyncListener::class,
         ],
         
-        // Rating Events - Unified Firebase Sync
         \App\Models\Review::class => [
             \App\Listeners\Firebase\UnifiedFirebaseSyncListener::class,
+        ],
+        
+        // Driver Presence Events
+        \App\Events\DriverOnline::class => [
+            \App\Listeners\UpdateDriverPresenceListener::class,
+        ],
+        \App\Events\DriverOffline::class => [
+            \App\Listeners\UpdateDriverPresenceListener::class,
         ],
     ];
 

@@ -132,18 +132,22 @@ class IdentityResolverService
         }
 
         $nameParts = preg_split('/\s+/', trim((string) $user->name), 2) ?: ['User', 'Account'];
+        $roleStr = $user->role instanceof UserRole ? $user->role->value : (string) $user->role;
 
-        $mobileUser = MobileUser::query()->firstOrCreate(
-            ['email' => $user->email],
-            [
-                'first_name' => $nameParts[0] ?: 'User',
-                'last_name' => $nameParts[1] ?? 'Account',
-                'phone' => $user->phone ?? '+250700000000',
-                'password' => $user->password ?? bcrypt(str()->random(32)),
-                'role' => $user->role instanceof UserRole ? $user->role->value : (string) $user->role,
-                'is_verified' => (bool) $user->is_verified,
-            ]
-        );
+        $mobileUser = MobileUser::query()->where('email', $user->email)->first();
+
+        if (!$mobileUser) {
+            $mobileUser = new MobileUser();
+            $mobileUser->id = $user->id;
+            $mobileUser->email = $user->email;
+            $mobileUser->first_name = $nameParts[0] ?: 'User';
+            $mobileUser->last_name = $nameParts[1] ?? 'Account';
+            $mobileUser->phone = $user->phone ?? '+250700000000';
+            $mobileUser->password = $user->password ?? bcrypt(\Illuminate\Support\Str::random(32));
+            $mobileUser->role = $roleStr;
+            $mobileUser->is_verified = (bool) $user->is_verified;
+            $mobileUser->save();
+        }
 
         if ((int) $user->mobile_user_id !== (int) $mobileUser->id) {
             $user->forceFill(['mobile_user_id' => $mobileUser->id])->save();

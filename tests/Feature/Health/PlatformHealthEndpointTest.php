@@ -6,6 +6,7 @@ use App\Services\Health\Checks\DatabaseHealthCheck;
 use App\Services\Health\Checks\FirebaseHealthCheck;
 use App\Services\Health\Checks\MlServiceHealthCheck;
 use App\Services\Health\Checks\QueueHealthCheck;
+use App\Services\Health\Checks\RedisHealthCheck;
 use Illuminate\Support\Facades\Http;
 use Tests\LightweightTestCase;
 
@@ -72,6 +73,7 @@ class PlatformHealthEndpointTest extends LightweightTestCase
         });
 
         $this->bindHealthyQueueCheck();
+        $this->bindHealthyRedisCheck();
 
         $response = $this->getJson('/health/ready');
 
@@ -211,6 +213,8 @@ class PlatformHealthEndpointTest extends LightweightTestCase
             }
         });
 
+        $this->bindHealthyRedisCheck();
+
         $response = $this->getJson('/health/full');
 
         $response->assertStatus(503)
@@ -220,6 +224,7 @@ class PlatformHealthEndpointTest extends LightweightTestCase
     private function bindHealthyCoreChecks(): void
     {
         $this->bindHealthyDatabaseCheck();
+        $this->bindHealthyRedisCheck();
         $this->bindHealthyQueueCheck();
     }
 
@@ -235,6 +240,22 @@ class PlatformHealthEndpointTest extends LightweightTestCase
                     'message' => 'Database ok',
                     'latency_ms' => 1,
                     'details' => ['driver' => 'pgsql'],
+                ];
+            }
+        });
+    }
+
+    private function bindHealthyRedisCheck(): void
+    {
+        $this->app->instance(RedisHealthCheck::class, new class extends RedisHealthCheck
+        {
+            public function check(bool $extended = false): array
+            {
+                return [
+                    'ok' => true,
+                    'status' => 'ok',
+                    'message' => 'Redis ok',
+                    'latency_ms' => 1,
                 ];
             }
         });

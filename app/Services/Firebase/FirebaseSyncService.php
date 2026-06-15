@@ -55,7 +55,7 @@ class FirebaseSyncService
         }
 
         if (!$this->healthService->grpcAvailable()) {
-            Log::info('[FirebaseSyncService] ext-grpc not installed — Firestore sync unavailable');
+            Log::warning('[FirebaseSyncService] ext-grpc not installed — Firestore sync unavailable');
             return;
         }
 

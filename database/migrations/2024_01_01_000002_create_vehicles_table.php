@@ -11,6 +11,8 @@ return new class extends Migration
      */
     public function up(): void
     {
+        Schema::dropIfExists('vehicles');
+
         Schema::create('vehicles', function (Blueprint $table) {
             $table->id();
             $table->foreignId('driver_id')->constrained('drivers')->onDelete('cascade');
@@ -18,7 +20,11 @@ return new class extends Migration
             $table->string('model');
             $table->integer('year');
             $table->string('color');
-            $table->enum('vehicle_type', ['sedan', 'suv', 'hatchback', 'van', 'motorcycle', 'compact']);
+            $table->enum('vehicle_type', [
+                'sedan', 'suv', 'hatchback', 'van', 'motorcycle', 'compact',
+                'bus', 'BUS', 'motorbike', 'minibus', 'coach', 'minivan',
+                'boda', 'moto', 'tuk-tuk', 'tricycle'
+            ]);
             $table->integer('seats')->default(4);
             $table->boolean('air_conditioning')->default(true);
             $table->boolean('is_active')->default(true);

@@ -182,7 +182,7 @@ class MatchingTestDataSeeder extends Seeder
             'license_plate' => $data['license_plate'],
             'status' => 'approved',
             'availability_status' => 'online',
-            'is_available' => true,
+
             'current_trip_id' => null,
             'current_latitude' => $location['lat'],
             'current_longitude' => $location['lng'],

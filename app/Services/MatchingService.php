@@ -69,6 +69,7 @@ class MatchingService
 
     public function matchMotorcycleTrip(MotorcycleTrip $trip, array $excludeDriverIds = [], float $searchRadiusKm = 5): ?array
     {
+        $eligibleDrivers = [];
         try {
             // Ensure radius is within bounds
             $searchRadiusKm = max(1, min(25, $searchRadiusKm));
@@ -189,7 +190,7 @@ class MatchingService
                 'error' => $e->getMessage(),
                 'trace' => $e->getTraceAsString(),
             ]);
-            return null;
+            return $this->bestLocalMatch($eligibleDrivers, 'Matching service exception: ' . $e->getMessage());
         }
     }
 

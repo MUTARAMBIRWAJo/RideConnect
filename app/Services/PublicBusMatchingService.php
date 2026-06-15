@@ -412,6 +412,7 @@ class PublicBusMatchingService
             'success' => true,
             'message' => 'Public bus match found',
             'data' => [
+                'id' => $tripRequest->id,
                 'trip_request_id' => $tripRequest->id,
                 'corridor' => [
                     'id' => $tripRequest->corridor_id,

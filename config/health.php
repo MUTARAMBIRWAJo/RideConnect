@@ -10,6 +10,7 @@ return [
 
     'timeouts' => [
         'database_ms' => (int) env('HEALTH_DB_TIMEOUT_MS', 3000),
+        'redis_ms' => (int) env('HEALTH_REDIS_TIMEOUT_MS', 2000),
         'firebase_ms' => (int) env('HEALTH_FIREBASE_TIMEOUT_MS', 3000),
         'ml_service_ms' => (int) env('HEALTH_ML_TIMEOUT_MS', 5000),
         'queue_ms' => (int) env('HEALTH_QUEUE_TIMEOUT_MS', 2000),
@@ -32,6 +33,7 @@ return [
 
     'ready_requires' => [
         'database',
+        'redis',
         'queue',
     ],
 

@@ -20,18 +20,43 @@ class MobileNotificationController extends Controller
     {
         $user = $request->user();
         $mobileUserId = $this->mobileUserId($request);
-        $perPage = min(100, max(1, (int) $request->integer('per_page', 20)));
 
-        $notifications = Notification::query()
+        $query = Notification::query()
             ->where('user_id', $mobileUserId)
-            ->orderByDesc('created_at')
-            ->paginate($perPage);
+            ->orderByDesc('created_at');
+
+        $notifications = $query->get();
+
+        $formatted = $notifications->map(fn (Notification $n) => $this->formatNotification($n));
+
+        if ($request->boolean('only_clearable')) {
+            $formatted = $formatted->filter(fn ($n) => $n['can_be_cleared'] === true);
+        }
+
+        if ($request->boolean('only_action_required')) {
+            $formatted = $formatted->filter(fn ($n) => $n['can_be_cleared'] === false);
+        }
+
+        $formatted = $formatted->values();
+
+        $perPage = min(100, max(1, (int) $request->integer('per_page', 20)));
+        $currentPage = (int) $request->integer('page', 1);
+        $total = $formatted->count();
+
+        $sliced = $formatted->slice(($currentPage - 1) * $perPage, $perPage)->values()->all();
 
         return response()->json([
+            'success' => true,
             'status'  => 'success',
             'code'    => 200,
             'message' => 'Notifications retrieved',
-            'data'    => $notifications->items(),
+            'data'    => $sliced,
+            'pagination' => [
+                'total' => $total,
+                'per_page' => $perPage,
+                'current_page' => $currentPage,
+                'last_page' => (int) ceil($total / $perPage),
+            ],
         ]);
     }
 

@@ -95,6 +95,7 @@ RUN set -eux; \
         libzip \
         nginx \
         procps \
+        sqlite \
         sqlite-libs \
         supervisor
 

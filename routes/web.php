@@ -144,30 +144,30 @@ Route::middleware(['auth', 'role:super_admin,admin,officer'])->group(function ()
 
 // Compatibility aliases for legacy admin view links.
 Route::middleware('auth')->group(function () {
-    Route::redirect('/admin/legacy/dashboard', '/admin')->name('admin.dashboard');
+    Route::redirect('/admin/legacy/dashboard', '/admin')->name('admin.legacy.dashboard');
 
-    Route::redirect('/admin/legacy/users', '/admin/users')->name('admin.users.index');
-    Route::redirect('/admin/legacy/users/create', '/admin/users/create')->name('admin.users.create');
-    Route::redirect('/admin/legacy/users/pending', '/admin/users')->name('admin.users.pending');
+    Route::redirect('/admin/legacy/users', '/admin/users')->name('admin.legacy.users.index');
+    Route::redirect('/admin/legacy/users/create', '/admin/users/create')->name('admin.legacy.users.create');
+    Route::redirect('/admin/legacy/users/pending', '/admin/users')->name('admin.legacy.users.pending');
 
     Route::post('/admin/legacy/users/{user}/approve', fn () => redirect()->to('/admin/users'))
-        ->name('admin.users.approve');
-    Route::post('/admin/legacy/users/{user}/reject', fn () => redirect()->to('/admin/users'))
-        ->name('admin.users.reject');
+        ->name('admin.legacy.users.approve');
+    Route::post('/admin/legacy/users/{user}/reject', fn () => redirect()->to('/admin/legacy/users'))
+        ->name('admin.legacy.users.reject');
 
-    Route::redirect('/admin/legacy/bookings', '/admin/bookings')->name('admin.bookings.index');
-    Route::redirect('/admin/legacy/bookings/pending', '/admin/bookings')->name('admin.bookings.pending');
+    Route::redirect('/admin/legacy/bookings', '/admin/bookings')->name('admin.legacy.bookings.index');
+    Route::redirect('/admin/legacy/bookings/pending', '/admin/bookings')->name('admin.legacy.bookings.pending');
 
-    Route::redirect('/admin/legacy/trips', '/admin/trips')->name('admin.trips.index');
-    Route::redirect('/admin/legacy/trips/pending', '/admin/trips')->name('admin.trips.pending');
-    Route::redirect('/admin/legacy/trips/completed', '/admin/trips')->name('admin.trips.completed');
+    Route::redirect('/admin/legacy/trips', '/admin/trips')->name('admin.legacy.trips.index');
+    Route::redirect('/admin/legacy/trips/pending', '/admin/trips')->name('admin.legacy.trips.pending');
+    Route::redirect('/admin/legacy/trips/completed', '/admin/trips')->name('admin.legacy.trips.completed');
 
-    Route::redirect('/admin/legacy/rides', '/admin/rides')->name('admin.rides.index');
-    Route::redirect('/admin/legacy/rides/available', '/admin/rides')->name('admin.rides.available');
+    Route::redirect('/admin/legacy/rides', '/admin/rides')->name('admin.legacy.rides.index');
+    Route::redirect('/admin/legacy/rides/available', '/admin/rides')->name('admin.legacy.rides.available');
 
-    Route::redirect('/admin/legacy/reports/users', '/admin')->name('admin.reports.users');
-    Route::redirect('/admin/legacy/reports/trips', '/admin')->name('admin.reports.trips');
-    Route::redirect('/admin/legacy/reports/financial', '/admin')->name('admin.reports.financial');
+    Route::redirect('/admin/legacy/reports/users', '/admin')->name('admin.legacy.reports.users');
+    Route::redirect('/admin/legacy/reports/trips', '/admin')->name('admin.legacy.reports.trips');
+    Route::redirect('/admin/legacy/reports/financial', '/admin')->name('admin.legacy.reports.financial');
 });
 
 // Public fallback routes for placeholder legal/help links.

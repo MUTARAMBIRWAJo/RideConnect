@@ -22,6 +22,14 @@ class PushDeliveryBridge
                 if ($token->platform === 'apns') {
                     $this->sendApns($token->device_token, $notification);
                 }
+
+                \App\Models\NotificationDelivery::query()
+                    ->where('notification_id', $notification->id)
+                    ->where('user_id', $user->id)
+                    ->update([
+                        'status' => 'delivered',
+                        'delivered_at' => now(),
+                    ]);
             } catch (\Throwable $e) {
                 Log::warning('Push delivery failed', [
                     'user_id' => $user->id,
@@ -29,6 +37,13 @@ class PushDeliveryBridge
                     'platform' => $token->platform,
                     'error' => $e->getMessage(),
                 ]);
+
+                \App\Models\NotificationDelivery::query()
+                    ->where('notification_id', $notification->id)
+                    ->where('user_id', $user->id)
+                    ->update([
+                        'status' => 'failed',
+                    ]);
             }
         }
     }

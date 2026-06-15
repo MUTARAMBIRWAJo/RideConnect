@@ -67,7 +67,7 @@ class MatchableTestDriverSeeder extends Seeder
                 'license_plate' => 'RAD-DEMO-01',
                 'status' => 'approved',
                 'availability_status' => 'online',
-                'is_available' => true,
+
                 'total_rides' => 50,
                 'rating' => 4.8,
                 'rating_count' => 25,

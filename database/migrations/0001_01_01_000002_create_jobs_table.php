@@ -3,6 +3,7 @@
 use Illuminate\Database\Migrations\Migration;
 use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Support\Facades\Schema;
+use Illuminate\Support\Facades\DB;
 
 return new class extends Migration
 {
@@ -11,6 +12,17 @@ return new class extends Migration
      */
     public function up(): void
     {
+        // Ensure any leftover custom type does not clash
+        if (DB::getDriverName() === 'pgsql') {
+            DB::statement('DROP TYPE IF EXISTS jobs');
+        }
+
+        // Drop tables if they exist to avoid conflicts
+        Schema::dropIfExists('jobs');
+        Schema::dropIfExists('job_batches');
+        Schema::dropIfExists('failed_jobs');
+
+        // Create jobs table
         Schema::create('jobs', function (Blueprint $table) {
             $table->id();
             $table->string('queue')->index();
@@ -21,6 +33,7 @@ return new class extends Migration
             $table->unsignedInteger('created_at');
         });
 
+        // Create job_batches table
         Schema::create('job_batches', function (Blueprint $table) {
             $table->string('id')->primary();
             $table->string('name');
@@ -34,6 +47,7 @@ return new class extends Migration
             $table->integer('finished_at')->nullable();
         });
 
+        // Create failed_jobs table
         Schema::create('failed_jobs', function (Blueprint $table) {
             $table->id();
             $table->string('uuid')->unique();

@@ -58,8 +58,8 @@ class IdentityNormalizationFlowTest extends TestCase
         Review::query()->create([
             'user_id' => $passenger->id,
             'driver_id' => $driver->id,
-            'ride_id' => $trip->ride_id ?? 1,
-            'booking_id' => $trip->booking_id ?? 1,
+            'ride_id' => $trip->ride_id ?? null,
+            'booking_id' => $trip->booking_id ?? null,
             'rating' => 5,
             'comment' => 'Great ride',
         ]);
@@ -76,11 +76,32 @@ class IdentityNormalizationFlowTest extends TestCase
     {
         $driverUser = User::factory()->create(['role' => 'DRIVER', 'is_approved' => true]);
         $driver = Driver::factory()->create(['user_id' => $driverUser->id]);
-        $passenger = User::factory()->create(['role' => 'PASSENGER', 'is_approved' => true]);
+        
+        \App\Models\MobileUser::factory()->create([
+            'id' => 888888,
+            'role' => 'PASSENGER',
+            'email' => 'passenger_mobile@example.com',
+            'phone' => '+250700000888'
+        ]);
+        $passenger = User::factory()->create([
+            'id' => 888888,
+            'role' => 'PASSENGER',
+            'is_approved' => true,
+            'mobile_user_id' => 888888,
+            'email' => 'passenger_canonical@example.com',
+            'phone' => '+250700000111'
+        ]);
+
+        \App\Models\Vehicle::factory()->create([
+            'driver_id' => $driver->id,
+            'vehicle_type' => 'sedan',
+            'is_active' => true,
+        ]);
 
         $trip = Trip::factory()->pending()->create([
             'passenger_id' => $passenger->id,
             'driver_id' => null,
+            'transport_type' => 'CAR',
         ]);
 
         $accept = $this->actingAs($driverUser, 'sanctum')->putJson("/api/v1/driver/trips/{$trip->id}/accept");
@@ -88,6 +109,9 @@ class IdentityNormalizationFlowTest extends TestCase
 
         $trip->refresh();
         $this->assertSame((int) $driver->id, (int) $trip->driver_id);
+
+        $start = $this->actingAs($driverUser, 'sanctum')->putJson("/api/v1/driver/trips/{$trip->id}/start");
+        $start->assertOk();
 
         $complete = $this->actingAs($driverUser, 'sanctum')->putJson("/api/v1/driver/trips/{$trip->id}/complete", [
             'actual_fare' => $trip->fare,

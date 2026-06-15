@@ -35,17 +35,24 @@ class LedgerService
         self::BANK_ACCOUNT => 'asset',
     ];
 
+    private array $accountCache = [];
+
     // -----------------------------------------------------------------------
     // Account Resolvers
     // -----------------------------------------------------------------------
 
     public function getPlatformAccount(string $name): LedgerAccount
     {
+        $cacheKey = "platform:{$name}";
+        if (isset($this->accountCache[$cacheKey])) {
+            return $this->accountCache[$cacheKey];
+        }
+
         if (! array_key_exists($name, self::PLATFORM_ACCOUNT_TYPES)) {
             throw new RuntimeException("Unknown platform account: {$name}");
         }
 
-        return LedgerAccount::firstOrCreate(
+        $account = LedgerAccount::firstOrCreate(
             ['name' => $name, 'owner_type' => 'platform', 'owner_id' => null],
             [
                 'type' => self::PLATFORM_ACCOUNT_TYPES[$name],
@@ -53,22 +60,38 @@ class LedgerService
                 'is_active' => true,
             ]
         );
+
+        return $this->accountCache[$cacheKey] = $account;
     }
 
     public function getDriverAccount(int $driverId): LedgerAccount
     {
-        return LedgerAccount::firstOrCreate(
+        $cacheKey = "driver:{$driverId}";
+        if (isset($this->accountCache[$cacheKey])) {
+            return $this->accountCache[$cacheKey];
+        }
+
+        $account = LedgerAccount::firstOrCreate(
             ['name' => 'Driver Wallet', 'owner_type' => 'driver', 'owner_id' => $driverId],
             ['type' => 'liability', 'currency' => 'RWF', 'is_active' => true]
         );
+
+        return $this->accountCache[$cacheKey] = $account;
     }
 
     public function getPassengerAccount(int $userId): LedgerAccount
     {
-        return LedgerAccount::firstOrCreate(
+        $cacheKey = "passenger:{$userId}";
+        if (isset($this->accountCache[$cacheKey])) {
+            return $this->accountCache[$cacheKey];
+        }
+
+        $account = LedgerAccount::firstOrCreate(
             ['name' => 'Passenger Wallet', 'owner_type' => 'passenger', 'owner_id' => $userId],
             ['type' => 'liability', 'currency' => 'RWF', 'is_active' => true]
         );
+
+        return $this->accountCache[$cacheKey] = $account;
     }
 
     // -----------------------------------------------------------------------

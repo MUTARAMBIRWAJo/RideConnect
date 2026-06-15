@@ -250,7 +250,7 @@ class FirebaseHealthService
     public function getFirestore(): ?Firestore
     {
         if (!$this->grpcAvailable()) {
-            Log::debug('[FirebaseHealthService] ext-grpc not installed — Firestore unavailable. Using fallback transport.');
+            Log::warning('gRPC extension not installed. Firestore operations are unavailable.');
             return null;
         }
 

@@ -31,7 +31,9 @@ return new class extends Migration
                 
                 // Foreign keys
                 $table->foreign('driver_id')->references('id')->on('drivers')->cascadeOnDelete();
-                $table->foreign('trip_id')->references('id')->on('motorcycle_trips')->nullableOnDelete();
+                                if (Schema::hasTable('motorcycle_trips')) {
+                    $table->foreign('trip_id')->references('id')->on('motorcycle_trips')->nullOnDelete();
+                }
                 
                 // Indexes for performance
                 $table->index('driver_id');

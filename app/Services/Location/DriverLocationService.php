@@ -106,14 +106,23 @@ class DriverLocationService
         // Broadcast location update to passengers tracking this driver
         $this->broadcastLocationUpdate($driverId, $location);
 
-        // Sync to Firebase asynchronously
-        dispatch(new DriverLocationSyncJob(
-            driverId: $driverId,
-            latitude: $latitude,
-            longitude: $longitude,
-            accuracy: $accuracy,
-            tripId: $tripId,
-        ));
+        // Sync to Firebase asynchronously with interval throttling
+        $lastSyncKey = "driver_location_sync_time:{$driverId}";
+        $lastSync = Cache::get($lastSyncKey);
+        $interval = config('rideconnect.firebase.location_update_interval_seconds', 1);
+
+        if (!$lastSync || now()->diffInSeconds($lastSync) >= $interval) {
+            Cache::put($lastSyncKey, now(), 60);
+            dispatch(new \App\Jobs\UpdateDriverLocationJob(
+                driverId: $driverId,
+                latitude: $latitude,
+                longitude: $longitude,
+                speedKmh: $speedKmh,
+                heading: $heading,
+                accuracy: $accuracy,
+                tripId: $tripId
+            ));
+        }
 
         $this->anomalyDetectionService->inspectLocationUpdate(
             driverId: $driverId,

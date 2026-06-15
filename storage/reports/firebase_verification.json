@@ -1,0 +1,30 @@
+{
+    "timestamp": "2026-06-15T22:02:20+00:00",
+    "env_validation": {
+        "FIREBASE_PROJECT_ID": {
+            "exists": true,
+            "value": "ride...a009"
+        },
+        "FIREBASE_CREDENTIALS_PATH": {
+            "exists": true,
+            "value": "stor...json"
+        },
+        "FIREBASE_DATABASE_URL": {
+            "exists": true,
+            "value": "http....app"
+        }
+    },
+    "rtdb_initialization": {
+        "drivers_online": "ok",
+        "driver_locations": "ok",
+        "active_trips": "ok",
+        "trip_locations": "ok",
+        "passenger_requests": "ok",
+        "system_status": "ok",
+        "emergency_alerts": "ok"
+    },
+    "firestore_validation": {
+        "connection": "ok"
+    },
+    "status": "success"
+}

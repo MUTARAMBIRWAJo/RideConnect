@@ -186,7 +186,7 @@ class PassengerApiTest extends TestCase
     public function test_get_current_trip_returns_active_trip()
     {
         $trip = Trip::factory()->create([
-            'passenger_id' => $this->passenger->id,
+            'passenger_id' => $this->passengerUser->id,
             'status' => 'ACCEPTED',
             'pickup_location' => 'Test Pickup',
             'pickup_lat' => -1.9403,
@@ -216,7 +216,7 @@ class PassengerApiTest extends TestCase
     public function test_track_trip_returns_location_data()
     {
         $trip = Trip::factory()->create([
-            'passenger_id' => $this->passenger->id,
+            'passenger_id' => $this->passengerUser->id,
             'driver_id' => $this->carDriver->id,
             'status' => 'STARTED',
         ]);

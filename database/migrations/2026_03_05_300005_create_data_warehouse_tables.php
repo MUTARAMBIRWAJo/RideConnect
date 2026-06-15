@@ -19,18 +19,20 @@ return new class extends Migration
         // ------------------------------------------------------------------
         // DIMENSION: Date
         // ------------------------------------------------------------------
-        Schema::create('dw_dim_date', function (Blueprint $table) {
-            $table->date('date_key')->primary();
-            $table->unsignedSmallInteger('year');
-            $table->unsignedTinyInteger('month');
-            $table->unsignedTinyInteger('day');
-            $table->unsignedTinyInteger('day_of_week');   // 0=Sunday
-            $table->unsignedTinyInteger('quarter');
-            $table->string('month_name', 20);
-            $table->string('day_name', 20);
-            $table->boolean('is_weekend')->default(false);
-            $table->boolean('is_holiday')->default(false);
-        });
+        if (!Schema::hasTable('dw_dim_date')) {
+            Schema::create('dw_dim_date', function (Blueprint $table) {
+                $table->date('date_key')->primary();
+                $table->unsignedSmallInteger('year');
+                $table->unsignedTinyInteger('month');
+                $table->unsignedTinyInteger('day');
+                $table->unsignedTinyInteger('day_of_week');   // 0=Sunday
+                $table->unsignedTinyInteger('quarter');
+                $table->string('month_name', 20);
+                $table->string('day_name', 20);
+                $table->boolean('is_weekend')->default(false);
+                $table->boolean('is_holiday')->default(false);
+            });
+        }
 
         // ------------------------------------------------------------------
         // DIMENSION: Driver

@@ -76,6 +76,7 @@ Route::prefix('webhooks')->group(function () {
 });
 
 Route::get('/rides', [RideController::class, 'index']);
+Route::get('/system/firebase-health', [\App\Http\Controllers\SystemHealthController::class, 'firebaseHealth']);
 
 Route::middleware(['auth:sanctum'])->group(function () {
     Route::post('/driver/location', [DriverLocationController::class, 'update']);
@@ -393,6 +394,7 @@ Route::prefix('v1')->group(function () {
         Route::get('/notifications/unread-count', [MobileNotificationController::class, 'unreadCount']);
         Route::put('/notifications/{id}/read', [MobileNotificationController::class, 'markAsRead']);
         Route::post('/notifications/{id}/acknowledged', [TripSyncController::class, 'acknowledgeNotification'])->whereNumber('id');
+        Route::put('/notifications/{id}/acknowledge', [TripSyncController::class, 'acknowledgeNotificationPUT'])->whereNumber('id');
         Route::put('/notifications/read-all', [MobileNotificationController::class, 'markAllAsRead']);
         Route::delete('/notifications/clear-actioned', [MobileNotificationController::class, 'clearActioned']);
         Route::delete('/notifications/{id}', [MobileNotificationController::class, 'destroy']);

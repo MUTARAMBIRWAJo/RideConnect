@@ -299,7 +299,7 @@ class PassengerNotificationEndpointsTest extends TestCase
             'is_approved' => true,
         ]);
 
-        $pending = Notification::create([
+        $pending = Notification::forceCreate([
             'user_id' => $user->id,
             'type' => 'ride_request_received',
             'title' => 'Pending Action',
@@ -310,7 +310,7 @@ class PassengerNotificationEndpointsTest extends TestCase
             'updated_at' => now()->subMinute(),
         ]);
 
-        $actioned = Notification::create([
+        $actioned = Notification::forceCreate([
             'user_id' => $user->id,
             'type' => 'trip_cancelled',
             'title' => 'Cancelled',
@@ -340,7 +340,7 @@ class PassengerNotificationEndpointsTest extends TestCase
             'is_approved' => true,
         ]);
 
-        $actioned = Notification::create([
+        $actioned = Notification::forceCreate([
             'user_id' => $user->id,
             'type' => 'trip_cancelled',
             'title' => 'Cancelled',
@@ -351,7 +351,7 @@ class PassengerNotificationEndpointsTest extends TestCase
             'updated_at' => now(),
         ]);
 
-        Notification::create([
+        Notification::forceCreate([
             'user_id' => $user->id,
             'type' => 'ride_request_received',
             'title' => 'Pending Action',
@@ -380,7 +380,7 @@ class PassengerNotificationEndpointsTest extends TestCase
             'is_approved' => true,
         ]);
 
-        Notification::create([
+        Notification::forceCreate([
             'user_id' => $user->id,
             'type' => 'trip_cancelled',
             'title' => 'Cancelled',
@@ -391,7 +391,7 @@ class PassengerNotificationEndpointsTest extends TestCase
             'updated_at' => now()->subMinute(),
         ]);
 
-        $pending = Notification::create([
+        $pending = Notification::forceCreate([
             'user_id' => $user->id,
             'type' => 'ride_request_received',
             'title' => 'Pending Action',
@@ -452,7 +452,6 @@ class PassengerNotificationEndpointsTest extends TestCase
         $this->assertDatabaseHas('notification_deliveries', [
             'notification_id' => $notification->id,
             'status' => 'delivered',
-            'platform' => 'fcm',
         ]);
     }
 

@@ -188,7 +188,7 @@ class PassengerBusBookingTest extends TestCase
             ->assertJsonPath('data.bus.display_name', sprintf('%s %s %s', $this->bus->year, $this->bus->make, $this->bus->model));
 
         $this->assertDatabaseHas('passenger_route_boardings', [
-            'passenger_id' => $this->passengerMobile->id,
+            'passenger_id' => $this->passengerUser->id,
             'corridor_id' => $this->corridor->id,
             'bus_route_assignment_id' => $this->assignment->id,
         ]);
@@ -219,7 +219,7 @@ class PassengerBusBookingTest extends TestCase
             ]);
 
         $this->assertDatabaseHas('passenger_route_boardings', [
-            'passenger_id' => $this->passengerMobile->id,
+            'passenger_id' => $this->passengerUser->id,
             'corridor_id' => $this->corridor->id,
         ]);
     }
@@ -258,7 +258,7 @@ class PassengerBusBookingTest extends TestCase
         Sanctum::actingAs($this->passengerUser);
 
         $trip = Trip::create([
-            'passenger_id' => $this->passengerMobile->id,
+            'passenger_id' => $this->passengerUser->id,
             'driver_id' => $this->driverProfile->id,
             'pickup_location' => 'Downtown Terminal',
             'dropoff_location' => 'Airport Departure',
@@ -272,7 +272,7 @@ class PassengerBusBookingTest extends TestCase
         ]);
 
         $booking = PassengerRouteBoarding::create([
-            'passenger_id' => $this->passengerMobile->id,
+            'passenger_id' => $this->passengerUser->id,
             'trip_id' => $trip->id,
             'corridor_id' => $this->corridor->id,
             'bus_route_assignment_id' => $this->assignment->id,
@@ -307,7 +307,7 @@ class PassengerBusBookingTest extends TestCase
         Sanctum::actingAs($this->passengerUser);
 
         $trip = Trip::create([
-            'passenger_id' => $this->passengerMobile->id,
+            'passenger_id' => $this->passengerUser->id,
             'driver_id' => $this->driverProfile->id,
             'pickup_location' => 'Downtown Terminal',
             'dropoff_location' => 'Airport Departure',
@@ -321,7 +321,7 @@ class PassengerBusBookingTest extends TestCase
         ]);
 
         $booking = PassengerRouteBoarding::create([
-            'passenger_id' => $this->passengerMobile->id,
+            'passenger_id' => $this->passengerUser->id,
             'trip_id' => $trip->id,
             'corridor_id' => $this->corridor->id,
             'bus_route_assignment_id' => $this->assignment->id,

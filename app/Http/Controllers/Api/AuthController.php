@@ -60,6 +60,13 @@ class AuthController extends Controller
             'is_approved' => false, // Require approval before login
         ]);
 
+        try {
+            app(\App\Services\Identity\IdentityResolverService::class)->ensureLegacyMobileUserLink($user);
+            $user->refresh();
+        } catch (\Throwable $e) {
+            Log::warning('Failed to create legacy mobile user link during registration: ' . $e->getMessage());
+        }
+
         return response()->json([
             'success' => true,
             'message' => 'Registration successful. Your account is pending approval.',

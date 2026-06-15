@@ -124,19 +124,12 @@ class AdminPanelProvider extends PanelProvider
                         /* Ensure basic visibility and interactivity */
                         body {
                             opacity: 1 !important;
-                            pointer-events: auto !important;
                         }
                         .fi-body {
                             opacity: 1 !important;
-                            pointer-events: auto !important;
                         }
                         .fi-main {
                             opacity: 1 !important;
-                            pointer-events: auto !important;
-                        }
-                        /* Fix any overlay issues */
-                        * {
-                            pointer-events: auto !important;
                         }
                     </style>
                 HTML,

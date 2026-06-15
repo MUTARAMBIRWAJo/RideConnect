@@ -23,6 +23,7 @@ class SystemHealthWidget extends Widget
                     'ai' => $this->checkAiService(),
                     'database' => $this->checkDatabase(),
                     'queue' => $this->checkQueue(),
+                    'firebase' => $this->checkFirebase(),
                 ];
             }),
         ];
@@ -100,6 +101,27 @@ class SystemHealthWidget extends Widget
             report($e);
 
             return ['status' => 'down', 'message' => 'Queue status unavailable'];
+        }
+    }
+
+    /**
+     * @return array{status: string, message: string}
+     */
+    private function checkFirebase(): array
+    {
+        try {
+            $healthService = app(\App\Services\Firebase\FirebaseHealthService::class);
+            if (!$healthService->isEnabled()) {
+                return ['status' => 'warn', 'message' => 'Firebase integrations disabled'];
+            }
+
+            if (!$healthService->canConnectFirestore() || !$healthService->canConnectMessaging()) {
+                return ['status' => 'down', 'message' => 'Firebase connections failing'];
+            }
+
+            return ['status' => 'ok', 'message' => 'Firebase Firestore & FCM operational'];
+        } catch (\Throwable $e) {
+            return ['status' => 'down', 'message' => 'Firebase status check failed: ' . $e->getMessage()];
         }
     }
 }

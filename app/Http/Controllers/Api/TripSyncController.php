@@ -175,6 +175,40 @@ class TripSyncController extends Controller
         ]);
     }
 
+    public function acknowledgeNotificationPUT(Request $request, int $id): JsonResponse
+    {
+        $notification = Notification::query()
+            ->where('id', $id)
+            ->where('user_id', $request->user()->id)
+            ->firstOrFail();
+
+        $notification->forceFill([
+            'is_read' => true,
+            'read_at' => $notification->read_at ?: now(),
+        ])->save();
+
+        $delivery = NotificationDelivery::query()->updateOrCreate(
+            ['notification_id' => $notification->id, 'user_id' => $notification->user_id],
+            [
+                'channel' => 'push',
+                'status' => 'acknowledged',
+                'delivered_at' => now(),
+                'acknowledged_at' => now(),
+            ]
+        );
+
+        return response()->json([
+            'success' => true,
+            'data' => [
+                'notification_id' => $notification->id,
+                'delivery_id' => $delivery->id,
+                'status' => $delivery->status,
+                'acknowledged' => true,
+                'acknowledged_at' => $delivery->acknowledged_at?->toIso8601String(),
+            ],
+        ]);
+    }
+
     private function canAccessTrip(Request $request, Trip $trip): bool
     {
         $user = $request->user();

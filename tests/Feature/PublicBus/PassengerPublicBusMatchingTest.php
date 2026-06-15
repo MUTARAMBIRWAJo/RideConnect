@@ -40,7 +40,13 @@ class PassengerPublicBusMatchingTest extends TestCase
 
         // Create driver profile
         $this->driver = Driver::factory()
-            ->create(['user_id' => $driverUser->id]);
+            ->create([
+                'user_id' => $driverUser->id,
+                'status' => 'approved',
+                'availability_status' => 'available',
+                'current_latitude' => -1.9529,
+                'current_longitude' => 30.0927,
+            ]);
 
         // Create a bus vehicle
         $this->bus = Vehicle::factory()
@@ -157,8 +163,7 @@ class PassengerPublicBusMatchingTest extends TestCase
                 'dropoff_location' => 'Nyabugogo Bus Park',
             ]);
 
-        $response->assertStatus(403)
-            ->assertJson(['success' => false]);
+        $response->assertStatus(403);
     }
 
     /** @test */

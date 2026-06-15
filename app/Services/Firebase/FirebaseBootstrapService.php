@@ -78,7 +78,7 @@ class FirebaseBootstrapService
         }
 
         if (!$this->healthService->grpcAvailable()) {
-            Log::info('[FirebaseBootstrapService] ext-grpc not installed — Firestore bootstrap unavailable');
+            Log::warning('[FirebaseBootstrapService] ext-grpc not installed — Firestore bootstrap unavailable');
             return;
         }
 

@@ -7,6 +7,7 @@ use App\Services\Health\Checks\DatabaseHealthCheck;
 use App\Services\Health\Checks\FirebaseHealthCheck;
 use App\Services\Health\Checks\MlServiceHealthCheck;
 use App\Services\Health\Checks\QueueHealthCheck;
+use App\Services\Health\Checks\RedisHealthCheck;
 use App\Services\Health\Checks\StorageHealthCheck;
 use Illuminate\Support\Arr;
 
@@ -14,6 +15,7 @@ class HealthCheckService
 {
     public function __construct(
         private readonly DatabaseHealthCheck $database,
+        private readonly RedisHealthCheck $redis,
         private readonly FirebaseHealthCheck $firebase,
         private readonly MlServiceHealthCheck $mlService,
         private readonly QueueHealthCheck $queue,
@@ -41,11 +43,15 @@ class HealthCheckService
         $checks = $this->runCoreChecks(includeOptional: true);
 
         $databaseOk = (bool) ($checks['database']['ok'] ?? false);
+        $redisOk = (bool) ($checks['redis']['ok'] ?? false);
         $firebaseOk = (bool) ($checks['firebase']['ok'] ?? false);
         $mlOk = (bool) ($checks['ml_service']['ok'] ?? false);
         $queueOk = (bool) ($checks['queue']['ok'] ?? false);
 
-        $required = config('health.ready_requires', ['database', 'queue']);
+        // Firestore is available only if firebase check succeeded and grpc_available/firestore_available is true
+        $firestoreAvailable = $firebaseOk && ($checks['firebase']['details']['firestore_available'] ?? false);
+
+        $required = config('health.ready_requires', ['database', 'redis', 'queue']);
         $requiredOk = collect($required)->every(
             fn (string $name) => (bool) ($checks[$name]['ok'] ?? false)
         );
@@ -53,7 +59,9 @@ class HealthCheckService
         $payload = [
             'status' => $requiredOk ? 'ready' : 'not_ready',
             'database' => $databaseOk,
-            'firebase' => $firebaseOk,
+            'redis' => $redisOk,
+            'firebase' => $firestoreAvailable,
+            'firestore' => $firestoreAvailable,
             'ml_service' => $mlOk,
             'queue' => $queueOk,
             'timestamp' => now()->toIso8601String(),
@@ -95,6 +103,7 @@ class HealthCheckService
     {
         $checks = [
             'database' => $this->database->check($includeExtended),
+            'redis' => $this->redis->check($includeExtended),
             'queue' => $this->queue->check($includeExtended),
             'application' => $this->application->check($includeExtended),
             'storage' => $this->storage->check($includeExtended),

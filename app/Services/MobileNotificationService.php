@@ -268,7 +268,7 @@ class MobileNotificationService
 
         $user = User::query()->find($userId);
         if ($user) {
-            $this->pushDeliveryBridge->deliverUserNotification($user, $notification);
+            \App\Jobs\DeliverPushNotificationJob::dispatch($notification->id);
         }
 
         return $notification;
@@ -276,6 +276,6 @@ class MobileNotificationService
 
     private function resolvePassengerUserId(Trip $trip): ?int
     {
-        return User::query()->where('mobile_user_id', $trip->passenger_id)->value('id');
+        return app(\App\Services\Identity\IdentityResolverService::class)->resolvePassengerUserId((int) $trip->passenger_id);
     }
 }

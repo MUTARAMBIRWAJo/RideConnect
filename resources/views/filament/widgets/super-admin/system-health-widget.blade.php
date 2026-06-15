@@ -1,9 +1,9 @@
 <x-filament-widgets::widget>
     <x-filament::section>
         <x-slot name="heading">System Monitoring</x-slot>
-        <x-slot name="description">API, AI service, database, and queue runtime health.</x-slot>
+        <x-slot name="description">API, AI service, database, queue, and Firebase runtime health.</x-slot>
 
-        <div class="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
+        <div class="grid gap-3 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5">
             @foreach ($checks as $name => $check)
                 <div class="rounded-xl border border-gray-200 bg-white p-4 shadow-sm dark:border-gray-800 dark:bg-gray-900">
                     <div class="flex items-center justify-between">
