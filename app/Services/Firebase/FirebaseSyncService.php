@@ -29,20 +29,33 @@ class FirebaseSyncService
     private ?Messaging $messaging = null;
     private bool $enabled = false;
     private bool $bootstrapEnabled = false;
+    private bool $initialized = false;
 
     public function __construct(
         private readonly FirebaseHealthService $healthService
     ) {
-        $this->initialize();
+        // Lazy initialization — do NOT connect to Firestore here.
+        // Connection is deferred until the first method call that needs it.
     }
 
     /**
-     * Initialize Firebase connection
+     * Lazy-initialize Firebase connection on first use.
+     * Safe to call multiple times (idempotent).
      */
-    private function initialize(): void
+    private function ensureInitialized(): void
     {
+        if ($this->initialized) {
+            return;
+        }
+        $this->initialized = true;
+
         if (!$this->healthService->isEnabled()) {
             Log::debug('[FirebaseSyncService] Firestore sync disabled in configuration');
+            return;
+        }
+
+        if (!$this->healthService->grpcAvailable()) {
+            Log::info('[FirebaseSyncService] ext-grpc not installed — Firestore sync unavailable');
             return;
         }
 
@@ -65,6 +78,7 @@ class FirebaseSyncService
      */
     public function isEnabled(): bool
     {
+        $this->ensureInitialized();
         return $this->enabled && $this->firestore !== null;
     }
 

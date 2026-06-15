@@ -26,6 +26,7 @@ class FirebaseBootstrapService
     private ?\Google\Cloud\Firestore\FirestoreClient $firestore = null;
     private bool $enabled = false;
     private bool $bootstrapEnabled = false;
+    private bool $initialized = false;
 
     /**
      * Required collections for Firestore schema
@@ -56,16 +57,28 @@ class FirebaseBootstrapService
     public function __construct(
         private readonly FirebaseHealthService $healthService
     ) {
-        $this->initialize();
+        // Lazy initialization — do NOT connect to Firestore here.
+        // Connection is deferred until the first method call that needs it.
     }
 
     /**
-     * Initialize Firebase connection
+     * Lazy-initialize Firebase connection on first use.
+     * Safe to call multiple times (idempotent).
      */
-    private function initialize(): void
+    private function ensureInitialized(): void
     {
+        if ($this->initialized) {
+            return;
+        }
+        $this->initialized = true;
+
         if (!$this->healthService->isEnabled()) {
             Log::debug('[FirebaseBootstrapService] Firebase disabled in configuration');
+            return;
+        }
+
+        if (!$this->healthService->grpcAvailable()) {
+            Log::info('[FirebaseBootstrapService] ext-grpc not installed — Firestore bootstrap unavailable');
             return;
         }
 
@@ -117,6 +130,7 @@ class FirebaseBootstrapService
      */
     public function isEnabled(): bool
     {
+        $this->ensureInitialized();
         return $this->enabled && $this->firestore !== null;
     }
 

@@ -2,6 +2,7 @@
 
 namespace App\Services\Health\Checks;
 
+use App\Services\Firebase\FirebaseHealthService;
 use App\Services\Firebase\FirebaseSyncService;
 use App\Services\FirebaseRealtimeService;
 
@@ -10,6 +11,7 @@ class FirebaseHealthCheck
     public function __construct(
         private readonly FirebaseSyncService $firebaseSyncService,
         private readonly FirebaseRealtimeService $firebaseRealtimeService,
+        private readonly FirebaseHealthService $firebaseHealthService,
     ) {
     }
 
@@ -25,6 +27,7 @@ class FirebaseHealthCheck
             $projectId = config('services.firebase.project_id');
             $credentials = config('services.firebase.credentials');
             $databaseUrl = config('services.firebase.database_url');
+            $grpcAvailable = $this->firebaseHealthService->grpcAvailable();
 
             if (! $enabled) {
                 return [
@@ -33,6 +36,7 @@ class FirebaseHealthCheck
                     'message' => 'Firebase disabled via FIREBASE_ENABLED=false',
                     'details' => [
                         'enabled' => false,
+                        'grpc_available' => $grpcAvailable,
                         'admin_sdk_initialized' => false,
                         'realtime_database_configured' => false,
                     ],
@@ -40,13 +44,12 @@ class FirebaseHealthCheck
             }
 
             $credentialsExist = is_string($credentials) && $credentials !== '' && file_exists($credentials);
-            $adminInitialized = $this->firebaseSyncService->isEnabled();
 
             $details = [
                 'enabled' => true,
                 'project_id' => $projectId,
                 'credentials_present' => $credentialsExist,
-                'admin_sdk_initialized' => $adminInitialized,
+                'grpc_available' => $grpcAvailable,
                 'realtime_database_configured' => filled($databaseUrl),
                 'firestore_configured' => filled(config('services.firebase.firestore_database')),
                 'bootstrap_enabled' => config('firebase.bootstrap_enabled', false),
@@ -60,6 +63,26 @@ class FirebaseHealthCheck
                     'details' => $details,
                 ];
             }
+
+            // When grpc is missing, Firebase Auth/Messaging still work (REST-based).
+            // Only Firestore is unavailable. Report as degraded, not failed.
+            if (! $grpcAvailable) {
+                $details['admin_sdk_initialized'] = true;
+                $details['firestore_available'] = false;
+                $details['messaging_available'] = true;
+                $details['auth_available'] = true;
+
+                return [
+                    'ok' => true,
+                    'status' => 'degraded',
+                    'message' => 'Firebase Auth/Messaging available. Firestore unavailable (ext-grpc not installed).',
+                    'details' => $details,
+                ];
+            }
+
+            // Full check with grpc available
+            $adminInitialized = $this->firebaseSyncService->isEnabled();
+            $details['admin_sdk_initialized'] = $adminInitialized;
 
             if (! $adminInitialized) {
                 return [

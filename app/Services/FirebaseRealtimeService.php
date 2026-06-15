@@ -5,6 +5,7 @@ namespace App\Services;
 use Kreait\Firebase\Factory;
 use Illuminate\Support\Facades\Log;
 use App\Services\Firebase\FirebaseSyncService;
+use App\Services\Firebase\FirebaseHealthService;
 
 /**
  * FirebaseRealtimeService - COMPATIBILITY WRAPPER (Read-Only)
@@ -25,16 +26,29 @@ class FirebaseRealtimeService
     private ?\Kreait\Firebase\Database $database = null;
     private ?\Kreait\Firebase\Firestore $firestore = null;
     private bool $enabled = false;
+    private bool $initialized = false;
 
     public function __construct(
         private readonly FirebaseSyncService $firebaseSyncService,
+        private readonly FirebaseHealthService $healthService,
     ) {
-        Log::warning('[FirebaseRealtimeService] DEPRECATED - Use FirebaseSyncService for writes');
+        // Lazy initialization — do NOT connect to Firestore here.
+    }
+
+    /**
+     * Lazy-initialize Firebase connection on first use.
+     */
+    private function ensureInitialized(): void
+    {
+        if ($this->initialized) {
+            return;
+        }
+        $this->initialized = true;
 
         $projectId     = config('services.firebase.project_id');
         $credentials   = config('services.firebase.credentials');
-        $databaseUrl   = config('services.firebase.database_url');   // Realtime DB only
-        $firestoreDb   = config('services.firebase.firestore_database'); // optional DB ID
+        $databaseUrl   = config('services.firebase.database_url');
+        $firestoreDb   = config('services.firebase.firestore_database');
 
         if (! $projectId || ! $credentials || ! file_exists($credentials)) {
             Log::debug('FirebaseRealtimeService: disabled — no project/credentials configured');
@@ -44,10 +58,15 @@ class FirebaseRealtimeService
         try {
             $factory = (new Factory)->withServiceAccount($credentials)->withProjectId($projectId);
 
-            if ($firestoreDb) {
-                $this->firestore = $factory->createFirestore()->database($firestoreDb);
+            // Firestore — only if ext-grpc is available
+            if ($this->healthService->grpcAvailable()) {
+                if ($firestoreDb) {
+                    $this->firestore = $factory->createFirestore()->database($firestoreDb);
+                } else {
+                    $this->firestore = $factory->createFirestore()->database();
+                }
             } else {
-                $this->firestore = $factory->createFirestore()->database();
+                Log::info('[FirebaseRealtimeService] ext-grpc not installed — Firestore skipped');
             }
 
             // Realtime DB (used by the legacy /realtime/config endpoint)
@@ -59,6 +78,7 @@ class FirebaseRealtimeService
             Log::info('FirebaseRealtimeService: initialised (read-only mode)', [
                 'project_id' => $projectId,
                 'firestore_db' => $firestoreDb ?? '(default)',
+                'firestore_available' => $this->firestore !== null,
                 'database_url' => $databaseUrl,
             ]);
         } catch (\Throwable $e) {
@@ -98,13 +118,12 @@ class FirebaseRealtimeService
             'user_id' => $userId,
         ]);
 
-        // Notifications are handled by FirebaseSyncService internally via sendNotification()
-        // This method is kept for backward compatibility only
         // No-op - notifications are now sent automatically by FirebaseSyncService event handlers
     }
 
     public function isEnabled(): bool
     {
+        $this->ensureInitialized();
         return $this->enabled;
     }
 
@@ -113,6 +132,8 @@ class FirebaseRealtimeService
      */
     public function connectivityStatus(): array
     {
+        $this->ensureInitialized();
+
         if (! $this->enabled) {
             return [
                 'firestore' => false,
@@ -149,6 +170,7 @@ class FirebaseRealtimeService
         return [
             'firestore' => $firestoreOk,
             'realtime_database' => $rtdbOk,
+            'grpc_available' => $this->healthService->grpcAvailable(),
             'message' => 'Connectivity probe completed',
         ];
     }

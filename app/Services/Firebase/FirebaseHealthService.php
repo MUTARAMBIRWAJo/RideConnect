@@ -13,6 +13,16 @@ class FirebaseHealthService
     private ?Messaging $messaging = null;
     private array $diagnostics = [];
 
+    /**
+     * Check if the native gRPC C extension is loaded.
+     * google/cloud-firestore requires ext-grpc for its transport.
+     * Without it, Firestore operations are unavailable.
+     */
+    public function grpcAvailable(): bool
+    {
+        return extension_loaded('grpc');
+    }
+
     public function isEnabled(): bool
     {
         return config('firebase.enabled', false) === true;
@@ -60,6 +70,11 @@ class FirebaseHealthService
     public function canConnectFirestore(): bool
     {
         if (!$this->isEnabled() || !$this->credentialsAreValid()) {
+            return false;
+        }
+
+        if (!$this->grpcAvailable()) {
+            Log::warning('[FirebaseHealthService] ext-grpc not installed — Firestore connectivity check skipped');
             return false;
         }
 
@@ -234,6 +249,11 @@ class FirebaseHealthService
 
     public function getFirestore(): ?Firestore
     {
+        if (!$this->grpcAvailable()) {
+            Log::debug('[FirebaseHealthService] ext-grpc not installed — Firestore unavailable. Using fallback transport.');
+            return null;
+        }
+
         if ($this->firestore === null) {
             if (app()->bound(Firestore::class)) {
                 $this->firestore = app(Firestore::class);
