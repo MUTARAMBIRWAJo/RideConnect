@@ -12,6 +12,8 @@ RUN set -eux; \
         pkgconf \
         postgresql-dev \
         re2c \
+        zlib-dev \
+        sqlite-dev \
     && apk add --no-cache \
         git \
         unzip \
@@ -24,9 +26,10 @@ RUN set -eux; \
         icu-libs \
         libpq \
         libzip \
-    && docker-php-ext-install -j"$(nproc)" pdo pdo_pgsql intl zip pcntl \
-    && pecl install redis \
-    && docker-php-ext-enable redis \
+        sqlite-libs \
+    && docker-php-ext-install -j"$(nproc)" pdo pdo_pgsql pdo_sqlite intl zip pcntl \
+    && pecl install redis grpc protobuf \
+    && docker-php-ext-enable redis grpc protobuf \
     && apk del .build-deps \
     && rm -rf /var/cache/apk/* /tmp/*
 
