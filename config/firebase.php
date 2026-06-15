@@ -10,13 +10,22 @@ return [
     |
     */
 
-    'enabled' => env('FIREBASE_ENABLED', true) === true || env('FIREBASE_ENABLED') === 'true',
+    'enabled' => filter_var(env('FIREBASE_ENABLED', false), FILTER_VALIDATE_BOOLEAN),
 
-    'bootstrap_enabled' => env('FIREBASE_BOOTSTRAP_ENABLED', false) === true || env('FIREBASE_BOOTSTRAP_ENABLED') === 'true',
+    'bootstrap_enabled' => filter_var(env('FIREBASE_BOOTSTRAP_ENABLED', false), FILTER_VALIDATE_BOOLEAN),
 
     'project_id' => env('FIREBASE_PROJECT_ID'),
 
-    'credentials' => env('FIREBASE_CREDENTIALS_PATH', storage_path('firebase/credentials.json')),
+    'credentials' => (function() {
+        $path = env('FIREBASE_CREDENTIALS_PATH');
+        if (empty($path)) {
+            return storage_path('firebase/credentials.json');
+        }
+        if (substr($path, 0, 1) !== '/' && !preg_match('/^[a-zA-Z]:\\\\/', $path)) {
+            return base_path($path);
+        }
+        return $path;
+    })(),
 
     'database_url' => env('FIREBASE_DATABASE_URL'),
 

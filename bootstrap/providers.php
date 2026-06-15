@@ -2,6 +2,7 @@
 
 return [
     App\Providers\AppServiceProvider::class,
+    App\Providers\FirebaseServiceProvider::class,
     App\Providers\Filament\AccountantPanelProvider::class,
     App\Providers\Filament\AdminPanelProvider::class,
     App\Providers\Filament\OfficerPanelProvider::class,

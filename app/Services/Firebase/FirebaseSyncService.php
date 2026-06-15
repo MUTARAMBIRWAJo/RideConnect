@@ -25,13 +25,14 @@ use Exception;
  */
 class FirebaseSyncService
 {
-    private ?Firestore $firestore = null;
+    private ?\Google\Cloud\Firestore\FirestoreClient $firestore = null;
     private ?Messaging $messaging = null;
     private bool $enabled = false;
     private bool $bootstrapEnabled = false;
 
-    public function __construct()
-    {
+    public function __construct(
+        private readonly FirebaseHealthService $healthService
+    ) {
         $this->initialize();
     }
 
@@ -40,40 +41,19 @@ class FirebaseSyncService
      */
     private function initialize(): void
     {
-        if (!config('firebase.enabled')) {
+        if (!$this->healthService->isEnabled()) {
             Log::debug('[FirebaseSyncService] Firestore sync disabled in configuration');
             return;
         }
 
         try {
-            $projectId = config('firebase.project_id');
-            $credentialsPath = config('firebase.credentials');
+            $firestore = $this->healthService->getFirestore();
+            $this->firestore = $firestore ? $firestore->database() : null;
+            $this->messaging = $this->healthService->getMessaging();
+            $this->enabled = $this->healthService->isEnabled() && $this->firestore !== null;
+            $this->bootstrapEnabled = $this->healthService->isBootstrapEnabled();
 
-            if (!$projectId) {
-                throw new Exception('Firebase project ID not configured');
-            }
-
-            if (!$credentialsPath || !file_exists($credentialsPath)) {
-                throw new Exception("Firebase credentials file not found: {$credentialsPath}");
-            }
-
-            $factory = (new Factory)
-                ->withServiceAccount($credentialsPath)
-                ->withProjectId($projectId);
-
-            $firestoreDb = config('firebase.firestore_database', '(default)');
-            $this->firestore = $factory->createFirestore()->database($firestoreDb);
-            
-            $this->messaging = $factory->createMessaging();
-
-            $this->enabled = true;
-            $this->bootstrapEnabled = config('firebase.bootstrap_enabled', false);
-
-            Log::info('[FirebaseSyncService] Initialized successfully', [
-                'project_id' => $projectId,
-                'firestore_db' => $firestoreDb,
-                'bootstrap_enabled' => $this->bootstrapEnabled,
-            ]);
+            Log::info('[FirebaseSyncService] Initialized successfully via HealthService');
         } catch (Exception $e) {
             Log::warning('[FirebaseSyncService] Initialization failed: ' . $e->getMessage());
             $this->enabled = false;
@@ -156,7 +136,7 @@ class FirebaseSyncService
                     'firebase_token' => null,
                     'app_version' => '1.0.0',
                 ],
-            ], '_schema_seed');
+            ]);
 
             // Bootstrap drivers collection
             $results['drivers'] = $this->bootstrapCollection('drivers', [
@@ -188,7 +168,7 @@ class FirebaseSyncService
                     'shift_end' => null,
                     'offline_reason' => null,
                 ],
-            ], '_schema_seed');
+            ]);
 
             // Bootstrap active_trips collection
             $results['active_trips'] = $this->bootstrapCollection('active_trips', [
@@ -256,7 +236,7 @@ class FirebaseSyncService
                     'discount_amount' => 0,
                     'notes' => '',
                 ],
-            ], '_schema_seed');
+            ]);
 
             // Bootstrap trip_events collection
             $results['trip_events'] = $this->bootstrapCollection('trip_events', [
@@ -264,7 +244,7 @@ class FirebaseSyncService
                 'event' => '',
                 'payload' => [],
                 'timestamp' => now(),
-            ], '_schema_seed');
+            ]);
 
             // Bootstrap driver_locations collection
             $results['driver_locations'] = $this->bootstrapCollection('driver_locations', [
@@ -279,7 +259,7 @@ class FirebaseSyncService
                 ],
                 'timestamp' => now(),
                 'is_online' => false,
-            ], '_schema_seed');
+            ]);
 
             // Bootstrap trip_tracking collection
             $results['trip_tracking'] = $this->bootstrapCollection('trip_tracking', [
@@ -300,7 +280,7 @@ class FirebaseSyncService
                 'eta' => null,
                 'started_at' => now(),
                 'updated_at' => now(),
-            ], '_schema_seed');
+            ]);
 
             // Bootstrap notifications collection
             $results['notifications'] = $this->bootstrapCollection('notifications', [
@@ -312,7 +292,7 @@ class FirebaseSyncService
                 'read' => false,
                 'timestamp' => now(),
                 'expires_at' => null,
-            ], '_schema_seed');
+            ]);
 
             // Bootstrap chat_rooms collection
             $results['chat_rooms'] = $this->bootstrapCollection('chat_rooms', [
@@ -325,7 +305,7 @@ class FirebaseSyncService
                     'last_message_at' => null,
                     'message_count' => 0,
                 ],
-            ], '_schema_seed');
+            ]);
 
             // Bootstrap chat_messages collection
             $results['chat_messages'] = $this->bootstrapCollection('chat_messages', [
@@ -336,7 +316,7 @@ class FirebaseSyncService
                 'timestamp' => now(),
                 'read_by' => [],
                 'metadata' => [],
-            ], '_schema_seed');
+            ]);
 
             // Bootstrap presence collection
             $results['presence'] = $this->bootstrapCollection('presence', [
@@ -351,7 +331,7 @@ class FirebaseSyncService
                     'latitude' => null,
                     'longitude' => null,
                 ],
-            ], '_schema_seed');
+            ]);
 
             // Bootstrap device_tokens collection
             $results['device_tokens'] = $this->bootstrapCollection('device_tokens', [
@@ -362,7 +342,40 @@ class FirebaseSyncService
                 'active' => true,
                 'created_at' => now(),
                 'last_used_at' => now(),
-            ], '_schema_seed');
+            ]);
+
+            // Bootstrap payments collection
+            $results['payments'] = $this->bootstrapCollection('payments', [
+                'id' => 0,
+                'trip_id' => null,
+                'user_id' => '',
+                'amount' => 0.0,
+                'currency' => 'RWF',
+                'status' => 'pending',
+                'method' => 'momo',
+                'transaction_id' => '',
+                'created_at' => now(),
+                'updated_at' => now(),
+                'metadata' => [
+                    'reference' => '',
+                    'verified_at' => null,
+                ],
+            ]);
+
+            // Bootstrap ratings collection
+            $results['ratings'] = $this->bootstrapCollection('ratings', [
+                'id' => 0,
+                'trip_id' => null,
+                'driver_id' => null,
+                'passenger_id' => null,
+                'rating' => 0.0,
+                'review' => '',
+                'categories' => [],
+                'created_at' => now(),
+                'metadata' => [
+                    'anonymous' => false,
+                ],
+            ]);
 
             Log::info('[FirebaseSyncService] Schema bootstrap completed', $results);
 
@@ -386,13 +399,19 @@ class FirebaseSyncService
     /**
      * Bootstrap a single collection with seed data
      */
-    private function bootstrapCollection(string $collection, array $data, string $documentId): array
+    private function bootstrapCollection(string $collection, array $data): array
     {
         try {
             $this->firestore
                 ->collection($collection)
-                ->document($documentId)
-                ->set($data, ['merge' => true]);
+                ->document('_schema_seed')
+                ->collection('bootstrap')
+                ->document('metadata')
+                ->set(array_merge($data, [
+                    '_schema_version' => '1.0.0',
+                    '_bootstrapped_at' => now()->toIso8601String(),
+                    '_collection' => $collection,
+                ]), ['merge' => true]);
 
             return [
                 'collection' => $collection,
@@ -1576,17 +1595,18 @@ class FirebaseSyncService
         }
 
         try {
-            $this->firestore
-                ->collection('users')
-                ->limit(1)
-                ->documents()
-                ->current();
-
-            return [
-                'status' => 'connected',
-                'message' => 'Firebase Firestore connection healthy',
-                'bootstrap_enabled' => $this->bootstrapEnabled,
-            ];
+            if ($this->healthService->canConnectFirestore()) {
+                return [
+                    'status' => 'connected',
+                    'message' => 'Firebase Firestore connection healthy',
+                    'bootstrap_enabled' => $this->bootstrapEnabled,
+                ];
+            } else {
+                return [
+                    'status' => 'error',
+                    'message' => 'Firebase connection failed: Ping verification failed',
+                ];
+            }
         } catch (Exception $e) {
             return [
                 'status' => 'error',

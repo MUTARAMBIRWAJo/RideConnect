@@ -4,6 +4,7 @@ namespace App\Console\Commands;
 
 use App\Services\Firebase\FirebaseSyncService;
 use App\Services\Firebase\FirebaseBootstrapService;
+use App\Services\Firebase\FirebaseHealthService;
 use App\Services\DeviceTokenService;
 use Illuminate\Console\Command;
 use Illuminate\Support\Facades\DB;
@@ -20,9 +21,11 @@ class RideconnectProductionCheckCommand extends Command
     public function __construct(
         private readonly FirebaseSyncService $firebaseSyncService,
         private readonly FirebaseBootstrapService $firebaseBootstrapService,
+        private readonly FirebaseHealthService $firebaseHealthService,
         private readonly ?DeviceTokenService $deviceTokenService = null,
     ) {
         parent::__construct();
+        $this->app = app();
     }
 
     public function handle(): int
@@ -150,7 +153,7 @@ class RideconnectProductionCheckCommand extends Command
         $issues = [];
 
         try {
-            if (!$this->firebaseSyncService->isEnabled()) {
+            if (!$this->firebaseHealthService->isEnabled()) {
                 $issues[] = 'Firebase not enabled or not configured';
             } else {
                 $score += 5;
@@ -162,10 +165,10 @@ class RideconnectProductionCheckCommand extends Command
                 $issues[] = 'Firebase project ID not configured';
             }
 
-            if (config('firebase.credentials') && file_exists(config('firebase.credentials'))) {
+            if ($this->firebaseHealthService->credentialsExist() && $this->firebaseHealthService->credentialsAreValid()) {
                 $score += 2;
             } else {
-                $issues[] = 'Firebase credentials file not found';
+                $issues[] = 'Firebase credentials file not found or invalid';
             }
         } catch (\Exception $e) {
             $issues[] = 'Exception: ' . $e->getMessage();
@@ -185,17 +188,15 @@ class RideconnectProductionCheckCommand extends Command
         $issues = [];
 
         try {
-            if (!$this->firebaseSyncService->isEnabled()) {
+            if (!$this->firebaseHealthService->isEnabled()) {
                 $issues[] = 'Firebase not enabled';
                 return ['score' => 0, 'max_score' => $maxScore, 'issues' => $issues];
             }
 
-            $healthCheck = $this->firebaseSyncService->healthCheck();
-            
-            if ($healthCheck['status'] === 'connected') {
+            if ($this->firebaseHealthService->canConnectFirestore()) {
                 $score += 10;
             } else {
-                $issues[] = 'Firestore not connected: ' . ($healthCheck['message'] ?? 'Unknown error');
+                $issues[] = 'Firestore not connected: Check credentials and permissions';
             }
         } catch (\Exception $e) {
             $issues[] = 'Exception: ' . $e->getMessage();
@@ -215,16 +216,19 @@ class RideconnectProductionCheckCommand extends Command
         $issues = [];
 
         try {
-            if (config('firebase.fcm.enabled')) {
+            // FCM uses Firebase Admin SDK (service account credentials)
+            // Check if Firebase is enabled
+            if ($this->firebaseHealthService->isEnabled()) {
                 $score += 5;
             } else {
-                $issues[] = 'FCM not enabled in configuration';
+                $issues[] = 'Firebase not enabled in configuration';
             }
 
-            if (config('firebase.fcm.server_key')) {
+            // Check if Messaging is available via Admin SDK
+            if ($this->firebaseHealthService->canConnectMessaging()) {
                 $score += 5;
             } else {
-                $issues[] = 'FCM server key not configured';
+                $issues[] = 'Firebase Admin SDK Messaging not available (check credentials)';
             }
         } catch (\Exception $e) {
             $issues[] = 'Exception: ' . $e->getMessage();
@@ -425,16 +429,16 @@ class RideconnectProductionCheckCommand extends Command
         $issues = [];
 
         try {
-            if (config('firebase.bootstrap_enabled')) {
+            if ($this->firebaseHealthService->isBootstrapEnabled()) {
                 $score += 5;
             } else {
                 $issues[] = 'Firebase bootstrap not enabled';
             }
 
-            if (method_exists($this->firebaseBootstrapService, 'bootstrapSchema')) {
+            if ($this->firebaseHealthService->bootstrapReady()) {
                 $score += 5;
             } else {
-                $issues[] = 'FirebaseBootstrapService::bootstrapSchema not found';
+                $issues[] = 'Firebase bootstrap not ready (check credentials and Firestore connection)';
             }
         } catch (\Exception $e) {
             $issues[] = 'Exception: ' . $e->getMessage();

@@ -3,6 +3,7 @@
 namespace App\Console\Commands;
 
 use App\Services\Firebase\FirebaseBootstrapService;
+use App\Services\Firebase\FirebaseHealthService;
 use Illuminate\Console\Command;
 
 class FirebaseBootstrapCommand extends Command
@@ -23,6 +24,7 @@ class FirebaseBootstrapCommand extends Command
 
     public function __construct(
         private readonly FirebaseBootstrapService $firebaseBootstrapService,
+        private readonly FirebaseHealthService $firebaseHealthService,
     ) {
         parent::__construct();
     }
@@ -37,17 +39,39 @@ class FirebaseBootstrapCommand extends Command
         $this->newLine();
 
         // Check if Firebase is enabled
-        if (!$this->firebaseBootstrapService->isEnabled()) {
+        if (!$this->firebaseHealthService->isEnabled()) {
             $this->warn('Firebase is not enabled or not configured.');
             $this->info('Status: disabled');
             $this->info('Message: Firebase not enabled');
             $this->newLine();
+            
+            // Show diagnostics
+            $diagnostics = $this->firebaseHealthService->getDiagnostics();
+            $this->info('Diagnostics:');
+            foreach ($diagnostics as $key => $diag) {
+                $this->line("  {$key}: {$diag['status']} - {$diag['message']}");
+            }
+            $this->newLine();
+            
             $this->info('To enable Firebase, set FIREBASE_ENABLED=true in your .env file.');
             return self::SUCCESS; // Return success to not crash the system
         }
 
+        // Check if credentials exist and are valid
+        if (!$this->firebaseHealthService->credentialsExist()) {
+            $this->error('Firebase credentials file does not exist.');
+            $this->info('Expected path: ' . config('firebase.credentials'));
+            return self::FAILURE;
+        }
+
+        if (!$this->firebaseHealthService->credentialsAreValid()) {
+            $this->error('Firebase credentials file is invalid or missing required keys.');
+            $this->info('Required keys: project_id, client_email, private_key');
+            return self::FAILURE;
+        }
+
         // Check if bootstrap is enabled
-        if (!$this->firebaseBootstrapService->isBootstrapEnabled()) {
+        if (!$this->firebaseHealthService->isBootstrapEnabled()) {
             $this->warn('Firebase bootstrap is disabled (FIREBASE_BOOTSTRAP_ENABLED=false).');
             $this->warn('To enable bootstrap, set FIREBASE_BOOTSTRAP_ENABLED=true in your .env file.');
             

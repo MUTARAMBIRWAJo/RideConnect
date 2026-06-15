@@ -4,6 +4,7 @@ namespace App\Console\Commands;
 
 use App\Services\Firebase\FirebaseSyncService;
 use App\Services\Firebase\FirebaseBootstrapService;
+use App\Services\Firebase\FirebaseHealthService;
 use Illuminate\Console\Command;
 use Illuminate\Support\Facades\Log;
 
@@ -26,6 +27,7 @@ class FirebaseReconcileCommand extends Command
     public function __construct(
         private readonly FirebaseSyncService $firebaseSyncService,
         private readonly FirebaseBootstrapService $firebaseBootstrapService,
+        private readonly FirebaseHealthService $firebaseHealthService,
     ) {
         parent::__construct();
     }
@@ -40,11 +42,20 @@ class FirebaseReconcileCommand extends Command
         $this->newLine();
 
         // Check if Firebase is enabled
-        if (!$this->firebaseSyncService->isEnabled()) {
+        if (!$this->firebaseHealthService->isEnabled()) {
             $this->warn('Firebase is not enabled or not configured.');
             $this->info('Status: disabled');
             $this->info('Message: Firebase not enabled');
             $this->newLine();
+            
+            // Show diagnostics
+            $diagnostics = $this->firebaseHealthService->getDiagnostics();
+            $this->info('Diagnostics:');
+            foreach ($diagnostics as $key => $diag) {
+                $this->line("  {$key}: {$diag['status']} - {$diag['message']}");
+            }
+            $this->newLine();
+            
             $this->info('To enable Firebase, set FIREBASE_ENABLED=true in your .env file.');
             return self::SUCCESS; // Return success to not crash the system
         }

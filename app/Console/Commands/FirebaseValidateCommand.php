@@ -4,6 +4,7 @@ namespace App\Console\Commands;
 
 use App\Services\Firebase\FirebaseSyncService;
 use App\Services\Firebase\FirebaseBootstrapService;
+use App\Services\Firebase\FirebaseHealthService;
 use App\Services\DeviceTokenService;
 use Illuminate\Console\Command;
 use Illuminate\Support\Facades\Log;
@@ -27,6 +28,7 @@ class FirebaseValidateCommand extends Command
     public function __construct(
         private readonly FirebaseSyncService $firebaseSyncService,
         private readonly FirebaseBootstrapService $firebaseBootstrapService,
+        private readonly FirebaseHealthService $firebaseHealthService,
         private ?DeviceTokenService $deviceTokenService,
     ) {
         parent::__construct();
@@ -43,11 +45,20 @@ class FirebaseValidateCommand extends Command
         $this->newLine();
 
         // Check if Firebase is enabled
-        if (!config('firebase.enabled')) {
+        if (!$this->firebaseHealthService->isEnabled()) {
             $this->warn('Firebase is not enabled in configuration.');
             $this->info('Status: disabled');
             $this->info('Message: Firebase not enabled');
             $this->newLine();
+            
+            // Show diagnostics
+            $diagnostics = $this->firebaseHealthService->getDiagnostics();
+            $this->info('Diagnostics:');
+            foreach ($diagnostics as $key => $diag) {
+                $this->line("  {$key}: {$diag['status']} - {$diag['message']}");
+            }
+            $this->newLine();
+            
             $this->info('Readiness Score: 0/100 (Firebase disabled)');
             $this->newLine();
             $this->info('To enable Firebase, set FIREBASE_ENABLED=true in your .env file.');

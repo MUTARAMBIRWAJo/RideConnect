@@ -23,7 +23,7 @@ use Exception;
  */
 class FirebaseBootstrapService
 {
-    private ?Firestore $firestore = null;
+    private ?\Google\Cloud\Firestore\FirestoreClient $firestore = null;
     private bool $enabled = false;
     private bool $bootstrapEnabled = false;
 
@@ -53,8 +53,9 @@ class FirebaseBootstrapService
     private const APP_METADATA_DOC = '_app_metadata';
     private const REALTIME_FLAGS_DOC = '_realtime_flags';
 
-    public function __construct()
-    {
+    public function __construct(
+        private readonly FirebaseHealthService $healthService
+    ) {
         $this->initialize();
     }
 
@@ -63,36 +64,19 @@ class FirebaseBootstrapService
      */
     private function initialize(): void
     {
-        if (!config('firebase.enabled')) {
+        if (!$this->healthService->isEnabled()) {
             Log::debug('[FirebaseBootstrapService] Firebase disabled in configuration');
             return;
         }
 
         try {
-            $projectId = config('firebase.project_id');
-            $credentialsPath = config('firebase.credentials');
-
-            if (!$projectId) {
-                throw new Exception('Firebase project ID not configured');
-            }
-
-            if (!$credentialsPath || !file_exists($credentialsPath)) {
-                throw new Exception("Firebase credentials file not found: {$credentialsPath}");
-            }
-
-            $factory = (new Factory)
-                ->withServiceAccount($credentialsPath)
-                ->withProjectId($projectId);
-
-            $firestoreDb = config('firebase.firestore_database', '(default)');
-            $this->firestore = $factory->createFirestore()->database($firestoreDb);
-
-            $this->enabled = true;
-            $this->bootstrapEnabled = config('firebase.bootstrap_enabled', false);
+            $firestore = $this->healthService->getFirestore();
+            $this->firestore = $firestore ? $firestore->database() : null;
+            $this->enabled = $this->healthService->isEnabled() && $this->firestore !== null;
+            $this->bootstrapEnabled = $this->healthService->isBootstrapEnabled();
 
             Log::info('[FirebaseBootstrapService] Initialized successfully', [
-                'project_id' => $projectId,
-                'firestore_db' => $firestoreDb,
+                'project_id' => config('firebase.project_id'),
                 'bootstrap_enabled' => $this->bootstrapEnabled,
             ]);
 
@@ -152,14 +136,35 @@ class FirebaseBootstrapService
      */
     public function bootstrapSchema(): array
     {
-        if (!$this->isEnabled()) {
+        if (!$this->healthService->isEnabled()) {
             return [
                 'success' => false,
                 'message' => 'Firebase not enabled',
             ];
         }
 
-        if (!$this->bootstrapEnabled) {
+        if (!$this->healthService->credentialsExist()) {
+            return [
+                'success' => false,
+                'message' => 'Firebase credentials file not found: ' . config('firebase.credentials'),
+            ];
+        }
+
+        if (!$this->healthService->credentialsAreValid()) {
+            return [
+                'success' => false,
+                'message' => 'Firebase credentials file is invalid or missing required keys',
+            ];
+        }
+
+        if (!$this->healthService->canConnectFirestore()) {
+            return [
+                'success' => false,
+                'message' => 'Firestore connectivity check failed (database not found or unreachable)',
+            ];
+        }
+
+        if (!$this->isBootstrapEnabled()) {
             return [
                 'success' => false,
                 'message' => 'Firebase bootstrap disabled (FIREBASE_BOOTSTRAP_ENABLED=false)',
@@ -202,10 +207,12 @@ class FirebaseBootstrapService
     private function bootstrapCollection(string $collection): array
     {
         try {
-            // Create a schema seed document to ensure collection exists
+            // Create a schema seed document to ensure collection exists at _schema_seed/bootstrap/metadata
             $this->firestore
                 ->collection($collection)
                 ->document('_schema_seed')
+                ->collection('bootstrap')
+                ->document('metadata')
                 ->set([
                     '_schema_version' => '1.0.0',
                     '_bootstrapped_at' => now()->toIso8601String(),
@@ -364,13 +371,20 @@ class FirebaseBootstrapService
 
             foreach (self::REQUIRED_COLLECTIONS as $collection) {
                 try {
-                    // Try to read the schema seed document
-                    $this->firestore
+                    // Try to read the schema seed bootstrap metadata document
+                    $snapshot = $this->firestore
                         ->collection($collection)
                         ->document('_schema_seed')
+                        ->collection('bootstrap')
+                        ->document('metadata')
                         ->snapshot();
 
-                    $collectionsReady[] = $collection;
+                    if ($snapshot->exists()) {
+                        $collectionsReady[] = $collection;
+                    } else {
+                        $missing[] = $collection;
+                        $warnings[] = "Collection {$collection} missing bootstrap metadata document";
+                    }
                 } catch (Exception $e) {
                     $missing[] = $collection;
                     $warnings[] = "Collection {$collection} missing or inaccessible: " . $e->getMessage();

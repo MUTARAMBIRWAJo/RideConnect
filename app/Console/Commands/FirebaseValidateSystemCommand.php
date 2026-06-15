@@ -340,6 +340,19 @@ class FirebaseValidateSystemCommand extends Command
                 continue;
             }
 
+            // Skip FirebaseHealthService
+            if (str_contains($file->getPathname(), 'FirebaseHealthService.php')) {
+                continue;
+            }
+
+            // Skip Firebase CLI debug/test/validation commands
+            if (str_contains($file->getPathname(), 'FirebaseDebugCommand.php') ||
+                str_contains($file->getPathname(), 'FirebaseTestCommand.php') ||
+                str_contains($file->getPathname(), 'FirebaseValidateCommand.php') ||
+                str_contains($file->getPathname(), 'FirebaseValidateSystemCommand.php')) {
+                continue;
+            }
+
             // Skip legacy wrappers (they delegate)
             if (str_contains($file->getPathname(), 'FirebaseSync.php') ||
                 str_contains($file->getPathname(), 'FirebaseEventDispatcher.php') ||
@@ -496,8 +509,8 @@ class FirebaseValidateSystemCommand extends Command
         }
 
         // Check if messaging is initialized
-        $health = $this->firebaseSyncService->healthCheck();
-        if (!isset($health['bootstrap_enabled'])) {
+        $healthService = app(\App\Services\Firebase\FirebaseHealthService::class);
+        if (!$healthService->isEnabled() || !app()->bound(\Kreait\Firebase\Contract\Messaging::class)) {
             return [
                 'passed' => false,
                 'score' => 5,

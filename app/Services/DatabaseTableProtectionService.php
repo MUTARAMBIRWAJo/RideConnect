@@ -120,10 +120,32 @@ class DatabaseTableProtectionService
 
         $tables = $this->discoverTables();
         $locked = 0;
+        $values = [];
+        $now = now();
 
         foreach ($tables as $table) {
-            $this->lockTable($table['schema_name'], $table['table_name'], $reason);
+            $schemaName = $table['schema_name'];
+            $tableName = $table['table_name'];
+            $qualifiedName = $schemaName.'.'.$tableName;
+            $values[] = [
+                'schema_name' => $schemaName,
+                'table_name' => $tableName,
+                'qualified_name' => $qualifiedName,
+                'is_locked' => true,
+                'locked_reason' => $reason,
+                'locked_at' => $now,
+                'created_at' => $now,
+                'updated_at' => $now,
+            ];
             $locked++;
+        }
+
+        if (!empty($values)) {
+            DB::table(self::LOCKS_TABLE)->upsert(
+                $values,
+                ['schema_name', 'table_name'],
+                ['qualified_name', 'is_locked', 'locked_reason', 'locked_at', 'updated_at']
+            );
         }
 
         $this->lockPolicyTables($reason);
@@ -146,6 +168,8 @@ class DatabaseTableProtectionService
         $this->ensureLocksTableExists();
 
         $locked = 0;
+        $values = [];
+        $now = now();
 
         foreach (config('database_protection.policy_tables', []) as $tableName) {
             if (! is_string($tableName) || $tableName === '') {
@@ -156,8 +180,25 @@ class DatabaseTableProtectionService
                 continue;
             }
 
-            $this->lockTable('public', $tableName, $reason);
+            $values[] = [
+                'schema_name' => 'public',
+                'table_name' => $tableName,
+                'qualified_name' => 'public.'.$tableName,
+                'is_locked' => true,
+                'locked_reason' => $reason,
+                'locked_at' => $now,
+                'created_at' => $now,
+                'updated_at' => $now,
+            ];
             $locked++;
+        }
+
+        if (!empty($values)) {
+            DB::table(self::LOCKS_TABLE)->upsert(
+                $values,
+                ['schema_name', 'table_name'],
+                ['qualified_name', 'is_locked', 'locked_reason', 'locked_at', 'updated_at']
+            );
         }
 
         return ['locked' => $locked];

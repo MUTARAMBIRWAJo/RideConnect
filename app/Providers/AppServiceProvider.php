@@ -57,18 +57,6 @@ class AppServiceProvider extends ServiceProvider
         // Bind GuzzleHttp\ClientInterface to GuzzleHttp\Client
         $this->app->bind(\GuzzleHttp\ClientInterface::class, \GuzzleHttp\Client::class);
 
-        // Register Firebase Factory and Messaging using Kreait Firebase Admin SDK
-        if (config('firebase.enabled') && file_exists(config('firebase.credentials'))) {
-            $this->app->singleton(\Kreait\Firebase\Factory::class, function () {
-                return (new \Kreait\Firebase\Factory)
-                    ->withServiceAccount(config('firebase.credentials'))
-                    ->withProjectId(config('firebase.project_id'));
-            });
-
-            $this->app->singleton(\Kreait\Firebase\Contract\Messaging::class, function ($app) {
-                return $app->make(\Kreait\Firebase\Factory::class)->createMessaging();
-            });
-        }
 
         // Register DeviceTokenService with nullable dependencies for graceful degradation
         $this->app->singleton(\App\Services\DeviceTokenService::class, function ($app) {

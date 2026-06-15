@@ -161,7 +161,16 @@ return [
     */
     'firebase' => [
         'project_id'            => env('FIREBASE_PROJECT_ID'),
-        'credentials'           => env('FIREBASE_CREDENTIALS'),
+        'credentials'           => (function() {
+            $path = env('FIREBASE_CREDENTIALS_PATH');
+            if (empty($path)) {
+                return storage_path('firebase/credentials.json');
+            }
+            if (substr($path, 0, 1) !== '/' && !preg_match('/^[a-zA-Z]:\\\\/', $path)) {
+                return base_path($path);
+            }
+            return $path;
+        })(),
         'database_url'          => env('FIREBASE_DATABASE_URL'),
         'firestore_database'    => env('FIREBASE_FIRESTORE_DATABASE', '(default)'),
     ],
