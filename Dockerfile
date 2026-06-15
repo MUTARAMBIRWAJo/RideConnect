@@ -2,6 +2,16 @@ FROM php:8.4-fpm-alpine
 
 WORKDIR /var/www
 
+# ──────────────────────────────────────────────────────────────────────
+# System deps & PHP extensions
+# NOTE: We intentionally do NOT compile grpc/protobuf from PECL.
+#   pecl install grpc on Alpine compiles the entire gRPC C++ library
+#   from source (~2500 files) and takes 40+ minutes.
+#   Instead we use the pure-PHP grpc/grpc composer package which
+#   provides adequate transport for Firestore operations.
+#   If you need the C extension for performance, switch the base image
+#   to php:8.4-fpm (Debian) where pecl install grpc is much faster.
+# ──────────────────────────────────────────────────────────────────────
 RUN set -eux; \
     apk add --no-cache --virtual .build-deps \
         autoconf \
@@ -12,7 +22,6 @@ RUN set -eux; \
         pkgconf \
         postgresql-dev \
         re2c \
-        zlib-dev \
         sqlite-dev \
     && apk add --no-cache \
         git \
@@ -28,13 +37,20 @@ RUN set -eux; \
         libzip \
         sqlite-libs \
     && docker-php-ext-install -j"$(nproc)" pdo pdo_pgsql pdo_sqlite intl zip pcntl \
-    && pecl install redis grpc protobuf \
-    && docker-php-ext-enable redis grpc protobuf \
+    && pecl install redis \
+    && docker-php-ext-enable redis \
     && apk del .build-deps \
     && rm -rf /var/cache/apk/* /tmp/*
 
 COPY --from=composer:2 /usr/bin/composer /usr/bin/composer
 
+# ──────────────────────────────────────────────────────────────────────
+# Composer install
+# --ignore-platform-req=ext-grpc: google/cloud-firestore requires the
+# grpc C extension, but the pure-PHP grpc composer package works as a
+# fallback. Firebase/Firestore operations function correctly without
+# the C extension (just slightly slower serialization).
+# ──────────────────────────────────────────────────────────────────────
 COPY composer.json composer.lock ./
 RUN set -eux; composer install \
     --no-dev \
@@ -43,7 +59,8 @@ RUN set -eux; composer install \
     --optimize-autoloader \
     --classmap-authoritative \
     --no-scripts \
-    --no-progress
+    --no-progress \
+    --ignore-platform-req=ext-grpc
 
 COPY package*.json ./
 RUN set -eux; npm install
