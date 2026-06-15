@@ -120,7 +120,7 @@ class PassengerNotificationEndpointsTest extends TestCase
 
         $response->assertStatus(201)
             ->assertJsonPath('success', true)
-            ->assertJsonPath('data.status', 'PENDING');
+            ->assertJsonPath('data.status', 'REQUESTED');
 
         $tripId = (int) $response->json('data.trip_id');
 
@@ -128,7 +128,7 @@ class PassengerNotificationEndpointsTest extends TestCase
             'id' => $tripId,
             'passenger_id' => $mobilePassenger->id,
             'driver_id' => $driver->id,
-            'status' => 'PENDING',
+            'status' => 'REQUESTED',
         ]);
 
         $this->assertDatabaseHas('user_notifications', [

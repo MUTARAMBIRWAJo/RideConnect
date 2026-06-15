@@ -160,7 +160,7 @@ class PrivateTransportFlowTest extends TestCase
         ]);
 
         $this->assertTrue(Trip::where('id', $trip->id)->exists());
-        $this->assertEquals('PENDING', $trip->status);
+        $this->assertEquals('REQUESTED', $trip->status);
         $this->assertNotNull($trip->driver_id);
     }
 

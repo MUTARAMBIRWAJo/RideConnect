@@ -4,12 +4,10 @@ namespace App\Services\Firebase;
 
 use Illuminate\Support\Facades\Log;
 use Kreait\Firebase\Factory;
-use Kreait\Firebase\Contract\Firestore;
 use Kreait\Firebase\Contract\Messaging;
 
 class FirebaseHealthService
 {
-    private ?Firestore $firestore = null;
     private ?Messaging $messaging = null;
     private array $diagnostics = [];
 
@@ -67,52 +65,13 @@ class FirebaseHealthService
         return true;
     }
 
+    /**
+     * Firestore is permanently disabled in this RTDB-only architecture.
+     * Always returns false — no Firestore connection is attempted.
+     */
     public function canConnectFirestore(): bool
     {
-        if (!$this->isEnabled() || !$this->credentialsAreValid()) {
-            return false;
-        }
-
-        if (!$this->grpcAvailable()) {
-            Log::warning('[FirebaseHealthService] ext-grpc not installed — Firestore connectivity check skipped');
-            return false;
-        }
-
-        try {
-            $firestoreWrapper = $this->getFirestore();
-            if ($firestoreWrapper === null) {
-                return false;
-            }
-            $firestore = $firestoreWrapper->database();
-
-            // Real connectivity check: Write, Read, Delete under healthcheck/ping
-            $docRef = $firestore->collection('healthcheck')->document('ping');
-            $testData = [
-                'timestamp' => now()->toIso8601String(),
-                'environment' => config('app.env'),
-                'project_id' => config('firebase.project_id'),
-            ];
-            
-            $docRef->set($testData);
-            
-            $snapshot = $docRef->snapshot();
-            if (!$snapshot->exists()) {
-                throw new \Exception('Read back test failed: Document does not exist after write.');
-            }
-            
-            $readData = $snapshot->data();
-            if (($readData['project_id'] ?? null) !== $testData['project_id']) {
-                throw new \Exception('Read back test failed: Mismatched project_id.');
-            }
-            
-            $docRef->delete();
-            return true;
-        } catch (\Exception $e) {
-            Log::error('[FirebaseHealthService] Firestore connection/ping failed', [
-                'error' => $e->getMessage(),
-            ]);
-            return false;
-        }
+        return false;
     }
 
     public function canConnectMessaging(): bool
@@ -134,10 +93,10 @@ class FirebaseHealthService
 
     public function bootstrapReady(): bool
     {
-        return $this->isEnabled() && 
-               $this->isBootstrapEnabled() && 
-               $this->credentialsAreValid() && 
-               $this->canConnectFirestore();
+        // Firestore is permanently disabled; RTDB-only architecture does not require it
+        return $this->isEnabled() &&
+               $this->isBootstrapEnabled() &&
+               $this->credentialsAreValid();
     }
 
     public function checkCollectionHealth(string $collection): array
@@ -228,9 +187,9 @@ class FirebaseHealthService
                 'message' => $this->credentialsAreValid() ? 'Credentials are valid' : 'Credentials are invalid',
             ],
             'firestore_connection' => [
-                'status' => $this->canConnectFirestore() ? 'pass' : 'fail',
-                'value' => $this->canConnectFirestore(),
-                'message' => $this->canConnectFirestore() ? 'Firestore connection successful' : 'Firestore connection failed',
+                'status' => 'disabled',
+                'value' => false,
+                'message' => 'Firestore is permanently disabled — RTDB-only architecture',
             ],
             'messaging_connection' => [
                 'status' => $this->canConnectMessaging() ? 'pass' : 'fail',
@@ -247,21 +206,14 @@ class FirebaseHealthService
         return $this->diagnostics;
     }
 
-    public function getFirestore(): ?Firestore
+    /**
+     * Firestore is permanently disabled. Always returns null.
+     * @deprecated Use RealtimeDatabaseManager instead.
+     * @return null
+     */
+    public function getFirestore(): null
     {
-        if (!$this->grpcAvailable()) {
-            Log::warning('gRPC extension not installed. Firestore operations are unavailable.');
-            return null;
-        }
-
-        if ($this->firestore === null) {
-            if (app()->bound(Firestore::class)) {
-                $this->firestore = app(Firestore::class);
-            } else {
-                $this->firestore = $this->createFirestore();
-            }
-        }
-        return $this->firestore;
+        return null;
     }
 
     public function getMessaging(): ?Messaging

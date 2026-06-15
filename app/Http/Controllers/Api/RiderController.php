@@ -92,8 +92,8 @@ class RiderController extends Controller
             ], 404);
         }
 
-        // Get pending requests in driver's area (simplified - should use spatial queries)
-        $requests = Trip::where('status', 'PENDING')
+        // Get pending/requested requests in driver's area (simplified - should use spatial queries)
+        $requests = Trip::whereIn('status', ['PENDING', 'REQUESTED'])
             ->where(function ($query) use ($driver) {
                 $query->where('driver_id', $driver->id)
                     ->orWhereNull('driver_id');
@@ -228,7 +228,7 @@ class RiderController extends Controller
             ], 403);
         }
 
-        if ($trip->status !== 'PENDING') {
+        if ($trip->status !== 'PENDING' && $trip->status !== 'REQUESTED') {
             return response()->json([
                 'success' => false,
                 'message' => 'This request is no longer available',

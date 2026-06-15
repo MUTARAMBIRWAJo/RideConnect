@@ -32,10 +32,11 @@ class TripStatusController extends Controller
         ]);
 
         $oldStatus = $trip->status;
-        if (! in_array($validated['status'], self::ALLOWED[$oldStatus] ?? [], true)) {
+        $normalizedNewStatus = \App\Domain\Trip\TripStateMachine::normalize($validated['status']);
+        if (! \App\Domain\Trip\TripStateMachine::canTransition($oldStatus, $normalizedNewStatus)) {
             return response()->json([
                 'status' => 'error',
-                'message' => 'Invalid trip status transition',
+                'message' => 'Invalid trip status transition: ' . $oldStatus . ' -> ' . $normalizedNewStatus,
             ], 422);
         }
 

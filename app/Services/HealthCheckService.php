@@ -43,13 +43,14 @@ class HealthCheckService
         $checks = $this->runCoreChecks(includeOptional: true);
 
         $databaseOk = (bool) ($checks['database']['ok'] ?? false);
-        $redisOk = (bool) ($checks['redis']['ok'] ?? false);
+        $redisOk    = (bool) ($checks['redis']['ok'] ?? false);
         $firebaseOk = (bool) ($checks['firebase']['ok'] ?? false);
-        $mlOk = (bool) ($checks['ml_service']['ok'] ?? false);
-        $queueOk = (bool) ($checks['queue']['ok'] ?? false);
+        $mlOk       = (bool) ($checks['ml_service']['ok'] ?? false);
+        $queueOk    = (bool) ($checks['queue']['ok'] ?? false);
 
-        // Firestore is available only if firebase check succeeded and grpc_available/firestore_available is true
-        $firestoreAvailable = $firebaseOk && ($checks['firebase']['details']['firestore_available'] ?? false);
+        // Firestore is permanently disabled — RTDB-only architecture.
+        // Firebase readiness is based on RTDB connectivity, not Firestore.
+        $rtdbConfigured = (bool) ($checks['firebase']['details']['realtime_database_configured'] ?? false);
 
         $required = config('health.ready_requires', ['database', 'redis', 'queue']);
         $requiredOk = collect($required)->every(
@@ -57,18 +58,19 @@ class HealthCheckService
         );
 
         $payload = [
-            'status' => $requiredOk ? 'ready' : 'not_ready',
-            'database' => $databaseOk,
-            'redis' => $redisOk,
-            'firebase' => $firestoreAvailable,
-            'firestore' => $firestoreAvailable,
+            'status'    => $requiredOk ? 'ready' : 'not_ready',
+            'database'  => $databaseOk,
+            'redis'     => $redisOk,
+            'firebase'  => $firebaseOk,
+            'rtdb'      => $rtdbConfigured,
+            'firestore' => 'disabled',  // Permanently disabled — RTDB-only architecture
             'ml_service' => $mlOk,
-            'queue' => $queueOk,
+            'queue'     => $queueOk,
             'timestamp' => now()->toIso8601String(),
         ];
 
         return [
-            'payload' => $payload,
+            'payload'     => $payload,
             'http_status' => $requiredOk ? 200 : 503,
         ];
     }

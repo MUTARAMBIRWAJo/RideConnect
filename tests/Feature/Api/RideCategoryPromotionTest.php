@@ -78,7 +78,7 @@ class RideCategoryPromotionTest extends TestCase
         $this->assertDatabaseHas('trips', [
             'passenger_id' => $mobilePassenger->id,
             'driver_id' => $driver->id,
-            'status' => 'PENDING',
+            'status' => 'REQUESTED',
         ]);
     }
 

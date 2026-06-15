@@ -3,8 +3,6 @@
 namespace App\Services\Firebase;
 
 use Kreait\Firebase\Factory;
-use Kreait\Firebase\Firestore;
-use Kreait\Firebase\Messaging;
 use Illuminate\Support\Facades\Log;
 use App\Models\User;
 use App\Models\Driver;
@@ -14,32 +12,32 @@ use App\Models\Review;
 use Exception;
 
 /**
- * FirebaseSyncService - SINGLE ORCHESTRATOR FOR ALL FIRESTORE WRITES
+ * FirebaseSyncService - RTDB-ONLY ORCHESTRATOR FOR REAL-TIME STATE
  *
  * CRITICAL ARCHITECTURE RULE:
- * This is the ONLY service allowed to write to Firestore.
- * All other services must go through this service.
+ * Firestore is permanently disabled. All real-time writes go to Firebase
+ * Realtime Database (RTDB) using the RTDB-only architecture.
  *
  * Supabase is the source of truth.
- * Firestore is the real-time projection layer.
+ * RTDB is the real-time cache layer.
  */
 class FirebaseSyncService
 {
-    private ?\Google\Cloud\Firestore\FirestoreClient $firestore = null;
-    private ?Messaging $messaging = null;
+    /** @var \Kreait\Firebase\Contract\Database|null RTDB client for real-time state */
+    private $rtdb = null;
+    /** @var null Firestore is permanently disabled — stub to prevent fatal errors on legacy calls */
+    private $firestore = null;
     private bool $enabled = false;
-    private bool $bootstrapEnabled = false;
     private bool $initialized = false;
 
     public function __construct(
         private readonly FirebaseHealthService $healthService
     ) {
-        // Lazy initialization — do NOT connect to Firestore here.
-        // Connection is deferred until the first method call that needs it.
+        // Lazy initialization — do NOT connect to RTDB here.
     }
 
     /**
-     * Lazy-initialize Firebase connection on first use.
+     * Lazy-initialize Firebase RTDB connection on first use.
      * Safe to call multiple times (idempotent).
      */
     private function ensureInitialized(): void
@@ -50,446 +48,120 @@ class FirebaseSyncService
         $this->initialized = true;
 
         if (!$this->healthService->isEnabled()) {
-            Log::debug('[FirebaseSyncService] Firestore sync disabled in configuration');
-            return;
-        }
-
-        if (!$this->healthService->grpcAvailable()) {
-            Log::warning('[FirebaseSyncService] ext-grpc not installed — Firestore sync unavailable');
+            Log::debug('[FirebaseSyncService] Firebase sync disabled in configuration');
             return;
         }
 
         try {
-            $firestore = $this->healthService->getFirestore();
-            $this->firestore = $firestore ? $firestore->database() : null;
-            $this->messaging = $this->healthService->getMessaging();
-            $this->enabled = $this->healthService->isEnabled() && $this->firestore !== null;
-            $this->bootstrapEnabled = $this->healthService->isBootstrapEnabled();
+            $credentialsPath = config('firebase.credentials');
+            $databaseUrl     = config('firebase.database_url');
 
-            Log::info('[FirebaseSyncService] Initialized successfully via HealthService');
+            if (!$credentialsPath || !file_exists($credentialsPath)) {
+                Log::warning('[FirebaseSyncService] Firebase credentials not found. Disabling sync.');
+                return;
+            }
+
+            $factory = (new Factory)->withServiceAccount($credentialsPath);
+
+            if ($databaseUrl) {
+                $factory = $factory->withDatabaseUri($databaseUrl);
+            }
+
+            $this->rtdb    = $factory->createDatabase();
+            $this->enabled = true;
+
+            Log::info('[FirebaseSyncService] RTDB initialized successfully (Firestore disabled)');
         } catch (Exception $e) {
-            Log::warning('[FirebaseSyncService] Initialization failed: ' . $e->getMessage());
+            Log::warning('[FirebaseSyncService] RTDB initialization failed: ' . $e->getMessage());
             $this->enabled = false;
         }
     }
 
     /**
-     * Check if Firebase is enabled and ready
+     * Check if Firebase RTDB is enabled and ready
      */
     public function isEnabled(): bool
     {
         $this->ensureInitialized();
-        return $this->enabled && $this->firestore !== null;
+        return $this->enabled && $this->rtdb !== null;
     }
 
     /**
-     * Ensure collection exists in Firestore
-     * Self-healing: creates collection if missing
-     */
-    private function ensureCollectionExists(string $collection): void
-    {
-        try {
-            // Try to create a seed document to ensure collection exists
-            $this->firestore
-                ->collection($collection)
-                ->document('_collection_seed')
-                ->set([
-                    '_seed' => true,
-                    '_created_at' => now()->toIso8601String(),
-                ], ['merge' => true]);
-        } catch (Exception $e) {
-            Log::warning('[FirebaseSyncService] Failed to ensure collection exists', [
-                'collection' => $collection,
-                'error' => $e->getMessage(),
-            ]);
-        }
-    }
-
-    /**
-     * Bootstrap Firestore schema with seed writes
-     * 
-     * IMPORTANT:
-     * - Idempotent (safe to run multiple times)
-     * - Merge-safe (uses merge: true)
-     * - Never deletes data
-     * - No manual Firestore console dependency
+     * Bootstrap schema — no-op in RTDB-only architecture.
+     * RTDB does not require explicit collection creation.
      */
     public function bootstrapSchema(): array
     {
-        if (!$this->isEnabled()) {
-            return [
-                'success' => false,
-                'message' => 'Firebase not enabled',
-            ];
-        }
-
-        if (!$this->bootstrapEnabled) {
-            return [
-                'success' => false,
-                'message' => 'Firebase bootstrap disabled (FIREBASE_BOOTSTRAP_ENABLED=false)',
-            ];
-        }
-
-        try {
-            $results = [];
-
-            // Bootstrap users collection with schema seed
-            $results['users'] = $this->bootstrapCollection('users', [
-                'email' => '',
-                'name' => '',
-                'phone' => '',
-                'role' => 'passenger',
-                'is_online' => false,
-                'last_seen' => now(),
-                'rating' => 0.0,
-                'completed_trips' => 0,
-                'cancelled_trips' => 0,
-                'metadata' => [
-                    'created_at' => now(),
-                    'updated_at' => now(),
-                    'firebase_token' => null,
-                    'app_version' => '1.0.0',
-                ],
-            ]);
-
-            // Bootstrap drivers collection
-            $results['drivers'] = $this->bootstrapCollection('drivers', [
-                'user_id' => '',
-                'status' => 'offline',
-                'current_location' => [
-                    'latitude' => 0,
-                    'longitude' => 0,
-                    'accuracy' => 0,
-                    'updated_at' => now(),
-                ],
-                'current_trip_id' => null,
-                'vehicle' => [
-                    'type' => 'economy',
-                    'license_plate' => '',
-                    'color' => '',
-                    'model' => '',
-                ],
-                'service_types' => ['private_car'],
-                'response_time' => 0,
-                'acceptance_rate' => 0,
-                'cancellation_rate' => 0,
-                'average_rating' => 0.0,
-                'total_earnings' => 0,
-                'available_capacity' => 1,
-                'metadata' => [
-                    'last_location_update' => now(),
-                    'shift_start' => null,
-                    'shift_end' => null,
-                    'offline_reason' => null,
-                ],
-            ]);
-
-            // Bootstrap active_trips collection
-            $results['active_trips'] = $this->bootstrapCollection('active_trips', [
-                'passenger_id' => '',
-                'driver_id' => null,
-                'status' => 'requested',
-                'ride_type' => 'private_car',
-                'pickup' => [
-                    'latitude' => 0,
-                    'longitude' => 0,
-                    'address' => '',
-                    'timestamp' => now(),
-                ],
-                'dropoff' => [
-                    'latitude' => 0,
-                    'longitude' => 0,
-                    'address' => '',
-                    'timestamp' => now(),
-                ],
-                'distance_km' => 0,
-                'estimated_duration_seconds' => 0,
-                'estimated_fare' => 0,
-                'currency' => 'RWF',
-                'driver_location' => [
-                    'latitude' => 0,
-                    'longitude' => 0,
-                    'timestamp' => now(),
-                    'distance_to_pickup' => 0,
-                ],
-                'route' => [
-                    'polyline' => '',
-                    'waypoints' => [],
-                    'updated_at' => now(),
-                ],
-                'passenger_location_history' => [],
-                'driver_location_history' => [],
-                'events' => [],
-                'timeline' => [
-                    'requested_at' => now(),
-                    'accepted_at' => null,
-                    'driver_arrived_at' => null,
-                    'started_at' => null,
-                    'completed_at' => null,
-                    'cancelled_at' => null,
-                ],
-                'payment' => [
-                    'method' => 'upi',
-                    'status' => 'pending',
-                    'amount' => 0,
-                    'transaction_id' => '',
-                ],
-                'rating' => [
-                    'passenger_rating' => null,
-                    'driver_rating' => null,
-                    'passenger_review' => null,
-                    'driver_review' => null,
-                ],
-                'cancellation' => [
-                    'reason' => null,
-                    'cancelled_by' => null,
-                    'refund_amount' => null,
-                ],
-                'metadata' => [
-                    'promotion_code' => null,
-                    'discount_amount' => 0,
-                    'notes' => '',
-                ],
-            ]);
-
-            // Bootstrap trip_events collection
-            $results['trip_events'] = $this->bootstrapCollection('trip_events', [
-                'trip_id' => 0,
-                'event' => '',
-                'payload' => [],
-                'timestamp' => now(),
-            ]);
-
-            // Bootstrap driver_locations collection
-            $results['driver_locations'] = $this->bootstrapCollection('driver_locations', [
-                'driver_id' => '',
-                'trip_id' => null,
-                'location' => [
-                    'latitude' => 0,
-                    'longitude' => 0,
-                    'accuracy' => 0,
-                    'heading' => 0,
-                    'speed' => 0,
-                ],
-                'timestamp' => now(),
-                'is_online' => false,
-            ]);
-
-            // Bootstrap trip_tracking collection
-            $results['trip_tracking'] = $this->bootstrapCollection('trip_tracking', [
-                'trip_id' => 0,
-                'driver_id' => '',
-                'passenger_id' => '',
-                'tracking_data' => [
-                    'polyline' => '',
-                    'distance_traveled' => 0,
-                    'duration_seconds' => 0,
-                    'stops' => [],
-                ],
-                'current_location' => [
-                    'latitude' => 0,
-                    'longitude' => 0,
-                    'timestamp' => now(),
-                ],
-                'eta' => null,
-                'started_at' => now(),
-                'updated_at' => now(),
-            ]);
-
-            // Bootstrap notifications collection
-            $results['notifications'] = $this->bootstrapCollection('notifications', [
-                'user_id' => 0,
-                'type' => 'system',
-                'title' => '',
-                'body' => '',
-                'data' => [],
-                'read' => false,
-                'timestamp' => now(),
-                'expires_at' => null,
-            ]);
-
-            // Bootstrap chat_rooms collection
-            $results['chat_rooms'] = $this->bootstrapCollection('chat_rooms', [
-                'trip_id' => 0,
-                'participants' => [],
-                'type' => 'trip_chat',
-                'created_at' => now(),
-                'updated_at' => now(),
-                'metadata' => [
-                    'last_message_at' => null,
-                    'message_count' => 0,
-                ],
-            ]);
-
-            // Bootstrap chat_messages collection
-            $results['chat_messages'] = $this->bootstrapCollection('chat_messages', [
-                'room_id' => '',
-                'sender_id' => '',
-                'message' => '',
-                'message_type' => 'text',
-                'timestamp' => now(),
-                'read_by' => [],
-                'metadata' => [],
-            ]);
-
-            // Bootstrap presence collection
-            $results['presence'] = $this->bootstrapCollection('presence', [
-                'user_id' => '',
-                'online' => false,
-                'last_seen' => now(),
-                'device_info' => [
-                    'platform' => 'android',
-                    'app_version' => '1.0.0',
-                ],
-                'location' => [
-                    'latitude' => null,
-                    'longitude' => null,
-                ],
-            ]);
-
-            // Bootstrap device_tokens collection
-            $results['device_tokens'] = $this->bootstrapCollection('device_tokens', [
-                'user_id' => '',
-                'token' => '',
-                'platform' => 'android',
-                'app_version' => '1.0.0',
-                'active' => true,
-                'created_at' => now(),
-                'last_used_at' => now(),
-            ]);
-
-            // Bootstrap payments collection
-            $results['payments'] = $this->bootstrapCollection('payments', [
-                'id' => 0,
-                'trip_id' => null,
-                'user_id' => '',
-                'amount' => 0.0,
-                'currency' => 'RWF',
-                'status' => 'pending',
-                'method' => 'momo',
-                'transaction_id' => '',
-                'created_at' => now(),
-                'updated_at' => now(),
-                'metadata' => [
-                    'reference' => '',
-                    'verified_at' => null,
-                ],
-            ]);
-
-            // Bootstrap ratings collection
-            $results['ratings'] = $this->bootstrapCollection('ratings', [
-                'id' => 0,
-                'trip_id' => null,
-                'driver_id' => null,
-                'passenger_id' => null,
-                'rating' => 0.0,
-                'review' => '',
-                'categories' => [],
-                'created_at' => now(),
-                'metadata' => [
-                    'anonymous' => false,
-                ],
-            ]);
-
-            Log::info('[FirebaseSyncService] Schema bootstrap completed', $results);
-
-            return [
-                'success' => true,
-                'message' => 'Firestore schema bootstrapped successfully',
-                'results' => $results,
-            ];
-        } catch (Exception $e) {
-            Log::error('[FirebaseSyncService] Schema bootstrap failed', [
-                'error' => $e->getMessage(),
-            ]);
-
-            return [
-                'success' => false,
-                'message' => 'Schema bootstrap failed: ' . $e->getMessage(),
-            ];
-        }
+        Log::info('[FirebaseSyncService] bootstrapSchema called — no-op (RTDB-only architecture; Firestore disabled)');
+        return [
+            'success' => true,
+            'message' => 'Schema bootstrap not required — RTDB-only architecture (Firestore disabled)',
+        ];
     }
 
     /**
-     * Bootstrap a single collection with seed data
-     */
-    private function bootstrapCollection(string $collection, array $data): array
-    {
-        try {
-            $this->firestore
-                ->collection($collection)
-                ->document('_schema_seed')
-                ->collection('bootstrap')
-                ->document('metadata')
-                ->set(array_merge($data, [
-                    '_schema_version' => '1.0.0',
-                    '_bootstrapped_at' => now()->toIso8601String(),
-                    '_collection' => $collection,
-                ]), ['merge' => true]);
-
-            return [
-                'collection' => $collection,
-                'status' => 'success',
-            ];
-        } catch (Exception $e) {
-            Log::warning("[FirebaseSyncService] Failed to bootstrap collection {$collection}", [
-                'error' => $e->getMessage(),
-            ]);
-
-            return [
-                'collection' => $collection,
-                'status' => 'failed',
-                'error' => $e->getMessage(),
-            ];
-        }
-    }
-
-    /**
-     * Sync Supabase data to Firestore
-     * 
-     * Pulls data from Supabase tables and upserts to Firestore
+     * Sync Supabase to Firebase — pushes active trips and driver state to RTDB.
      */
     public function syncSupabaseToFirestore(): array
     {
         if (!$this->isEnabled()) {
-            return [
-                'success' => false,
-                'message' => 'Firebase not enabled',
-            ];
+            return ['success' => false, 'message' => 'Firebase RTDB not enabled'];
         }
 
         try {
             $results = [];
-
-            // Sync users
-            $results['users'] = $this->syncUsers();
-
-            // Sync drivers
-            $results['drivers'] = $this->syncDrivers();
-
-            // Sync active trips
-            $results['active_trips'] = $this->syncActiveTrips();
-
-            // Sync payments
-            $results['payments'] = $this->syncPayments();
-
-            Log::info('[FirebaseSyncService] Supabase to Firestore sync completed', $results);
-
+            $results['active_trips'] = $this->syncActiveTripsToRtdb();
+            Log::info('[FirebaseSyncService] Supabase → RTDB sync completed', $results);
             return [
                 'success' => true,
-                'message' => 'Supabase to Firestore sync completed',
+                'message' => 'Supabase to RTDB sync completed',
                 'results' => $results,
             ];
         } catch (Exception $e) {
-            Log::error('[FirebaseSyncService] Supabase to Firestore sync failed', [
-                'error' => $e->getMessage(),
-            ]);
-
-            return [
-                'success' => false,
-                'message' => 'Sync failed: ' . $e->getMessage(),
-            ];
+            Log::error('[FirebaseSyncService] Supabase → RTDB sync failed', ['error' => $e->getMessage()]);
+            return ['success' => false, 'message' => 'Sync failed: ' . $e->getMessage()];
         }
+    }
+
+    /**
+     * Push all active trips to RTDB under active_trips/{trip_id}
+     */
+    private function syncActiveTripsToRtdb(): array
+    {
+        $trips = Trip::whereIn('status', ['REQUESTED', 'MATCHING', 'DRIVER_FOUND', 'ASSIGNED', 'ACCEPTED', 'ARRIVED', 'STARTED'])->get();
+        $synced = 0;
+        $failed = 0;
+
+        foreach ($trips as $trip) {
+            try {
+                $this->rtdb->getReference('active_trips/' . $trip->id)->set([
+                    'trip_id'     => $trip->id,
+                    'passenger_id' => (string) $trip->passenger_id,
+                    'driver_id'   => $trip->driver_id ? (string) $trip->driver_id : null,
+                    'status'      => strtolower($trip->status ?? 'requested'),
+                    'ride_type'   => $trip->ride_type ?? 'private_car',
+                    'pickup'      => [
+                        'latitude'  => $trip->pickup_latitude,
+                        'longitude' => $trip->pickup_longitude,
+                        'address'   => $trip->pickup_address ?? '',
+                    ],
+                    'dropoff'     => [
+                        'latitude'  => $trip->dropoff_latitude,
+                        'longitude' => $trip->dropoff_longitude,
+                        'address'   => $trip->dropoff_address ?? '',
+                    ],
+                    'estimated_fare' => $trip->estimated_fare ?? 0,
+                    'currency'       => 'RWF',
+                    'updated_at'     => now()->toIso8601String(),
+                ]);
+                $synced++;
+            } catch (Exception $e) {
+                Log::warning("[FirebaseSyncService] Failed to sync trip {$trip->id} to RTDB", ['error' => $e->getMessage()]);
+                $failed++;
+            }
+        }
+
+        return ['total' => $trips->count(), 'synced' => $synced, 'failed' => $failed];
     }
 
     /**
@@ -782,11 +454,11 @@ class FirebaseSyncService
     }
 
     /**
-     * Handle DriverAssigned event
+     * Handle DriverAssigned event — writes to RTDB
      */
     private function handleDriverAssigned(array $payload): bool
     {
-        $tripId = $payload['trip_id'] ?? null;
+        $tripId   = $payload['trip_id'] ?? null;
         $driverId = $payload['driver_id'] ?? null;
 
         if (!$tripId || !$driverId) {
@@ -795,61 +467,47 @@ class FirebaseSyncService
         }
 
         try {
-            // Update active_trips
-            $this->firestore
-                ->collection('active_trips')
-                ->document((string) $tripId)
-                ->update([
-                    ['path' => 'driver_id', 'value' => (string) $driverId],
-                    ['path' => 'status', 'value' => 'accepted'],
-                    ['path' => 'timeline.accepted_at', 'value' => now()],
-                ]);
+            // Update active_trips/{trip_id} in RTDB
+            $this->rtdb->getReference('active_trips/' . $tripId)->update([
+                'driver_id'          => (string) $driverId,
+                'status'             => 'accepted',
+                'timeline_accepted_at' => now()->toIso8601String(),
+                'updated_at'         => now()->toIso8601String(),
+            ]);
 
-            // Update driver status
-            $this->firestore
-                ->collection('drivers')
-                ->document((string) $driverId)
-                ->update([
-                    ['path' => 'status', 'value' => 'on_trip'],
-                    ['path' => 'current_trip_id', 'value' => (string) $tripId],
-                ]);
+            // Update drivers_online/{driver_id} status in RTDB
+            $this->rtdb->getReference('drivers_online/' . $driverId)->update([
+                'status'         => 'on_trip',
+                'current_trip_id' => (string) $tripId,
+                'updated_at'     => now()->toIso8601String(),
+            ]);
 
-            // Log trip event
-            $this->firestore
-                ->collection('trip_events')
-                ->add([
-                    'trip_id' => (int) $tripId,
-                    'event' => 'driver_assigned',
-                    'payload' => $payload,
-                    'timestamp' => now(),
-                ]);
-
-            // Send notification to passenger
+            // Send FCM notification to passenger
             $this->sendNotification(
                 $payload['passenger_id'] ?? null,
                 'trip',
                 'Driver Assigned',
                 'Your driver has been assigned',
-                ['trip_id' => $tripId, 'driver_id' => $driverId]
+                ['trip_id' => (string) $tripId, 'driver_id' => (string) $driverId]
             );
 
-            Log::info('[FirebaseSyncService] DriverAssigned synced', [
-                'trip_id' => $tripId,
+            Log::info('[FirebaseSyncService] DriverAssigned synced to RTDB', [
+                'trip_id'   => $tripId,
                 'driver_id' => $driverId,
             ]);
 
             return true;
         } catch (Exception $e) {
-            Log::error('[FirebaseSyncService] DriverAssigned sync failed', [
+            Log::error('[FirebaseSyncService] DriverAssigned RTDB sync failed', [
                 'trip_id' => $tripId,
-                'error' => $e->getMessage(),
+                'error'   => $e->getMessage(),
             ]);
             return false;
         }
     }
 
     /**
-     * Handle TripStarted event
+     * Handle TripStarted event — writes to RTDB
      */
     private function handleTripStarted(array $payload): bool
     {
@@ -861,52 +519,40 @@ class FirebaseSyncService
         }
 
         try {
-            // Update active_trips
-            $this->firestore
-                ->collection('active_trips')
-                ->document((string) $tripId)
-                ->update([
-                    ['path' => 'status', 'value' => 'in_progress'],
-                    ['path' => 'timeline.started_at', 'value' => now()],
-                ]);
+            // Update active_trips/{trip_id} in RTDB
+            $this->rtdb->getReference('active_trips/' . $tripId)->update([
+                'status'             => 'started',
+                'timeline_started_at' => now()->toIso8601String(),
+                'updated_at'         => now()->toIso8601String(),
+            ]);
 
-            // Log trip event
-            $this->firestore
-                ->collection('trip_events')
-                ->add([
-                    'trip_id' => (int) $tripId,
-                    'event' => 'trip_started',
-                    'payload' => $payload,
-                    'timestamp' => now(),
-                ]);
-
-            // Send notification to passenger
+            // Send FCM notification to passenger
             $this->sendNotification(
                 $payload['passenger_id'] ?? null,
                 'trip',
                 'Trip Started',
                 'Your trip has started',
-                ['trip_id' => $tripId]
+                ['trip_id' => (string) $tripId]
             );
 
-            Log::info('[FirebaseSyncService] TripStarted synced', ['trip_id' => $tripId]);
+            Log::info('[FirebaseSyncService] TripStarted synced to RTDB', ['trip_id' => $tripId]);
 
             return true;
         } catch (Exception $e) {
-            Log::error('[FirebaseSyncService] TripStarted sync failed', [
+            Log::error('[FirebaseSyncService] TripStarted RTDB sync failed', [
                 'trip_id' => $tripId,
-                'error' => $e->getMessage(),
+                'error'   => $e->getMessage(),
             ]);
             return false;
         }
     }
 
     /**
-     * Handle TripCompleted event
+     * Handle TripCompleted event — writes to RTDB
      */
     private function handleTripCompleted(array $payload): bool
     {
-        $tripId = $payload['trip_id'] ?? null;
+        $tripId   = $payload['trip_id'] ?? null;
         $driverId = $payload['driver_id'] ?? null;
 
         if (!$tripId) {
@@ -915,76 +561,62 @@ class FirebaseSyncService
         }
 
         try {
-            // Update active_trips
-            $this->firestore
-                ->collection('active_trips')
-                ->document((string) $tripId)
-                ->update([
-                    ['path' => 'status', 'value' => 'completed'],
-                    ['path' => 'timeline.completed_at', 'value' => now()],
-                ]);
+            // Update active_trips/{trip_id} in RTDB
+            $this->rtdb->getReference('active_trips/' . $tripId)->update([
+                'status'               => 'completed',
+                'timeline_completed_at' => now()->toIso8601String(),
+                'updated_at'           => now()->toIso8601String(),
+            ]);
 
-            // Update driver status
+            // Release driver in drivers_online/{driver_id}
             if ($driverId) {
-                $this->firestore
-                    ->collection('drivers')
-                    ->document((string) $driverId)
-                    ->update([
-                        ['path' => 'status', 'value' => 'available'],
-                        ['path' => 'current_trip_id', 'value' => null],
-                    ]);
+                $this->rtdb->getReference('drivers_online/' . $driverId)->update([
+                    'status'          => 'online',
+                    'current_trip_id' => null,
+                    'updated_at'      => now()->toIso8601String(),
+                ]);
             }
 
-            // Log trip event
-            $this->firestore
-                ->collection('trip_events')
-                ->add([
-                    'trip_id' => (int) $tripId,
-                    'event' => 'trip_completed',
-                    'payload' => $payload,
-                    'timestamp' => now(),
-                ]);
-
-            // Send notification to passenger
+            // Send FCM notification to passenger
             $this->sendNotification(
                 $payload['passenger_id'] ?? null,
                 'trip',
                 'Trip Completed',
                 'Your trip has been completed',
-                ['trip_id' => $tripId]
+                ['trip_id' => (string) $tripId]
             );
 
-            // Send notification to driver
+            // Send FCM notification to driver
             if ($driverId) {
                 $this->sendNotification(
                     $driverId,
                     'trip',
                     'Trip Completed',
                     'Trip completed successfully',
-                    ['trip_id' => $tripId]
+                    ['trip_id' => (string) $tripId]
                 );
             }
 
-            Log::info('[FirebaseSyncService] TripCompleted synced', ['trip_id' => $tripId]);
+            Log::info('[FirebaseSyncService] TripCompleted synced to RTDB', ['trip_id' => $tripId]);
 
             return true;
         } catch (Exception $e) {
-            Log::error('[FirebaseSyncService] TripCompleted sync failed', [
+            Log::error('[FirebaseSyncService] TripCompleted RTDB sync failed', [
                 'trip_id' => $tripId,
-                'error' => $e->getMessage(),
+                'error'   => $e->getMessage(),
             ]);
             return false;
         }
     }
 
     /**
-     * Handle PaymentCompleted event
+     * Handle PaymentCompleted event — writes to RTDB
      */
     private function handlePaymentCompleted(array $payload): bool
     {
-        $tripId = $payload['trip_id'] ?? null;
-        $paymentId = $payload['payment_id'] ?? null;
-        $amount = $payload['amount'] ?? 0;
+        $tripId        = $payload['trip_id'] ?? null;
+        $paymentId     = $payload['payment_id'] ?? null;
+        $amount        = $payload['amount'] ?? 0;
         $transactionId = $payload['transaction_id'] ?? '';
 
         if (!$tripId) {
@@ -993,67 +625,55 @@ class FirebaseSyncService
         }
 
         try {
-            // Update active_trips payment
-            $this->firestore
-                ->collection('active_trips')
-                ->document((string) $tripId)
-                ->update([
-                    ['path' => 'payment.status', 'value' => 'completed'],
-                    ['path' => 'payment.amount', 'value' => $amount],
-                    ['path' => 'payment.transaction_id', 'value' => $transactionId],
-                ]);
+            // Update payment status in active_trips RTDB node
+            $this->rtdb->getReference('active_trips/' . $tripId)->update([
+                'payment_status'         => 'completed',
+                'payment_amount'         => $amount,
+                'payment_transaction_id' => $transactionId,
+                'updated_at'             => now()->toIso8601String(),
+            ]);
 
-            // Log trip event
-            $this->firestore
-                ->collection('trip_events')
-                ->add([
-                    'trip_id' => (int) $tripId,
-                    'event' => 'payment_completed',
-                    'payload' => $payload,
-                    'timestamp' => now(),
-                ]);
-
-            // Send notification to passenger
+            // Send FCM notification to passenger
             $this->sendNotification(
                 $payload['passenger_id'] ?? null,
                 'payment',
                 'Payment Confirmed',
                 'Your payment has been confirmed',
-                ['trip_id' => $tripId, 'payment_id' => $paymentId, 'amount' => $amount]
+                ['trip_id' => (string) $tripId, 'payment_id' => (string) $paymentId, 'amount' => $amount]
             );
 
-            // Send notification to driver
+            // Send FCM notification to driver
             $this->sendNotification(
                 $payload['driver_id'] ?? null,
                 'payment',
                 'Payment Received',
                 'Payment received successfully',
-                ['trip_id' => $tripId, 'payment_id' => $paymentId, 'amount' => $amount]
+                ['trip_id' => (string) $tripId, 'payment_id' => (string) $paymentId, 'amount' => $amount]
             );
 
-            Log::info('[FirebaseSyncService] PaymentCompleted synced', [
-                'trip_id' => $tripId,
+            Log::info('[FirebaseSyncService] PaymentCompleted synced to RTDB', [
+                'trip_id'    => $tripId,
                 'payment_id' => $paymentId,
             ]);
 
             return true;
         } catch (Exception $e) {
-            Log::error('[FirebaseSyncService] PaymentCompleted sync failed', [
+            Log::error('[FirebaseSyncService] PaymentCompleted RTDB sync failed', [
                 'trip_id' => $tripId,
-                'error' => $e->getMessage(),
+                'error'   => $e->getMessage(),
             ]);
             return false;
         }
     }
 
     /**
-     * Handle RatingSubmitted event
+     * Handle RatingSubmitted event — updates RTDB driver node and sends FCM
      */
     private function handleRatingSubmitted(array $payload): bool
     {
         $driverId = $payload['driver_id'] ?? null;
-        $rating = $payload['rating'] ?? 0;
-        $tripId = $payload['trip_id'] ?? null;
+        $rating   = $payload['rating'] ?? 0;
+        $tripId   = $payload['trip_id'] ?? null;
 
         if (!$driverId) {
             Log::warning('[FirebaseSyncService] RatingSubmitted missing required fields', $payload);
@@ -1061,45 +681,22 @@ class FirebaseSyncService
         }
 
         try {
-            // Add to driver_ratings collection
-            $this->firestore
-                ->collection('driver_ratings')
-                ->add([
-                    'driver_id' => (string) $driverId,
-                    'trip_id' => $tripId ?? '',
-                    'passenger_id' => $payload['passenger_id'] ?? '',
-                    'rating' => $rating,
-                    'review' => $payload['review'] ?? '',
-                    'categories' => $payload['categories'] ?? [],
-                    'created_at' => now(),
-                    'anonymous' => false,
-                ]);
+            // Update driver's rating in drivers_online/{driver_id} RTDB node
+            $this->rtdb->getReference('drivers_online/' . $driverId)->update([
+                'last_rating' => $rating,
+                'updated_at'  => now()->toIso8601String(),
+            ]);
 
-            // Update driver average rating
-            $this->updateDriverAverageRating($driverId);
-
-            // Log trip event
-            if ($tripId) {
-                $this->firestore
-                    ->collection('trip_events')
-                    ->add([
-                        'trip_id' => (int) $tripId,
-                        'event' => 'rating_submitted',
-                        'payload' => $payload,
-                        'timestamp' => now(),
-                    ]);
-            }
-
-            Log::info('[FirebaseSyncService] RatingSubmitted synced', [
+            Log::info('[FirebaseSyncService] RatingSubmitted synced to RTDB', [
                 'driver_id' => $driverId,
-                'rating' => $rating,
+                'rating'    => $rating,
             ]);
 
             return true;
         } catch (Exception $e) {
-            Log::error('[FirebaseSyncService] RatingSubmitted sync failed', [
+            Log::error('[FirebaseSyncService] RatingSubmitted RTDB sync failed', [
                 'driver_id' => $driverId,
-                'error' => $e->getMessage(),
+                'error'     => $e->getMessage(),
             ]);
             return false;
         }
@@ -1133,34 +730,23 @@ class FirebaseSyncService
         }
 
         try {
-            $this->firestore
-                ->collection('users')
-                ->document((string) $user->id)
-                ->set([
-                    'email' => $user->email,
-                    'name' => $user->name,
-                    'phone' => $user->phone,
-                    'role' => $user->role->value,
-                    'is_online' => false,
-                    'last_seen' => now(),
-                    'rating' => 0.0,
-                    'completed_trips' => 0,
-                    'cancelled_trips' => 0,
-                    'metadata' => [
-                        'created_at' => now(),
-                        'updated_at' => now(),
-                        'firebase_token' => null,
-                        'app_version' => '1.0.0',
-                    ],
-                ], ['merge' => true]);
+            // Write basic user presence info to RTDB presence/{user_id}
+            $this->rtdb->getReference('presence/' . $user->id)->set([
+                'user_id'    => (string) $user->id,
+                'name'       => $user->name,
+                'role'       => $user->role->value ?? 'passenger',
+                'online'     => false,
+                'last_seen'  => now()->toIso8601String(),
+                'updated_at' => now()->toIso8601String(),
+            ]);
 
-            Log::info('[FirebaseSyncService] UserCreated synced', ['user_id' => $userId]);
+            Log::info('[FirebaseSyncService] UserCreated synced to RTDB presence', ['user_id' => $userId]);
 
             return true;
         } catch (Exception $e) {
-            Log::error('[FirebaseSyncService] UserCreated sync failed', [
+            Log::error('[FirebaseSyncService] UserCreated RTDB sync failed', [
                 'user_id' => $userId,
-                'error' => $e->getMessage(),
+                'error'   => $e->getMessage(),
             ]);
             return false;
         }
@@ -1180,47 +766,25 @@ class FirebaseSyncService
         }
 
         try {
-            $this->firestore
-                ->collection('drivers')
-                ->document((string) $driver->user_id)
-                ->set([
-                    'user_id' => $driver->user_id,
-                    'status' => 'offline',
-                    'current_location' => [
-                        'latitude' => $driver->last_location_lat ?? 0,
-                        'longitude' => $driver->last_location_lng ?? 0,
-                        'accuracy' => 0,
-                        'updated_at' => now(),
-                    ],
-                    'current_trip_id' => null,
-                    'vehicle' => [
-                        'type' => $driver->vehicle_type ?? 'economy',
-                        'license_plate' => $driver->license_plate ?? '',
-                        'color' => $driver->vehicle_color ?? '',
-                        'model' => $driver->vehicle_model ?? '',
-                    ],
-                    'service_types' => ['private_car'],
-                    'response_time' => 0,
-                    'acceptance_rate' => 0,
-                    'cancellation_rate' => 0,
-                    'average_rating' => 0.0,
-                    'total_earnings' => 0,
-                    'available_capacity' => $driver->capacity ?? 1,
-                    'metadata' => [
-                        'last_location_update' => now(),
-                        'shift_start' => null,
-                        'shift_end' => null,
-                        'offline_reason' => null,
-                    ],
-                ], ['merge' => true]);
+            // Write driver online state to RTDB drivers_online/{driver_user_id}
+            $this->rtdb->getReference('drivers_online/' . $driver->user_id)->set([
+                'driver_id'        => $driver->id,
+                'user_id'          => (string) $driver->user_id,
+                'status'           => 'offline',
+                'current_lat'      => $driver->last_location_lat ?? 0,
+                'current_lng'      => $driver->last_location_lng ?? 0,
+                'vehicle_type'     => $driver->vehicle_type ?? 'economy',
+                'current_trip_id'  => null,
+                'updated_at'       => now()->toIso8601String(),
+            ]);
 
-            Log::info('[FirebaseSyncService] DriverCreated synced', ['driver_id' => $driverId]);
+            Log::info('[FirebaseSyncService] DriverCreated synced to RTDB', ['driver_id' => $driverId]);
 
             return true;
         } catch (Exception $e) {
-            Log::error('[FirebaseSyncService] DriverCreated sync failed', [
+            Log::error('[FirebaseSyncService] DriverCreated RTDB sync failed', [
                 'driver_id' => $driverId,
-                'error' => $e->getMessage(),
+                'error'     => $e->getMessage(),
             ]);
             return false;
         }
@@ -1242,45 +806,31 @@ class FirebaseSyncService
         }
 
         try {
-            // Update active_trips
-            $this->firestore
-                ->collection('active_trips')
-                ->document((string) $tripId)
-                ->update([
-                    ['path' => 'status', 'value' => 'cancelled'],
-                    ['path' => 'timeline.cancelled_at', 'value' => now()],
-                    ['path' => 'cancellation.reason', 'value' => $reason],
-                    ['path' => 'cancellation.cancelled_by', 'value' => $cancelledBy],
-                ]);
+            // Update active_trips/{trip_id} in RTDB
+            $this->rtdb->getReference('active_trips/' . $tripId)->update([
+                'status'                  => 'cancelled',
+                'timeline_cancelled_at'   => now()->toIso8601String(),
+                'cancellation_reason'     => $reason,
+                'cancelled_by'            => $cancelledBy,
+                'updated_at'              => now()->toIso8601String(),
+            ]);
 
-            // Update driver status
+            // Release driver in drivers_online/{driver_id}
             if ($driverId) {
-                $this->firestore
-                    ->collection('drivers')
-                    ->document((string) $driverId)
-                    ->update([
-                        ['path' => 'status', 'value' => 'available'],
-                        ['path' => 'current_trip_id', 'value' => null],
-                    ]);
+                $this->rtdb->getReference('drivers_online/' . $driverId)->update([
+                    'status'          => 'online',
+                    'current_trip_id' => null,
+                    'updated_at'      => now()->toIso8601String(),
+                ]);
             }
 
-            // Log trip event
-            $this->firestore
-                ->collection('trip_events')
-                ->add([
-                    'trip_id' => (int) $tripId,
-                    'event' => 'trip_cancelled',
-                    'payload' => $payload,
-                    'timestamp' => now(),
-                ]);
-
-            Log::info('[FirebaseSyncService] TripCancelled synced', ['trip_id' => $tripId]);
+            Log::info('[FirebaseSyncService] TripCancelled synced to RTDB', ['trip_id' => $tripId]);
 
             return true;
         } catch (Exception $e) {
-            Log::error('[FirebaseSyncService] TripCancelled sync failed', [
+            Log::error('[FirebaseSyncService] TripCancelled RTDB sync failed', [
                 'trip_id' => $tripId,
-                'error' => $e->getMessage(),
+                'error'   => $e->getMessage(),
             ]);
             return false;
         }
@@ -1299,12 +849,11 @@ class FirebaseSyncService
     }
 
     /**
-     * Sync driver location
-     * 
-     * Centralize driver tracking writes:
-     * - driver_locations collection
-     * - drivers.current_location update
-     * - active_trips.driver_location update (if active)
+     * Sync driver location to RTDB.
+     *
+     * RTDB paths:
+     * - driver_locations/{driver_id} — current location snapshot
+     * - active_trips/{trip_id}       — driver_location sub-node (if on trip)
      */
     public function syncDriverLocation(string $driverId, float $latitude, float $longitude, float $accuracy = 0, ?int $tripId = null): bool
     {
@@ -1313,68 +862,50 @@ class FirebaseSyncService
         }
 
         try {
-            $this->ensureCollectionExists('driver_locations');
-            
-            // Update driver_locations collection
-            $this->firestore
-                ->collection('driver_locations')
-                ->add([
-                    'driver_id' => (string) $driverId,
-                    'trip_id' => $tripId ? (string) $tripId : null,
-                    'location' => [
-                        'latitude' => $latitude,
-                        'longitude' => $longitude,
-                        'accuracy' => $accuracy,
-                        'heading' => 0,
-                        'speed' => 0,
-                    ],
-                    'timestamp' => now(),
-                    'is_online' => true,
-                ]);
+            // Update driver_locations/{driver_id} in RTDB
+            $this->rtdb->getReference('driver_locations/' . $driverId)->set([
+                'driver_id'  => (string) $driverId,
+                'trip_id'    => $tripId ? (string) $tripId : null,
+                'latitude'   => $latitude,
+                'longitude'  => $longitude,
+                'accuracy'   => $accuracy,
+                'is_online'  => true,
+                'updated_at' => now()->toIso8601String(),
+            ]);
 
-            // Update drivers.current_location
-            $this->firestore
-                ->collection('drivers')
-                ->document((string) $driverId)
-                ->update([
-                    ['path' => 'current_location.latitude', 'value' => $latitude],
-                    ['path' => 'current_location.longitude', 'value' => $longitude],
-                    ['path' => 'current_location.accuracy', 'value' => $accuracy],
-                    ['path' => 'current_location.updated_at', 'value' => now()],
-                    ['path' => 'metadata.last_location_update', 'value' => now()],
-                ]);
+            // Also update drivers_online/{driver_id} current location
+            $this->rtdb->getReference('drivers_online/' . $driverId)->update([
+                'current_lat' => $latitude,
+                'current_lng' => $longitude,
+                'updated_at'  => now()->toIso8601String(),
+            ]);
 
-            // Update active_trips.driver_location if on active trip
+            // Update active_trips/{trip_id} driver_location if on active trip
             if ($tripId) {
-                $this->firestore
-                    ->collection('active_trips')
-                    ->document((string) $tripId)
-                    ->update([
-                        ['path' => 'driver_location.latitude', 'value' => $latitude],
-                        ['path' => 'driver_location.longitude', 'value' => $longitude],
-                        ['path' => 'driver_location.timestamp', 'value' => now()],
-                    ]);
-                
+                $this->rtdb->getReference('active_trips/' . $tripId)->update([
+                    'driver_lat'        => $latitude,
+                    'driver_lng'        => $longitude,
+                    'driver_updated_at' => now()->toIso8601String(),
+                ]);
+
                 // Sync trip tracking
                 $this->syncTripTracking($tripId, $driverId, $latitude, $longitude);
             }
 
             return true;
         } catch (Exception $e) {
-            Log::error('[FirebaseSyncService] Driver location sync failed', [
+            Log::error('[FirebaseSyncService] Driver location RTDB sync failed', [
                 'driver_id' => $driverId,
-                'error' => $e->getMessage(),
+                'error'     => $e->getMessage(),
             ]);
             return false;
         }
     }
 
     /**
-     * Sync trip tracking data
-     * 
-     * Centralize trip tracking writes:
-     * - trip_tracking collection
-     * - ETA and distance calculations
+     * Sync trip tracking data to RTDB.
+     *
+     * RTDB path: trip_tracking/{trip_id}
      */
     public function syncTripTracking(int $tripId, string $driverId, float $latitude, float $longitude, ?float $eta = null, ?float $distanceRemaining = null): bool
     {
@@ -1383,28 +914,20 @@ class FirebaseSyncService
         }
 
         try {
-            $this->ensureCollectionExists('trip_tracking');
-            
-            $this->firestore
-                ->collection('trip_tracking')
-                ->document((string) $tripId)
-                ->set([
-                    'driver_id' => (string) $driverId,
-                    'driver_location' => [
-                        'latitude' => $latitude,
-                        'longitude' => $longitude,
-                        'updated_at' => now(),
-                    ],
-                    'eta' => $eta,
-                    'distance_remaining' => $distanceRemaining,
-                    'updated_at' => now(),
-                ], ['merge' => true]);
+            $this->rtdb->getReference('trip_tracking/' . $tripId)->update([
+                'driver_id'         => (string) $driverId,
+                'driver_lat'        => $latitude,
+                'driver_lng'        => $longitude,
+                'eta'               => $eta,
+                'distance_remaining' => $distanceRemaining,
+                'updated_at'        => now()->toIso8601String(),
+            ]);
 
             return true;
         } catch (Exception $e) {
-            Log::error('[FirebaseSyncService] Trip tracking sync failed', [
+            Log::error('[FirebaseSyncService] Trip tracking RTDB sync failed', [
                 'trip_id' => $tripId,
-                'error' => $e->getMessage(),
+                'error'   => $e->getMessage(),
             ]);
             return false;
         }
@@ -1434,94 +957,60 @@ class FirebaseSyncService
         }
 
         try {
-            // Update active_trips.payment
-            $this->firestore
-                ->collection('active_trips')
-                ->document((string) $tripId)
-                ->update([
-                    ['path' => 'payment.status', 'value' => $status],
-                    ['path' => 'payment.amount', 'value' => $amount],
-                    ['path' => 'payment.transaction_id', 'value' => $transactionId],
-                ]);
-
-            // Log trip event
-            $this->firestore
-                ->collection('trip_events')
-                ->add([
-                    'trip_id' => (int) $tripId,
-                    'event' => 'payment_' . $status,
-                    'payload' => $paymentData,
-                    'timestamp' => now(),
-                ]);
+            // Update active_trips/{trip_id} payment status in RTDB
+            $this->rtdb->getReference('active_trips/' . $tripId)->update([
+                'payment_status'         => $status,
+                'payment_amount'         => $amount,
+                'payment_transaction_id' => $transactionId,
+                'updated_at'             => now()->toIso8601String(),
+            ]);
 
             // Trigger notification if completed
             if ($status === 'completed') {
                 $this->syncEvent('PaymentCompleted', $paymentData);
             }
 
-            Log::info('[FirebaseSyncService] Payment event synced', [
+            Log::info('[FirebaseSyncService] Payment event synced to RTDB', [
                 'trip_id' => $tripId,
-                'status' => $status,
+                'status'  => $status,
             ]);
 
             return true;
         } catch (Exception $e) {
-            Log::error('[FirebaseSyncService] Payment event sync failed', [
+            Log::error('[FirebaseSyncService] Payment event RTDB sync failed', [
                 'trip_id' => $tripId,
-                'error' => $e->getMessage(),
+                'error'   => $e->getMessage(),
             ]);
             return false;
         }
     }
 
     /**
-     * Update driver average rating from all ratings
+     * Update driver average rating from Postgres instead of Firestore.
+     * Firestore is disabled; rating data lives in Supabase.
      */
     private function updateDriverAverageRating(string $driverId): void
     {
         try {
-            $ratings = $this->firestore
-                ->collection('driver_ratings')
-                ->where('driver_id', '==', $driverId)
-                ->documents();
-
-            $total = 0;
-            $count = 0;
-
-            foreach ($ratings as $doc) {
-                $total += (float) ($doc['rating'] ?? 0);
-                $count++;
-            }
-
-            if ($count === 0) {
-                return;
-            }
-
-            $average = $total / $count;
-
-            $this->firestore
-                ->collection('drivers')
-                ->document($driverId)
-                ->update([
-                    ['path' => 'average_rating', 'value' => $average],
+            $driver = Driver::find($driverId);
+            if ($driver && $driver->average_rating !== null) {
+                // Update RTDB driver node with the Postgres-sourced rating
+                $this->rtdb->getReference('drivers_online/' . $driverId)->update([
+                    'average_rating' => (float) $driver->average_rating,
+                    'updated_at'     => now()->toIso8601String(),
                 ]);
-
-            $this->firestore
-                ->collection('users')
-                ->document($driverId)
-                ->update([
-                    ['path' => 'rating', 'value' => $average],
-                ]);
+            }
         } catch (Exception $e) {
-            Log::error('[FirebaseSyncService] Update average rating failed', [
+            Log::error('[FirebaseSyncService] RTDB rating update failed', [
                 'driver_id' => $driverId,
-                'error' => $e->getMessage(),
+                'error'     => $e->getMessage(),
             ]);
         }
     }
 
     /**
-     * Send notification to Firestore and FCM
+     * Send notification: writes to RTDB notification_queue and dispatches FCM.
+     * Firestore is disabled; notifications go to RTDB notification_queue/{user_id}.
      */
     private function sendNotification(?int $userId, string $type, string $title, string $body, array $data = []): void
     {
@@ -1530,110 +1019,98 @@ class FirebaseSyncService
         }
 
         try {
-            // Write to Firestore notifications collection
-            $this->firestore
-                ->collection('notifications')
-                ->add([
-                    'user_id' => (int) $userId,
-                    'type' => $type,
-                    'title' => $title,
-                    'body' => $body,
-                    'data' => $data,
-                    'read' => false,
-                    'timestamp' => now(),
-                ]);
+            // Push notification to RTDB notification_queue/{user_id}/{timestamp}
+            $this->rtdb->getReference('notification_queue/' . $userId . '/' . now()->timestamp)->set([
+                'user_id'    => (int) $userId,
+                'type'       => $type,
+                'title'      => $title,
+                'body'       => $body,
+                'data'       => $data,
+                'read'       => false,
+                'created_at' => now()->toIso8601String(),
+            ]);
 
-            // Send FCM push notification
-            if ($this->messaging) {
-                $this->sendFcmNotification($userId, $title, $body, $data);
-            }
+            // Send FCM push notification via Postgres device tokens
+            $this->sendFcmNotification($userId, $title, $body, $data);
         } catch (Exception $e) {
             Log::warning('[FirebaseSyncService] Notification send failed', [
                 'user_id' => $userId,
-                'error' => $e->getMessage(),
+                'error'   => $e->getMessage(),
             ]);
         }
     }
 
     /**
-     * Send FCM push notification
+     * Send FCM push notification.
+     * Device tokens are read from Postgres (device_tokens table) instead of Firestore.
      */
     private function sendFcmNotification(int $userId, string $title, string $body, array $data = []): void
     {
         try {
-            // Get user's device tokens from Firestore
-            $tokens = $this->firestore
-                ->collection('device_tokens')
-                ->where('user_id', '==', (string) $userId)
-                ->where('active', '==', true)
-                ->documents();
+            // Read active device tokens from Postgres via the DeviceToken model
+            $tokenRecords = \App\Models\DeviceToken::where('tokenable_id', $userId)
+                ->where('is_active', true)
+                ->pluck('token')
+                ->filter()
+                ->values()
+                ->toArray();
 
-            $tokenList = [];
-            foreach ($tokens as $token) {
-                $tokenList[] = $token['token'];
-            }
-
-            if (empty($tokenList)) {
+            if (empty($tokenRecords)) {
                 return;
             }
 
-            // Send multicast message
+            // Create FCM messaging client from factory
+            $credentialsPath = config('firebase.credentials');
+            if (!$credentialsPath || !file_exists($credentialsPath)) {
+                return;
+            }
+
+            $messaging = (new \Kreait\Firebase\Factory)
+                ->withServiceAccount($credentialsPath)
+                ->createMessaging();
+
             $message = \Kreait\Firebase\Messaging\CloudMessage::new()
                 ->withNotification(['title' => $title, 'body' => $body])
-                ->withData($data);
+                ->withData(array_map('strval', $data));
 
-            $this->messaging->sendMulticast($message, $tokenList);
+            $messaging->sendMulticast($message, $tokenRecords);
 
             Log::debug('[FirebaseSyncService] FCM notification sent', [
-                'user_id' => $userId,
-                'tokens_count' => count($tokenList),
+                'user_id'      => $userId,
+                'tokens_count' => count($tokenRecords),
             ]);
         } catch (Exception $e) {
             Log::warning('[FirebaseSyncService] FCM notification failed', [
                 'user_id' => $userId,
-                'error' => $e->getMessage(),
+                'error'   => $e->getMessage(),
             ]);
         }
     }
 
     /**
-     * Health check
+     * Health check — reports RTDB status (Firestore is permanently disabled)
      */
     public function healthCheck(): array
     {
         if (!$this->isEnabled()) {
             return [
-                'status' => 'disconnected',
-                'message' => 'Firebase not configured or enabled',
+                'status'   => 'disconnected',
+                'message'  => 'Firebase RTDB not configured or enabled',
+                'firestore' => 'disabled',
             ];
         }
 
-        try {
-            if ($this->healthService->canConnectFirestore()) {
-                return [
-                    'status' => 'connected',
-                    'message' => 'Firebase Firestore connection healthy',
-                    'bootstrap_enabled' => $this->bootstrapEnabled,
-                ];
-            } else {
-                return [
-                    'status' => 'error',
-                    'message' => 'Firebase connection failed: Ping verification failed',
-                ];
-            }
-        } catch (Exception $e) {
-            return [
-                'status' => 'error',
-                'message' => 'Firebase connection failed: ' . $e->getMessage(),
-            ];
-        }
+        return [
+            'status'    => 'connected',
+            'message'   => 'Firebase RTDB connection active (Firestore permanently disabled)',
+            'firestore' => 'disabled',
+        ];
     }
 
     // ==================== ADDITIONAL SYNC METHODS ====================
 
     /**
-     * Sync user to Firestore
-     * Idempotent, retry-safe, queue-safe
+     * Sync user to RTDB presence — Firestore permanently disabled.
      */
     public function syncUser(int $userId): bool
     {
@@ -1648,33 +1125,21 @@ class FirebaseSyncService
         }
 
         try {
-            $this->firestore
-                ->collection('users')
-                ->document((string) $user->id)
-                ->set([
-                    'email' => $user->email,
-                    'name' => $user->name,
-                    'phone' => $user->phone,
-                    'role' => $user->role->value,
-                    'is_online' => false,
-                    'last_seen' => $user->updated_at ?? now(),
-                    'rating' => 0.0,
-                    'completed_trips' => 0,
-                    'cancelled_trips' => 0,
-                    'metadata' => [
-                        'created_at' => $user->created_at ?? now(),
-                        'updated_at' => $user->updated_at ?? now(),
-                        'firebase_token' => null,
-                        'app_version' => '1.0.0',
-                    ],
-                ], ['merge' => true]);
+            $this->rtdb->getReference('presence/' . $userId)->update([
+                'user_id'    => (string) $userId,
+                'name'       => $user->name,
+                'role'       => $user->role->value ?? 'passenger',
+                'online'     => false,
+                'last_seen'  => ($user->updated_at ?? now())->toIso8601String(),
+                'updated_at' => now()->toIso8601String(),
+            ]);
 
-            Log::info('[FirebaseSyncService] User synced', ['user_id' => $userId]);
+            Log::info('[FirebaseSyncService] User synced to RTDB presence', ['user_id' => $userId]);
             return true;
         } catch (Exception $e) {
-            Log::error('[FirebaseSyncService] User sync failed', [
+            Log::error('[FirebaseSyncService] User RTDB sync failed', [
                 'user_id' => $userId,
-                'error' => $e->getMessage(),
+                'error'   => $e->getMessage(),
             ]);
             return false;
         }
@@ -1697,54 +1162,32 @@ class FirebaseSyncService
         }
 
         try {
-            $this->firestore
-                ->collection('drivers')
-                ->document((string) $driver->user_id)
-                ->set([
-                    'user_id' => $driver->user_id,
-                    'status' => 'offline',
-                    'current_location' => [
-                        'latitude' => $driver->last_location_lat ?? 0,
-                        'longitude' => $driver->last_location_lng ?? 0,
-                        'accuracy' => 0,
-                        'updated_at' => now(),
-                    ],
-                    'current_trip_id' => null,
-                    'vehicle' => [
-                        'type' => $driver->vehicle_type ?? 'economy',
-                        'license_plate' => $driver->license_plate ?? '',
-                        'color' => $driver->vehicle_color ?? '',
-                        'model' => $driver->vehicle_model ?? '',
-                    ],
-                    'service_types' => ['private_car'],
-                    'response_time' => 0,
-                    'acceptance_rate' => 0,
-                    'cancellation_rate' => 0,
-                    'average_rating' => 0.0,
-                    'total_earnings' => 0,
-                    'available_capacity' => $driver->capacity ?? 1,
-                    'metadata' => [
-                        'last_location_update' => now(),
-                        'shift_start' => null,
-                        'shift_end' => null,
-                        'offline_reason' => null,
-                    ],
-                ], ['merge' => true]);
+            // Write driver state to RTDB drivers_online/{driver_user_id}
+            $this->rtdb->getReference('drivers_online/' . $driver->user_id)->set([
+                'driver_id'       => $driver->id,
+                'user_id'         => (string) $driver->user_id,
+                'status'          => 'offline',
+                'current_lat'     => $driver->last_location_lat ?? 0,
+                'current_lng'     => $driver->last_location_lng ?? 0,
+                'vehicle_type'    => $driver->vehicle_type ?? 'economy',
+                'average_rating'  => (float) ($driver->average_rating ?? 0),
+                'current_trip_id' => null,
+                'updated_at'      => now()->toIso8601String(),
+            ]);
 
-            Log::info('[FirebaseSyncService] Driver synced', ['driver_id' => $driverId]);
+            Log::info('[FirebaseSyncService] Driver synced to RTDB', ['driver_id' => $driverId]);
             return true;
         } catch (Exception $e) {
-            Log::error('[FirebaseSyncService] Driver sync failed', [
+            Log::error('[FirebaseSyncService] Driver RTDB sync failed', [
                 'driver_id' => $driverId,
-                'error' => $e->getMessage(),
+                'error'     => $e->getMessage(),
             ]);
             return false;
         }
     }
 
     /**
-     * Sync trip to Firestore
-     * Idempotent, retry-safe, queue-safe
+     * Sync trip to RTDB active_trips — Firestore permanently disabled.
      */
     public function syncTrip(int $tripId): bool
     {
@@ -1759,82 +1202,31 @@ class FirebaseSyncService
         }
 
         try {
-            $this->firestore
-                ->collection('active_trips')
-                ->document((string) $trip->id)
-                ->set([
-                    'passenger_id' => (string) $trip->passenger_id,
-                    'driver_id' => $trip->driver_id ? (string) $trip->driver_id : null,
-                    'status' => $trip->status ?? 'requested',
-                    'ride_type' => $trip->ride_type ?? 'private_car',
-                    'pickup' => [
-                        'latitude' => $trip->pickup_latitude,
-                        'longitude' => $trip->pickup_longitude,
-                        'address' => $trip->pickup_address ?? '',
-                        'timestamp' => now(),
-                    ],
-                    'dropoff' => [
-                        'latitude' => $trip->dropoff_latitude,
-                        'longitude' => $trip->dropoff_longitude,
-                        'address' => $trip->dropoff_address ?? '',
-                        'timestamp' => now(),
-                    ],
-                    'distance_km' => $trip->distance_km ?? 0,
-                    'estimated_duration_seconds' => $trip->estimated_duration ?? 0,
-                    'estimated_fare' => $trip->estimated_fare ?? 0,
-                    'currency' => 'RWF',
-                    'driver_location' => [
-                        'latitude' => 0,
-                        'longitude' => 0,
-                        'timestamp' => now(),
-                        'distance_to_pickup' => 0,
-                    ],
-                    'route' => [
-                        'polyline' => '',
-                        'waypoints' => [],
-                        'updated_at' => now(),
-                    ],
-                    'passenger_location_history' => [],
-                    'driver_location_history' => [],
-                    'events' => [],
-                    'timeline' => [
-                        'requested_at' => $trip->created_at ?? now(),
-                        'accepted_at' => null,
-                        'driver_arrived_at' => null,
-                        'started_at' => null,
-                        'completed_at' => null,
-                        'cancelled_at' => null,
-                    ],
-                    'payment' => [
-                        'method' => 'upi',
-                        'status' => 'pending',
-                        'amount' => 0,
-                        'transaction_id' => '',
-                    ],
-                    'rating' => [
-                        'passenger_rating' => null,
-                        'driver_rating' => null,
-                        'passenger_review' => null,
-                        'driver_review' => null,
-                    ],
-                    'cancellation' => [
-                        'reason' => null,
-                        'cancelled_by' => null,
-                        'refund_amount' => null,
-                    ],
-                    'metadata' => [
-                        'promotion_code' => null,
-                        'discount_amount' => 0,
-                        'notes' => '',
-                    ],
-                ], ['merge' => true]);
+            $this->rtdb->getReference('active_trips/' . $tripId)->set([
+                'trip_id'          => $trip->id,
+                'passenger_id'     => (string) $trip->passenger_id,
+                'driver_id'        => $trip->driver_id ? (string) $trip->driver_id : null,
+                'status'           => strtolower($trip->status ?? 'requested'),
+                'ride_type'        => $trip->ride_type ?? 'private_car',
+                'pickup_lat'       => $trip->pickup_latitude,
+                'pickup_lng'       => $trip->pickup_longitude,
+                'pickup_address'   => $trip->pickup_address ?? '',
+                'dropoff_lat'      => $trip->dropoff_latitude,
+                'dropoff_lng'      => $trip->dropoff_longitude,
+                'dropoff_address'  => $trip->dropoff_address ?? '',
+                'estimated_fare'   => $trip->estimated_fare ?? 0,
+                'currency'         => 'RWF',
+                'payment_status'   => 'pending',
+                'created_at'       => ($trip->created_at ?? now())->toIso8601String(),
+                'updated_at'       => now()->toIso8601String(),
+            ]);
 
-            Log::info('[FirebaseSyncService] Trip synced', ['trip_id' => $tripId]);
+            Log::info('[FirebaseSyncService] Trip synced to RTDB', ['trip_id' => $tripId]);
             return true;
         } catch (Exception $e) {
-            Log::error('[FirebaseSyncService] Trip sync failed', [
+            Log::error('[FirebaseSyncService] Trip RTDB sync failed', [
                 'trip_id' => $tripId,
-                'error' => $e->getMessage(),
+                'error'   => $e->getMessage(),
             ]);
             return false;
         }
@@ -1851,8 +1243,7 @@ class FirebaseSyncService
     }
 
     /**
-     * Sync chat room to Firestore
-     * Idempotent, retry-safe, queue-safe
+     * Sync chat room to RTDB chats/{room_id} — Firestore permanently disabled.
      */
     public function syncChatRoom(string $roomId, array $data): bool
     {
@@ -1861,35 +1252,26 @@ class FirebaseSyncService
         }
 
         try {
-            $this->firestore
-                ->collection('chat_rooms')
-                ->document($roomId)
-                ->set([
-                    'trip_id' => $data['trip_id'] ?? 0,
-                    'participants' => $data['participants'] ?? [],
-                    'type' => $data['type'] ?? 'trip_chat',
-                    'created_at' => now(),
-                    'updated_at' => now(),
-                    'metadata' => [
-                        'last_message_at' => null,
-                        'message_count' => 0,
-                    ],
-                ], ['merge' => true]);
+            $this->rtdb->getReference('chats/' . $roomId)->update([
+                'trip_id'      => $data['trip_id'] ?? null,
+                'participants' => $data['participants'] ?? [],
+                'type'         => $data['type'] ?? 'trip_chat',
+                'updated_at'   => now()->toIso8601String(),
+            ]);
 
-            Log::info('[FirebaseSyncService] Chat room synced', ['room_id' => $roomId]);
+            Log::info('[FirebaseSyncService] Chat room synced to RTDB', ['room_id' => $roomId]);
             return true;
         } catch (Exception $e) {
-            Log::error('[FirebaseSyncService] Chat room sync failed', [
+            Log::error('[FirebaseSyncService] Chat room RTDB sync failed', [
                 'room_id' => $roomId,
-                'error' => $e->getMessage(),
+                'error'   => $e->getMessage(),
             ]);
             return false;
         }
     }
 
     /**
-     * Sync chat message to Firestore
-     * Idempotent, retry-safe, queue-safe
+     * Sync chat message to RTDB chats/{room_id}/messages — Firestore permanently disabled.
      */
     public function syncChatMessage(string $roomId, array $data): bool
     {
@@ -1898,42 +1280,35 @@ class FirebaseSyncService
         }
 
         try {
-            $this->firestore
-                ->collection('chat_messages')
-                ->add([
-                    'room_id' => $roomId,
-                    'sender_id' => $data['sender_id'] ?? '',
-                    'message' => $data['message'] ?? '',
-                    'message_type' => $data['message_type'] ?? 'text',
-                    'timestamp' => now(),
-                    'read_by' => $data['read_by'] ?? [],
-                    'metadata' => $data['metadata'] ?? [],
-                ]);
+            $msgKey = now()->timestamp . '_' . ($data['sender_id'] ?? 'unknown');
+            $this->rtdb->getReference('chats/' . $roomId . '/messages/' . $msgKey)->set([
+                'room_id'      => $roomId,
+                'sender_id'    => $data['sender_id'] ?? '',
+                'message'      => $data['message'] ?? '',
+                'message_type' => $data['message_type'] ?? 'text',
+                'timestamp'    => now()->toIso8601String(),
+                'read_by'      => $data['read_by'] ?? [],
+            ]);
 
-            // Update chat room metadata
-            $this->firestore
-                ->collection('chat_rooms')
-                ->document($roomId)
-                ->update([
-                    ['path' => 'metadata.last_message_at', 'value' => now()],
-                    ['path' => 'metadata.message_count', 'value' => \Kreait\Firebase\FieldValue::increment(1)],
-                    ['path' => 'updated_at', 'value' => now()],
-                ]);
+            // Update last message timestamp on the room
+            $this->rtdb->getReference('chats/' . $roomId)->update([
+                'last_message_at' => now()->toIso8601String(),
+                'updated_at'      => now()->toIso8601String(),
+            ]);
 
-            Log::info('[FirebaseSyncService] Chat message synced', ['room_id' => $roomId]);
+            Log::info('[FirebaseSyncService] Chat message synced to RTDB', ['room_id' => $roomId]);
             return true;
         } catch (Exception $e) {
-            Log::error('[FirebaseSyncService] Chat message sync failed', [
+            Log::error('[FirebaseSyncService] Chat message RTDB sync failed', [
                 'room_id' => $roomId,
-                'error' => $e->getMessage(),
+                'error'   => $e->getMessage(),
             ]);
             return false;
         }
     }
 
     /**
-     * Sync presence to Firestore
-     * Idempotent, retry-safe, queue-safe
+     * Sync presence to RTDB presence/{user_id} — Firestore permanently disabled.
      */
     public function syncPresence(int $userId, bool $online, array $location = null): bool
     {
@@ -1943,102 +1318,58 @@ class FirebaseSyncService
 
         try {
             $data = [
-                'user_id' => (string) $userId,
-                'online' => $online,
-                'last_seen' => now(),
-                'device_info' => [
-                    'platform' => 'android',
-                    'app_version' => '1.0.0',
-                ],
+                'user_id'    => (string) $userId,
+                'online'     => $online,
+                'last_seen'  => now()->toIso8601String(),
+                'updated_at' => now()->toIso8601String(),
             ];
 
             if ($location) {
-                $data['location'] = $location;
+                $data['lat'] = $location['latitude'] ?? $location['lat'] ?? null;
+                $data['lng'] = $location['longitude'] ?? $location['lng'] ?? null;
             }
 
-            $this->firestore
-                ->collection('presence')
-                ->document((string) $userId)
-                ->set($data, ['merge' => true]);
+            $this->rtdb->getReference('presence/' . $userId)->update($data);
 
-            Log::info('[FirebaseSyncService] Presence synced', ['user_id' => $userId, 'online' => $online]);
+            Log::info('[FirebaseSyncService] Presence synced to RTDB', ['user_id' => $userId, 'online' => $online]);
             return true;
         } catch (Exception $e) {
-            Log::error('[FirebaseSyncService] Presence sync failed', [
+            Log::error('[FirebaseSyncService] Presence RTDB sync failed', [
                 'user_id' => $userId,
-                'error' => $e->getMessage(),
+                'error'   => $e->getMessage(),
             ]);
             return false;
         }
     }
 
     /**
-     * Sync device token to Firestore
-     * Idempotent, retry-safe, queue-safe
+     * Sync device token — device tokens are stored in Postgres, not Firestore.
+     * This method is a no-op; use the DeviceToken model directly.
      */
     public function syncDeviceToken(int $userId, string $token, string $platform = 'android'): bool
     {
-        if (!$this->isEnabled()) {
-            return false;
-        }
-
-        try {
-            $this->ensureCollectionExists('device_tokens');
-            
-            $this->firestore
-                ->collection('device_tokens')
-                ->document($token)
-                ->set([
-                    'user_id' => (string) $userId,
-                    'token' => $token,
-                    'platform' => $platform,
-                    'app_version' => '1.0.0',
-                    'active' => true,
-                    'created_at' => now(),
-                    'last_used_at' => now(),
-                ], ['merge' => true]);
-
-            Log::info('[FirebaseSyncService] Device token synced', ['user_id' => $userId]);
-            return true;
-        } catch (Exception $e) {
-            Log::error('[FirebaseSyncService] Device token sync failed', [
-                'user_id' => $userId,
-                'error' => $e->getMessage(),
-            ]);
-            return false;
-        }
+        // Device tokens are managed in Postgres (device_tokens table).
+        // Firestore is permanently disabled. Nothing to sync to Firebase.
+        Log::debug('[FirebaseSyncService] syncDeviceToken called (no-op — tokens managed in Postgres)', [
+            'user_id' => $userId,
+        ]);
+        return true;
     }
 
     /**
-     * Remove device token from Firestore
-     * Idempotent, retry-safe, queue-safe
+     * Remove device token — tokens are managed in Postgres, not Firestore.
+     * This method is a no-op; use the DeviceToken model directly.
      */
     public function removeDeviceToken(string $token): bool
     {
-        if (!$this->isEnabled()) {
-            return false;
-        }
-
-        try {
-            $this->firestore
-                ->collection('device_tokens')
-                ->document($token)
-                ->delete();
-
-            Log::info('[FirebaseSyncService] Device token removed', ['token' => substr($token, 0, 20) . '...']);
-            return true;
-        } catch (Exception $e) {
-            Log::error('[FirebaseSyncService] Device token removal failed', [
-                'token' => substr($token, 0, 20) . '...',
-                'error' => $e->getMessage(),
-            ]);
-            return false;
-        }
+        // Device tokens are managed in Postgres (device_tokens table).
+        // Firestore is permanently disabled. Nothing to remove from Firebase.
+        Log::debug('[FirebaseSyncService] removeDeviceToken called (no-op — tokens managed in Postgres)');
+        return true;
     }
 
     /**
-     * Sync notification to Firestore
-     * Idempotent, retry-safe, queue-safe
+     * Sync notification to RTDB notification_queue — Firestore permanently disabled.
      */
     public function syncNotification(int $userId, string $type, string $title, string $body, array $data = []): bool
     {
@@ -2047,134 +1378,78 @@ class FirebaseSyncService
         }
 
         try {
-            $this->firestore
-                ->collection('notifications')
-                ->add([
-                    'user_id' => (int) $userId,
-                    'type' => $type,
-                    'title' => $title,
-                    'body' => $body,
-                    'data' => $data,
-                    'read' => false,
-                    'timestamp' => now(),
-                    'expires_at' => null,
-                ]);
+            $this->rtdb->getReference('notification_queue/' . $userId . '/' . now()->timestamp)->set([
+                'user_id'    => (int) $userId,
+                'type'       => $type,
+                'title'      => $title,
+                'body'       => $body,
+                'data'       => $data,
+                'read'       => false,
+                'created_at' => now()->toIso8601String(),
+            ]);
 
-            // Send FCM push notification
-            if ($this->messaging) {
-                $this->sendFcmNotification($userId, $title, $body, $data);
-            }
+            // Also fire FCM
+            $this->sendFcmNotification($userId, $title, $body, $data);
 
-            Log::info('[FirebaseSyncService] Notification synced', ['user_id' => $userId]);
+            Log::info('[FirebaseSyncService] Notification synced to RTDB', ['user_id' => $userId]);
             return true;
         } catch (Exception $e) {
-            Log::error('[FirebaseSyncService] Notification sync failed', [
+            Log::error('[FirebaseSyncService] Notification RTDB sync failed', [
                 'user_id' => $userId,
-                'error' => $e->getMessage(),
+                'error'   => $e->getMessage(),
             ]);
             return false;
         }
     }
 
     /**
-     * Sync payment to Firestore
-     * Idempotent, retry-safe, queue-safe
+     * Sync payment — payments are stored in Postgres (source of truth).
+     * This method logs a payment completion event to RTDB notification_queue.
      */
     public function syncPayment(int $paymentId): bool
     {
-        if (!$this->isEnabled()) {
-            return false;
-        }
-
         $payment = Payment::find($paymentId);
         if (!$payment) {
             Log::warning('[FirebaseSyncService] Payment not found', ['payment_id' => $paymentId]);
             return false;
         }
 
-        try {
-            $this->ensureCollectionExists('payments');
-            
-            $this->firestore
-                ->collection('payments')
-                ->document((string) $payment->id)
-                ->set([
-                    'id' => (int) $payment->id,
-                    'trip_id' => $payment->trip_id ? (string) $payment->trip_id : null,
-                    'user_id' => (string) $payment->user_id,
-                    'amount' => (float) $payment->amount,
-                    'currency' => 'RWF',
-                    'status' => $payment->status ?? 'pending',
-                    'method' => $payment->method ?? 'momo',
-                    'transaction_id' => $payment->transaction_id ?? '',
-                    'created_at' => $payment->created_at ?? now(),
-                    'updated_at' => $payment->updated_at ?? now(),
-                    'metadata' => [
-                        'reference' => $payment->reference ?? '',
-                        'verified_at' => $payment->verified_at ?? null,
-                    ],
-                ], ['merge' => true]);
-
-            Log::info('[FirebaseSyncService] Payment synced', ['payment_id' => $paymentId]);
-            return true;
-        } catch (Exception $e) {
-            Log::error('[FirebaseSyncService] Payment sync failed', [
-                'payment_id' => $paymentId,
-                'error' => $e->getMessage(),
-            ]);
-            return false;
+        // Payments are stored in Postgres. If there's a trip, update RTDB payment status.
+        if ($payment->trip_id && $this->isEnabled()) {
+            try {
+                $this->rtdb->getReference('active_trips/' . $payment->trip_id)->update([
+                    'payment_status'         => strtolower($payment->status ?? 'pending'),
+                    'payment_amount'         => (float) $payment->amount,
+                    'payment_transaction_id' => $payment->transaction_id ?? '',
+                    'updated_at'             => now()->toIso8601String(),
+                ]);
+            } catch (Exception $e) {
+                Log::warning('[FirebaseSyncService] Payment RTDB update failed', ['error' => $e->getMessage()]);
+            }
         }
+
+        Log::info('[FirebaseSyncService] Payment synced (Postgres is source of truth)', ['payment_id' => $paymentId]);
+        return true;
     }
 
     /**
-     * Sync rating to Firestore
-     * Idempotent, retry-safe, queue-safe
+     * Sync rating — ratings are stored in Postgres (source of truth).
+     * This method updates the driver's RTDB state with their new rating.
      */
     public function syncRating(int $ratingId): bool
     {
-        if (!$this->isEnabled()) {
-            return false;
-        }
-
         $rating = Review::find($ratingId);
         if (!$rating) {
             Log::warning('[FirebaseSyncService] Rating not found', ['rating_id' => $ratingId]);
             return false;
         }
 
-        try {
-            $this->ensureCollectionExists('ratings');
-            
-            $this->firestore
-                ->collection('ratings')
-                ->document((string) $rating->id)
-                ->set([
-                    'id' => (int) $rating->id,
-                    'trip_id' => $rating->trip_id ? (string) $rating->trip_id : null,
-                    'driver_id' => $rating->driver_id ? (string) $rating->driver_id : null,
-                    'passenger_id' => $rating->passenger_id ? (string) $rating->passenger_id : null,
-                    'rating' => (float) $rating->rating,
-                    'review' => $rating->review ?? '',
-                    'categories' => $rating->categories ?? [],
-                    'created_at' => $rating->created_at ?? now(),
-                    'metadata' => [
-                        'anonymous' => $rating->anonymous ?? false,
-                    ],
-                ], ['merge' => true]);
-
-            // Update driver average rating
-            if ($rating->driver_id) {
-                $this->updateDriverAverageRating((string) $rating->driver_id);
-            }
-
-            Log::info('[FirebaseSyncService] Rating synced', ['rating_id' => $ratingId]);
-            return true;
-        } catch (Exception $e) {
-            Log::error('[FirebaseSyncService] Rating sync failed', [
-                'rating_id' => $ratingId,
-                'error' => $e->getMessage(),
-            ]);
-            return false;
+        // Update driver average rating in RTDB from Postgres data
+        if ($rating->driver_id) {
+            $this->updateDriverAverageRating((string) $rating->driver_id);
         }
+
+        Log::info('[FirebaseSyncService] Rating synced (Postgres is source of truth)', ['rating_id' => $ratingId]);
+        return true;
     }
 }

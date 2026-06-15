@@ -3,7 +3,6 @@
 namespace App\Services\Firebase;
 
 use Kreait\Firebase\Factory;
-use Kreait\Firebase\Contract\Firestore;
 use Kreait\Firebase\Contract\Database;
 use Kreait\Firebase\Contract\Messaging;
 use Illuminate\Support\Facades\Log;
@@ -11,7 +10,8 @@ use Illuminate\Support\Facades\Log;
 class FirebaseManager
 {
     protected ?Factory $factory = null;
-    protected ?Firestore $firestore = null;
+    /** @var null Firestore is permanently disabled — RTDB-only architecture */
+    protected $firestore = null;
     protected ?Database $database = null;
     protected ?Messaging $messaging = null;
 
@@ -35,19 +35,14 @@ class FirebaseManager
     }
 
     /**
-     * Get the Firestore wrapper client.
+     * Firestore is permanently disabled — this system uses RTDB-only architecture.
+     * Returns null always. Use RealtimeDatabaseManager or database() instead.
+     *
+     * @return null
      */
-    public function firestore(): ?Firestore
+    public function firestore(): null
     {
-        if ($this->firestore === null && $this->healthService->grpcAvailable() && $this->healthService->isEnabled()) {
-            try {
-                $firestoreDb = config('firebase.firestore_database', '(default)');
-                $this->firestore = $this->getFactory()->createFirestore($firestoreDb);
-            } catch (\Throwable $e) {
-                Log::error('[FirebaseManager] Failed to create Firestore client', ['error' => $e->getMessage()]);
-            }
-        }
-        return $this->firestore;
+        return null;
     }
 
     /**

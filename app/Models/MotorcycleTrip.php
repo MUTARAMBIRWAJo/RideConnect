@@ -124,17 +124,17 @@ class MotorcycleTrip extends Model
 
     public function isDriverAssigned(): bool
     {
-        return $this->status === 'DRIVER_ASSIGNED';
+        return in_array($this->status, ['ASSIGNED', 'DRIVER_ASSIGNED', 'ACCEPTED']);
     }
 
     public function isWaitingPassenger(): bool
     {
-        return $this->status === 'PASSENGER_WAITING';
+        return in_array($this->status, ['ARRIVED', 'PASSENGER_WAITING']);
     }
 
     public function isInProgress(): bool
     {
-        return $this->status === 'IN_PROGRESS';
+        return in_array($this->status, ['STARTED', 'IN_PROGRESS']);
     }
 
     public function isCompleted(): bool
@@ -144,18 +144,23 @@ class MotorcycleTrip extends Model
 
     public function isRejected(): bool
     {
-        return $this->status === 'REJECTED_BY_DRIVER';
+        return in_array($this->status, ['REJECTED_BY_DRIVER', 'FAILED']);
     }
 
     public function isCancelled(): bool
     {
-        return in_array($this->status, ['CANCELLED_BY_PASSENGER', 'CANCELLED_BY_DRIVER']);
+        return in_array($this->status, ['CANCELLED', 'CANCELLED_BY_PASSENGER', 'CANCELLED_BY_DRIVER']);
     }
 
     public function isActive(): bool
     {
         return in_array($this->status, [
+            'MATCHING',
+            'DRIVER_FOUND',
             'ASSIGNED',
+            'ACCEPTED',
+            'ARRIVED',
+            'STARTED',
             'DRIVER_ASSIGNED',
             'PASSENGER_WAITING',
             'IN_PROGRESS',
@@ -169,7 +174,11 @@ class MotorcycleTrip extends Model
     {
         return $query->where('driver_id', $driverId)
             ->whereIn('status', [
+                'DRIVER_FOUND',
                 'ASSIGNED',
+                'ACCEPTED',
+                'ARRIVED',
+                'STARTED',
                 'DRIVER_ASSIGNED',
                 'PASSENGER_WAITING',
                 'IN_PROGRESS',
@@ -200,7 +209,11 @@ class MotorcycleTrip extends Model
         return $query->whereIn('status', [
             'REQUESTED',
             'MATCHING',
+            'DRIVER_FOUND',
             'ASSIGNED',
+            'ACCEPTED',
+            'ARRIVED',
+            'STARTED',
             'DRIVER_ASSIGNED',
             'PASSENGER_WAITING',
             'IN_PROGRESS',

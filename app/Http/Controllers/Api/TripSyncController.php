@@ -24,11 +24,19 @@ class TripSyncController extends Controller
             return response()->json(['success' => false, 'message' => 'Unauthorized'], 403);
         }
 
+        $clientStatus = $request->query('last_status') ?? $request->query('status');
+        $statusChanged = true;
+        if ($clientStatus !== null) {
+            $statusChanged = strtoupper(trim($clientStatus)) !== strtoupper(trim($trip->status));
+        }
+
         return response()->json([
             'success' => true,
             'data' => [
                 'trip_id' => $trip->id,
                 'trip_status' => $trip->status,
+                'status_changed' => $statusChanged,
+                'last_updated_at' => $trip->updated_at?->toIso8601String(),
                 'assignment_status' => $trip->assignment_status,
                 'payment_status' => $trip->payment_status,
                 'driver_id' => $trip->driver_id,

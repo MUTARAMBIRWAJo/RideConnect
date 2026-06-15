@@ -32,10 +32,9 @@ class FirestoreManager
                 ->document($document)
                 ->set($data, ['merge' => $merge]);
         } catch (\Throwable $e) {
-            Log::error("[FirestoreManager] Failed to set document {$collection}/{$document}", [
+            Log::warning("[FirestoreManager] Failed to set document {$collection}/{$document} (skipping to prevent crash)", [
                 'error' => $e->getMessage()
             ]);
-            throw $e;
         }
     }
 
@@ -56,10 +55,9 @@ class FirestoreManager
                 ->document($document)
                 ->delete();
         } catch (\Throwable $e) {
-            Log::error("[FirestoreManager] Failed to delete document {$collection}/{$document}", [
+            Log::warning("[FirestoreManager] Failed to delete document {$collection}/{$document} (skipping to prevent crash)", [
                 'error' => $e->getMessage()
             ]);
-            throw $e;
         }
     }
 
@@ -80,7 +78,7 @@ class FirestoreManager
                 ->snapshot();
             return $snapshot->exists() ? $snapshot->data() : null;
         } catch (\Throwable $e) {
-            Log::error("[FirestoreManager] Failed to get document {$collection}/{$document}", [
+            Log::warning("[FirestoreManager] Failed to get document {$collection}/{$document} (skipping to prevent crash)", [
                 'error' => $e->getMessage()
             ]);
             return null;

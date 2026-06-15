@@ -33,8 +33,8 @@ class DriverPolicy
             return false;
         }
 
-        // Trip must be in PENDING state
-        if ($trip->status !== 'PENDING') {
+        // Trip must be in REQUESTED/PENDING state
+        if ($trip->status !== 'REQUESTED' && $trip->status !== 'PENDING') {
             return false;
         }
 
@@ -71,8 +71,8 @@ class DriverPolicy
             );
         }
 
-        // Check if trip is in PENDING state
-        if ($trip->status !== 'PENDING') {
+        // Check if trip is in REQUESTED/PENDING state
+        if ($trip->status !== 'REQUESTED' && $trip->status !== 'PENDING') {
             throw DomainException::make(
                 'This trip is no longer pending',
                 'TRIP_NOT_PENDING'

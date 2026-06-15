@@ -45,6 +45,8 @@ use App\Http\Controllers\Api\TripController;
 use App\Http\Controllers\Api\TripStatusController;
 use App\Http\Controllers\Api\TripSyncController;
 use App\Http\Controllers\Api\UserController;
+use App\Http\Controllers\Api\UnifiedPassengerTripController;
+use App\Http\Controllers\Api\UnifiedDriverTripController;
 use App\Http\Controllers\Api\Webhooks\MTNWebhookController;
 use App\Http\Controllers\Api\Webhooks\StripeWebhookController;
 use App\Http\Controllers\Api\PaymentVerificationController;
@@ -190,6 +192,15 @@ Route::prefix('v1')->group(function () {
             Route::match(['put', 'patch'], '/profile', [PassengerController::class, 'updateProfile'])
                 ->name('passenger.profile.update');
             Route::get('/stats', [PassengerController::class, 'stats']);
+
+            // Standardized Unified Passenger Trip APIs
+            Route::prefix('{type}')->group(function () {
+                Route::get('/trip-requests/{id}', [UnifiedPassengerTripController::class, 'show'])->whereNumber('id');
+                Route::get('/trip-history', [UnifiedPassengerTripController::class, 'history']);
+                Route::post('/trip-request', [UnifiedPassengerTripController::class, 'store']);
+                Route::post('/trip-cancel', [UnifiedPassengerTripController::class, 'cancel']);
+            });
+
             Route::prefix('public-bus')->group(function () {
                 // Corridor listing
                 Route::get('/corridors', [PassengerPublicBusController::class, 'corridors']);
@@ -279,6 +290,14 @@ Route::prefix('v1')->group(function () {
             Route::get('/profile', [DriverController::class, 'profile']);
             Route::put('/profile', [DriverController::class, 'updateProfile']);
             Route::get('/stats', [DriverController::class, 'stats']);
+
+            Route::prefix('trips')->group(function () {
+                Route::get('/active', [UnifiedDriverTripController::class, 'active']);
+                Route::post('/{id}/accept', [UnifiedDriverTripController::class, 'accept'])->whereNumber('id');
+                Route::post('/{id}/arrived', [UnifiedDriverTripController::class, 'arrived'])->whereNumber('id');
+                Route::post('/{id}/start', [UnifiedDriverTripController::class, 'start'])->whereNumber('id');
+                Route::post('/{id}/complete', [UnifiedDriverTripController::class, 'complete'])->whereNumber('id');
+            });
             
             // Trip request decision endpoints - standardized API design
             Route::get('/trip-requests/assigned', [PublicBusTripController::class, 'getAssigned']);

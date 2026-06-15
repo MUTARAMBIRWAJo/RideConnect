@@ -18,7 +18,7 @@ class TripStateSyncService
      * Synchronize a trip's Postgres state to both Firestore and Realtime Database.
      * Runs inside PostgresSyncContext to safely allow restricted field writes.
      */
-    public function syncToFirebase(Trip $trip): void
+    public function syncToFirebase(object $trip): void
     {
         $payload = [
             'trip_id' => $trip->id,
@@ -26,27 +26,32 @@ class TripStateSyncService
             'driver_id' => $trip->driver_id,
             'status' => $trip->status,
             'pickup' => [
-                'latitude' => $trip->pickup_latitude,
-                'longitude' => $trip->pickup_longitude,
-                'address' => $trip->pickup_address,
+                'latitude' => (float) $trip->pickup_lat,
+                'longitude' => (float) $trip->pickup_lng,
+                'address' => $trip->pickup_location,
             ],
             'dropoff' => [
-                'latitude' => $trip->dropoff_latitude,
-                'longitude' => $trip->dropoff_longitude,
-                'address' => $trip->dropoff_address,
+                'latitude' => (float) $trip->dropoff_lat,
+                'longitude' => (float) $trip->dropoff_lng,
+                'address' => $trip->dropoff_location,
             ],
-            'estimated_fare' => $trip->estimated_fare,
-            'actual_fare' => $trip->actual_fare,
+            'estimated_fare' => (float) ($trip->estimated_fare ?? $trip->fare ?? 0),
+            'actual_fare' => $trip->actual_fare ? (float) $trip->actual_fare : null,
             'updated_at' => $trip->updated_at?->toIso8601String() ?? now()->toIso8601String(),
             'version' => $trip->updated_at?->getTimestamp() ?? now()->getTimestamp(),
         ];
 
         try {
             PostgresSyncContext::run(function () use ($trip, $payload) {
-                // Sync to Realtime Database
+                // Sync to Realtime Database active_trips node
                 $this->rtdbManager->set("active_trips/{$trip->id}", $payload);
 
-                // Sync to Firestore
+                // Sync to Realtime Database live_tracking node if driver is present
+                if ($trip->driver_id) {
+                    $this->rtdbManager->set("live_tracking/{$trip->driver_id}", $payload);
+                }
+
+                // Sync to Firestore active_trips collection
                 $this->firestoreManager->set("active_trips", (string) $trip->id, $payload);
             });
         } catch (\Throwable $e) {
@@ -88,7 +93,7 @@ class TripStateSyncService
      */
     public function resolveConflicts(): void
     {
-        $activeStatuses = ['requested', 'matched', 'in_progress'];
+        $activeStatuses = ['requested', 'matched', 'in_progress', 'REQUESTED', 'MATCHING', 'DRIVER_FOUND', 'ASSIGNED', 'ACCEPTED', 'ARRIVED', 'STARTED'];
         
         Trip::whereIn('status', $activeStatuses)->chunk(100, function ($trips) {
             foreach ($trips as $trip) {

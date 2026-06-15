@@ -122,7 +122,7 @@ class RideTransportClassificationTest extends TestCase
             'pickup_location' => 'Test Pickup',
             'dropoff_location' => 'Test Dropoff',
             'fare' => 5000,
-            'status' => 'PENDING',
+            'status' => 'REQUESTED',
         ]);
     }
 
@@ -161,7 +161,7 @@ class RideTransportClassificationTest extends TestCase
         $this->assertDatabaseHas('trips', [
             'booking_id' => $booking->id,
             'ride_id' => $ride->id,
-            'status' => 'PENDING',
+            'status' => 'REQUESTED',
         ]);
     }
 

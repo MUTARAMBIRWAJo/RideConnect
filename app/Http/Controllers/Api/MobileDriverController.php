@@ -124,7 +124,7 @@ class MobileDriverController extends Controller
 
         $query = Trip::query()
             ->with(['passenger', 'ride'])
-            ->where('status', 'PENDING')
+            ->whereIn('status', ['PENDING', 'REQUESTED'])
             ->whereNull('driver_id'); // Not yet assigned
 
         $allowedTransports = $this->getDriverTransportTypes($driver);
@@ -220,7 +220,7 @@ class MobileDriverController extends Controller
         }
 
         // Step 2: Check if trip is in correct status to accept
-        if ($trip->status !== 'PENDING') {
+        if ($trip->status !== 'PENDING' && $trip->status !== 'REQUESTED') {
             $message = match ($trip->status) {
                 'ACCEPTED', 'STARTED', 'COMPLETED' => 'This trip has already been accepted by another driver.',
                 'CANCELLED' => 'This trip request has been cancelled.',
@@ -258,7 +258,7 @@ class MobileDriverController extends Controller
             $trip = DB::transaction(function () use ($id, $driver): Trip {
                 $trip = Trip::query()
                     ->where('id', $id)
-                    ->where('status', 'PENDING')
+                    ->whereIn('status', ['PENDING', 'REQUESTED'])
                     ->where(function ($query) use ($driver): void {
                         $query->whereNull('driver_id')
                             ->orWhere('driver_id', $driver->id);
@@ -333,7 +333,7 @@ class MobileDriverController extends Controller
         }
 
         // Can only reject pending trips that are unassigned or assigned to this driver.
-        if ($trip->status !== 'PENDING' || ($trip->driver_id !== null && (int) $trip->driver_id !== (int) $driver->id)) {
+        if (($trip->status !== 'PENDING' && $trip->status !== 'REQUESTED') || ($trip->driver_id !== null && (int) $trip->driver_id !== (int) $driver->id)) {
             return response()->json([
                 'status' => 'error',
                 'message' => 'This trip cannot be rejected as it has already been accepted.',

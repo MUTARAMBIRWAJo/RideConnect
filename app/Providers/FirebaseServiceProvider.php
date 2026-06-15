@@ -5,7 +5,6 @@ namespace App\Providers;
 use Illuminate\Support\ServiceProvider;
 use Illuminate\Support\Facades\Log;
 use Kreait\Firebase\Factory;
-use Kreait\Firebase\Contract\Firestore;
 use Kreait\Firebase\Contract\Messaging;
 use Kreait\Firebase\Contract\Auth;
 use App\Services\Firebase\FirebaseHealthService;
@@ -58,27 +57,8 @@ class FirebaseServiceProvider extends ServiceProvider
             return $app->make(Factory::class)->createAuth();
         });
 
-        // Firestore — REQUIRES ext-grpc, only bind when available
-        if ($healthService->grpcAvailable()) {
-            $this->app->singleton(Firestore::class, function ($app) {
-                $factory = $app->make(Factory::class);
-
-                $credentialsPath = config('firebase.credentials');
-                if (file_exists($credentialsPath)) {
-                    $credentials = json_decode(file_get_contents($credentialsPath), true);
-                    if ($credentials !== null) {
-                        $factory = $factory->withFirestoreClientConfig([
-                            'credentials' => $credentials,
-                        ]);
-                    }
-                }
-
-                $firestoreDb = config('firebase.firestore_database', '(default)');
-                return $factory->createFirestore($firestoreDb);
-            });
-        } else {
-            Log::warning('gRPC extension not installed. Using fallback transport.');
-        }
+        // Firestore is permanently disabled — RTDB-only architecture.
+        // No Firestore binding is registered. All real-time writes go to RTDB.
     }
 
     /**

@@ -14,7 +14,7 @@ class TripStatusNormalizationTest extends TestCase
         $trip = new Trip;
 
         $trip->status = 'pending';
-        $this->assertSame('PENDING', $trip->status);
+        $this->assertSame('REQUESTED', $trip->status);
 
         $trip->status = 'completed';
         $this->assertSame('COMPLETED', $trip->status);

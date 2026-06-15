@@ -102,6 +102,17 @@ class DriverLocationService
                 'last_location_lng' => $lng,
             ]);
 
+            // Cache current location in Redis for ultra-fast lookup
+            Cache::put("driver_location_{$driver->id}", [
+                'driver_id' => $driver->id,
+                'lat' => $lat,
+                'lng' => $lng,
+                'speed' => $speed,
+                'heading' => $heading,
+                'accuracy' => $accuracy,
+                'recorded_at' => now()->toIso8601String(),
+            ], 300);
+
             // Store location history (dual-write lat/lng + latitude/longitude for compatibility)
             DriverLocation::create([
                 'driver_id' => $driver->id,
@@ -170,6 +181,24 @@ class DriverLocationService
      */
     public function getCurrentLocation(Driver $driver): ?DriverLocation
     {
+        $cached = Cache::get("driver_location_{$driver->id}");
+        if ($cached) {
+            $location = new DriverLocation();
+            $location->forceFill([
+                'driver_id' => (int) $cached['driver_id'],
+                'lat' => (float) $cached['lat'],
+                'lng' => (float) $cached['lng'],
+                'latitude' => (float) $cached['lat'],
+                'longitude' => (float) $cached['lng'],
+                'speed' => $cached['speed'] ? (float) $cached['speed'] : null,
+                'heading' => $cached['heading'] ? (int) $cached['heading'] : null,
+                'accuracy' => $cached['accuracy'] ? (float) $cached['accuracy'] : null,
+                'recorded_at' => \Carbon\Carbon::parse($cached['recorded_at']),
+            ]);
+            $location->exists = true;
+            return $location;
+        }
+
         return DriverLocation::where('driver_id', $driver->id)
             ->latest('recorded_at')
             ->first();

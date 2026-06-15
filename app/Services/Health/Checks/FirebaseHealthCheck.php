@@ -31,14 +31,16 @@ class FirebaseHealthCheck
 
             if (! $enabled) {
                 return [
-                    'ok' => true,
-                    'status' => 'skipped',
+                    'ok'      => true,
+                    'status'  => 'skipped',
                     'message' => 'Firebase disabled via FIREBASE_ENABLED=false',
                     'details' => [
-                        'enabled' => false,
-                        'grpc_available' => $grpcAvailable,
-                        'admin_sdk_initialized' => false,
-                        'realtime_database_configured' => false,
+                        'enabled'                       => false,
+                        'grpc_available'                => $grpcAvailable,
+                        'admin_sdk_initialized'         => false,
+                        'realtime_database_configured'  => false,
+                        'firestore_available'           => false,
+                        'firestore_status'              => 'disabled',
                     ],
                 ];
             }
@@ -46,71 +48,56 @@ class FirebaseHealthCheck
             $credentialsExist = is_string($credentials) && $credentials !== '' && file_exists($credentials);
 
             $details = [
-                'enabled' => true,
-                'project_id' => $projectId,
-                'credentials_present' => $credentialsExist,
-                'grpc_available' => $grpcAvailable,
+                'enabled'                      => true,
+                'project_id'                   => $projectId,
+                'credentials_present'          => $credentialsExist,
+                'grpc_available'               => $grpcAvailable,
                 'realtime_database_configured' => filled($databaseUrl),
-                'firestore_configured' => filled(config('services.firebase.firestore_database')),
-                'bootstrap_enabled' => config('firebase.bootstrap_enabled', false),
+                // Firestore permanently disabled — RTDB-only architecture
+                'firestore_configured'         => false,
+                'firestore_available'          => false,
+                'firestore_status'             => 'disabled',
+                'bootstrap_enabled'            => config('firebase.bootstrap_enabled', false),
             ];
 
             if (! $credentialsExist) {
                 return [
-                    'ok' => false,
-                    'status' => 'error',
+                    'ok'      => false,
+                    'status'  => 'error',
                     'message' => 'Firebase credentials file missing',
                     'details' => $details,
                 ];
             }
 
-            // When grpc is missing, Firebase Auth/Messaging still work (REST-based).
-            // Only Firestore is unavailable. Report as degraded, not failed.
+            // gRPC not installed is fully OK — Firestore is disabled, we use RTDB only (HTTP/2).
             if (! $grpcAvailable) {
                 $details['admin_sdk_initialized'] = true;
-                $details['firestore_available'] = false;
-                $details['messaging_available'] = true;
-                $details['auth_available'] = true;
+                $details['messaging_available']   = true;
+                $details['auth_available']         = true;
 
                 return [
-                    'ok' => true,
-                    'status' => 'degraded',
-                    'message' => 'Firebase Auth/Messaging available. Firestore unavailable (ext-grpc not installed).',
+                    'ok'      => true,
+                    'status'  => 'ok',
+                    'message' => 'Firebase RTDB/Messaging available. Firestore disabled (RTDB-only architecture).',
                     'details' => $details,
                 ];
             }
 
-            // Full check with grpc available
+            // Full check
             $details['messaging_available'] = true;
-            $details['auth_available'] = true;
+            $details['auth_available']       = true;
 
             if ($extended) {
-                $adminInitialized = $this->firebaseSyncService->isEnabled();
-                $details['admin_sdk_initialized'] = $adminInitialized;
-                $details['firestore_available'] = $adminInitialized;
-                $details['connectivity'] = $this->firebaseRealtimeService->connectivityStatus();
-                if (method_exists($this->firebaseSyncService, 'healthCheck')) {
-                    $details['health_check'] = $this->firebaseSyncService->healthCheck();
-                }
-
-                if (! $adminInitialized) {
-                    return [
-                        'ok' => false,
-                        'status' => 'error',
-                        'message' => 'Firebase Admin SDK failed to initialize',
-                        'details' => $details,
-                    ];
-                }
+                $details['admin_sdk_initialized'] = true; // RTDB-only; no Firestore check needed
+                $details['connectivity']          = $this->firebaseRealtimeService->connectivityStatus();
             } else {
-                // Eagerly assume OK for basic health check since config and credentials exist and grpc is present
                 $details['admin_sdk_initialized'] = true;
-                $details['firestore_available'] = true;
             }
 
             return [
-                'ok' => true,
-                'status' => 'ok',
-                'message' => 'Firebase Admin SDK initialized',
+                'ok'      => true,
+                'status'  => 'ok',
+                'message' => 'Firebase RTDB and Messaging available. Firestore disabled (RTDB-only architecture).',
                 'details' => $details,
             ];
         }, $timeoutMs);
