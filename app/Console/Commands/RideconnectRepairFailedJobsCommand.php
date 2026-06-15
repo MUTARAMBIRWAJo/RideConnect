@@ -136,7 +136,7 @@ class RideconnectRepairFailedJobsCommand extends Command
 
         foreach ($safeCategories as $category) {
             $jobs = $categories[$category] ?? [];
-            
+
             foreach ($jobs as $job) {
                 if ($dryRun) {
                     $this->line("Would retry job ID: {$job->id} ({$category})");
@@ -144,17 +144,41 @@ class RideconnectRepairFailedJobsCommand extends Command
                     try {
                         // Move job back to queue
                         $payload = json_decode($job->payload, true);
-                        
+
+                        // Safe check for command structure
+                        $command = $payload['command'] ?? null;
+                        if (!$command || !isset($command['name'])) {
+                            Log::warning('Invalid job payload, skipping retry', [
+                                'job_id' => $job->id,
+                                'payload' => $payload,
+                            ]);
+                            $this->warn("Skipping invalid job ID: {$job->id} (no command name)");
+                            continue;
+                        }
+
                         // Delete from failed_jobs
                         DB::table('failed_jobs')->where('id', $job->id)->delete();
-                        
+
                         // Re-queue the job
                         $queue = $payload['queue'] ?? 'default';
-                        dispatch(new ($payload['command']['name']))->onQueue($queue);
-                        
-                        $totalRetried++;
-                        $this->line("Retried job ID: {$job->id}");
+                        $jobClass = $command['name'];
+
+                        if (class_exists($jobClass)) {
+                            dispatch(new $jobClass())->onQueue($queue);
+                            $totalRetried++;
+                            $this->line("Retried job ID: {$job->id}");
+                        } else {
+                            Log::warning('Job class not found, skipping retry', [
+                                'job_id' => $job->id,
+                                'job_class' => $jobClass,
+                            ]);
+                            $this->warn("Skipping job ID: {$job->id} (class {$jobClass} not found)");
+                        }
                     } catch (\Exception $e) {
+                        Log::error('Failed to retry job', [
+                            'job_id' => $job->id,
+                            'error' => $e->getMessage(),
+                        ]);
                         $this->error("Failed to retry job ID: {$job->id} - {$e->getMessage()}");
                     }
                 }

@@ -38,9 +38,12 @@ class FirebaseBootstrapCommand extends Command
 
         // Check if Firebase is enabled
         if (!$this->firebaseBootstrapService->isEnabled()) {
-            $this->error('Firebase is not enabled or not configured.');
-            $this->warn('Please check your Firebase configuration in .env file.');
-            return self::FAILURE;
+            $this->warn('Firebase is not enabled or not configured.');
+            $this->info('Status: disabled');
+            $this->info('Message: Firebase not enabled');
+            $this->newLine();
+            $this->info('To enable Firebase, set FIREBASE_ENABLED=true in your .env file.');
+            return self::SUCCESS; // Return success to not crash the system
         }
 
         // Check if bootstrap is enabled

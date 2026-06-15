@@ -10,9 +10,9 @@ return [
     |
     */
 
-    'enabled' => env('FIREBASE_ENABLED', true),
+    'enabled' => env('FIREBASE_ENABLED', true) === true || env('FIREBASE_ENABLED') === 'true',
 
-    'bootstrap_enabled' => env('FIREBASE_BOOTSTRAP_ENABLED', false),
+    'bootstrap_enabled' => env('FIREBASE_BOOTSTRAP_ENABLED', false) === true || env('FIREBASE_BOOTSTRAP_ENABLED') === 'true',
 
     'project_id' => env('FIREBASE_PROJECT_ID'),
 

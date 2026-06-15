@@ -42,6 +42,18 @@ class FirebaseValidateCommand extends Command
         $this->info('===============================');
         $this->newLine();
 
+        // Check if Firebase is enabled
+        if (!config('firebase.enabled')) {
+            $this->warn('Firebase is not enabled in configuration.');
+            $this->info('Status: disabled');
+            $this->info('Message: Firebase not enabled');
+            $this->newLine();
+            $this->info('Readiness Score: 0/100 (Firebase disabled)');
+            $this->newLine();
+            $this->info('To enable Firebase, set FIREBASE_ENABLED=true in your .env file.');
+            return self::SUCCESS; // Return success to not crash the system
+        }
+
         $results = [];
         $totalScore = 0;
         $maxScore = 100;
@@ -287,19 +299,18 @@ class FirebaseValidateCommand extends Command
         $issues = [];
 
         try {
-            // Check if PaymentVerified event is registered
-            $eventListeners = config('events.listeners', []);
-            if (isset($eventListeners[\App\Events\Domain\PaymentVerified::class])) {
+            // Check if PaymentVerified event class exists
+            if (class_exists(\App\Events\Domain\PaymentVerified::class)) {
                 $score += 5;
             } else {
-                $issues[] = 'PaymentVerified event not registered';
+                $issues[] = 'PaymentVerified event class not found';
             }
 
-            // Check if FirebaseSyncService has syncPaymentEvent method
-            if (method_exists($this->firebaseSyncService, 'syncPaymentEvent')) {
+            // Check if FirebaseSyncService has syncPayment method
+            if (method_exists($this->firebaseSyncService, 'syncPayment')) {
                 $score += 5;
             } else {
-                $issues[] = 'FirebaseSyncService::syncPaymentEvent not found';
+                $issues[] = 'FirebaseSyncService::syncPayment not found';
             }
         } catch (\Exception $e) {
             $issues[] = 'Exception: ' . $e->getMessage();

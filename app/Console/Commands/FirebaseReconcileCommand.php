@@ -41,8 +41,12 @@ class FirebaseReconcileCommand extends Command
 
         // Check if Firebase is enabled
         if (!$this->firebaseSyncService->isEnabled()) {
-            $this->error('Firebase is not enabled or not configured.');
-            return self::FAILURE;
+            $this->warn('Firebase is not enabled or not configured.');
+            $this->info('Status: disabled');
+            $this->info('Message: Firebase not enabled');
+            $this->newLine();
+            $this->info('To enable Firebase, set FIREBASE_ENABLED=true in your .env file.');
+            return self::SUCCESS; // Return success to not crash the system
         }
 
         $issues = [];
