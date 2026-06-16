@@ -48,7 +48,7 @@ Schedule::job(new NightlyWarehouseEtlJob(Carbon::yesterday()->toDateString()))
 
 // Trigger independent AI model retraining from platform data every night.
 Schedule::command('ai:retrain-models')
-    ->dailyAt('03:00')
+    ->dailyAt('00:00')
     ->withoutOverlapping()
     ->onOneServer()
     ->name('ai-retrain-models');
@@ -62,7 +62,7 @@ Schedule::command('health:record-platform-snapshot')
 
 // Poll production demand forecasts for key Kigali zones.
 Schedule::job(new PollDemandPredictionsJob)
-    ->everyFiveMinutes()
+    ->hourly()
     ->withoutOverlapping()
     ->onOneServer()
     ->name('poll-ml-demand-predictions');

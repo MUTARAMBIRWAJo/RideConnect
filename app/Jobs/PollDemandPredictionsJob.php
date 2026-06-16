@@ -2,7 +2,6 @@
 
 namespace App\Jobs;
 
-use App\Services\MlService;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Queue\Queueable;
 use Illuminate\Support\Facades\Log;
@@ -11,37 +10,82 @@ class PollDemandPredictionsJob implements ShouldQueue
 {
     use Queueable;
 
-    /**
-     * @var array<int, array{name: string, latitude: float, longitude: float}>
-     */
-    private array $majorZones = [
-        ['name' => 'Remera', 'latitude' => -1.9579, 'longitude' => 30.1127],
-        ['name' => 'Nyabugogo', 'latitude' => -1.9398, 'longitude' => 30.0445],
-        ['name' => 'Kimironko', 'latitude' => -1.9367, 'longitude' => 30.1304],
-        ['name' => 'Kacyiru', 'latitude' => -1.9360, 'longitude' => 30.0820],
-        ['name' => 'Kigali Heights', 'latitude' => -1.9536, 'longitude' => 30.0606],
-    ];
-
-    public function handle(MlService $mlService): void
+    public function handle(): void
     {
-        $now = now();
+        $service = app(\App\Services\DemandPredictionService::class);
+        $points = $service->predict();
 
-        foreach ($this->majorZones as $zone) {
-            $payload = [
-                'latitude' => $zone['latitude'],
-                'longitude' => $zone['longitude'],
-                'hour' => $now->hour,
-                'day_of_week' => $now->dayOfWeek,
-            ];
+        $highDemandZones = [];
+        foreach ($points as $point) {
+            if (($point['intensity'] ?? 0) >= 0.70) {
+                // Find the zone name from DB since the points collection doesn't have it directly.
+                $prediction = \App\Models\DemandPrediction::where('lat', $point['lat'])
+                    ->where('lng', $point['lng'])
+                    ->orderByDesc('predicted_at')
+                    ->first();
 
-            $result = $mlService->predictDemand($payload);
+                if ($prediction) {
+                    $highDemandZones[] = [
+                        'name' => $prediction->zone_name ?? $prediction->zone_id,
+                        'intensity' => $point['intensity']
+                    ];
+                }
+            }
+        }
 
-            if (! ($result['success'] ?? false)) {
-                Log::warning('Scheduled ML demand prediction failed', [
-                    'zone' => $zone['name'],
-                    'status' => $result['status'] ?? null,
-                    'error' => $result['error'] ?? null,
-                ]);
+        if (empty($highDemandZones)) {
+            Log::info('No high demand zones detected this hour.');
+            return;
+        }
+
+        // Notify only specific drivers:
+        // 1. Public Bus drivers with available seats
+        // 2. Motor-drivers with 2 seats available (idle/no active trips)
+        $availableDrivers = \App\Models\Driver::with(['user', 'vehicles', 'rides' => function ($query) {
+                $query->whereIn('status', ['published', 'in_progress'])
+                      ->where('available_seats', '>', 0);
+            }])
+            ->where('status', 'ONLINE')
+            ->where('is_available', true)
+            ->get()
+            ->filter(function ($driver) {
+                $activeVehicle = $driver->vehicles->where('is_active', true)->first();
+                if (!$activeVehicle) {
+                    return false;
+                }
+
+                $type = strtolower($activeVehicle->vehicle_type ?? '');
+
+                // 1. Public Bus with available seats
+                if (in_array($type, ['bus', 'public_bus', 'minibus'])) {
+                    return $driver->rides->isNotEmpty();
+                }
+
+                // 2. Motor-driver with idle of 2 seats available
+                if (in_array($type, ['motorcycle', 'moto', 'bike', 'motor_vehicle'])) {
+                    $hasActiveTrip = $driver->hasActiveMotoTrip();
+                    return !$hasActiveTrip && ((int) $activeVehicle->seats >= 2);
+                }
+
+                return false;
+            });
+
+        if ($availableDrivers->isEmpty()) {
+            return;
+        }
+
+        foreach ($highDemandZones as $zone) {
+            Log::info("High demand in {$zone['name']}. Notifying {$availableDrivers->count()} targeted drivers.");
+            
+            $notification = new \App\Notifications\HighDemandZoneNotification(
+                $zone['name'], 
+                $zone['intensity']
+            );
+
+            foreach ($availableDrivers as $driver) {
+                if ($driver->user) {
+                    $driver->user->notify($notification);
+                }
             }
         }
     }

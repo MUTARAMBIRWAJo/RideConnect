@@ -15,31 +15,24 @@ class AiDashboardService
     public function getDemandZones(): array
     {
         return $this->remember('dashboard.ai.demand_zones', 90, function (): array {
-            return collect($this->majorDemandZones())
-                ->map(function (array $zone): array {
-                    $response = $this->mlClient()->post('/ml/predict-demand', [
-                        'latitude' => $zone['latitude'],
-                        'longitude' => $zone['longitude'],
-                        'hour' => now()->hour,
-                        'day_of_week' => now()->dayOfWeek,
-                    ]);
-
-                    if (! $response->successful()) {
-                        return null;
-                    }
-
-                    $score = (float) ($response->json('demand_level') ?? 0);
-
-                    return [
-                        'zone' => $zone['name'],
-                        'level' => $this->demandLevelLabel($score),
-                        'score' => $score,
-                    ];
-                })
-                ->filter()
+            $predictions = \App\Models\DemandPrediction::where('predicted_at', '>=', now()->subHours(2))
+                ->orderByDesc('predicted_at')
+                ->orderByDesc('intensity')
                 ->take(8)
-                ->values()
-                ->all() ?: $this->fallbackDemandZones();
+                ->get();
+
+            if ($predictions->isEmpty()) {
+                return $this->fallbackDemandZones();
+            }
+
+            return $predictions->map(function ($prediction): array {
+                $score = $prediction->intensity;
+                return [
+                    'zone' => $prediction->zone_id,
+                    'level' => $this->demandLevelLabel($score),
+                    'score' => $score,
+                ];
+            })->all();
         }, $this->fallbackDemandZones());
     }
 
@@ -49,36 +42,20 @@ class AiDashboardService
     public function getSurgePredictions(): array
     {
         return $this->remember('dashboard.ai.surge_predictions', 90, function (): array {
-            $payload = [
-                'city' => 'Kigali',
-                'hour' => now()->hour,
-                'day_of_week' => now()->dayOfWeek,
-            ];
-
-            $response = $this->client()->post('/predict/surge', $payload);
-
-            if (! $response->successful()) {
-                return $this->fallbackSurgePredictions();
+            $demand = $this->getDemandZones();
+            if (empty($demand)) {
+                return [];
             }
-
-            $zones = $response->json('zones');
-
-            if (! is_array($zones) || $zones === []) {
-                return $this->fallbackSurgePredictions();
-            }
-
-            return collect($zones)
-                ->filter(fn (mixed $zone): bool => is_array($zone))
-                ->map(function (array $zone): array {
-                    return [
-                        'zone' => (string) ($zone['zone'] ?? $zone['name'] ?? 'Unknown'),
-                        'multiplier' => (float) ($zone['multiplier'] ?? $zone['surge_multiplier'] ?? 1.0),
-                    ];
-                })
-                ->take(8)
-                ->values()
-                ->all();
-        }, $this->fallbackSurgePredictions());
+            
+            return collect($demand)->map(function ($zone) {
+                // Heuristic: scale score dynamically to surge
+                $multiplier = max(1.0, 1.0 + ($zone['score'] * 3));
+                return [
+                    'zone' => $zone['zone'],
+                    'multiplier' => round($multiplier, 2),
+                ];
+            })->sortByDesc('multiplier')->take(5)->values()->all();
+        }, []);
     }
 
     /**
@@ -87,26 +64,16 @@ class AiDashboardService
     public function getEtaPredictions(): array
     {
         return $this->remember('dashboard.ai.eta_prediction', 90, function (): array {
-            $payload = [
-                'origin_lat' => -1.9441,
-                'origin_lng' => 30.0619,
-                'destination_lat' => -1.9706,
-                'destination_lng' => 30.1044,
-                'hour' => now()->hour,
-                'day_of_week' => now()->dayOfWeek,
-            ];
-
-            $response = $this->client()->post('/predict/eta', $payload);
-
-            if (! $response->successful()) {
-                return ['minutes' => 14, 'confidence' => 0.72];
-            }
+            $metric = \Illuminate\Support\Facades\DB::table('ai_model_metrics')
+                ->where('metric_name', 'accuracy')
+                ->orderByDesc('evaluated_at')
+                ->first();
 
             return [
-                'minutes' => (int) ($response->json('eta_minutes') ?? $response->json('minutes') ?? 14),
-                'confidence' => (float) ($response->json('confidence') ?? 0.72),
+                'minutes' => 60,
+                'confidence' => $metric ? (float) $metric->metric_value : 0.95,
             ];
-        }, ['minutes' => 14, 'confidence' => 0.72]);
+        }, ['minutes' => 60, 'confidence' => 0.95]);
     }
 
     private function client()
@@ -180,8 +147,8 @@ class AiDashboardService
     private function demandLevelLabel(float $score): string
     {
         return match (true) {
-            $score >= 0.75 => 'HIGH',
-            $score >= 0.45 => 'MEDIUM',
+            $score >= 0.15 => 'HIGH',
+            $score >= 0.08 => 'MEDIUM',
             default => 'LOW',
         };
     }

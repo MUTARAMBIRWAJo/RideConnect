@@ -6,7 +6,7 @@ COPY requirements.txt .
 RUN pip install --no-cache-dir -r requirements.txt
 
 COPY models/Matching_Modal_tflite_learn_1013157_3.tflite ./models/
-COPY main.py .
+COPY *.py .
 
 ENV PORT=8001
 EXPOSE ${PORT}

@@ -6,7 +6,7 @@
         <div class="space-y-4">
             <div class="grid gap-3 sm:grid-cols-2">
                 <div class="rounded-xl border border-gray-200 bg-white p-4 dark:border-gray-800 dark:bg-gray-900">
-                    <p class="text-xs uppercase tracking-wide text-gray-500 dark:text-gray-400">Predicted ETA</p>
+                    <p class="text-xs uppercase tracking-wide text-gray-500 dark:text-gray-400">Prediction Frequency</p>
                     <p class="mt-2 text-2xl font-semibold text-gray-900 dark:text-gray-100">{{ (int) ($eta['minutes'] ?? 0) }} min</p>
                     <p class="mt-1 text-xs text-gray-500 dark:text-gray-400">Confidence: {{ number_format(((float) ($eta['confidence'] ?? 0)) * 100, 1) }}%</p>
                 </div>
@@ -42,7 +42,7 @@
                                                 {{ $zone['level'] }}
                                             </span>
                                         </td>
-                                        <td class="px-4 py-2 text-gray-600 dark:text-gray-300">{{ number_format((float) $zone['score'], 2) }}</td>
+                                        <td class="px-4 py-2 text-gray-600 dark:text-gray-300">{{ number_format((float) $zone['score'] * 100, 1) }}%</td>
                                     </tr>
                                 @empty
                                     <tr>

@@ -36,6 +36,18 @@ class RetrainAIModels extends Command
         }
 
         $this->finishTrainingRun($runId, 'triggered', $result['data'] ?? []);
+
+        if (Schema::hasTable('ai_model_metrics') && isset($result['data']['metrics'])) {
+            foreach ($result['data']['metrics'] as $metricName => $metricValue) {
+                DB::table('ai_model_metrics')->insert([
+                    'model_name' => $modelName,
+                    'metric_name' => $metricName,
+                    'metric_value' => $metricValue,
+                    'evaluated_at' => now(),
+                ]);
+            }
+        }
+
         $this->info('AI retraining triggered successfully.');
         $this->line(json_encode($result['data'] ?? [], JSON_PRETTY_PRINT));
 

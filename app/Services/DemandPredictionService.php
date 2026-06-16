@@ -8,52 +8,80 @@ use Illuminate\Support\Collection;
 class DemandPredictionService
 {
     /**
-     * Build demand points using recent trip pickup density as a lightweight AI proxy.
+     * Fetch demand predictions from the ML service and save them to the DB.
      */
     public function predict(): Collection
     {
-        $recentTrips = Trip::query()
-            ->whereIn('status', ['PENDING', 'ACCEPTED', 'STARTED', 'COMPLETED'])
-            ->whereNotNull('pickup_lat')
-            ->whereNotNull('pickup_lng')
-            ->where('created_at', '>=', now()->subHours(6))
-            ->get(['pickup_lat', 'pickup_lng']);
+        $now = now();
+        $features = [
+            'hour_of_day' => $now->hour,
+            'day_of_week' => $now->dayOfWeek,
+            'is_weekend'  => $now->isWeekend() ? 1 : 0,
+            'is_holiday'  => 0,
+            'is_peak'     => (($now->hour >= 7 && $now->hour <= 9) || ($now->hour >= 17 && $now->hour <= 19)) ? 1 : 0,
+            'temperature' => 21.0,
+            'is_raining'  => 0,
+        ];
 
-        if ($recentTrips->isEmpty()) {
-            return collect([
-                ['lat' => -1.9440, 'lng' => 30.0610, 'intensity' => 0.45],
-                ['lat' => -1.9500, 'lng' => 30.0580, 'intensity' => 0.70],
-                ['lat' => -1.9380, 'lng' => 30.0720, 'intensity' => 0.90],
+        try {
+            $response = \Illuminate\Support\Facades\Http::timeout(30)
+                ->post(config('services.ml.url', 'http://ml-service:8001') . '/predict-demand/all', [
+                    'timestamp' => $now->toISOString(),
+                    'features'  => $features,
+                ]);
+
+            if ($response->successful()) {
+                $zones = $response->json('data.zones', []);
+                $points = collect();
+
+                foreach ($zones as $zone) {
+                    // Save to database
+                    $prediction = \App\Models\DemandPrediction::updateOrCreate(
+                        [
+                            'zone_id' => $zone['zone_id'],
+                            'predicted_at' => $now->startOfMinute()->toDateTimeString(),
+                        ],
+                        [
+                            'zone_name' => $zone['zone_name'] ?? null,
+                            'lat' => $zone['lat'],
+                            'lng' => $zone['lng'],
+                            'intensity' => min(1.0, max(0.0, ($zone['demand_score'] ?? 0) / 100)),
+                        ]
+                    );
+
+                    $points->push([
+                        'lat' => $prediction->lat,
+                        'lng' => $prediction->lng,
+                        'intensity' => $prediction->intensity,
+                    ]);
+                }
+
+                return $points;
+            }
+            
+            \Illuminate\Support\Facades\Log::warning('DemandPredictionService: ML service returned error', [
+                'status' => $response->status(),
+                'body'   => $response->body(),
+            ]);
+        } catch (\Exception $e) {
+            \Illuminate\Support\Facades\Log::warning('DemandPredictionService: ML service unreachable', [
+                'error' => $e->getMessage(),
             ]);
         }
 
-        $buckets = $recentTrips
-            ->groupBy(function (Trip $trip) {
-                return round((float) $trip->pickup_lat, 3).':'.round((float) $trip->pickup_lng, 3);
-            })
-            ->map(function (Collection $group) {
-                $first = $group->first();
-
+        // Fallback: Return the latest predictions from DB if available
+        $latestPredictionTime = \App\Models\DemandPrediction::max('predicted_at');
+        if ($latestPredictionTime) {
+            $latest = \App\Models\DemandPrediction::where('predicted_at', $latestPredictionTime)->get();
+            return $latest->map(function ($prediction) {
                 return [
-                    'lat' => round((float) $first->pickup_lat, 3),
-                    'lng' => round((float) $first->pickup_lng, 3),
-                    'count' => $group->count(),
+                    'lat' => $prediction->lat,
+                    'lng' => $prediction->lng,
+                    'intensity' => $prediction->intensity,
                 ];
-            })
-            ->values();
+            });
+        }
 
-        $maxCount = (int) max(1, (int) $buckets->max('count'));
-
-        return $buckets
-            ->map(function (array $bucket) use ($maxCount) {
-                $normalized = $bucket['count'] / $maxCount;
-
-                return [
-                    'lat' => $bucket['lat'],
-                    'lng' => $bucket['lng'],
-                    'intensity' => round(min(1, max(0.2, $normalized)), 3),
-                ];
-            })
-            ->values();
+        return collect([]);
     }
 }

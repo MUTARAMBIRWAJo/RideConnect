@@ -166,7 +166,7 @@ class RideAIService
 
     private function client(): PendingRequest
     {
-        $baseUrl = rtrim((string) config('services.ride_ai.base_url', 'http://ai-service:8001'), '/');
+        $baseUrl = rtrim((string) config('services.ride_ai.base_url', 'http://ml-service:8001'), '/');
         $apiKey = (string) config('services.ride_ai.api_key', '');
         $timeout = (int) config('services.ride_ai.timeout', 5);
 
