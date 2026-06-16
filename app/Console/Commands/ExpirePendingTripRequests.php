@@ -62,6 +62,12 @@ class ExpirePendingTripRequests extends Command
                             'rejected_at' => now(),
                         ]);
 
+                    if ($trip->driver_id) {
+                        \App\Models\Driver::query()
+                            ->whereKey($trip->driver_id)
+                            ->update(['availability_status' => 'available']);
+                    }
+
                     if ($updated !== 1) {
                         continue;
                     }

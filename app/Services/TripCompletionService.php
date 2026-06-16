@@ -58,7 +58,11 @@ class TripCompletionService
             $this->ticketService->issueForTrip($trip->fresh());
 
             if ($trip->driver_id) {
-                Driver::query()->whereKey($trip->driver_id)->update(['availability_status' => 'available']);
+                Driver::query()->whereKey($trip->driver_id)->update([
+                    'availability_status' => 'available',
+                    'current_trip_id' => null,
+                    'is_available' => true,
+                ]);
             }
 
             TripStatusEvent::query()->create([

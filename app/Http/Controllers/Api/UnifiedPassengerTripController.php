@@ -187,6 +187,23 @@ class UnifiedPassengerTripController extends Controller
      */
     public function store(Request $request, string $type): JsonResponse
     {
+        $activeTrip = \App\Models\Trip::where('passenger_id', $request->user()->id)
+            ->whereIn('status', ['requested', 'assigning', 'assigned', 'accepted', 'started', 'REQUESTED', 'MATCHING', 'ASSIGNED', 'ACCEPTED', 'STARTED'])
+            ->first();
+
+        if ($activeTrip) {
+            return response()->json([
+                'success' => false,
+                'error_code' => 'ACTIVE_TRIP_EXISTS',
+                'message' => 'There is another trip in progress.',
+                'data' => [
+                    'trip_id' => $activeTrip->id,
+                    'status' => $activeTrip->status,
+                    'can_cancel' => in_array(strtoupper((string) $activeTrip->status), ['REQUESTED', 'MATCHING', 'ASSIGNED', 'ASSIGNING']),
+                ]
+            ], 409);
+        }
+
         $typeNormalized = $this->normalizeType($type);
         
         if ($typeNormalized === 'motorcycle') {

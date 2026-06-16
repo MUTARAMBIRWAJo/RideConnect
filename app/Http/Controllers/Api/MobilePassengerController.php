@@ -264,6 +264,23 @@ class MobilePassengerController extends Controller
             ], 403);
         }
 
+        $activeTrip = \App\Models\Trip::where('passenger_id', $user->id)
+            ->whereIn('status', ['requested', 'assigning', 'assigned', 'accepted', 'started', 'REQUESTED', 'MATCHING', 'ASSIGNED', 'ACCEPTED', 'STARTED'])
+            ->first();
+
+        if ($activeTrip) {
+            return response()->json([
+                'success' => false,
+                'error_code' => 'ACTIVE_TRIP_EXISTS',
+                'message' => 'There is another trip in progress.',
+                'data' => [
+                    'trip_id' => $activeTrip->id,
+                    'status' => $activeTrip->status,
+                    'can_cancel' => in_array(strtoupper((string) $activeTrip->status), ['REQUESTED', 'MATCHING', 'ASSIGNED', 'ASSIGNING']),
+                ]
+            ], 409);
+        }
+
         $validator = Validator::make($request->all(), [
             'ride_id' => 'nullable|exists:rides,id',
             'driver_id' => 'nullable|integer|exists:drivers,id',
@@ -500,6 +517,12 @@ class MobilePassengerController extends Controller
             TripStateMachine::assertTransitionForTrip($trip, TripStateMachine::CANCELLED);
             $trip->status = TripStateMachine::CANCELLED;
             $trip->save();
+
+            if ($trip->driver_id) {
+                \App\Models\Driver::query()
+                    ->whereKey($trip->driver_id)
+                    ->update(['availability_status' => 'available']);
+            }
         } catch (DomainException $e) {
             return response()->json([
                 'status' => 'error',

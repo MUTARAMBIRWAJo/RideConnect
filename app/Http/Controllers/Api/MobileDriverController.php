@@ -628,6 +628,9 @@ class MobileDriverController extends Controller
             TripStateMachine::assertTransitionForTrip($trip, TripStateMachine::CANCELLED);
             $trip->status = TripStateMachine::CANCELLED;
             $trip->save();
+
+            $driver->forceFill(['availability_status' => 'available'])->save();
+
             $this->mobileNotificationService->sendTripCancelledToPassenger($trip, 'Driver cancelled');
 
         } catch (DomainException $e) {

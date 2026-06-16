@@ -89,4 +89,83 @@ class AdminMatchingMetricsController extends Controller
             ],
         ]);
     }
+
+    /**
+     * GET /api/v1/admin/matching/debug/{tripId}
+     *
+     * Diagnostic endpoint to evaluate driver matching state for a specific trip.
+     */
+    public function matchingDebug($tripId): JsonResponse
+    {
+        $trip = \App\Models\Trip::find($tripId);
+        
+        if (!$trip) {
+            return response()->json(['success' => false, 'message' => 'Trip not found'], 404);
+        }
+
+        $distanceSql = '(6371 * acos(cos(radians(?)) * cos(radians(dl.latitude)) * cos(radians(dl.longitude) - radians(?)) + sin(radians(?)) * sin(radians(dl.latitude))))';
+
+        $rejectedDriverIds = DB::table('trip_rejections')->where('trip_id', $tripId)->pluck('driver_id')->all();
+
+        $candidates = DB::table('drivers as d')
+            ->join('driver_locations as dl', 'dl.driver_id', '=', 'd.user_id')
+            ->selectRaw('d.id, d.status as approval_status, d.availability_status, dl.is_online, dl.last_activity_at, ' . $distanceSql . ' as distance_km', [
+                $trip->pickup_lat,
+                $trip->pickup_lng,
+                $trip->pickup_lat,
+            ])
+            ->whereNull('d.deleted_at')
+            ->havingRaw($distanceSql . ' <= ?', [
+                $trip->pickup_lat,
+                $trip->pickup_lng,
+                $trip->pickup_lat,
+                10, // Wider 10km radius for diagnostic purposes
+            ])
+            ->get();
+
+        $driversFound = $candidates->count();
+        $filtered = [];
+        $filterReasons = [];
+
+        foreach ($candidates as $c) {
+            $reasons = [];
+            if ($c->approval_status !== 'approved') {
+                $reasons[] = 'approval_status_not_approved';
+            }
+            if (!in_array($c->availability_status, ['online', 'available'])) {
+                $reasons[] = 'availability_status_' . $c->availability_status;
+            }
+            if (!$c->is_online) {
+                $reasons[] = 'gps_is_offline';
+            }
+            if ($c->last_activity_at < now()->subMinutes(3)->toDateTimeString()) {
+                $reasons[] = 'gps_stale';
+            }
+            if (in_array($c->id, $rejectedDriverIds)) {
+                $reasons[] = 'previously_rejected';
+            }
+
+            if (!empty($reasons)) {
+                $filtered[] = $c->id;
+                $filterReasons[$c->id] = $reasons;
+            }
+        }
+
+        $attempt = \App\Models\TripAssignmentAttempt::where('trip_id', $tripId)->latest()->first();
+
+        return response()->json([
+            'success' => true,
+            'data' => [
+                'trip_id' => $trip->id,
+                'matching_status' => $trip->assignment_status,
+                'retry_count' => DB::table('trip_rejections')->where('trip_id', $tripId)->count(),
+                'drivers_found' => $driversFound,
+                'drivers_filtered' => count($filtered),
+                'filter_reasons' => $filterReasons,
+                'selected_driver' => $trip->driver_id,
+                'latest_attempt_status' => $attempt ? $attempt->status : null,
+                'ml_version' => $trip->ranker_version,
+            ],
+        ]);
+    }
 }

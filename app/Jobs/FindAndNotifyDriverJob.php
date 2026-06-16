@@ -24,12 +24,16 @@ class FindAndNotifyDriverJob implements ShouldQueue
 {
     use Dispatchable, InteractsWithQueue, Queueable, SerializesModels;
 
-    public int $tries = 3;
+    public int $tries = 2;
+    public int $backoff = 5;
 
     public function __construct(public readonly int $tripId) {}
 
     public function handle(MobilePushService $pushService): void
     {
+        \Illuminate\Support\Facades\Log::info('MATCHING_JOB_START', ['trip_id' => $this->tripId]);
+        $startMs = floor(microtime(true) * 1000);
+
         $trip = Trip::query()->with(['passenger', 'matchingSession'])->find($this->tripId);
 
         if (! $trip || $trip->status !== 'requested' || $trip->assignment_status !== 'unassigned') {
@@ -37,6 +41,7 @@ class FindAndNotifyDriverJob implements ShouldQueue
         }
 
         $candidates = $this->candidateDrivers($trip);
+        \Illuminate\Support\Facades\Log::info('DRIVER_POOL_SIZE_AFTER_FILTER', ['trip_id' => $trip->id, 'count' => $candidates->count()]);
 
         if ($candidates->isEmpty()) {
             $this->cancelNoDriverTrip($trip, $pushService);
@@ -157,6 +162,9 @@ class FindAndNotifyDriverJob implements ShouldQueue
         ]);
 
         AttemptTimeoutJob::dispatch((int) $attempt->id)->delay(now()->addSeconds(30));
+
+        $endMs = floor(microtime(true) * 1000);
+        \Illuminate\Support\Facades\Log::info('MATCHING_DURATION_MS', ['trip_id' => $this->tripId, 'duration_ms' => $endMs - $startMs]);
     }
 
     private function candidateDrivers(Trip $trip)
@@ -168,7 +176,7 @@ class FindAndNotifyDriverJob implements ShouldQueue
 
         $distanceSql = '(6371 * acos(cos(radians(?)) * cos(radians(dl.latitude)) * cos(radians(dl.longitude) - radians(?)) + sin(radians(?)) * sin(radians(dl.latitude))))';
 
-        return DB::table('drivers as d')
+        $query = DB::table('drivers as d')
             ->join('driver_locations as dl', 'dl.driver_id', '=', 'd.user_id')
             ->selectRaw('d.id, d.user_id, d.rating, d.total_rides, dl.latitude, dl.longitude, dl.speed_kmh, '.$distanceSql.' as distance_km', [
                 $trip->pickup_lat,
@@ -176,10 +184,12 @@ class FindAndNotifyDriverJob implements ShouldQueue
                 $trip->pickup_lat,
             ])
             ->where('d.status', 'approved')
-            ->where('d.availability_status', 'online')
+            ->whereIn('d.availability_status', ['online', 'available'])
+            ->where('d.is_available', true)
+            ->whereNull('d.current_trip_id')
             ->whereNull('d.deleted_at')
             ->where('dl.is_online', true)
-            ->where('dl.last_activity_at', '>=', now()->subMinutes(3))
+            ->where('dl.last_activity_at', '>=', now()->subSeconds(60))
             ->when(! empty($rejectedDriverIds), fn ($query) => $query->whereNotIn('d.id', $rejectedDriverIds))
             ->havingRaw($distanceSql.' <= ?', [
                 $trip->pickup_lat,
@@ -188,8 +198,11 @@ class FindAndNotifyDriverJob implements ShouldQueue
                 5,
             ])
             ->orderBy('distance_km')
-            ->limit(10)
-            ->get();
+            ->limit(10);
+
+        \Illuminate\Support\Facades\Log::info('DRIVER_POOL_SIZE_BEFORE', ['trip_id' => $trip->id, 'count' => DB::table('drivers')->where('status', 'approved')->where('is_available', true)->whereNull('current_trip_id')->count()]);
+
+        return $query->get();
     }
 
     private function rankDrivers(Trip $trip, $candidates): array
@@ -222,13 +235,46 @@ class FindAndNotifyDriverJob implements ShouldQueue
             'candidates' => $candidatePayload,
         ];
 
-        $mlResult = app(TfliteMatchingService::class)->rankDrivers(
-            tripId: (int) $trip->id,
-            transportType: $trip->transport_type ?? 'car',
-            pickupLat: (float) $trip->pickup_lat,
-            pickupLng: (float) $trip->pickup_lng,
-            candidates: $candidatePayload,
-        );
+        $fallbackTriggered = false;
+        try {
+            $mlResult = app(TfliteMatchingService::class)->rankDrivers(
+                tripId: (int) $trip->id,
+                transportType: $trip->transport_type ?? 'car',
+                pickupLat: (float) $trip->pickup_lat,
+                pickupLng: (float) $trip->pickup_lng,
+                candidates: $candidatePayload,
+            );
+        } catch (\Throwable $e) {
+            \Illuminate\Support\Facades\Log::error('ML_MATCHING_FAILED', [
+                'trip_id' => $trip->id,
+                'error' => $e->getMessage()
+            ]);
+            $fallbackTriggered = true;
+            $mlResult = null;
+        }
+
+        if (!$mlResult) {
+            $fallbackRanking = collect($candidatePayload)
+                ->sortBy('distance_km')
+                ->values()
+                ->map(function ($driver, $index) {
+                    return [
+                        'driver_id' => $driver['driver_id'],
+                        'score' => 100 - ($index * 5) - ($driver['distance_km'] * 2),
+                        'score_breakdown' => ['distance' => $driver['distance_km']]
+                    ];
+                })
+                ->all();
+
+            $mlResult = [
+                'ranked_drivers' => $fallbackRanking,
+                'model_version' => 'distance_fallback',
+                'latency_ms' => 0,
+            ];
+            \Illuminate\Support\Facades\Log::info('FALLBACK_TRIGGERED', ['trip_id' => $trip->id]);
+        }
+
+        \Illuminate\Support\Facades\Log::info('ML_RESPONSE', ['trip_id' => $trip->id, 'ml_result' => $mlResult]);
 
         $latencyMs = (int) ($mlResult['latency_ms'] ?? 0);
         $modelVersion = (string) ($mlResult['model_version'] ?? 'unknown');

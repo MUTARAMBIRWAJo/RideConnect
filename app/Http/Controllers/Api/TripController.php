@@ -798,6 +798,14 @@ class TripController extends Controller
             'status' => 'CANCELLED',
         ]);
 
+        if ($trip->driver_id) {
+            \App\Models\Driver::query()->whereKey($trip->driver_id)->update([
+                'availability_status' => 'available',
+                'current_trip_id' => null,
+                'is_available' => true,
+            ]);
+        }
+
         $trip = $trip->fresh();
         $reason = (string) $request->input('reason', 'cancelled_by_user');
         $this->mobileNotificationService->sendTripCancelledToPassenger($trip, $reason);

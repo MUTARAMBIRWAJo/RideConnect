@@ -35,6 +35,7 @@ use App\Http\Controllers\Api\OfficerPublicBusController;
 use App\Http\Controllers\Api\OfficerPublicTransportController;
 use App\Http\Controllers\Api\PassengerController;
 use App\Http\Controllers\Api\PassengerPublicBusController;
+use App\Http\Controllers\Api\PassengerMatchingController;
 use App\Http\Controllers\Api\PaymentController;
 use App\Http\Controllers\Api\PricingController;
 use App\Http\Controllers\Api\PublicTransportController;
@@ -109,6 +110,7 @@ Route::middleware(['auth:sanctum', 'role:super_admin,admin'])->prefix('admin')->
     Route::get('/demand-heatmap', [DemandHeatmapController::class, 'index']);
     Route::get('/live-requests', [LiveRequestsController::class, 'index']);
     Route::get('/rides/{ride}/route-history', [RideRouteHistoryController::class, 'show']);
+    Route::get('/matching/debug/{tripId}', [\App\Http\Controllers\Admin\AdminMatchingMetricsController::class, 'matchingDebug']);
 });
 
 Route::prefix('v1')->group(function () {
@@ -251,6 +253,7 @@ Route::prefix('v1')->group(function () {
             // Ride History
             Route::get('/rides/history', [PassengerController::class, 'rideHistory']);
             Route::get('/rides/{id}', [RideController::class, 'showRide'])->whereNumber('id');
+Route::post('/matching/driver/{tripId}', [PassengerMatchingController::class, 'match']); // Passenger driver matching
             Route::put('/rides/{id}/cancel', [RideController::class, 'cancelRide'])->whereNumber('id');
 
             // Bookings

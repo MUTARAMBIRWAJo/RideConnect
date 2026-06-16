@@ -61,6 +61,8 @@ class AttemptTimeoutJob implements ShouldQueue
 
             Driver::query()->where('id', $attempt->driver_id)->update([
                 'availability_status' => 'online',
+                'is_available' => true,
+                'current_trip_id' => null,
                 'updated_at' => now(),
             ]);
 
