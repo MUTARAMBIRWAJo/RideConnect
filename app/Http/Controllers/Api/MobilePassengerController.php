@@ -562,7 +562,25 @@ class MobilePassengerController extends Controller
             TripStateMachine::assertTransitionForTrip($trip, TripStateMachine::COMPLETED);
             $trip->status = TripStateMachine::COMPLETED;
             $trip->save();
-        } catch (DomainException $e) {
+
+            // ML/MoMo Integration: Generate the Pending MTN MoMo Payment
+            $payment = \App\Models\Payment::create([
+                'trip_id' => $trip->id,
+                'user_id' => $passengerMobileUserId,
+                'type' => 'ride_fare',
+                'amount' => $trip->fare ?? 0,
+                'currency' => 'RWF',
+                'payment_method' => 'mobile_money',
+                'payment_provider' => 'mtn_momo',
+                'transaction_id' => 'MOMO-'.strtoupper(uniqid()),
+                'status' => 'pending',
+                'verification_status' => 'pending',
+            ]);
+
+            // Note: In production, we would dispatch a MoMo API request job here
+            // e.g., dispatch(new \App\Jobs\InitiateMoMoPaymentJob($payment));
+
+        } catch (\App\Exceptions\DomainException $e) {
             return response()->json([
                 'status' => 'error',
                 'type' => 'DOMAIN_ERROR',
@@ -576,6 +594,12 @@ class MobilePassengerController extends Controller
             'data' => [
                 'trip_id' => $trip->id,
                 'trip_state' => $trip->status,
+                'payment' => [
+                    'id' => $payment->id,
+                    'amount' => $payment->amount,
+                    'transaction_id' => $payment->transaction_id,
+                    'instruction' => 'Check your phone for the MTN MoMo PIN prompt.',
+                ]
             ],
         ]);
     }

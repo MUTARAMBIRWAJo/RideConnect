@@ -201,6 +201,7 @@ Route::prefix('v1')->group(function () {
                 Route::get('/trip-history', [UnifiedPassengerTripController::class, 'history']);
                 Route::post('/trip-request', [UnifiedPassengerTripController::class, 'store']);
                 Route::post('/trip-cancel', [UnifiedPassengerTripController::class, 'cancel']);
+                Route::post('/trip-rate/{id}', [\App\Http\Controllers\Api\ReviewController::class, 'store'])->whereNumber('id');
             });
 
             Route::prefix('public-bus')->group(function () {
