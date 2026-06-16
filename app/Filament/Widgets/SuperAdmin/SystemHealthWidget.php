@@ -43,18 +43,19 @@ class SystemHealthWidget extends Widget
     private function checkAiService(): array
     {
         try {
-            $url = rtrim((string) config('services.ai_service.url', 'https://rideconnect-ai.onrender.com'), '/');
-            $response = Http::timeout((int) config('services.ai_service.timeout', 8))->get($url.'/health');
+            // Hit the internal ML service container directly
+            $url = rtrim((string) config('services.ml_service.url', 'http://ml-service:8001'), '/');
+            $response = Http::timeout((int) config('services.ml_service.timeout', 8))->get($url.'/health');
 
             if ($response->successful()) {
-                return ['status' => 'ok', 'message' => 'AI service reachable'];
+                return ['status' => 'ok', 'message' => 'ML Service reachable'];
             }
 
-            return ['status' => 'warn', 'message' => 'AI health check returned '.$response->status()];
+            return ['status' => 'warn', 'message' => 'ML health check returned '.$response->status()];
         } catch (\Throwable $e) {
             report($e);
 
-            return ['status' => 'down', 'message' => 'AI service unavailable'];
+            return ['status' => 'down', 'message' => 'ML Service unavailable'];
         }
     }
 
@@ -115,11 +116,11 @@ class SystemHealthWidget extends Widget
                 return ['status' => 'warn', 'message' => 'Firebase integrations disabled'];
             }
 
-            if (!$healthService->canConnectFirestore() || !$healthService->canConnectMessaging()) {
+            if (!$healthService->canConnectMessaging()) {
                 return ['status' => 'down', 'message' => 'Firebase connections failing'];
             }
 
-            return ['status' => 'ok', 'message' => 'Firebase Firestore & FCM operational'];
+            return ['status' => 'ok', 'message' => 'Firebase FCM & RTDB operational'];
         } catch (\Throwable $e) {
             return ['status' => 'down', 'message' => 'Firebase status check failed: ' . $e->getMessage()];
         }
