@@ -181,6 +181,7 @@ class DatabaseSeeder extends Seeder
                 'phone' => null,
                 'profile_photo' => $mobileUser->profile_photo,
                 'is_verified' => $mobileUser->is_verified,
+                'is_approved' => true,
                 'created_at' => $mobileUser->created_at ?? now(),
                 'updated_at' => now(),
             ];
@@ -190,7 +191,7 @@ class DatabaseSeeder extends Seeder
             DB::table('users')->upsert(
                 array_values($rowsByEmail),
                 ['email'],
-                ['name', 'password', 'role', 'mobile_user_id', 'manager_id', 'profile_photo', 'is_verified', 'updated_at'],
+                ['name', 'password', 'role', 'mobile_user_id', 'manager_id', 'profile_photo', 'is_verified', 'is_approved', 'updated_at'],
             );
 
             $this->syncTableIdSequence('users');

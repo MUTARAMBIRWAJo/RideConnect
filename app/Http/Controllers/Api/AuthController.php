@@ -57,7 +57,7 @@ class AuthController extends Controller
             'password' => Hash::make($request->validated('password')),
             'role' => $role,
             'phone' => $request->validated('phone'),
-            'is_approved' => false, // Require approval before login
+            'is_approved' => true, // Auto-approve mobile registration for testing
         ]);
 
         try {

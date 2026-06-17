@@ -34,6 +34,7 @@
         {{ \Filament\Support\Facades\FilamentView::renderHook(\Filament\View\PanelsRenderHook::STYLES_BEFORE, scopes: $livewire?->getRenderHookScopes()) }}
 
         <style>
+            [x-cloak],
             [x-cloak=''],
             [x-cloak='x-cloak'],
             [x-cloak='1'] {

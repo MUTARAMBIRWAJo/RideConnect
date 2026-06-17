@@ -76,7 +76,7 @@
 			<x-slot name="description">High-impact controls to reduce response time during operations.</x-slot>
 
 			<div class="grid gap-3 sm:grid-cols-1 md:grid-cols-2 xl:grid-cols-4">
-				<x-filament::modal width="md">
+				<x-filament::modal id="clear-app-caches-modal" width="md">
 					<x-slot name="trigger">
 						<button type="button" class="w-full rounded-xl border border-slate-200 bg-white px-4 py-3 text-left text-sm font-medium text-slate-800 shadow-sm transition hover:bg-slate-50">
 							Clear App Caches
@@ -92,7 +92,7 @@
 					</div>
 				</x-filament::modal>
 
-				<x-filament::modal width="md">
+				<x-filament::modal id="restart-queue-workers-modal" width="md">
 					<x-slot name="trigger">
 						<button type="button" class="w-full rounded-xl border border-slate-200 bg-white px-4 py-3 text-left text-sm font-medium text-slate-800 shadow-sm transition hover:bg-slate-50">
 							Restart Queue Workers
@@ -108,7 +108,7 @@
 					</div>
 				</x-filament::modal>
 
-				<x-filament::modal width="md">
+				<x-filament::modal id="approve-pending-drivers-modal" width="md">
 					<x-slot name="trigger">
 						<button type="button" class="w-full rounded-xl border border-slate-200 bg-white px-4 py-3 text-left text-sm font-medium text-slate-800 shadow-sm transition hover:bg-slate-50">
 							Approve Pending Drivers
@@ -138,7 +138,7 @@
 					</div>
 				</x-filament::modal>
 
-				<x-filament::modal width="md">
+				<x-filament::modal id="approve-pending-users-modal" width="md">
 					<x-slot name="trigger">
 						<button type="button" class="w-full rounded-xl border border-slate-200 bg-white px-4 py-3 text-left text-sm font-medium text-slate-800 shadow-sm transition hover:bg-slate-50">
 							Approve Pending Users
