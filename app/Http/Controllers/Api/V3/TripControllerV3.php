@@ -1,0 +1,91 @@
+<?php
+
+namespace App\Http\Controllers\Api\V3;
+
+use App\Http\Controllers\Controller;
+use App\Http\Requests\V3\MotorVehicleTripRequestV3;
+use App\Http\Requests\V3\PrivateCarTripRequestV3;
+use App\Http\Requests\V3\PublicBusTripRequestV3;
+use App\Models\V3\TripV3;
+use App\Services\V3\TripLifecycleEngineV3;
+use App\Services\V3\TripMatchingEngineV3;
+use Illuminate\Http\JsonResponse;
+
+class TripControllerV3 extends Controller
+{
+    private TripLifecycleEngineV3 $lifecycle;
+    private TripMatchingEngineV3 $matchingEngine;
+
+    public function __construct(TripLifecycleEngineV3 $lifecycle, TripMatchingEngineV3 $matchingEngine)
+    {
+        $this->lifecycle = $lifecycle;
+        $this->matchingEngine = $matchingEngine;
+    }
+
+    public function requestMotorVehicle(MotorVehicleTripRequestV3 $request): JsonResponse
+    {
+        $trip = new TripV3([
+            'user_id' => $request->user()->id,
+            'transport_type' => 'motor_vehicle',
+            'pickup_location' => $request->validated('pickup_location'),
+            'dropoff_location' => $request->validated('dropoff_location'),
+            'metadata' => [
+                'ride_mode' => $request->validated('ride_mode'),
+                'payment_method' => $request->validated('payment_method'),
+            ],
+        ]);
+        $trip->save();
+
+        $this->matchingEngine->startMatching($trip);
+
+        return response()->json([
+            'success' => true,
+            'data' => $trip,
+        ], 201);
+    }
+
+    public function requestPrivateCar(PrivateCarTripRequestV3 $request): JsonResponse
+    {
+        $trip = new TripV3([
+            'user_id' => $request->user()->id,
+            'transport_type' => 'private_car',
+            'pickup_location' => $request->validated('pickup_location'),
+            'dropoff_location' => $request->validated('dropoff_location'),
+            'metadata' => [
+                'car_type_preference' => $request->validated('car_type_preference'),
+                'scheduled_time' => $request->validated('scheduled_time'),
+            ],
+        ]);
+        $trip->save();
+
+        $this->matchingEngine->startMatching($trip);
+
+        return response()->json([
+            'success' => true,
+            'data' => $trip,
+        ], 201);
+    }
+
+    public function requestPublicBus(PublicBusTripRequestV3 $request): JsonResponse
+    {
+        $trip = new TripV3([
+            'user_id' => $request->user()->id,
+            'transport_type' => 'public_bus',
+            'pickup_location' => $request->validated('pickup_stop'),
+            'dropoff_location' => $request->validated('dropoff_stop'),
+            'metadata' => [
+                'route_id' => $request->validated('route_id'),
+                'passenger_count' => $request->validated('passenger_count'),
+                'preferred_time' => $request->validated('preferred_time'),
+            ],
+        ]);
+        $trip->save();
+
+        $this->matchingEngine->startMatching($trip);
+
+        return response()->json([
+            'success' => true,
+            'data' => $trip,
+        ], 201);
+    }
+}

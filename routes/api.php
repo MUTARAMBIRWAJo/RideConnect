@@ -70,6 +70,15 @@ use Illuminate\Support\Facades\Route;
    =========================== */
 
 /* ===========================
+   API V3 (Trip System V3 - Isolated)
+   =========================== */
+Route::prefix('v3')->middleware(['auth:sanctum'])->group(function () {
+    Route::post('/trips/motor-vehicle/request', [\App\Http\Controllers\Api\V3\TripControllerV3::class, 'requestMotorVehicle']);
+    Route::post('/trips/private-car/request', [\App\Http\Controllers\Api\V3\TripControllerV3::class, 'requestPrivateCar']);
+    Route::post('/trips/public-bus/request', [\App\Http\Controllers\Api\V3\TripControllerV3::class, 'requestPublicBus']);
+});
+
+/* ===========================
    PAYMENT WEBHOOKS (No auth — verified by signature/key)
    =========================== */
 
