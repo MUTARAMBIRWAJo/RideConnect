@@ -205,6 +205,8 @@ Route::prefix('v1')->group(function () {
                 // Smart trip request and matching
                 Route::post('/request', [PassengerPublicBusController::class, 'requestTrip'])
                     ->name('passenger.public-bus.request');
+                Route::post('/trip-request', [\App\Http\Controllers\Api\PublicBusTripController::class, 'tripRequest'])
+                    ->name('passenger.public-bus.trip-request');
                 Route::get('/requests/{id}', [PassengerPublicBusController::class, 'showRequest'])
                     ->name('passenger.public-bus.show-request');
 
@@ -243,6 +245,11 @@ Route::prefix('v1')->group(function () {
             Route::get('/trips/current', [PublicTransportController::class, 'currentTrip']);
             Route::get('/trips/{trip}/ticket', [PublicTransportController::class, 'ticket'])->whereNumber('trip');
             Route::post('/trips/{trip}/feedback', [PublicTransportController::class, 'feedback'])->whereNumber('trip');
+
+            // Public Bus Trip Execution
+            Route::post('/trips/{id}/board', [\App\Http\Controllers\Api\PublicBusTripController::class, 'board'])->whereNumber('id');
+            Route::post('/trips/{id}/start', [\App\Http\Controllers\Api\PublicBusTripController::class, 'start'])->whereNumber('id');
+            Route::post('/trips/{id}/complete', [\App\Http\Controllers\Api\PublicBusTripController::class, 'complete'])->whereNumber('id');
 
             // Rides - Discovery + Booking
             Route::get('/rides/available', [RideController::class, 'index']);

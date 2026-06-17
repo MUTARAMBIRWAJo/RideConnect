@@ -44,6 +44,20 @@ class Trip extends Model
         'driver_assigned' => 'ASSIGNED',
         'DRIVER_ASSIGNED' => 'ASSIGNED',
         'matched' => 'DRIVER_FOUND',
+
+        // Public Bus
+        'searching_bus' => 'SEARCHING_BUS',
+        'SEARCHING_BUS' => 'SEARCHING_BUS',
+        'bus_assigned' => 'BUS_ASSIGNED',
+        'BUS_ASSIGNED' => 'BUS_ASSIGNED',
+        'bus_arriving' => 'BUS_ARRIVING',
+        'BUS_ARRIVING' => 'BUS_ARRIVING',
+        'passengers_boarding' => 'PASSENGERS_BOARDING',
+        'PASSENGERS_BOARDING' => 'PASSENGERS_BOARDING',
+        'near_destination' => 'NEAR_DESTINATION',
+        'NEAR_DESTINATION' => 'NEAR_DESTINATION',
+        'expired' => 'EXPIRED',
+        'EXPIRED' => 'EXPIRED',
     ];
 
     protected $fillable = [
@@ -94,6 +108,11 @@ class Trip extends Model
         'rejection_reason',
         'paid_to_driver_at',
         'pickup_verified_at',
+        'capacity_used',
+        'capacity_total',
+        'route_id',
+        'bus_id',
+        'boarding_status',
     ];
 
     protected $casts = [
@@ -119,6 +138,9 @@ class Trip extends Model
         'rejected_at' => 'datetime',
         'pickup_verified_at' => 'datetime',
         'paid_to_driver_at' => 'datetime',
+        'capacity_used' => 'integer',
+        'capacity_total' => 'integer',
+        'boarding_status' => 'array',
     ];
 
     public function passenger()
