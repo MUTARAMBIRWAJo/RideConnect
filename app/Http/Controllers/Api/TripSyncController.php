@@ -89,22 +89,30 @@ class TripSyncController extends Controller
         ]);
     }
 
-    public function acknowledgeTrip(Request $request, int $tripId): JsonResponse
+    public function acknowledgeTrip(Request $request, int $id): JsonResponse
     {
+        $trip = null;
         $isMotorcycle = false;
-        $trip = Trip::find($tripId);
         
-        if (! $trip) {
-            $trip = \App\Models\MotorcycleTrip::find($tripId);
-            if ($trip) {
-                $isMotorcycle = true;
-            } else {
-                return response()->json(['success' => false, 'message' => 'Trip not found'], 404);
+        $legacyTrip = Trip::find($id);
+        $motoTrip = MotorcycleTrip::find($id);
+        
+        $canAccessLegacy = $legacyTrip ? $this->canAccessTrip($request, $legacyTrip) : false;
+        $canAccessMoto = $motoTrip ? $this->canAccessTrip($request, $motoTrip) : false;
+        
+        // Prioritize modern MotorcycleTrip if there is a collision and the user has access to both (rare)
+        if ($canAccessMoto) {
+            $trip = $motoTrip;
+            $isMotorcycle = true;
+        } elseif ($canAccessLegacy) {
+            $trip = $legacyTrip;
+            $isMotorcycle = false;
+        } else {
+            // Neither exist, or unauthorized
+            if ($legacyTrip || $motoTrip) {
+                return response()->json(['success' => false, 'message' => 'Unauthorized'], 403);
             }
-        }
-
-        if (! $this->canAccessTrip($request, $trip)) {
-            return response()->json(['success' => false, 'message' => 'Unauthorized'], 403);
+            return response()->json(['success' => false, 'message' => 'Trip not found'], 404);
         }
 
         $validated = $request->validate([
