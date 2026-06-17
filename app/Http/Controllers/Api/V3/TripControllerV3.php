@@ -88,4 +88,19 @@ class TripControllerV3 extends Controller
             'data' => $trip,
         ], 201);
     }
+    public function status(string $id): JsonResponse
+    {
+        $trip = TripV3::findOrFail($id);
+
+        return response()->json([
+            'success' => true,
+            'data' => [
+                'id' => $trip->id,
+                'status' => $trip->status,
+                'driver_id' => $trip->driver_id,
+                'matched_driver_id' => $trip->matched_driver_id,
+                'transport_type' => $trip->transport_type,
+            ],
+        ]);
+    }
 }

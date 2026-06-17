@@ -12,13 +12,13 @@ class TripLifecycleEngineV3
      * Allowed state transitions.
      */
     protected const TRANSITIONS = [
-        'created' => ['searching', 'cancelled', 'expired'],
-        'searching' => ['assigned', 'cancelled', 'expired'],
-        'assigned' => ['active', 'searching', 'cancelled'], // Driver rejected/timed out -> searching
-        'active' => ['completed', 'cancelled'],
-        'completed' => [],
-        'cancelled' => [],
-        'expired' => [],
+        'SEARCHING' => ['DRIVER_OFFERED', 'CANCELLED', 'EXPIRED'],
+        'DRIVER_OFFERED' => ['ASSIGNED', 'SEARCHING', 'CANCELLED'],
+        'ASSIGNED' => ['IN_PROGRESS', 'SEARCHING', 'CANCELLED'],
+        'IN_PROGRESS' => ['COMPLETED', 'CANCELLED'],
+        'COMPLETED' => [],
+        'CANCELLED' => [],
+        'EXPIRED' => [],
     ];
 
     /**
@@ -55,6 +55,6 @@ class TripLifecycleEngineV3
         $metadata['cancellation_reason'] = $reason;
         $trip->metadata = $metadata;
 
-        return $this->transition($trip, 'cancelled');
+        return $this->transition($trip, 'CANCELLED');
     }
 }

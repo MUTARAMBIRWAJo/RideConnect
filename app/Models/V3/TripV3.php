@@ -16,7 +16,9 @@ class TripV3 extends Model
     protected $table = 'trips_v3';
 
     protected $attributes = [
-        'status' => 'created',
+        'status' => 'SEARCHING',
+        'driver_response_status' => 'pending',
+        'match_attempt_count' => 0,
     ];
 
     protected $fillable = [
@@ -33,10 +35,17 @@ class TripV3 extends Model
         'fare_estimate',
         'fare_actual',
         'metadata',
+        'driver_response_status',
+        'matched_driver_id',
+        'match_attempt_count',
+        'last_matched_at',
+        'ignored_driver_ids',
     ];
 
     protected $casts = [
         'metadata' => 'array',
+        'ignored_driver_ids' => 'array',
+        'last_matched_at' => 'datetime',
         'pickup_lat' => 'float',
         'pickup_lng' => 'float',
         'dropoff_lat' => 'float',
