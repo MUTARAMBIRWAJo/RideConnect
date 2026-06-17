@@ -15,7 +15,7 @@ class TfliteMatchingService
     public function __construct()
     {
         $this->endpoint = rtrim((string) config('services.tflite.endpoint'), '/');
-        $this->timeoutSeconds = (int) config('services.tflite.timeout', 15);
+        $this->timeoutSeconds = 5;
     }
 
     public function warmUp(): void
@@ -51,7 +51,7 @@ class TfliteMatchingService
 
         try {
             $response = Http::timeout($this->timeoutSeconds)
-                ->retry(2, 3000)
+                ->retry(1, 500)
                 ->post("{$this->endpoint}/rank-drivers", $payload);
 
             $latencyMs = (int) ((microtime(true) - $start) * 1000);

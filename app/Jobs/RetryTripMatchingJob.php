@@ -22,7 +22,11 @@ class RetryTripMatchingJob implements ShouldQueue
 
     public function __construct(private $tripId) {}
 
-    public function handle(MatchingService $matchingService, NotificationService $notificationService): void
+    public function handle(
+        MatchingService $matchingService,
+        NotificationService $notificationService,
+        \App\Services\MotorcycleTripService $motorcycleTripService
+    ): void
     {
         $trip = MotorcycleTrip::find($this->tripId);
 
@@ -90,29 +94,14 @@ class RetryTripMatchingJob implements ShouldQueue
         // Attempt matching with expanded radius
         $matchResult = $matchingService->matchMotorcycleTrip($trip, $excludedDriverIds, $trip->current_search_radius_km);
 
-        if ($matchResult['success'] && !empty($matchResult['driver_id'])) {
+        if ($matchResult && !empty($matchResult['driver_id'])) {
             Log::info('RetryTripMatchingJob: Driver found on retry', [
                 'trip_id' => $trip->id,
                 'driver_id' => $matchResult['driver_id'],
                 'retry_count' => $trip->retry_count,
             ]);
 
-            // Driver found - update trip
-            $trip->update([
-                'status' => 'DRIVER_ASSIGNED',
-                'matching_status' => 'DRIVER_FOUND',
-                'driver_id' => $matchResult['driver_id'],
-            ]);
-
-            // Notify passenger
-            $notificationService->sendInAppNotification(
-                $trip->passenger_id,
-                'DRIVER_FOUND',
-                'Driver found',
-                'A driver has accepted your trip request.',
-                ['trip_id' => $trip->id, 'driver_id' => $matchResult['driver_id']]
-            );
-
+            $motorcycleTripService->assignDriver($trip, $matchResult);
             return;
         }
 

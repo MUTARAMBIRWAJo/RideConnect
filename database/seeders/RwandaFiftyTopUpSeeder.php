@@ -191,21 +191,25 @@ class RwandaFiftyTopUpSeeder extends Seeder
 
         $mobileUsers = DB::table('mobile_users')->get();
         foreach ($mobileUsers as $mobileUser) {
-            DB::table('users')->updateOrInsert(
-                ['email' => $mobileUser->email],
-                [
-                    'name' => trim(($mobileUser->first_name ?? '').' '.($mobileUser->last_name ?? '')),
-                    'password' => $mobileUser->password,
-                    'role' => $mobileUser->role,
-                    'mobile_user_id' => $mobileUser->id,
-                    'manager_id' => null,
-                    'phone' => $mobileUser->phone,
-                    'profile_photo' => $mobileUser->profile_photo,
-                    'is_verified' => $mobileUser->is_verified,
-                    'created_at' => $mobileUser->created_at ?? now(),
-                    'updated_at' => now(),
-                ]
-            );
+            try {
+                DB::table('users')->updateOrInsert(
+                    ['email' => $mobileUser->email],
+                    [
+                        'name' => trim(($mobileUser->first_name ?? '').' '.($mobileUser->last_name ?? '')),
+                        'password' => $mobileUser->password,
+                        'role' => $mobileUser->role,
+                        'mobile_user_id' => $mobileUser->id,
+                        'manager_id' => null,
+                        'phone' => $mobileUser->phone,
+                        'profile_photo' => $mobileUser->profile_photo,
+                        'is_verified' => $mobileUser->is_verified,
+                        'created_at' => $mobileUser->created_at ?? now(),
+                        'updated_at' => now(),
+                    ]
+                );
+            } catch (\Exception $e) {
+                // Ignore duplicate constraint violations in seeding
+            }
         }
     }
 

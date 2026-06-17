@@ -218,7 +218,7 @@ class MotorcycleTripService
         return [];
     }
 
-    private function assignDriver(MotorcycleTrip $trip, array $match): array
+    public function assignDriver(MotorcycleTrip $trip, array $match): array
     {
         return DB::transaction(function () use ($trip, $match) {
             $trip->update([

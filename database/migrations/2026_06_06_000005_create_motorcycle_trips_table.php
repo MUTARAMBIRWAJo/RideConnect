@@ -36,6 +36,7 @@ return new class extends Migration
                 $table->enum('status', [
                     'REQUESTED',
                     'MATCHING',
+                    'MATCHING_PENDING',
                     'ASSIGNED',
                     'DRIVER_ASSIGNED',
                     'PASSENGER_WAITING',

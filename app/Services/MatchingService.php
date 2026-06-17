@@ -19,8 +19,8 @@ class MatchingService
     public function __construct()
     {
         $this->mlServiceUrl = config('services.ml_service.url') ?? 'https://ml-service-j72g.onrender.com';
-        $this->timeout = config('services.ml_service.timeout', 30);
-        $this->maxRetries = 2;
+        $this->timeout = 5; // Reduced to 5 seconds to ensure fast fallback matching
+        $this->maxRetries = 1; // 1 retry only to prevent blocking the worker
     }
 
     /**
