@@ -265,6 +265,8 @@ class MatchingService
             $eligibleDrivers = Driver::with('vehicles')
                 ->where('status', 'approved')
                 ->whereIn('availability_status', ['online', 'available'])
+                ->where('is_online', true)
+                ->where('last_seen_at', '>=', now()->subMinutes(15))
                 ->whereNotIn('id', $excludeDriverIds)
                 ->whereDoesntHave('motorcycleTrips', function ($query) {
                     $query->whereIn('status', ['ASSIGNED', 'DRIVER_ASSIGNED', 'PASSENGER_WAITING', 'IN_PROGRESS']);
@@ -370,6 +372,11 @@ class MatchingService
     private function isDriverAvailable(Driver $driver): bool
     {
         if (! in_array((string) $driver->availability_status, ['online', 'available'], true)) {
+            return false;
+        }
+
+        // Must have an active heartbeat within 15 minutes and be marked online.
+        if (! $driver->is_online || ! $driver->last_seen_at || $driver->last_seen_at->lt(now()->subMinutes(15))) {
             return false;
         }
 

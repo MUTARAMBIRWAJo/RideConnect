@@ -57,12 +57,29 @@ class AuthService
             ];
         }
 
-        // Revoke all existing tokens (single session enforcement)
-        $user->tokens()->delete();
-
         // Create new token
+
         $tokenName = $deviceName ?: ($isManager ? 'manager-token' : 'auth-token');
-        $token = $user->createToken($tokenName)->plainTextToken;
+        $tokenResult = $user->createToken($tokenName);
+        
+        $user->update([
+            'last_seen_at' => now(),
+            'is_online' => true,
+            'current_device_id' => $deviceName,
+            'current_token_id' => $tokenResult->accessToken->id,
+        ]);
+        
+        if ($user->role && $user->role->value === 'DRIVER' && Schema::hasTable('drivers')) {
+            DB::table('drivers')
+                ->where('user_id', $user->id)
+                ->update([
+                    'last_seen_at' => now(),
+                    'is_online' => true,
+                    'last_online_at' => now(),
+                ]);
+        }
+
+        $token = $tokenResult->plainTextToken;
 
         // Resolve phone: prefer users.phone, fall back to linked mobile_users.phone
         $phone = $user->phone;

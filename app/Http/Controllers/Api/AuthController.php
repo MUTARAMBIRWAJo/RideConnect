@@ -155,8 +155,26 @@ class AuthController extends Controller
      */
     public function logout(Request $request): JsonResponse
     {
+        $user = $request->user();
+        
         // Revoke the current token
-        $request->user()->currentAccessToken()->delete();
+        $user->currentAccessToken()->delete();
+        
+        $user->update([
+            'is_online' => false,
+            'current_device_id' => null,
+            'current_token_id' => null,
+            'last_seen_at' => now(),
+        ]);
+        
+        if ($user->role && $user->role->value === 'DRIVER' && \Illuminate\Support\Facades\Schema::hasTable('drivers')) {
+            \Illuminate\Support\Facades\DB::table('drivers')
+                ->where('user_id', $user->id)
+                ->update([
+                    'is_online' => false,
+                    'last_seen_at' => now(),
+                ]);
+        }
 
         return response()->json([
             'success' => true,

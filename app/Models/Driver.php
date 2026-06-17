@@ -33,6 +33,8 @@ class Driver extends Model
         'rating_count',
         'balance',
         'approved_at',
+        'last_seen_at',
+        'is_online',
     ];
 
     protected $casts = [
@@ -47,6 +49,8 @@ class Driver extends Model
         'rating_count' => 'integer',
         'is_test' => 'boolean',
         'is_available' => 'boolean',
+        'last_seen_at' => 'datetime',
+        'is_online' => 'boolean',
     ];
 
     public function user()

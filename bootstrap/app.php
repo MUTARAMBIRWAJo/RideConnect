@@ -35,6 +35,7 @@ return Application::configure(basePath: dirname(__DIR__))
         ]);
 
         $middleware->api(prepend: [
+            \App\Http\Middleware\HeartbeatMiddleware::class,
             \App\Http\Middleware\EnforceDomainPolicies::class,
             \Illuminate\Cookie\Middleware\AddQueuedCookiesToResponse::class,
         ]);

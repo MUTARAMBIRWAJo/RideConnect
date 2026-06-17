@@ -51,6 +51,10 @@ class User extends Authenticatable implements FilamentUser
         'preferred_payment_method',
         'emergency_contact_name',
         'emergency_contact_phone',
+        'last_seen_at',
+        'is_online',
+        'current_device_id',
+        'current_token_id',
     ];
 
     /**
@@ -82,6 +86,8 @@ class User extends Authenticatable implements FilamentUser
             'two_factor_backup_codes' => 'array',
             'last_login_at' => 'datetime',
             'mfa_locked_until' => 'datetime',
+            'last_seen_at' => 'datetime',
+            'is_online' => 'boolean',
         ];
     }
 
