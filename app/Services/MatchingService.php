@@ -135,18 +135,25 @@ class MatchingService
                 'trip_duration_minutes' => $tripDurationMinutes,
             ]);
 
+            $startTime = microtime(true);
+
             // Call matching service
             $response = Http::timeout($this->timeout)
                 ->retry($this->maxRetries, 100)
                 ->post("{$this->mlServiceUrl}/match", $payload);
+
+            $mlResponseTime = round((microtime(true) - $startTime) * 1000, 2);
 
             if (!$response->successful()) {
                 Log::warning('Matching service returned error', [
                     'trip_id' => $trip->id,
                     'status' => $response->status(),
                     'body' => $response->body(),
+                    'ml_response_time_ms' => $mlResponseTime,
                 ]);
-                return $this->bestLocalMatch($eligibleDrivers, 'ML service unavailable; selected nearest eligible driver');
+                $fallbackMatch = $this->bestLocalMatch($eligibleDrivers, 'ML service unavailable; selected nearest eligible driver');
+                $this->logAssignmentResult($trip->id, count($eligibleDrivers), array_column($eligibleDrivers, 'id'), $mlResponseTime, $fallbackMatch);
+                return $fallbackMatch;
             }
 
             $data = $response->json();
@@ -157,8 +164,11 @@ class MatchingService
                     'trip_id' => $trip->id,
                     'response' => $data,
                     'search_radius_km' => $searchRadiusKm,
+                    'ml_response_time_ms' => $mlResponseTime,
                 ]);
-                return $this->bestLocalMatch($eligibleDrivers, 'ML service returned no driver; selected nearest eligible driver');
+                $fallbackMatch = $this->bestLocalMatch($eligibleDrivers, 'ML service returned no driver; selected nearest eligible driver');
+                $this->logAssignmentResult($trip->id, count($eligibleDrivers), array_column($eligibleDrivers, 'id'), $mlResponseTime, $fallbackMatch);
+                return $fallbackMatch;
             }
 
             // Verify driver is still eligible
@@ -176,21 +186,30 @@ class MatchingService
                 'driver_id' => $driverId,
                 'score' => $data['score'] ?? null,
                 'reason' => $data['reason'] ?? null,
+                'ml_response_time_ms' => $mlResponseTime,
             ]);
 
-            return [
+            $matchResult = [
                 'driver_id' => $driverId,
                 'score' => $data['score'] ?? 0,
                 'reason' => $data['reason'] ?? 'Selected by ML engine',
                 'metadata' => $data,
             ];
+
+            $this->logAssignmentResult($trip->id, count($eligibleDrivers), array_column($eligibleDrivers, 'id'), $mlResponseTime, $matchResult);
+
+            return $matchResult;
         } catch (\Exception $e) {
+            $mlResponseTime = isset($startTime) ? round((microtime(true) - $startTime) * 1000, 2) : 0;
             Log::error('Exception calling matching service', [
                 'trip_id' => $trip->id,
                 'error' => $e->getMessage(),
                 'trace' => $e->getTraceAsString(),
+                'ml_response_time_ms' => $mlResponseTime,
             ]);
-            return $this->bestLocalMatch($eligibleDrivers, 'Matching service exception: ' . $e->getMessage());
+            $fallbackMatch = $this->bestLocalMatch($eligibleDrivers, 'Matching service exception: ' . $e->getMessage());
+            $this->logAssignmentResult($trip->id, count($eligibleDrivers), array_column($eligibleDrivers, 'id'), $mlResponseTime, $fallbackMatch);
+            return $fallbackMatch;
         }
     }
 
@@ -486,5 +505,17 @@ class MatchingService
         ]);
 
         return true;
+    }
+
+    private function logAssignmentResult(int $tripId, int $onlineDriverCount, array $candidateDriverIds, float $mlResponseTime, ?array $assignmentResult): void
+    {
+        Log::info('Trip Assignment Result', [
+            'trip_id' => $tripId,
+            'online_driver_count' => $onlineDriverCount,
+            'candidate_driver_ids' => $candidateDriverIds,
+            'ml_response_time_ms' => $mlResponseTime,
+            'assignment_result' => $assignmentResult ? 'SUCCESS' : 'FAILED',
+            'assigned_driver_id' => $assignmentResult['driver_id'] ?? null,
+        ]);
     }
 }

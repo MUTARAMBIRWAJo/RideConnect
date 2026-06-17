@@ -46,28 +46,48 @@ class RetryTripMatchingJob implements ShouldQueue
 
         // Check if max retries exceeded
         if ($trip->retry_count >= $trip->max_retries) {
-            Log::warning('RetryTripMatchingJob: Max retries exceeded', [
-                'trip_id' => $trip->id,
-                'retry_count' => $trip->retry_count,
-                'max_retries' => $trip->max_retries,
-            ]);
+            // Driver Availability Verification
+            $onlineDriversCount = \App\Models\Driver::where('status', 'approved')
+                ->whereIn('availability_status', ['online', 'available'])
+                ->where('is_online', true)
+                ->where('last_seen_at', '>=', now()->subMinutes(15))
+                ->whereNull('current_trip_id')
+                ->whereDoesntHave('motorcycleTrips', function ($query) {
+                    $query->whereIn('status', ['ASSIGNED', 'DRIVER_ASSIGNED', 'PASSENGER_WAITING', 'IN_PROGRESS']);
+                })
+                ->count();
 
-            $trip->update([
-                'status' => 'EXPIRED',
-                'matching_status' => 'FAILED_MAX_RETRIES',
-            ]);
+            if ($onlineDriversCount > 0) {
+                Log::info('RetryTripMatchingJob: Max retries exceeded, but online drivers exist. Continuing search.', [
+                    'trip_id' => $trip->id,
+                    'online_drivers' => $onlineDriversCount
+                ]);
+                $trip->max_retries += 5;
+                $trip->save();
+            } else {
+                Log::warning('RetryTripMatchingJob: Max retries exceeded and no online eligible drivers found', [
+                    'trip_id' => $trip->id,
+                    'retry_count' => $trip->retry_count,
+                    'max_retries' => $trip->max_retries,
+                ]);
 
-            // Notify passenger
-            $notificationService->sendInAppNotification(
-                $trip->passenger_id,
-                'TRIP_MATCHING_FAILED',
-                'No drivers available',
-                'We couldn\'t find a driver for your trip after multiple attempts. Please try again.',
-                ['trip_id' => $trip->id]
-            );
+                $trip->update([
+                    'status' => 'EXPIRED',
+                    'matching_status' => 'FAILED_MAX_RETRIES',
+                ]);
 
-            Log::info('RetryTripMatchingJob: Trip expired after max retries', ['trip_id' => $trip->id]);
-            return;
+                // Notify passenger
+                $notificationService->sendInAppNotification(
+                    $trip->passenger_id,
+                    'TRIP_MATCHING_FAILED',
+                    'No drivers available',
+                    'We couldn\'t find a driver for your trip after multiple attempts. Please try again.',
+                    ['trip_id' => $trip->id]
+                );
+
+                Log::info('RetryTripMatchingJob: Trip expired after max retries', ['trip_id' => $trip->id]);
+                return;
+            }
         }
 
         // Expand search radius
@@ -115,13 +135,19 @@ class RetryTripMatchingJob implements ShouldQueue
             'matching_status' => 'RETRY_SCHEDULED',
         ]);
 
-        // Schedule next retry with exponential backoff
-        $delaySeconds = 15 + (($trip->retry_count - 1) * 5); // 15s, 20s, 25s, 30s, 35s
-        dispatch(new self($trip->id))->delay(now()->addSeconds($delaySeconds));
+        // Schedule next retry with exponential backoff (only if not using sync queue)
+        if (config('queue.default') !== 'sync') {
+            $delaySeconds = 15 + (($trip->retry_count - 1) * 5); // 15s, 20s, 25s, 30s, 35s
+            dispatch(new self($trip->id))->delay(now()->addSeconds($delaySeconds));
 
-        Log::info('RetryTripMatchingJob: Next retry scheduled', [
-            'trip_id' => $trip->id,
-            'delay_seconds' => $delaySeconds,
-        ]);
+            Log::info('RetryTripMatchingJob: Next retry scheduled', [
+                'trip_id' => $trip->id,
+                'delay_seconds' => $delaySeconds,
+            ]);
+        } else {
+            Log::info('RetryTripMatchingJob: Sync queue detected, skipping recursive background dispatch.', [
+                'trip_id' => $trip->id,
+            ]);
+        }
     }
 }

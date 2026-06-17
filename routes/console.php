@@ -78,3 +78,10 @@ Schedule::command('rides:promote-bookings-to-trips')
     ->withoutOverlapping()
     ->onOneServer()
     ->name('sync-travel-categories');
+
+// Expire and rematch unresponsive motorcycle trips
+Schedule::command('motorcycle-trips:expire-pending')
+    ->everyMinute()
+    ->withoutOverlapping()
+    ->onOneServer()
+    ->name('expire-pending-motorcycle-trips');

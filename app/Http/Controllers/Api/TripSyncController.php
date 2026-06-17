@@ -91,9 +91,16 @@ class TripSyncController extends Controller
 
     public function acknowledgeTrip(Request $request, int $tripId): JsonResponse
     {
+        $isMotorcycle = false;
         $trip = Trip::find($tripId);
+        
         if (! $trip) {
-            return response()->json(['success' => false, 'message' => 'Trip not found'], 404);
+            $trip = \App\Models\MotorcycleTrip::find($tripId);
+            if ($trip) {
+                $isMotorcycle = true;
+            } else {
+                return response()->json(['success' => false, 'message' => 'Trip not found'], 404);
+            }
         }
 
         if (! $this->canAccessTrip($request, $trip)) {
@@ -116,6 +123,7 @@ class TripSyncController extends Controller
                 'acknowledgement_type' => $validated['acknowledgement_type'],
                 'source' => $validated['source'] ?? 'mobile_app',
                 'metadata' => $validated['metadata'] ?? [],
+                'is_motorcycle_trip' => $isMotorcycle,
             ],
             'created_at' => now(),
         ]);
@@ -217,7 +225,7 @@ class TripSyncController extends Controller
         ]);
     }
 
-    private function canAccessTrip(Request $request, Trip $trip): bool
+    private function canAccessTrip(Request $request, $trip): bool
     {
         $user = $request->user();
 
@@ -229,6 +237,12 @@ class TripSyncController extends Controller
             return true;
         }
 
+        // Modern unified auth uses $user->id for passenger_id
+        if ((int) $trip->passenger_id === (int) $user->id) {
+            return true;
+        }
+
+        // Legacy check
         return (int) $trip->passenger_id === (int) $user->mobile_user_id;
     }
 
