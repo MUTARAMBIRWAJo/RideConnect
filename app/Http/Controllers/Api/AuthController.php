@@ -90,47 +90,24 @@ class AuthController extends Controller
      * Returns 403 if account is not approved.
      * Returns token + user role on success.
      */
-    public function login(LoginRequest $request): JsonResponse
+    public function login(LoginRequest $request, \App\Services\Identity\AuthService $authService): JsonResponse
     {
-        $user = User::where('email', $request->validated('email'))->first();
+        $result = $authService->authenticate(
+            $request->validated('email'),
+            $request->validated('password')
+        );
 
-        // Check if user exists and password is correct
-        if (! $user || ! Hash::check($request->validated('password'), $user->password)) {
+        if (!$result['success']) {
             return response()->json([
                 'success' => false,
-                'message' => 'Invalid credentials',
-            ], 401);
+                'message' => $result['message'],
+            ], $result['code']);
         }
-
-        // Check if user is approved
-        if (! $user->is_approved) {
-            return response()->json([
-                'success' => false,
-                'message' => 'Your account is pending approval. Please contact administrator.',
-            ], 403);
-        }
-
-        // Revoke all existing tokens (optional - each login generates new token)
-        // Comment out if you want multiple tokens
-        $user->tokens()->delete();
-
-        // Create new token
-        $token = $user->createToken('auth-token')->plainTextToken;
 
         return response()->json([
             'success' => true,
             'message' => 'Login successful',
-            'data' => [
-                'user' => [
-                    'id' => $user->id,
-                    'name' => $user->name,
-                    'email' => $user->email,
-                    'role' => $user->role->value,
-                    'phone' => $user->phone,
-                ],
-                'token' => $token,
-                'token_type' => 'Bearer',
-            ],
+            'data' => $result['data'],
         ]);
     }
 
@@ -138,60 +115,26 @@ class AuthController extends Controller
      * Mobile login that accepts either email or phone.
      * Safely handles missing columns and database errors.
      */
-    public function mobileLogin(MobileLoginRequest $request): JsonResponse
+    public function mobileLogin(MobileLoginRequest $request, \App\Services\Identity\AuthService $authService): JsonResponse
     {
         try {
-            $login = $request->validated('login');
+            $result = $authService->authenticate(
+                $request->validated('login'),
+                $request->validated('password'),
+                $request->validated('device_name') ?: 'flutter-mobile'
+            );
 
-            $query = User::query()->where('email', $login);
-
-            if (Schema::hasColumn('users', 'phone')) {
-                $query->orWhere('phone', $login);
-            }
-
-            $user = $query->first();
-
-            if (! $user || ! Hash::check($request->validated('password'), $user->password)) {
+            if (!$result['success']) {
                 return response()->json([
                     'success' => false,
-                    'message' => 'Invalid credentials',
-                ], 401);
+                    'message' => $result['message'],
+                ], $result['code']);
             }
-
-            if (! $user->isMobileUser()) {
-                return response()->json([
-                    'success' => false,
-                    'message' => 'This endpoint is for passenger/driver accounts only.',
-                ], 403);
-            }
-
-            if (! $user->is_approved) {
-                return response()->json([
-                    'success' => false,
-                    'message' => 'Your account is pending approval. Please contact administrator.',
-                ], 403);
-            }
-
-            $user->tokens()->delete();
-
-            $tokenName = $request->validated('device_name') ?: 'flutter-mobile';
-            $token = $user->createToken($tokenName)->plainTextToken;
 
             return response()->json([
                 'success' => true,
                 'message' => 'Login successful',
-                'data' => [
-                    'user' => [
-                        'id' => $user->id,
-                        'name' => $user->name,
-                        'email' => $user->email,
-                        'role' => $user->role->value,
-                        'phone' => $user->phone ?? null,
-                        'is_approved' => $user->is_approved,
-                    ],
-                    'token' => $token,
-                    'token_type' => 'Bearer',
-                ],
+                'data' => $result['data'],
             ]);
         } catch (\Throwable $throwable) {
             Log::error('Mobile login failed', [
@@ -368,7 +311,7 @@ class AuthController extends Controller
      * Manager login.
      * POST /api/v1/manager/login
      */
-    public function managerLogin(Request $request): JsonResponse
+    public function managerLogin(Request $request, \App\Services\Identity\AuthService $authService): JsonResponse
     {
         $validated = $request->validate([
             'email' => 'required|email',
@@ -376,51 +319,30 @@ class AuthController extends Controller
         ]);
 
         $user = User::where('email', $validated['email'])->first();
-
-        // Check if user exists and password is correct
-        if (! $user || ! Hash::check($validated['password'], $user->password)) {
-            return response()->json([
-                'success' => false,
-                'message' => 'Invalid credentials',
-            ], 401);
-        }
-
-        // Check if user is a manager
-        if (! $user->isManager()) {
+        if ($user && !$user->isManager()) {
             return response()->json([
                 'success' => false,
                 'message' => 'Only managers can login through this endpoint',
             ], 403);
         }
 
-        // Check if user is approved
-        if (! $user->is_approved) {
+        $result = $authService->authenticate(
+            $validated['email'],
+            $validated['password'],
+            'manager-token'
+        );
+
+        if (!$result['success']) {
             return response()->json([
                 'success' => false,
-                'message' => 'Your account is pending approval.',
-            ], 403);
+                'message' => $result['message'],
+            ], $result['code']);
         }
-
-        // Revoke all existing tokens
-        $user->tokens()->delete();
-
-        // Create new token
-        $token = $user->createToken('manager-token')->plainTextToken;
 
         return response()->json([
             'success' => true,
             'message' => 'Manager login successful',
-            'data' => [
-                'user' => [
-                    'id' => $user->id,
-                    'name' => $user->name,
-                    'email' => $user->email,
-                    'role' => $user->role->value,
-                    'phone' => $user->phone,
-                ],
-                'token' => $token,
-                'token_type' => 'Bearer',
-            ],
+            'data' => $result['data'],
         ]);
     }
 
