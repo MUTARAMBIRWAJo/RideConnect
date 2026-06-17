@@ -125,16 +125,21 @@ class MotorcycleTripService
                 'status' => 'MATCHING_PENDING',
                 'matching_status' => 'RETRY_SCHEDULED',
                 'retry_count' => 0,
-                'max_retries' => 5,
+                'max_retries' => 50,
             ]);
 
-            // Schedule first retry after 15 seconds
-            dispatch(new RetryTripMatchingJob($trip->id))->delay(now()->addSeconds(15));
-
-            Log::info('First retry scheduled for trip', [
-                'trip_id' => $trip->id,
-                'retry_delay_seconds' => 15,
-            ]);
+            // Schedule first retry after 15 seconds (only if not using sync queue)
+            if (config('queue.default') !== 'sync') {
+                dispatch(new RetryTripMatchingJob($trip->id))->delay(now()->addSeconds(15));
+                Log::info('First retry scheduled for trip', [
+                    'trip_id' => $trip->id,
+                    'retry_delay_seconds' => 15,
+                ]);
+            } else {
+                Log::info('Sync queue detected: skipping background retry dispatch. Relying on passenger app polling to drive matching.', [
+                    'trip_id' => $trip->id,
+                ]);
+            }
 
             // Notify passenger that we're still looking
             $this->notificationService->sendInAppNotification(
