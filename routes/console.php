@@ -62,7 +62,7 @@ Schedule::command('health:record-platform-snapshot')
 
 // Poll production demand forecasts for key Kigali zones.
 Schedule::job(new PollDemandPredictionsJob)
-    ->hourly()
+    ->everyFiveMinutes()
     ->withoutOverlapping()
     ->onOneServer()
     ->name('poll-ml-demand-predictions');

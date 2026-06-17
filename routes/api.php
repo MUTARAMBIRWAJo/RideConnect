@@ -512,6 +512,8 @@ Route::post('/matching/driver/{tripId}', [PassengerMatchingController::class, 'm
             // Dashboard
             Route::get('/dashboard', [AdminDashboardController::class, 'index'])
                 ->middleware('can:viewAdminDashboard,'.Manager::class);
+            Route::get('/dashboard/demand-notifications', [AdminDashboardController::class, 'demandNotifications'])
+                ->middleware('can:viewAdminDashboard,'.Manager::class);
 
             // User Management
             Route::get('/users', [UserManagementController::class, 'index']);

@@ -270,4 +270,64 @@ class DashboardController extends Controller
             'data' => AdminActivityResource::collection($activities),
         ]);
     }
+
+    /**
+     * Get recent demand push notifications and live tracking info for admin dashboard.
+     * GET /api/v1/admin/dashboard/demand-notifications
+     */
+    public function demandNotifications(Request $request): JsonResponse
+    {
+        $user = $request->user();
+        Gate::forUser($user)->authorize('viewAdminDashboard', Manager::class);
+
+        $limit = $request->query('limit', 50);
+
+        // Fetch recent push logs with driver details
+        $logs = DB::table('demand_push_logs')
+            ->join('users', 'users.id', '=', 'demand_push_logs.driver_id')
+            ->select(
+                'demand_push_logs.id',
+                'demand_push_logs.zone_id',
+                'demand_push_logs.demand_count',
+                'demand_push_logs.available_drivers_count',
+                'demand_push_logs.lat',
+                'demand_push_logs.lng',
+                'demand_push_logs.payload',
+                'demand_push_logs.created_at',
+                'users.id as driver_id',
+                'users.name as driver_name',
+                'users.phone as driver_phone'
+            )
+            ->orderByDesc('demand_push_logs.created_at')
+            ->limit($limit)
+            ->get()
+            ->map(function ($log) {
+                return [
+                    'id' => $log->id,
+                    'zone_id' => $log->zone_id,
+                    'driver' => [
+                        'id' => $log->driver_id,
+                        'name' => $log->driver_name,
+                        'phone' => $log->driver_phone,
+                    ],
+                    'location' => [
+                        'lat' => (float) $log->lat,
+                        'lng' => (float) $log->lng,
+                    ],
+                    'metrics' => [
+                        'demand' => $log->demand_count,
+                        'available_drivers' => $log->available_drivers_count,
+                    ],
+                    'payload' => json_decode($log->payload, true),
+                    'dispatched_at' => Carbon::parse($log->created_at)->toIso8601String(),
+                ];
+            });
+
+        $this->trackAdminActivity($user, 'view_demand_notifications', 'Viewed real-time demand dispatch notifications.');
+
+        return response()->json([
+            'success' => true,
+            'data' => $logs,
+        ]);
+    }
 }

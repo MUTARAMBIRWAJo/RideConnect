@@ -15,7 +15,8 @@ class HighDemandZoneNotification extends Notification
      */
     public function __construct(
         public string $zoneName,
-        public float $intensity
+        public float $intensity,
+        public array $payload = []
     ) {}
 
     /**
@@ -29,28 +30,17 @@ class HighDemandZoneNotification extends Notification
     }
 
     /**
-     * Get the mail representation of the notification.
-     */
-    public function toMail(object $notifiable): MailMessage
-    {
-        return (new MailMessage)
-            ->line('The introduction to the notification.')
-            ->action('Notification Action', url('/'))
-            ->line('Thank you for using our application!');
-    }
-
-    /**
      * Get the array representation of the notification.
      *
      * @return array<string, mixed>
      */
     public function toArray(object $notifiable): array
     {
-        return [
-            'type' => 'high_demand_zone',
+        return array_merge([
+            'type' => 'demand_opportunity',
             'zone_name' => $this->zoneName,
             'intensity' => $this->intensity,
-            'message' => "High demand detected in {$this->zoneName}! Head there now to get more rides.",
-        ];
+            'message' => "High demand detected near your location. Accept trips now to earn more.",
+        ], $this->payload);
     }
 }
