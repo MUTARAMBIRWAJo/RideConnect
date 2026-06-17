@@ -125,7 +125,8 @@ class MotorcycleTripService
                 'status' => 'MATCHING_PENDING',
                 'matching_status' => 'RETRY_SCHEDULED',
                 'retry_count' => 0,
-                'max_retries' => 50,
+                'max_retries' => 100,
+                'matching_duration_seconds' => 0,
             ]);
 
             // Schedule first retry after 15 seconds (only if not using sync queue)
@@ -187,9 +188,13 @@ class MotorcycleTripService
         $match = $this->matchingService->fastLocalMatch($trip, $excluded, $radius);
         $candidateCount = $match['candidate_count'] ?? 0;
 
+        $newRetryCount = $trip->retry_count + 1;
+
         // Record progress so the status endpoint can report radius/candidates.
         $trip->forceFill([
             'current_search_radius_km' => $radius,
+            'retry_count' => $newRetryCount,
+            'last_retry_at' => now(),
             'metadata' => array_merge($trip->metadata ?? [], [
                 'last_candidate_count' => $candidateCount,
                 'last_search_radius_km' => $radius,
@@ -199,6 +204,14 @@ class MotorcycleTripService
         if ($match && ! empty($match['driver_id'])) {
             $this->assignDriver($trip, $match);
             return ['success' => true, 'driver_id' => $match['driver_id'], 'candidate_count' => $candidateCount, 'radius_km' => $radius];
+        }
+
+        if ($newRetryCount >= $trip->max_retries) {
+            $trip->forceFill([
+                'status' => 'FAILED',
+                'matching_status' => 'FAILED_MAX_RETRIES',
+            ])->save();
+            return ['success' => false, 'candidate_count' => $candidateCount, 'radius_km' => $radius];
         }
 
         // Keep the trip in a searchable state for the next poll/retry.

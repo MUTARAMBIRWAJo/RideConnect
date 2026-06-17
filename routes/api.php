@@ -195,14 +195,6 @@ Route::prefix('v1')->group(function () {
                 ->name('passenger.profile.update');
             Route::get('/stats', [PassengerController::class, 'stats']);
 
-            // Standardized Unified Passenger Trip APIs
-            Route::prefix('{type}')->group(function () {
-                Route::get('/trip-requests/{id}', [UnifiedPassengerTripController::class, 'show'])->whereNumber('id');
-                Route::get('/trip-history', [UnifiedPassengerTripController::class, 'history']);
-                Route::post('/trip-request', [UnifiedPassengerTripController::class, 'store']);
-                Route::post('/trip-cancel', [UnifiedPassengerTripController::class, 'cancel']);
-                Route::post('/trip-rate/{id}', [\App\Http\Controllers\Api\ReviewController::class, 'store'])->whereNumber('id');
-            });
 
             Route::prefix('public-bus')->group(function () {
                 // Corridor listing
@@ -234,6 +226,15 @@ Route::prefix('v1')->group(function () {
                 Route::get('/trip-requests/{id}', [MotorcycleTripController::class, 'show'])->whereNumber('id');
                 Route::post('/trip-requests/{id}/cancel', [MotorcycleTripController::class, 'cancel'])->whereNumber('id');
                 Route::post('/trip-requests/{id}/rate', [MotorcycleTripController::class, 'rate'])->whereNumber('id');
+            });
+
+            // Standardized Unified Passenger Trip APIs (Fallback for other types)
+            Route::prefix('{type}')->group(function () {
+                Route::get('/trip-requests/{id}', [UnifiedPassengerTripController::class, 'show'])->whereNumber('id');
+                Route::get('/trip-history', [UnifiedPassengerTripController::class, 'history']);
+                Route::post('/trip-request', [UnifiedPassengerTripController::class, 'store']);
+                Route::post('/trip-cancel', [UnifiedPassengerTripController::class, 'cancel']);
+                Route::post('/trip-rate/{id}', [\App\Http\Controllers\Api\ReviewController::class, 'store'])->whereNumber('id');
             });
 
             Route::get('/public-transport/corridors', [PassengerController::class, 'corridors']);
