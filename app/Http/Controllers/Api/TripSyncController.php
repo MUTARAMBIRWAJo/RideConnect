@@ -7,6 +7,7 @@ use App\Models\MatchingSession;
 use App\Models\Notification;
 use App\Models\NotificationDelivery;
 use App\Models\Trip;
+use App\Models\MotorcycleTrip;
 use App\Models\TripStatusEvent;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;

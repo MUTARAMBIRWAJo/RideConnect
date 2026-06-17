@@ -90,11 +90,16 @@ class DriverPolicy
         }
 
         // Check vehicle compatibility
+        // BYPASS: Currently relaxing this rule to allow testers/drivers to accept mismatched trips 
+        // as requested by the user, because testing different ride types on one account is common.
         if (! TransportMappingService::isCompatible($vehicle->vehicle_type, $transportType)) {
-            throw DomainException::make(
-                'Vehicle type not compatible with ride transport type',
-                'VEHICLE_TYPE_INCOMPATIBLE'
+            \Illuminate\Support\Facades\Log::warning(
+                "Vehicle type ({$vehicle->vehicle_type}) not strictly compatible with transport type ({$transportType}). Permitting for test/demo purposes."
             );
+            // throw DomainException::make(
+            //    'Vehicle type not compatible with ride transport type',
+            //    'VEHICLE_TYPE_INCOMPATIBLE'
+            // );
         }
     }
 

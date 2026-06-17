@@ -37,6 +37,8 @@ class MotorcycleMatchingServiceTest extends TestCase
         $driver = Driver::factory()->create([
             'status' => 'approved',
             'availability_status' => 'online',
+            'is_online' => true,
+            'last_seen_at' => now(),
             'current_latitude' => -1.9441,
             'current_longitude' => 30.0619,
         ]);

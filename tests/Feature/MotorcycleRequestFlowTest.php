@@ -49,6 +49,8 @@ class MotorcycleRequestFlowTest extends TestCase
             'status' => $status,
             'availability_status' => $availStatus,
             'is_available' => true,
+            'is_online' => true,
+            'last_seen_at' => now(),
             'current_latitude' => $lat,
             'current_longitude' => $lng,
         ]);
