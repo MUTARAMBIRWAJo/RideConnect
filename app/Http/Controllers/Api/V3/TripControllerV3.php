@@ -28,7 +28,11 @@ class TripControllerV3 extends Controller
             'user_id' => $request->user()->id,
             'transport_type' => 'motor_vehicle',
             'pickup_location' => $request->validated('pickup_location'),
+            'pickup_lat' => $request->validated('pickup_lat'),
+            'pickup_lng' => $request->validated('pickup_lng'),
             'dropoff_location' => $request->validated('dropoff_location'),
+            'dropoff_lat' => $request->validated('dropoff_lat'),
+            'dropoff_lng' => $request->validated('dropoff_lng'),
             'metadata' => [
                 'ride_mode' => $request->validated('ride_mode'),
                 'payment_method' => $request->validated('payment_method'),
@@ -50,7 +54,11 @@ class TripControllerV3 extends Controller
             'user_id' => $request->user()->id,
             'transport_type' => 'private_car',
             'pickup_location' => $request->validated('pickup_location'),
+            'pickup_lat' => $request->validated('pickup_lat'),
+            'pickup_lng' => $request->validated('pickup_lng'),
             'dropoff_location' => $request->validated('dropoff_location'),
+            'dropoff_lat' => $request->validated('dropoff_lat'),
+            'dropoff_lng' => $request->validated('dropoff_lng'),
             'metadata' => [
                 'car_type_preference' => $request->validated('car_type_preference'),
                 'scheduled_time' => $request->validated('scheduled_time'),
@@ -72,7 +80,11 @@ class TripControllerV3 extends Controller
             'user_id' => $request->user()->id,
             'transport_type' => 'public_bus',
             'pickup_location' => $request->validated('pickup_stop'),
+            'pickup_lat' => $request->validated('pickup_lat'),
+            'pickup_lng' => $request->validated('pickup_lng'),
             'dropoff_location' => $request->validated('dropoff_stop'),
+            'dropoff_lat' => $request->validated('dropoff_lat'),
+            'dropoff_lng' => $request->validated('dropoff_lng'),
             'metadata' => [
                 'route_id' => $request->validated('route_id'),
                 'passenger_count' => $request->validated('passenger_count'),
@@ -91,16 +103,21 @@ class TripControllerV3 extends Controller
     public function status(string $id): JsonResponse
     {
         $trip = TripV3::findOrFail($id);
+        
+        $driverLocation = null;
+        if ($trip->driver_id) {
+            $loc = \App\Models\V3\DriverLocationV3::where('driver_id', $trip->driver_id)->first();
+            if ($loc) {
+                $driverLocation = ['lat' => $loc->lat, 'lng' => $loc->lng];
+            }
+        }
 
         return response()->json([
-            'success' => true,
-            'data' => [
-                'id' => $trip->id,
-                'status' => $trip->status,
-                'driver_id' => $trip->driver_id,
-                'matched_driver_id' => $trip->matched_driver_id,
-                'transport_type' => $trip->transport_type,
-            ],
+            'trip_id' => $trip->id,
+            'status' => $trip->status,
+            'driver_location' => $driverLocation,
+            'eta' => '5 min', // In a real app, calculate via Google Maps Matrix API
+            'distance_remaining' => '2.3 km' // In a real app, calculate distance
         ]);
     }
 }

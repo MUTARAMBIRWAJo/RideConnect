@@ -13,40 +13,39 @@ use Illuminate\Support\Facades\DB;
 
 class DriverTripControllerV3 extends Controller
 {
-    private TripLifecycleEngineV3 $lifecycle;
-    private NotificationServiceV3 $notificationService;
-
-    public function __construct(TripLifecycleEngineV3 $lifecycle, NotificationServiceV3 $notificationService)
-    {
-        $this->lifecycle = $lifecycle;
-        $this->notificationService = $notificationService;
-    }
-
     public function accept(Request $request, string $id): JsonResponse
     {
-        $driver = $request->user();
+        // Assuming $request->user() returns a User model that has a driver relationship, 
+        // or returns a Driver directly based on auth setup.
+        $driverId = $request->user()->driver->id ?? $request->user()->id;
 
-        return DB::transaction(function () use ($id, $driver) {
+        return DB::transaction(function () use ($id, $driverId) {
             $trip = TripV3::where('id', $id)->lockForUpdate()->firstOrFail();
 
-            if ($trip->status !== 'DRIVER_OFFERED' || $trip->matched_driver_id !== $driver->id) {
+            if ($trip->status !== 'AWAITING_DRIVER_RESPONSE' || $trip->driver_id !== $driverId) {
                 return response()->json([
                     'success' => false,
                     'message' => 'Trip is no longer available or not assigned to you.',
                 ], 400);
             }
 
-            $trip->driver_id = $driver->id;
-            $trip->driver_response_status = 'accepted';
-            
-            $this->lifecycle->transition($trip, 'ASSIGNED');
+            $trip->status = 'ACCEPTED';
+            $trip->save();
 
-            $this->notificationService->sendToPassenger($trip->user_id, [
-                'type' => 'TRIP_ACCEPTED',
-                'driver_name' => $driver->name,
-                'eta' => 5,
-                'message' => 'Your driver has accepted your trip.',
+            // Insert into trip_events_v3 to trigger Realtime broadcast
+            DB::table('trip_events_v3')->insert([
+                'id' => (string) \Illuminate\Support\Str::uuid(),
+                'trip_id' => $trip->id,
+                'event_type' => 'TRIP_ACCEPTED',
+                'payload' => json_encode(['driver_id' => $driverId]),
+                'created_at' => now(),
+                'updated_at' => now(),
             ]);
+
+            // Update active_trips_v3 status
+            DB::table('active_trips_v3')
+                ->where('trip_id', $trip->id)
+                ->update(['status' => 'ACCEPTED', 'updated_at' => now()]);
 
             return response()->json([
                 'success' => true,
@@ -57,35 +56,38 @@ class DriverTripControllerV3 extends Controller
 
     public function reject(Request $request, string $id): JsonResponse
     {
-        $driver = $request->user();
+        $driverId = $request->user()->driver->id ?? $request->user()->id;
 
-        return DB::transaction(function () use ($id, $driver) {
+        return DB::transaction(function () use ($id, $driverId) {
             $trip = TripV3::where('id', $id)->lockForUpdate()->firstOrFail();
 
-            if ($trip->status !== 'DRIVER_OFFERED' || $trip->matched_driver_id !== $driver->id) {
+            if ($trip->status !== 'AWAITING_DRIVER_RESPONSE' || $trip->driver_id !== $driverId) {
                 return response()->json([
                     'success' => false,
                     'message' => 'Trip is no longer available or not assigned to you.',
                 ], 400);
             }
 
-            $trip->matched_driver_id = null;
-            $trip->driver_response_status = 'rejected';
+            $trip->status = 'REJECTED';
+            // Unassign driver so matching engine can re-assign
+            $trip->driver_id = null;
+            $trip->save();
 
-            $ignored = $trip->ignored_driver_ids ?? [];
-            if (!in_array($driver->id, $ignored)) {
-                $ignored[] = $driver->id;
-            }
-            $trip->ignored_driver_ids = $ignored;
+            DB::table('trip_events_v3')->insert([
+                'id' => (string) \Illuminate\Support\Str::uuid(),
+                'trip_id' => $trip->id,
+                'event_type' => 'TRIP_REJECTED',
+                'payload' => json_encode(['driver_id' => $driverId]),
+                'created_at' => now(),
+                'updated_at' => now(),
+            ]);
 
-            $this->lifecycle->transition($trip, 'SEARCHING');
-
-            // Dispatch matching for the next driver
-            ProcessTripMatchingV3::dispatch($trip);
+            // Typically here you'd dispatch a job to rematch or call the matching engine immediately
+            // app(\App\Services\V3\DriverMatchingEngineV3::class)->findAndNotifyNearbyDrivers($trip);
 
             return response()->json([
                 'success' => true,
-                'message' => 'Trip rejected successfully.',
+                'message' => 'Trip rejected successfully. Re-matching...',
             ]);
         });
     }

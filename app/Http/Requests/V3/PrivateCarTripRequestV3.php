@@ -15,8 +15,12 @@ class PrivateCarTripRequestV3 extends FormRequest
     {
         return [
             'pickup_location' => ['required', 'string'],
+            'pickup_lat' => ['required', 'numeric', 'between:-90,90'],
+            'pickup_lng' => ['required', 'numeric', 'between:-180,180'],
             'dropoff_location' => ['required', 'string'],
-            'car_type_preference' => ['required', 'string', 'in:economy,comfort,luxury'],
+            'dropoff_lat' => ['required', 'numeric', 'between:-90,90'],
+            'dropoff_lng' => ['required', 'numeric', 'between:-180,180'],
+            'car_type_preference' => ['required', 'string'],
             'scheduled_time' => ['nullable', 'date'],
         ];
     }

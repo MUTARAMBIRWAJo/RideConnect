@@ -15,7 +15,11 @@ class MotorVehicleTripRequestV3 extends FormRequest
     {
         return [
             'pickup_location' => ['required', 'string'],
+            'pickup_lat' => ['required', 'numeric', 'between:-90,90'],
+            'pickup_lng' => ['required', 'numeric', 'between:-180,180'],
             'dropoff_location' => ['required', 'string'],
+            'dropoff_lat' => ['required', 'numeric', 'between:-90,90'],
+            'dropoff_lng' => ['required', 'numeric', 'between:-180,180'],
             'ride_mode' => ['required', 'string', 'in:instant,scheduled'],
             'payment_method' => ['required', 'string'],
         ];
