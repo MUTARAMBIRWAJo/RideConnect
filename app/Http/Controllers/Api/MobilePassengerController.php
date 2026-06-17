@@ -264,25 +264,6 @@ class MobilePassengerController extends Controller
             ], 403);
         }
 
-        $activeTrip = \App\Models\Trip::where('passenger_id', $user->id)
-            ->whereIn('status', ['requested', 'assigning', 'assigned', 'accepted', 'started', 'REQUESTED', 'MATCHING', 'ASSIGNED', 'ACCEPTED', 'STARTED'])
-            ->first() 
-            ?? \App\Models\MotorcycleTrip::where('passenger_id', $user->id)
-            ->whereIn('status', ['REQUESTED', 'MATCHING', 'DRIVER_FOUND', 'ASSIGNED', 'ACCEPTED', 'ARRIVED', 'STARTED', 'DRIVER_ASSIGNED', 'PASSENGER_WAITING', 'IN_PROGRESS'])
-            ->first();
-
-        if ($activeTrip) {
-            return response()->json([
-                'success' => false,
-                'error_code' => 'ACTIVE_TRIP_EXISTS',
-                'message' => 'There is another trip in progress.',
-                'data' => [
-                    'trip_id' => $activeTrip->id,
-                    'status' => $activeTrip->status,
-                    'can_cancel' => in_array(strtoupper((string) $activeTrip->status), ['REQUESTED', 'MATCHING', 'ASSIGNED', 'ASSIGNING', 'DRIVER_FOUND', 'DRIVER_ASSIGNED', 'PASSENGER_WAITING']),
-                ]
-            ], 409);
-        }
 
         $validator = Validator::make($request->all(), [
             'ride_id' => 'nullable|exists:rides,id',

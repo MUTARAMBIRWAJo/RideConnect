@@ -57,6 +57,8 @@ class MotorcycleTripController extends Controller
             ]);
 
             $passengerId = auth()->id();
+
+
             $pickupLat = $validated['pickup_lat'] ?? null;
             $pickupLng = $validated['pickup_lng'] ?? null;
             $dropoffLat = $validated['dropoff_lat'] ?? null;
