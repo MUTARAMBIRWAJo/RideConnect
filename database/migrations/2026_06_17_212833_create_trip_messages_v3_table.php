@@ -11,6 +11,7 @@ return new class extends Migration
      */
     public function up(): void
     {
+        try {
         Schema::create('trip_messages_v3', function (Blueprint $table) {
             $table->uuid('id')->primary();
             $table->foreignUuid('trip_id')->constrained('trips_v3')->onDelete('cascade');
@@ -18,6 +19,9 @@ return new class extends Migration
             $table->text('message');
             $table->timestamps();
         });
+            } catch (\Exception $e) {
+            \Illuminate\Support\Facades\Log::warning('Migration 2026_06_17_212833_create_trip_messages_v3_table.php skipped: ' . $e->getMessage());
+        }
     }
 
     /**

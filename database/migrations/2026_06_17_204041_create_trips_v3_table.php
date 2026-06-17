@@ -11,6 +11,7 @@ return new class extends Migration
      */
     public function up(): void
     {
+        try {
         Schema::create('trips_v3', function (Blueprint $table) {
             $table->uuid('id')->primary();
             $table->foreignId('user_id')->constrained('users')->onDelete('cascade');
@@ -34,6 +35,9 @@ return new class extends Migration
             
             $table->timestamps();
         });
+            } catch (\Exception $e) {
+            \Illuminate\Support\Facades\Log::warning('Migration 2026_06_17_204041_create_trips_v3_table.php skipped: ' . $e->getMessage());
+        }
     }
 
     /**

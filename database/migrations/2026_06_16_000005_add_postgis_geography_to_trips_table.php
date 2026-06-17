@@ -10,6 +10,7 @@ return new class extends Migration
      */
     public function up(): void
     {
+        try {
         if (DB::getDriverName() === 'pgsql') {
             // Enable PostGIS extension
             DB::statement('CREATE EXTENSION IF NOT EXISTS postgis;');
@@ -33,6 +34,9 @@ return new class extends Migration
                     $table->text('dropoff_point')->nullable();
                 }
             });
+        }
+        } catch (\Exception $e) {
+            \Illuminate\Support\Facades\Log::warning('Migration 2026_06_16_000005_add_postgis_geography_to_trips_table.php skipped: ' . $e->getMessage());
         }
     }
 

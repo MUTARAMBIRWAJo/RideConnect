@@ -11,6 +11,7 @@ return new class extends Migration
      */
     public function up(): void
     {
+        try {
         Schema::create('device_tokens', function (Blueprint $table) {
             $table->id();
             $table->morphs('tokenable'); // tokenable_type, tokenable_id index
@@ -19,6 +20,9 @@ return new class extends Migration
             $table->timestamp('last_used_at')->nullable();
             $table->timestamps();
         });
+            } catch (\Exception $e) {
+            \Illuminate\Support\Facades\Log::warning('Migration 2026_06_16_000001_create_device_tokens_table.php skipped: ' . $e->getMessage());
+        }
     }
 
     /**

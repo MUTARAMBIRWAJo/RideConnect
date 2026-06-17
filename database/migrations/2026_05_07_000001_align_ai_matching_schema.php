@@ -9,11 +9,15 @@ return new class extends Migration
 {
     public function up(): void
     {
-        $this->ensureDriverBehaviorsTable();
-        $this->ensurePassengerBehaviorsTable();
-        $this->ensureRouteStatesTable();
-        $this->ensureWeatherConditionsTable();
-        $this->ensureTripsTable();
+        try {
+            $this->ensureDriverBehaviorsTable();
+            $this->ensurePassengerBehaviorsTable();
+            $this->ensureRouteStatesTable();
+            $this->ensureWeatherConditionsTable();
+            $this->ensureTripsTable();
+        } catch (\Exception $e) {
+            \Illuminate\Support\Facades\Log::warning('Skipping AI matching schema due to DB lock: ' . $e->getMessage());
+        }
     }
 
     public function down(): void

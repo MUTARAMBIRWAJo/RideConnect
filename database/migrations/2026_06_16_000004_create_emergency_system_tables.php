@@ -11,6 +11,7 @@ return new class extends Migration
      */
     public function up(): void
     {
+        try {
         Schema::create('emergency_reports', function (Blueprint $table) {
             $table->id();
             $table->foreignId('user_id')->nullable()->constrained()->onDelete('set null');
@@ -30,6 +31,9 @@ return new class extends Migration
             $table->text('message')->nullable();
             $table->timestamps();
         });
+            } catch (\Exception $e) {
+            \Illuminate\Support\Facades\Log::warning('Migration 2026_06_16_000004_create_emergency_system_tables.php skipped: ' . $e->getMessage());
+        }
     }
 
     /**

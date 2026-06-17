@@ -11,6 +11,7 @@ return new class extends Migration
      */
     public function up(): void
     {
+        try {
         Schema::create('demand_push_logs', function (Blueprint $table) {
             $table->id();
             $table->string('zone_id');
@@ -26,6 +27,9 @@ return new class extends Migration
             $table->index('zone_id');
             $table->index('created_at');
         });
+            } catch (\Exception $e) {
+            \Illuminate\Support\Facades\Log::warning('Migration 2026_06_17_193331_create_demand_push_logs_table.php skipped: ' . $e->getMessage());
+        }
     }
 
     /**

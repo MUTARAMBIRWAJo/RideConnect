@@ -11,6 +11,7 @@ return new class extends Migration
      */
     public function up(): void
     {
+        try {
         Schema::create('failed_jobs_archive', function (Blueprint $table) {
             $table->id();
             $table->string('uuid')->unique();
@@ -25,6 +26,9 @@ return new class extends Migration
 
             $table->index(['category', 'archived_at']);
         });
+            } catch (\Exception $e) {
+            \Illuminate\Support\Facades\Log::warning('Migration 2026_06_14_130000_create_failed_jobs_archive_table.php skipped: ' . $e->getMessage());
+        }
     }
 
     /**

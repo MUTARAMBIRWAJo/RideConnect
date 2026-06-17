@@ -11,6 +11,7 @@ return new class extends Migration
      */
     public function up(): void
     {
+        try {
         Schema::table('trips', function (Blueprint $table) {
             $table->integer('capacity_used')->default(0)->after('fare');
             $table->integer('capacity_total')->default(0)->after('capacity_used');
@@ -18,6 +19,9 @@ return new class extends Migration
             $table->unsignedBigInteger('bus_id')->nullable()->after('route_id');
             $table->jsonb('boarding_status')->nullable()->after('bus_id');
         });
+        } catch (\Exception $e) {
+            \Illuminate\Support\Facades\Log::warning('Migration 2026_06_17_200554_add_public_bus_fields_to_trips_table.php skipped: ' . $e->getMessage());
+        }
     }
 
     /**

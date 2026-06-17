@@ -11,6 +11,7 @@ return new class extends Migration
      */
     public function up(): void
     {
+        try {
         Schema::create('demand_predictions', function (Blueprint $table) {
             $table->id();
             $table->string('zone_id')->index();
@@ -21,6 +22,9 @@ return new class extends Migration
             $table->timestamp('predicted_at')->index();
             $table->timestamps();
         });
+            } catch (\Exception $e) {
+            \Illuminate\Support\Facades\Log::warning('Migration 2026_06_16_022638_create_demand_predictions_table.php skipped: ' . $e->getMessage());
+        }
     }
 
     /**

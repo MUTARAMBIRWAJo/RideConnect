@@ -11,6 +11,7 @@ return new class extends Migration
      */
     public function up(): void
     {
+        try {
         Schema::table('users', function (Blueprint $table) {
             $table->timestamp('last_seen_at')->nullable();
             $table->boolean('is_online')->default(false);
@@ -22,6 +23,9 @@ return new class extends Migration
             $table->timestamp('last_seen_at')->nullable();
             $table->boolean('is_online')->default(false);
         });
+        } catch (\Exception $e) {
+            \Illuminate\Support\Facades\Log::warning('Migration 2026_06_17_153254_add_online_tracking_to_users_table.php skipped: ' . $e->getMessage());
+        }
     }
 
     /**

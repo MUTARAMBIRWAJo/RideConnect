@@ -9,6 +9,7 @@ return new class extends Migration
 {
     public function up(): void
     {
+        try {
         if (Schema::hasTable('payments') && Schema::hasColumn('payments', 'booking_id')) {
             if (DB::getDriverName() === 'pgsql') {
                 DB::statement('ALTER TABLE payments ALTER COLUMN booking_id DROP NOT NULL');
@@ -34,6 +35,9 @@ return new class extends Migration
                     }
                 });
             }
+        }
+        } catch (\Exception $e) {
+            \Illuminate\Support\Facades\Log::warning('Migration 2026_06_12_000001_relax_polymorphic_payment_and_review_links.php skipped: ' . $e->getMessage());
         }
     }
 

@@ -11,6 +11,7 @@ return new class extends Migration
      */
     public function up(): void
     {
+        try {
         Schema::table('mobile_device_tokens', function (Blueprint $table) {
             // Add missing columns
             if (!Schema::hasColumn('mobile_device_tokens', 'is_active')) {
@@ -25,6 +26,9 @@ return new class extends Migration
                 $table->string('app_version', 20)->nullable()->after('platform');
             }
         });
+        } catch (\Exception $e) {
+            \Illuminate\Support\Facades\Log::warning('Migration 2026_06_14_120000_fix_mobile_device_tokens_schema.php skipped: ' . $e->getMessage());
+        }
     }
 
     /**

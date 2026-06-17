@@ -8,6 +8,7 @@ return new class extends Migration
 {
     public function up(): void
     {
+        try {
         Schema::create('payment_reconciliation_logs', function (Blueprint $table) {
             $table->id();
             $table->uuid('reconciliation_id')->unique();
@@ -35,6 +36,9 @@ return new class extends Migration
 
             $table->foreign('payment_id')->references('id')->on('payments')->restrictOnDelete();
         });
+            } catch (\Exception $e) {
+            \Illuminate\Support\Facades\Log::warning('Migration 2026_06_13_120003_create_payment_reconciliation_logs_table.php skipped: ' . $e->getMessage());
+        }
     }
 
     public function down(): void

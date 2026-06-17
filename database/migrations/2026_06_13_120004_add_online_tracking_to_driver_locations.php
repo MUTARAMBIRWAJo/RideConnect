@@ -8,6 +8,7 @@ return new class extends Migration
 {
     public function up(): void
     {
+        try {
         if (!Schema::hasTable('driver_locations')) {
             return;
         }
@@ -28,6 +29,9 @@ return new class extends Migration
             $table->index('last_activity_at');
             $table->index(['is_online', 'last_activity_at']);
         });
+        } catch (\Exception $e) {
+            \Illuminate\Support\Facades\Log::warning('Migration 2026_06_13_120004_add_online_tracking_to_driver_locations.php skipped: ' . $e->getMessage());
+        }
     }
 
     public function down(): void

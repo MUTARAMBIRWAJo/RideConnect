@@ -11,10 +11,14 @@ return new class extends Migration
      */
     public function up(): void
     {
-        // 1. Enable replication for the required tables
-        DB::statement('ALTER PUBLICATION supabase_realtime ADD TABLE trips_v3;');
-        DB::statement('ALTER PUBLICATION supabase_realtime ADD TABLE driver_locations_v3;');
-        DB::statement('ALTER PUBLICATION supabase_realtime ADD TABLE trip_messages_v3;');
+        try {
+            // 1. Enable replication for the required tables
+            \Illuminate\Support\Facades\DB::statement('ALTER PUBLICATION supabase_realtime ADD TABLE trips_v3;');
+            \Illuminate\Support\Facades\DB::statement('ALTER PUBLICATION supabase_realtime ADD TABLE driver_locations_v3;');
+            \Illuminate\Support\Facades\DB::statement('ALTER PUBLICATION supabase_realtime ADD TABLE trip_messages_v3;');
+        } catch (\Exception $e) {
+            \Illuminate\Support\Facades\Log::warning('Skipping supabase_realtime publication: ' . $e->getMessage());
+        }
     }
 
     /**

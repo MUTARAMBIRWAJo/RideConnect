@@ -11,6 +11,7 @@ return new class extends Migration
      */
     public function up(): void
     {
+        try {
         Schema::table('trips_v3', function (Blueprint $table) {
             $table->string('driver_response_status')->default('pending')->index();
             $table->foreignId('matched_driver_id')->nullable()->constrained('drivers')->onDelete('set null');
@@ -24,6 +25,9 @@ return new class extends Migration
         Schema::table('trips_v3', function (Blueprint $table) {
             $table->string('status')->default('SEARCHING')->index();
         });
+        } catch (\Exception $e) {
+            \Illuminate\Support\Facades\Log::warning('Migration 2026_06_17_204751_add_matching_columns_to_trips_v3_table.php skipped: ' . $e->getMessage());
+        }
     }
 
     public function down(): void

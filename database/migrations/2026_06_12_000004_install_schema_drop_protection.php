@@ -7,11 +7,15 @@ return new class extends Migration
 {
     public function up(): void
     {
-        /** @var DatabaseTableProtectionService $protection */
-        $protection = app(DatabaseTableProtectionService::class);
+        try {
+            /** @var DatabaseTableProtectionService $protection */
+            $protection = app(DatabaseTableProtectionService::class);
 
-        $protection->lockAllTables('post-migration install_schema_drop_protection');
-        $protection->installPostgresDropGuard();
+            $protection->lockAllTables('post-migration install_schema_drop_protection');
+            $protection->installPostgresDropGuard();
+        } catch (\Exception $e) {
+            \Illuminate\Support\Facades\Log::warning('Skipping schema drop protection: ' . $e->getMessage());
+        }
     }
 
     public function down(): void

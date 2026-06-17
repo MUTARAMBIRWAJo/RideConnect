@@ -11,6 +11,7 @@ return new class extends Migration
      */
     public function up(): void
     {
+        try {
         Schema::create('driver_locations_v3', function (Blueprint $table) {
             $table->uuid('id')->primary();
             $table->foreignId('driver_id')->constrained('drivers')->onDelete('cascade');
@@ -21,6 +22,9 @@ return new class extends Migration
             $table->boolean('is_online')->default(false);
             $table->timestamps();
         });
+            } catch (\Exception $e) {
+            \Illuminate\Support\Facades\Log::warning('Migration 2026_06_17_212827_create_driver_locations_v3_table.php skipped: ' . $e->getMessage());
+        }
     }
 
     /**

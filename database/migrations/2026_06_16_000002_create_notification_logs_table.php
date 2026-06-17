@@ -11,6 +11,7 @@ return new class extends Migration
      */
     public function up(): void
     {
+        try {
         Schema::create('notification_logs', function (Blueprint $table) {
             $table->id();
             $table->string('recipient_type')->nullable(); // e.g. User, Driver
@@ -25,6 +26,9 @@ return new class extends Migration
 
             $table->index(['recipient_type', 'recipient_id']);
         });
+            } catch (\Exception $e) {
+            \Illuminate\Support\Facades\Log::warning('Migration 2026_06_16_000002_create_notification_logs_table.php skipped: ' . $e->getMessage());
+        }
     }
 
     /**

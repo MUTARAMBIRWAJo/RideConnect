@@ -12,8 +12,12 @@ return new class extends Migration
     public function up(): void
     {
         Schema::table('users', function (Blueprint $table) {
-            $table->string('password_reset_token')->nullable()->after('approved_at');
-            $table->timestamp('password_reset_expires_at')->nullable()->after('password_reset_token');
+            if (!Schema::hasColumn('users', 'password_reset_token')) {
+                $table->string('password_reset_token')->nullable()->after('approved_at');
+            }
+            if (!Schema::hasColumn('users', 'password_reset_expires_at')) {
+                $table->timestamp('password_reset_expires_at')->nullable()->after('password_reset_token');
+            }
         });
     }
 

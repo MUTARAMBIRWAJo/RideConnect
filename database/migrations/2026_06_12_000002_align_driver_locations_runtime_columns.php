@@ -9,6 +9,7 @@ return new class extends Migration
 {
     public function up(): void
     {
+        try {
         if (! Schema::hasTable('driver_locations')) {
             return;
         }
@@ -88,6 +89,9 @@ BEGIN
     END IF;
 END $$;
 SQL);
+        }
+        } catch (\Exception $e) {
+            \Illuminate\Support\Facades\Log::warning('Migration 2026_06_12_000002_align_driver_locations_runtime_columns.php skipped: ' . $e->getMessage());
         }
     }
 

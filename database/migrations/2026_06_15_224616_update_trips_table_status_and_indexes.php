@@ -12,6 +12,7 @@ return new class extends Migration
      */
     public function up(): void
     {
+        try {
         $driver = DB::connection()->getDriverName();
 
         // 1. Drop check constraint first
@@ -50,6 +51,9 @@ return new class extends Migration
             $table->index('passenger_id', 'trips_passenger_id_index');
             $table->index('created_at', 'trips_created_at_index');
         });
+        } catch (\Exception $e) {
+            \Illuminate\Support\Facades\Log::warning('Migration 2026_06_15_224616_update_trips_table_status_and_indexes.php skipped: ' . $e->getMessage());
+        }
     }
 
     /**

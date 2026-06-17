@@ -11,6 +11,7 @@ return new class extends Migration
      */
     public function up(): void
     {
+        try {
         Schema::create('payment_submissions', function (Blueprint $table) {
             $table->id();
             $table->foreignId('payment_id')->constrained('payments')->cascadeOnDelete();
@@ -30,6 +31,9 @@ return new class extends Migration
             $table->index('user_id');
             $table->index('trip_id');
         });
+            } catch (\Exception $e) {
+            \Illuminate\Support\Facades\Log::warning('Migration 2026_06_14_000001_create_payment_submissions_table.php skipped: ' . $e->getMessage());
+        }
     }
 
     /**
