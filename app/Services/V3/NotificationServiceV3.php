@@ -27,15 +27,9 @@ class NotificationServiceV3
         $title = $payload['type'] === 'NEW_TRIP_REQUEST' ? 'New Trip Request' : 'Trip Update';
         $message = $payload['message'] ?? 'You have a new update for your trip.';
 
-        $this->mobileNotificationService->sendToUserId(
-            $driver->user_id,
-            $payload['type'] ?? 'DRIVER_NOTIFICATION',
-            $title,
-            $message,
-            $payload
-        );
+        broadcast(new \App\Events\NewTripRequestEvent($driver->user_id, $payload));
 
-        Log::info("Laravel Push Notification Triggered for Driver [{$driverId}]", $payload);
+        Log::info("Laravel WebSocket Triggered for Driver [{$driverId}]", $payload);
     }
 
     public function sendToPassenger(int $passengerId, array $payload): void
@@ -49,16 +43,9 @@ class NotificationServiceV3
 
         $message = $payload['message'] ?? 'You have a new update for your trip.';
 
-        // Assuming $passengerId is the mobile_users.id or users.id. 
-        // We can pass it to the mobile notification service.
-        $this->mobileNotificationService->sendToUserId(
-            $passengerId,
-            $payload['type'] ?? 'PASSENGER_NOTIFICATION',
-            $title,
-            $message,
-            $payload
-        );
+        // Broadcast via Laravel Native WebSockets (Reverb)
+        broadcast(new \App\Events\PassengerTripUpdateEvent($passengerId, $payload));
 
-        Log::info("Laravel Push Notification Triggered for Passenger [{$passengerId}]", $payload);
+        Log::info("Laravel WebSocket Triggered for Passenger [{$passengerId}]", $payload);
     }
 }

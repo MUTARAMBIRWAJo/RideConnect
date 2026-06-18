@@ -150,15 +150,9 @@ class PollDemandPredictionsJob implements ShouldQueue
                 'updated_at' => now(),
             ]);
 
-            // Dispatch notification via native Laravel push
+            // Dispatch notification via native Laravel WebSockets
             if ($driver->user) {
-                app(\App\Services\MobileNotificationService::class)->sendToUserId(
-                    $driver->user->id,
-                    'demand_opportunity',
-                    'High Demand Alert',
-                    'High demand detected near your location. Accept trips now to earn more.',
-                    $payload
-                );
+                broadcast(new \App\Events\HighDemandAlertEvent($driver->user->id, $payload));
             }
 
             $notifiedCount++;
