@@ -516,7 +516,7 @@ class MLTrainingVolumeSeeder extends Seeder
 
             $requestedAt = now()->subDays(random_int(1, 210))->subMinutes(random_int(0, 1200));
             $statusRoll = random_int(1, 100);
-            $status = $statusRoll <= 8 ? 'CANCELLED' : ($statusRoll <= 72 ? 'COMPLETED' : ($statusRoll <= 90 ? 'STARTED' : 'PENDING'));
+            $status = $statusRoll <= 8 ? 'CANCELLED' : ($statusRoll <= 72 ? 'COMPLETED' : ($statusRoll <= 90 ? 'STARTED' : 'REQUESTED'));
 
             $startedAt = in_array($status, ['STARTED', 'COMPLETED'], true) ? $requestedAt->copy()->addMinutes(random_int(3, 20)) : null;
             $completedAt = $status === 'COMPLETED' ? $startedAt?->copy()->addMinutes(random_int(10, 80)) : null;
@@ -526,7 +526,7 @@ class MLTrainingVolumeSeeder extends Seeder
 
             $rows[] = [
                 'passenger_id' => $passengerIds[array_rand($passengerIds)],
-                'driver_id' => $status === 'PENDING' ? null : $driverIds[array_rand($driverIds)],
+                'driver_id' => $status === 'REQUESTED' ? null : $driverIds[array_rand($driverIds)],
                 'pickup_location' => $pickup['name'].', Rwanda',
                 'dropoff_location' => $dropoff['name'].', Rwanda',
                 'pickup_lat' => $this->jitter($pickup['lat'], 0.0075),

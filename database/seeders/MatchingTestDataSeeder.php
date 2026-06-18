@@ -216,6 +216,7 @@ class MatchingTestDataSeeder extends Seeder
         ]);
 
         $this->upsertDriverLocation((int) $user['mobile_user_id'], $location['lat'], $location['lng']);
+        $this->upsertDriverLocationV3((int) $driver['id'], $location['lat'], $location['lng']);
 
         return [
             'user' => $user,
@@ -365,6 +366,39 @@ class MatchingTestDataSeeder extends Seeder
             ['driver_id' => $mobileUserId],
             $this->filterColumns('driver_locations', $values)
         );
+    }
+
+    private function upsertDriverLocationV3(int $driverId, float $lat, float $lng): void
+    {
+        if (! Schema::hasTable('driver_locations_v3')) {
+            return;
+        }
+
+        $values = [
+            'id' => (string) Str::uuid(),
+            'driver_id' => $driverId,
+            'latitude' => $lat,
+            'longitude' => $lng,
+            'is_online' => true,
+            'is_available' => true,
+            'created_at' => now(),
+            'updated_at' => now(),
+        ];
+
+        // We can't use updateOrInsert with a generated UUID as primary key easily if it doesn't exist,
+        // so we'll check if a record exists for this driver.
+        $existing = DB::table('driver_locations_v3')->where('driver_id', $driverId)->first();
+        if ($existing) {
+            DB::table('driver_locations_v3')->where('driver_id', $driverId)->update([
+                'latitude' => $lat,
+                'longitude' => $lng,
+                'is_online' => true,
+                'is_available' => true,
+                'updated_at' => now(),
+            ]);
+        } else {
+            DB::table('driver_locations_v3')->insert($values);
+        }
     }
 
     private function corridorStopId(int $corridorId, string $stopName): ?int
