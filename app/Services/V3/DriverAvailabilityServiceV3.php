@@ -14,16 +14,17 @@ class DriverAvailabilityServiceV3
     {
         $earthRadiusKm = 6371;
 
-        $query = Driver::query()
-            ->select('drivers.*')
-            ->selectRaw(
-                "( ? * acos( cos( radians(?) ) *
+        $haversine = "( ? * acos( cos( radians(?) ) *
                   cos( radians( current_latitude ) )
                   * cos( radians( current_longitude ) - radians(?)
                   ) + sin( radians(?) ) *
                   sin( radians( current_latitude ) ) )
-                ) AS distance", [$earthRadiusKm, $lat, $lng, $lat]
-            )
+                )";
+
+        $query = Driver::query()
+            ->select('drivers.*')
+            ->selectRaw("{$haversine} AS distance", [$earthRadiusKm, $lat, $lng, $lat])
+            ->whereRaw("{$haversine} <= ?", [$earthRadiusKm, $lat, $lng, $lat, $radiusKm])
             ->where('status', 'approved')
             ->where('is_active', true)
             ->where('is_online', true)
@@ -45,8 +46,6 @@ class DriverAvailabilityServiceV3
             $query->whereIn('vehicles.vehicle_type', ['sedan', 'suv', 'hatchback', 'van', 'compact', 'minivan']);
         }
 
-        return $query->having('distance', '<=', $radiusKm)
-            ->orderBy('distance', 'asc')
-            ->get();
+        return $query->orderBy('distance', 'asc')->get();
     }
 }
