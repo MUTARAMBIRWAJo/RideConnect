@@ -35,9 +35,16 @@ class DriverAvailabilityServiceV3
             $query->whereNotIn('id', $ignoredDriverIds);
         }
 
-        // Additional filter based on transport type would typically happen here
-        // or by joining the vehicles table. For simulation, we just return the closest.
-        
+        $query->join('vehicles', 'vehicles.driver_id', '=', 'drivers.id');
+
+        if ($transportType === 'motor_vehicle') {
+            $query->whereIn('vehicles.vehicle_type', ['motorcycle', 'boda', 'moto', 'motorbike', 'tuk-tuk']);
+        } elseif ($transportType === 'public_bus') {
+            $query->whereIn('vehicles.vehicle_type', ['bus', 'BUS', 'minibus', 'coach']);
+        } elseif ($transportType === 'private_car') {
+            $query->whereIn('vehicles.vehicle_type', ['sedan', 'suv', 'hatchback', 'van', 'compact', 'minivan']);
+        }
+
         return $query->having('distance', '<=', $radiusKm)
             ->orderBy('distance', 'asc')
             ->get();
