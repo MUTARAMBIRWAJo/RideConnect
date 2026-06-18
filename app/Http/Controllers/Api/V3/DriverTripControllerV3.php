@@ -13,6 +13,31 @@ use Illuminate\Support\Facades\DB;
 
 class DriverTripControllerV3 extends Controller
 {
+    public function incoming(Request $request): JsonResponse
+    {
+        $driverId = $request->user()->driver->id ?? $request->user()->id;
+
+        // Find a trip that is currently matching and has this driver selected as matched_driver_id
+        $incomingTrip = TripV3::where('matched_driver_id', $driverId)
+            ->where('status', 'DRIVER_FOUND')
+            ->where('driver_response_status', 'pending')
+            ->latest()
+            ->first();
+
+        if (!$incomingTrip) {
+            return response()->json([
+                'success' => true,
+                'data' => null,
+                'message' => 'No incoming requests.',
+            ]);
+        }
+
+        return response()->json([
+            'success' => true,
+            'data' => $incomingTrip,
+        ]);
+    }
+
     public function accept(Request $request, string $id): JsonResponse
     {
         // Assuming $request->user() returns a User model that has a driver relationship, 
