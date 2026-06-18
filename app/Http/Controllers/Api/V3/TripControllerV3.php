@@ -87,6 +87,7 @@ class TripControllerV3 extends Controller
             'dropoff_lng' => $request->validated('dropoff_lng'),
             'metadata' => [
                 'route_id' => $request->validated('route_id'),
+                'driver_id' => $request->validated('driver_id'),
                 'passenger_count' => $request->validated('passenger_count'),
                 'preferred_time' => $request->validated('preferred_time'),
             ],

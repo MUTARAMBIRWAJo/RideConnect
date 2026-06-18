@@ -44,15 +44,24 @@ class TripMatchingEngineV3
         $ignoredIds = $trip->ignored_driver_ids ?? [];
         $radiusKm = 5.0; // Dynamic radius based on attempt count or transport type could be added
 
-        $availableDrivers = $this->availabilityService->getNearbyAvailableDrivers(
-            $trip->pickup_lat ?? -1.95, // Fallback coordinates if null
-            $trip->pickup_lng ?? 30.06,
-            $radiusKm,
-            $trip->transport_type,
-            $ignoredIds
-        );
-
-        $selectedDriver = $availableDrivers->first();
+        $metadata = is_string($trip->metadata) ? json_decode($trip->metadata, true) : ($trip->metadata ?? []);
+        
+        if (!empty($metadata['driver_id'])) {
+            $selectedDriver = \App\Models\Driver::find($metadata['driver_id']);
+            // Unset driver_id so we don't infinitely retry the same driver if they reject
+            $metadata['driver_id'] = null;
+            $trip->metadata = $metadata;
+            $trip->save();
+        } else {
+            $availableDrivers = $this->availabilityService->getNearbyAvailableDrivers(
+                $trip->pickup_lat ?? -1.95, // Fallback coordinates if null
+                $trip->pickup_lng ?? 30.06,
+                $radiusKm,
+                $trip->transport_type,
+                $ignoredIds
+            );
+            $selectedDriver = $availableDrivers->first();
+        }
 
         if (!$selectedDriver) {
             // No drivers found in this pass. Wait and retry or cancel.
