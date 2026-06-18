@@ -52,7 +52,11 @@ class TripMatchingEngineV3
 
         $metadata = is_string($trip->metadata) ? json_decode($trip->metadata, true) : ($trip->metadata ?? []);
         
-        $elapsedSeconds = $trip->matching_started_at ? $trip->matching_started_at->diffInSeconds(now()) : 0;
+        $startedAt = $trip->matching_started_at;
+        if (is_string($startedAt)) {
+            $startedAt = \Carbon\Carbon::parse($startedAt);
+        }
+        $elapsedSeconds = $startedAt ? $startedAt->diffInSeconds(now()) : 0;
         $isFallback = $elapsedSeconds > 60;
 
         if (!empty($metadata['driver_id'])) {
