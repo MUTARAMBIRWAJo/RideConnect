@@ -515,10 +515,10 @@ class RwandaFiftyTopUpSeeder extends Seeder
             }
         }
 
-        if ($table === 'driver_earnings' && array_key_exists('driver_id', $row) && Schema::hasTable('mobile_users')) {
-            $driverMobileIds = DB::table('mobile_users')->where('role', 'DRIVER')->pluck('id')->all();
-            if (! empty($driverMobileIds)) {
-                $row['driver_id'] = $driverMobileIds[array_rand($driverMobileIds)];
+        if ($table === 'driver_earnings' && array_key_exists('driver_id', $row) && Schema::hasTable('drivers')) {
+            $driverIds = DB::table('drivers')->pluck('id')->all();
+            if (! empty($driverIds)) {
+                $row['driver_id'] = $driverIds[array_rand($driverIds)];
             }
 
             if (array_key_exists('trip_id', $row) && Schema::hasTable('trips')) {
