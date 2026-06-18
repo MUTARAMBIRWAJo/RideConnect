@@ -308,20 +308,73 @@ class AuthController extends Controller
         $validated = $request->validate([
             'name' => 'sometimes|string|max:255',
             'phone' => 'sometimes|string|max:20',
+            'email' => 'sometimes|email|unique:users,email,' . $user->id,
+            'profile_picture' => 'sometimes|image|mimes:jpeg,png,jpg,gif|max:2048',
+            'license_number' => 'sometimes|string|max:255',
+            'license_plate' => 'sometimes|string|max:255',
         ]);
 
-        $user->update($validated);
+        // Handle Profile Picture Upload
+        if ($request->hasFile('profile_picture')) {
+            $path = $request->file('profile_picture')->store('profiles', 'public');
+            $validated['profile_picture'] = \Illuminate\Support\Facades\Storage::url($path);
+        }
+
+        // Extract core user fields
+        $userFields = collect($validated)->only(['name', 'phone', 'email', 'profile_picture'])->toArray();
+        if (!empty($userFields)) {
+            $user->update($userFields);
+
+            // Sync with MobileUser table to prevent data fragmentation
+            if ($user->mobile_user_id) {
+                $mobileUser = \App\Models\MobileUser::find($user->mobile_user_id);
+                if ($mobileUser) {
+                    $mobileFields = [];
+                    if (isset($userFields['name'])) {
+                        $nameParts = preg_split('/\s+/', trim((string) $userFields['name']), 2) ?: ['User', 'Account'];
+                        $mobileFields['first_name'] = $nameParts[0] ?: 'User';
+                        $mobileFields['last_name'] = $nameParts[1] ?? 'Account';
+                    }
+                    if (isset($userFields['phone'])) $mobileFields['phone'] = $userFields['phone'];
+                    if (isset($userFields['email'])) $mobileFields['email'] = $userFields['email'];
+                    
+                    if (!empty($mobileFields)) {
+                        $mobileUser->update($mobileFields);
+                    }
+                }
+            }
+        }
+
+        // Driver specific fields
+        if ($user->isDriver() && $user->driver) {
+            $driverFields = collect($validated)->only(['license_number', 'license_plate'])->toArray();
+            if (!empty($driverFields)) {
+                $user->driver->update($driverFields);
+            }
+        }
+
+        $user->refresh();
+
+        $responseData = [
+            'id' => $user->id,
+            'name' => $user->name,
+            'email' => $user->email,
+            'phone' => $user->phone,
+            'role' => $user->role->value,
+            'profile_picture' => $user->profile_picture,
+        ];
+
+        if ($user->isDriver() && $user->driver) {
+            $responseData['driver'] = [
+                'license_number' => $user->driver->license_number,
+                'license_plate' => $user->driver->license_plate,
+            ];
+        }
 
         return response()->json([
             'success' => true,
             'message' => 'Profile updated successfully',
-            'data' => [
-                'id' => $user->id,
-                'name' => $user->name,
-                'email' => $user->email,
-                'phone' => $user->phone,
-                'role' => $user->role->value,
-            ],
+            'data' => $responseData,
         ]);
     }
 

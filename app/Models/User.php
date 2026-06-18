@@ -31,6 +31,7 @@ class User extends Authenticatable implements FilamentUser
         'mobile_user_id',
         'manager_id',
         'phone',
+        'profile_picture',
         'profile_photo',
         'is_verified',
         'is_approved',
