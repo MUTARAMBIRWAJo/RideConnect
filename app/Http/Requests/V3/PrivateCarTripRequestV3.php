@@ -22,6 +22,7 @@ class PrivateCarTripRequestV3 extends FormRequest
             'dropoff_lng' => ['required', 'numeric', 'between:-180,180'],
             'car_type_preference' => ['required', 'string'],
             'scheduled_time' => ['nullable', 'date'],
+            'requested_seats' => ['nullable', 'integer', 'min:1', 'max:4'],
         ];
     }
 }

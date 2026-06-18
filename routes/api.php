@@ -82,6 +82,7 @@ Route::prefix('v3')->middleware(['auth:sanctum'])->group(function () {
     Route::post('/trips/{id}/reject', [\App\Http\Controllers\Api\V3\DriverTripControllerV3::class, 'reject']);
     
     // Status polling for fallback
+    Route::get('/trips/{id}/matching-status', [\App\Http\Controllers\Api\V3\TripControllerV3::class, 'matchingStatus']);
     Route::get('/trips/{id}/status', [\App\Http\Controllers\Api\V3\TripControllerV3::class, 'status']);
 });
 

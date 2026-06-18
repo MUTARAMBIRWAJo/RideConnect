@@ -25,6 +25,10 @@ class TripMatchingEngineV3
 
     public function startMatching(TripV3 $trip): void
     {
+        if (is_null($trip->matching_started_at)) {
+            $trip->matching_started_at = now();
+            $trip->save();
+        }
         $this->lifecycle->transition($trip, 'MATCHING');
         ProcessTripMatchingV3::dispatch($trip);
     }
@@ -33,6 +37,8 @@ class TripMatchingEngineV3
     {
         // Limit max attempts to 5-10
         if ($trip->match_attempt_count >= 10) {
+            $trip->matching_timeout_at = now();
+            $trip->save();
             $this->lifecycle->cancel($trip, 'NO_DRIVER_AVAILABLE');
             $this->notificationService->sendToPassenger($trip->user_id, [
                 'type' => 'TRIP_REJECTED',
@@ -46,15 +52,48 @@ class TripMatchingEngineV3
 
         $metadata = is_string($trip->metadata) ? json_decode($trip->metadata, true) : ($trip->metadata ?? []);
         
+        $elapsedSeconds = $trip->matching_started_at ? $trip->matching_started_at->diffInSeconds(now()) : 0;
+        $isFallback = $elapsedSeconds > 60;
+
         if (!empty($metadata['driver_id'])) {
             $selectedDriver = \App\Models\Driver::find($metadata['driver_id']);
-            // Unset driver_id so we don't infinitely retry the same driver if they reject
             $metadata['driver_id'] = null;
             $trip->metadata = $metadata;
             $trip->save();
+        } elseif ($isFallback) {
+            $trip->fallback_match_used = true;
+            $trip->save();
+
+            // Stage 2: Fallback Match - Find nearest driver ignoring strict ML and radius rules
+            $lat = $trip->pickup_lat ?? -1.95;
+            $lng = $trip->pickup_lng ?? 30.06;
+            $haversine = "( 6371 * acos( cos( radians($lat) ) * cos( radians( current_latitude ) ) * cos( radians( current_longitude ) - radians($lng) ) + sin( radians($lat) ) * sin( radians( current_latitude ) ) ) )";
+            
+            $query = \App\Models\Driver::query()
+                ->select('drivers.*')
+                ->where('drivers.status', 'approved')
+                ->where('drivers.is_online', true)
+                ->whereIn('drivers.availability_status', ['online', 'available'])
+                ->whereNull('drivers.current_trip_id');
+
+            if (!empty($ignoredIds)) {
+                $query->whereNotIn('drivers.id', $ignoredIds);
+            }
+
+            $query->join('vehicles', 'vehicles.driver_id', '=', 'drivers.id');
+            if ($trip->transport_type === 'motor_vehicle') {
+                $query->whereIn('vehicles.vehicle_type', ['motorcycle', 'boda', 'moto', 'motorbike', 'tuk-tuk']);
+            } elseif ($trip->transport_type === 'public_bus') {
+                $query->whereIn('vehicles.vehicle_type', ['bus', 'BUS', 'minibus', 'coach']);
+            } elseif ($trip->transport_type === 'private_car') {
+                $query->whereIn('vehicles.vehicle_type', ['sedan', 'suv', 'hatchback', 'van', 'compact', 'minivan']);
+            }
+
+            $selectedDriver = $query->orderByRaw("$haversine ASC")->first();
         } else {
+            // Stage 1: Intelligent Match
             $availableDrivers = $this->availabilityService->getNearbyAvailableDrivers(
-                $trip->pickup_lat ?? -1.95, // Fallback coordinates if null
+                $trip->pickup_lat ?? -1.95,
                 $trip->pickup_lng ?? 30.06,
                 $radiusKm,
                 $trip->transport_type,
@@ -66,6 +105,8 @@ class TripMatchingEngineV3
         if (!$selectedDriver) {
             // No drivers found in this pass. Wait and retry or cancel.
             // For now, cancel to prevent infinite loop
+            $trip->matching_timeout_at = now();
+            $trip->save();
             $this->lifecycle->cancel($trip, 'NO_DRIVER_AVAILABLE');
             $this->notificationService->sendToPassenger($trip->user_id, [
                 'type' => 'TRIP_REJECTED',
@@ -79,6 +120,7 @@ class TripMatchingEngineV3
         $trip->driver_response_status = 'pending';
         $trip->match_attempt_count += 1;
         $trip->last_matched_at = now();
+        $trip->matched_at = now();
         $this->lifecycle->transition($trip, 'DRIVER_FOUND');
 
         // Notify Driver

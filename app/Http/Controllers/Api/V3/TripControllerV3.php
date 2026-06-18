@@ -36,6 +36,7 @@ class TripControllerV3 extends Controller
             'metadata' => [
                 'ride_mode' => $request->validated('ride_mode'),
                 'payment_method' => $request->validated('payment_method'),
+                'requested_seats' => 1,
             ],
         ]);
         $trip->save();
@@ -62,6 +63,7 @@ class TripControllerV3 extends Controller
             'metadata' => [
                 'car_type_preference' => $request->validated('car_type_preference'),
                 'scheduled_time' => $request->validated('scheduled_time'),
+                'requested_seats' => $request->validated('requested_seats') ?? 1,
             ],
         ]);
         $trip->save();
@@ -101,6 +103,20 @@ class TripControllerV3 extends Controller
             'data' => $trip,
         ], 201);
     }
+    public function matchingStatus(string $id): JsonResponse
+    {
+        $trip = TripV3::findOrFail($id);
+        
+        $elapsedSeconds = $trip->matching_started_at ? $trip->matching_started_at->diffInSeconds(now()) : 0;
+        
+        return response()->json([
+            'status' => $trip->status,
+            'attempts' => $trip->match_attempt_count,
+            'elapsed_seconds' => $elapsedSeconds,
+            'fallback_used' => (bool) $trip->fallback_match_used,
+        ]);
+    }
+
     public function status(string $id): JsonResponse
     {
         $trip = TripV3::findOrFail($id);
