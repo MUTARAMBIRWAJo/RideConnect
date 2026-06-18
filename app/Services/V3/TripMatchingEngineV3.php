@@ -94,6 +94,25 @@ class TripMatchingEngineV3
             }
 
             $selectedDriver = $query->orderByRaw("$haversine ASC")->first();
+            
+            // Stage 3: Absolute Fallback
+            // If the specific vehicle type fallback failed, just find ANY online driver (moto or car), EXCEPT buses.
+            if (!$selectedDriver && $trip->transport_type !== 'public_bus') {
+                $queryAny = \App\Models\Driver::query()
+                    ->select('drivers.*')
+                    ->where('drivers.status', 'approved')
+                    ->where('drivers.is_online', true)
+                    ->whereIn('drivers.availability_status', ['online', 'available'])
+                    ->whereNull('drivers.current_trip_id')
+                    ->join('vehicles', 'vehicles.driver_id', '=', 'drivers.id')
+                    ->whereNotIn('vehicles.vehicle_type', ['bus', 'BUS', 'minibus', 'coach']);
+
+                if (!empty($ignoredIds)) {
+                    $queryAny->whereNotIn('drivers.id', $ignoredIds);
+                }
+
+                $selectedDriver = $queryAny->orderByRaw("$haversine ASC")->first();
+            }
         } else {
             // Stage 1: Intelligent Match
             $availableDrivers = $this->availabilityService->getNearbyAvailableDrivers(
