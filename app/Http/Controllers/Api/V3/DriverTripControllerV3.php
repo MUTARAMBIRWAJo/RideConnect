@@ -22,15 +22,14 @@ class DriverTripControllerV3 extends Controller
         return DB::transaction(function () use ($id, $driverId) {
             $trip = TripV3::where('id', $id)->lockForUpdate()->firstOrFail();
 
-            if ($trip->status !== 'AWAITING_DRIVER_RESPONSE' || $trip->driver_id !== $driverId) {
+            if ($trip->status !== 'DRIVER_FOUND' || $trip->driver_id !== $driverId && $trip->matched_driver_id !== $driverId) {
                 return response()->json([
                     'success' => false,
                     'message' => 'Trip is no longer available or not assigned to you.',
                 ], 400);
             }
 
-            $trip->status = 'ACCEPTED';
-            $trip->save();
+            app(\App\Services\V3\TripLifecycleEngineV3::class)->transition($trip, 'ACCEPTED');
 
             // Insert into trip_events_v3 to trigger Realtime broadcast
             DB::table('trip_events_v3')->insert([
@@ -61,17 +60,17 @@ class DriverTripControllerV3 extends Controller
         return DB::transaction(function () use ($id, $driverId) {
             $trip = TripV3::where('id', $id)->lockForUpdate()->firstOrFail();
 
-            if ($trip->status !== 'AWAITING_DRIVER_RESPONSE' || $trip->driver_id !== $driverId) {
+            if ($trip->status !== 'DRIVER_FOUND' || $trip->driver_id !== $driverId && $trip->matched_driver_id !== $driverId) {
                 return response()->json([
                     'success' => false,
                     'message' => 'Trip is no longer available or not assigned to you.',
                 ], 400);
             }
 
-            $trip->status = 'REJECTED';
             // Unassign driver so matching engine can re-assign
+            $trip->matched_driver_id = null;
             $trip->driver_id = null;
-            $trip->save();
+            app(\App\Services\V3\TripLifecycleEngineV3::class)->transition($trip, 'MATCHING');
 
             DB::table('trip_events_v3')->insert([
                 'id' => (string) \Illuminate\Support\Str::uuid(),

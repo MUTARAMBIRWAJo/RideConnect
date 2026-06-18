@@ -16,7 +16,7 @@ class TripV3 extends Model
     protected $table = 'trips_v3';
 
     protected $attributes = [
-        'status' => 'SEARCHING',
+        'status' => 'REQUESTED',
         'driver_response_status' => 'pending',
         'match_attempt_count' => 0,
     ];

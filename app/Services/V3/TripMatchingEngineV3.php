@@ -25,7 +25,7 @@ class TripMatchingEngineV3
 
     public function startMatching(TripV3 $trip): void
     {
-        $this->lifecycle->transition($trip, 'SEARCHING');
+        $this->lifecycle->transition($trip, 'MATCHING');
         ProcessTripMatchingV3::dispatch($trip);
     }
 
@@ -70,7 +70,7 @@ class TripMatchingEngineV3
         $trip->driver_response_status = 'pending';
         $trip->match_attempt_count += 1;
         $trip->last_matched_at = now();
-        $this->lifecycle->transition($trip, 'DRIVER_OFFERED');
+        $this->lifecycle->transition($trip, 'DRIVER_FOUND');
 
         // Notify Driver
         $this->notificationService->sendToDriver($selectedDriver->id, [
