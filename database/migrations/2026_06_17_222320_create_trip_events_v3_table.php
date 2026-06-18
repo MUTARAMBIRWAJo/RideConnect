@@ -14,7 +14,7 @@ return new class extends Migration
         try {
             Schema::create('trip_events_v3', function (Blueprint $table) {
                 $table->uuid('id')->primary();
-                $table->foreignUuid('trip_id')->constrained('trips_v3')->onDelete('cascade');
+                $table->foreignId('trip_id')->constrained('trips_v3')->onDelete('cascade');
                 $table->string('event_type');
                 $table->jsonb('payload')->nullable();
                 $table->timestamps();

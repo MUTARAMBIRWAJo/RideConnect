@@ -81,6 +81,7 @@ Route::prefix('v3')->middleware(['auth:sanctum'])->group(function () {
     Route::get('/driver/trips/incoming', [\App\Http\Controllers\Api\V3\DriverTripControllerV3::class, 'incoming']);
     Route::post('/trips/{id}/accept', [\App\Http\Controllers\Api\V3\DriverTripControllerV3::class, 'accept']);
     Route::post('/trips/{id}/reject', [\App\Http\Controllers\Api\V3\DriverTripControllerV3::class, 'reject']);
+    Route::post('/trips/{id}/cancel', [\App\Http\Controllers\Api\V3\DriverTripControllerV3::class, 'cancel']);
     Route::post('/trips/{id}/arrived', [\App\Http\Controllers\Api\V3\DriverTripControllerV3::class, 'arrived']);
     Route::post('/trips/{id}/start', [\App\Http\Controllers\Api\V3\DriverTripControllerV3::class, 'start']);
     Route::post('/trips/{id}/complete', [\App\Http\Controllers\Api\V3\DriverTripControllerV3::class, 'complete']);
@@ -91,6 +92,7 @@ Route::prefix('v3')->middleware(['auth:sanctum'])->group(function () {
     // Status polling for fallback
     Route::get('/trips/{id}/matching-status', [\App\Http\Controllers\Api\V3\TripControllerV3::class, 'matchingStatus']);
     Route::get('/trips/{id}/status', [\App\Http\Controllers\Api\V3\TripControllerV3::class, 'status']);
+    Route::post('/trips/{id}/notify-driver', [\App\Http\Controllers\Api\V3\TripControllerV3::class, 'notifyDriver']);
 });
 
 /* ===========================

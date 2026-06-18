@@ -158,6 +158,49 @@ class DriverTripControllerV3 extends Controller
         });
     }
 
+    public function cancel(Request $request, string $id): JsonResponse
+    {
+        $driver = $this->driverFor($request);
+        $validated = $request->validate([
+            'reason' => 'required|string|max:255',
+        ]);
+
+        return DB::transaction(function () use ($id, $driver, $validated) {
+            $trip = TripV3::where('id', $id)->lockForUpdate()->firstOrFail();
+            $this->assertDriverOwnsTrip($trip, $driver);
+
+            if (in_array($trip->status, ['COMPLETED', 'PAID', 'RATED', 'CANCELLED', 'FAILED'], true)) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Trip cannot be cancelled at this stage.',
+                ], 422);
+            }
+
+            $this->lifecycle->cancel($trip, $validated['reason']);
+
+            $driver->update([
+                'availability_status' => 'available',
+                'is_available' => true,
+                'current_trip_id' => null,
+            ]);
+
+            $this->syncActiveTrip($trip);
+
+            $this->notifier->dispatch($trip, 'trip.cancelled', [
+                'trip_id' => $trip->id,
+                'cancelled_by' => 'driver',
+                'driver_id' => $driver->id,
+                'reason' => $validated['reason'],
+            ], $driver);
+
+            return response()->json([
+                'success' => true,
+                'message' => 'Trip cancelled successfully.',
+                'data' => $trip->fresh(),
+            ]);
+        });
+    }
+
     public function arrived(Request $request, string $id): JsonResponse
     {
         return $this->driverTransition($request, $id, ['DRIVER_ASSIGNED'], 'DRIVER_ARRIVED', 'trip.driver.arrived');
@@ -299,7 +342,7 @@ class DriverTripControllerV3 extends Controller
     {
         $driver = $this->driverFor($request);
         $validated = $request->validate([
-            'trip_id' => 'required|uuid|exists:trips_v3,id',
+            'trip_id' => 'required|integer|exists:trips_v3,id',
             'latitude' => 'required|numeric|between:-90,90',
             'longitude' => 'required|numeric|between:-180,180',
             'heading' => 'nullable|numeric|between:0,360',

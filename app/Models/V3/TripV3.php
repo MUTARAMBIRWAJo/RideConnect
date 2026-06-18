@@ -5,14 +5,13 @@ namespace App\Models\V3;
 use App\Models\Driver;
 use App\Models\DriverTripOffer;
 use App\Models\User;
-use Illuminate\Database\Eloquent\Concerns\HasUuids;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
 class TripV3 extends Model
 {
-    use HasFactory, HasUuids;
+    use HasFactory;
 
     protected $table = 'trips_v3';
 

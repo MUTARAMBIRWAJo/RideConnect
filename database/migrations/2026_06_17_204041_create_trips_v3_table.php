@@ -13,7 +13,7 @@ return new class extends Migration
     {
         try {
         Schema::create('trips_v3', function (Blueprint $table) {
-            $table->uuid('id')->primary();
+            $table->id();
             $table->foreignId('user_id')->constrained('users')->onDelete('cascade');
             $table->foreignId('driver_id')->nullable()->constrained('drivers')->onDelete('set null');
             

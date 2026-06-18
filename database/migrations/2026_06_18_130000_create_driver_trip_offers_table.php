@@ -11,7 +11,7 @@ return new class extends Migration
     {
         Schema::create('driver_trip_offers', function (Blueprint $table): void {
             $table->uuid('id')->primary();
-            $table->foreignUuid('trip_id')->constrained('trips_v3')->cascadeOnDelete();
+            $table->foreignId('trip_id')->constrained('trips_v3')->cascadeOnDelete();
             $table->foreignId('driver_id')->constrained('drivers')->cascadeOnDelete();
             $table->string('status')->default('pending')->index();
             $table->timestamp('expires_at')->index();

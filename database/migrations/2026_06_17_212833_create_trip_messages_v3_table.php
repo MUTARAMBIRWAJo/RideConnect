@@ -14,7 +14,7 @@ return new class extends Migration
         try {
         Schema::create('trip_messages_v3', function (Blueprint $table) {
             $table->uuid('id')->primary();
-            $table->foreignUuid('trip_id')->constrained('trips_v3')->onDelete('cascade');
+            $table->foreignId('trip_id')->constrained('trips_v3')->onDelete('cascade');
             $table->foreignId('sender_id')->constrained('users')->onDelete('cascade');
             $table->text('message');
             $table->timestamps();

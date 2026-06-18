@@ -9,6 +9,7 @@ use App\Http\Requests\V3\PublicBusTripRequestV3;
 use App\Models\V3\TripV3;
 use App\Services\V3\TripLifecycleEngineV3;
 use App\Services\V3\TripMatchingEngineV3;
+use App\Services\V3\NotificationServiceV3;
 use Illuminate\Http\JsonResponse;
 
 class TripControllerV3 extends Controller
@@ -20,6 +21,38 @@ class TripControllerV3 extends Controller
     {
         $this->lifecycle = $lifecycle;
         $this->matchingEngine = $matchingEngine;
+    }
+
+    public function notifyDriver(string $id, NotificationServiceV3 $notificationService): JsonResponse
+    {
+        $trip = TripV3::findOrFail($id);
+
+        $driverId = $trip->matched_driver_id ?: $trip->driver_id;
+
+        if (!$driverId) {
+            return response()->json([
+                'success' => false,
+                'message' => 'No driver is currently assigned or matched to this trip.'
+            ], 422);
+        }
+
+        $notificationService->sendToDriver($driverId, [
+            'type' => 'NEW_TRIP_REQUEST',
+            'trip_id' => $trip->id,
+            'pickup' => $trip->pickup_location,
+            'dropoff' => $trip->dropoff_location,
+            'fare' => $trip->fare_estimate ?? 4500,
+            'message' => 'New trip request available. Accept or reject.',
+        ]);
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Notification sent to assigned driver.',
+            'data' => [
+                'trip_id' => $trip->id,
+                'driver_id' => $driverId,
+            ]
+        ]);
     }
 
     public function requestMotorVehicle(MotorVehicleTripRequestV3 $request): JsonResponse
