@@ -12,6 +12,7 @@ use App\Http\Controllers\Controller;
 use App\Models\Booking;
 use App\Models\Ride;
 use App\Models\Trip;
+use App\Models\User;
 use App\Services\DriverAssignmentService;
 use App\Services\DriverMatchingService;
 use App\Services\Location\TripLocationService;
@@ -67,7 +68,7 @@ class MobilePassengerController extends Controller
 
         $rides = $query->orderBy('departure_time')->get();
 
-        $data = $rides->map(function ($ride) {
+        $data = $rides->map(function (Ride $ride) {
             return [
                 'id' => $ride->id,
                 'transport_type' => $ride->transport_type,
@@ -104,6 +105,7 @@ class MobilePassengerController extends Controller
     {
         DomainGuard::assertUsingPolicy(__METHOD__);
 
+        /** @var User $user */
         $user = $request->user();
 
         if (! $user->is_approved) {
@@ -253,6 +255,7 @@ class MobilePassengerController extends Controller
     {
         DomainGuard::assertUsingPolicy(__METHOD__);
 
+        /** @var User $user */
         $user = $request->user();
 
         if (! $user->is_approved) {
@@ -422,6 +425,7 @@ class MobilePassengerController extends Controller
      */
     public function getCurrentTrip(Request $request): JsonResponse
     {
+        /** @var User $user */
         $user = $request->user();
         $passengerMobileUserId = $this->resolvePassengerMobileUserId($user);
 
@@ -463,9 +467,10 @@ class MobilePassengerController extends Controller
      * GET /api/mobile/trips/{id}/track
      * Track driver location for trip.
      */
-    public function trackTrip(int $id): JsonResponse
+    public function trackTrip(Request $request, int $id): JsonResponse
     {
-        $user = request()->user();
+        /** @var User $user */
+        $user = $request->user();
         $passengerMobileUserId = $this->resolvePassengerMobileUserId($user);
 
         $trip = Trip::query()
@@ -487,9 +492,10 @@ class MobilePassengerController extends Controller
      * PUT /api/mobile/trips/{id}/cancel
      * Cancel trip (passenger action).
      */
-    public function cancelTrip(int $id): JsonResponse
+    public function cancelTrip(Request $request, int $id): JsonResponse
     {
-        $user = request()->user();
+        /** @var User $user */
+        $user = $request->user();
         $passengerMobileUserId = $this->resolvePassengerMobileUserId($user);
 
         $trip = Trip::query()
@@ -529,9 +535,10 @@ class MobilePassengerController extends Controller
      * PUT /api/mobile/trips/{id}/complete
      * Confirm trip completion (passenger action).
      */
-    public function completeTrip(int $id): JsonResponse
+    public function completeTrip(Request $request, int $id): JsonResponse
     {
-        $user = request()->user();
+        /** @var User $user */
+        $user = $request->user();
         $passengerMobileUserId = $this->resolvePassengerMobileUserId($user);
 
         $trip = Trip::query()
@@ -561,7 +568,7 @@ class MobilePassengerController extends Controller
             // Note: In production, we would dispatch a MoMo API request job here
             // e.g., dispatch(new \App\Jobs\InitiateMoMoPaymentJob($payment));
 
-        } catch (\App\Exceptions\DomainException $e) {
+        } catch (DomainException $e) {
             return response()->json([
                 'status' => 'error',
                 'type' => 'DOMAIN_ERROR',
@@ -596,7 +603,7 @@ class MobilePassengerController extends Controller
         return $earthRadius * (2 * atan2(sqrt($a), sqrt(1 - $a)));
     }
 
-    private function createPrivateCarRideForSelectedDriver(array $validated, $user): Ride
+    private function createPrivateCarRideForSelectedDriver(array $validated, User $user): Ride
     {
         $driver = \App\Models\Driver::query()
             ->with(['user:id,is_approved', 'vehicles'])
