@@ -126,8 +126,16 @@ class TripMatchingEngineV3
         }
 
         if (!$selectedDriver) {
-            // No drivers found in this pass. Wait and retry or cancel.
-            // For now, cancel to prevent infinite loop
+            // If we are still in the first 60 seconds (Stage 1), DO NOT CANCEL yet!
+            // Just retry in 5 seconds until the 60-second fallback timeout hits.
+            if (!$isFallback) {
+                $trip->match_attempt_count += 1;
+                $trip->save();
+                ProcessTripMatchingV3::dispatch($trip)->delay(now()->addSeconds(5));
+                return;
+            }
+
+            // If we reached here, fallback also failed to find anyone.
             $trip->matching_timeout_at = now();
             $trip->save();
             $this->lifecycle->cancel($trip, 'NO_DRIVER_AVAILABLE');
