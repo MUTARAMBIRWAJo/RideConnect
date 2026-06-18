@@ -13,12 +13,15 @@ class TripLifecycleEngineV3
      */
     protected const TRANSITIONS = [
         'REQUESTED' => ['MATCHING', 'CANCELLED'],
-        'MATCHING' => ['DRIVER_FOUND', 'CANCELLED', 'FAILED'],
-        'DRIVER_FOUND' => ['ACCEPTED', 'MATCHING', 'CANCELLED'],
-        'ACCEPTED' => ['ARRIVED', 'STARTED', 'CANCELLED'],
-        'ARRIVED' => ['STARTED', 'CANCELLED'],
-        'STARTED' => ['COMPLETED', 'CANCELLED'],
-        'COMPLETED' => [],
+        'PENDING_MATCH' => ['MATCHING', 'CANCELLED'],
+        'MATCHING' => ['MATCHING', 'DRIVER_FOUND', 'DRIVER_ASSIGNED', 'CANCELLED', 'FAILED'],
+        'DRIVER_FOUND' => ['MATCHING', 'DRIVER_ASSIGNED', 'CANCELLED'],
+        'DRIVER_ASSIGNED' => ['DRIVER_ARRIVED', 'IN_PROGRESS', 'CANCELLED'],
+        'DRIVER_ARRIVED' => ['IN_PROGRESS', 'CANCELLED'],
+        'IN_PROGRESS' => ['COMPLETED', 'CANCELLED'],
+        'COMPLETED' => ['PAID'],
+        'PAID' => ['RATED'],
+        'RATED' => [],
         'CANCELLED' => [],
         'FAILED' => [],
     ];

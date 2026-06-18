@@ -3,6 +3,7 @@
 namespace App\Models\V3;
 
 use App\Models\Driver;
+use App\Models\DriverTripOffer;
 use App\Models\User;
 use Illuminate\Database\Eloquent\Concerns\HasUuids;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
@@ -40,6 +41,15 @@ class TripV3 extends Model
         'match_attempt_count',
         'last_matched_at',
         'ignored_driver_ids',
+        'trip_started_at',
+        'trip_completed_at',
+        'payment_method',
+        'payment_reference',
+        'amount_paid',
+        'paid_at',
+        'rating',
+        'rating_comment',
+        'rated_at',
     ];
 
     protected $casts = [
@@ -57,6 +67,12 @@ class TripV3 extends Model
         'dropoff_lng' => 'float',
         'fare_estimate' => 'float',
         'fare_actual' => 'float',
+        'trip_started_at' => 'datetime',
+        'trip_completed_at' => 'datetime',
+        'amount_paid' => 'float',
+        'paid_at' => 'datetime',
+        'rating' => 'integer',
+        'rated_at' => 'datetime',
     ];
 
     public function user(): BelongsTo
@@ -67,5 +83,15 @@ class TripV3 extends Model
     public function driver(): BelongsTo
     {
         return $this->belongsTo(Driver::class);
+    }
+
+    public function matchedDriver(): BelongsTo
+    {
+        return $this->belongsTo(Driver::class, 'matched_driver_id');
+    }
+
+    public function offers()
+    {
+        return $this->hasMany(DriverTripOffer::class, 'trip_id');
     }
 }

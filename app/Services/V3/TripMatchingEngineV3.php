@@ -4,6 +4,8 @@ namespace App\Services\V3;
 
 use App\Jobs\V3\HandleDriverTimeoutV3;
 use App\Jobs\V3\ProcessTripMatchingV3;
+use App\Models\Driver;
+use App\Models\DriverTripOffer;
 use App\Models\V3\TripV3;
 use Illuminate\Support\Facades\Log;
 
@@ -12,15 +14,18 @@ class TripMatchingEngineV3
     private TripLifecycleEngineV3 $lifecycle;
     private DriverAvailabilityServiceV3 $availabilityService;
     private NotificationServiceV3 $notificationService;
+    private TripLifecycleNotifierV3 $notifier;
 
     public function __construct(
         TripLifecycleEngineV3 $lifecycle,
         DriverAvailabilityServiceV3 $availabilityService,
-        NotificationServiceV3 $notificationService
+        NotificationServiceV3 $notificationService,
+        TripLifecycleNotifierV3 $notifier
     ) {
         $this->lifecycle = $lifecycle;
         $this->availabilityService = $availabilityService;
         $this->notificationService = $notificationService;
+        $this->notifier = $notifier;
     }
 
     public function startMatching(TripV3 $trip): void
@@ -60,7 +65,7 @@ class TripMatchingEngineV3
         $isFallback = $elapsedSeconds > 60;
 
         if (!empty($metadata['driver_id'])) {
-            $selectedDriver = \App\Models\Driver::find($metadata['driver_id']);
+            $selectedDriver = Driver::find($metadata['driver_id']);
             $metadata['driver_id'] = null;
             $trip->metadata = $metadata;
             $trip->save();
@@ -73,8 +78,9 @@ class TripMatchingEngineV3
             $lng = $trip->pickup_lng ?? 30.06;
             $haversine = "( 6371 * acos( cos( radians($lat) ) * cos( radians( current_latitude ) ) * cos( radians( current_longitude ) - radians($lng) ) + sin( radians($lat) ) * sin( radians( current_latitude ) ) ) )";
             
-            $query = \App\Models\Driver::query()
+            $query = Driver::query()
                 ->select('drivers.*')
+                ->selectRaw("$haversine AS distance")
                 ->where('drivers.status', 'approved')
                 ->where('drivers.is_online', true)
                 ->whereIn('drivers.availability_status', ['online', 'available'])
@@ -93,13 +99,18 @@ class TripMatchingEngineV3
                 $query->whereIn('vehicles.vehicle_type', ['sedan', 'suv', 'hatchback', 'van', 'compact', 'minivan']);
             }
 
-            $selectedDriver = $query->orderByRaw("$haversine ASC")->first();
+            $selectedDriver = $query
+                ->orderByRaw('(COALESCE(drivers.rating, 4.5) * 0.2) DESC')
+                ->orderByRaw("$haversine ASC")
+                ->orderByDesc('drivers.online_since')
+                ->first();
             
             // Stage 3: Absolute Fallback
             // If the specific vehicle type fallback failed, just find ANY online driver (moto or car), EXCEPT buses.
             if (!$selectedDriver && $trip->transport_type !== 'public_bus') {
-                $queryAny = \App\Models\Driver::query()
+                $queryAny = Driver::query()
                     ->select('drivers.*')
+                    ->selectRaw("$haversine AS distance")
                     ->where('drivers.status', 'approved')
                     ->where('drivers.is_online', true)
                     ->whereIn('drivers.availability_status', ['online', 'available'])
@@ -111,7 +122,11 @@ class TripMatchingEngineV3
                     $queryAny->whereNotIn('drivers.id', $ignoredIds);
                 }
 
-                $selectedDriver = $queryAny->orderByRaw("$haversine ASC")->first();
+                $selectedDriver = $queryAny
+                    ->orderByRaw('(COALESCE(drivers.rating, 4.5) * 0.2) DESC')
+                    ->orderByRaw("$haversine ASC")
+                    ->orderByDesc('drivers.online_since')
+                    ->first();
             }
         } else {
             // Stage 1: Intelligent Match
@@ -146,13 +161,30 @@ class TripMatchingEngineV3
             return;
         }
 
-        // Assign driver
+        // Offer trip to selected driver. Final assignment happens only after accept.
         $trip->matched_driver_id = $selectedDriver->id;
         $trip->driver_response_status = 'pending';
         $trip->match_attempt_count += 1;
         $trip->last_matched_at = now();
-        $trip->matched_at = now();
-        $this->lifecycle->transition($trip, 'DRIVER_FOUND');
+        if ($trip->status !== 'MATCHING') {
+            $this->lifecycle->transition($trip, 'MATCHING');
+        } else {
+            $trip->save();
+        }
+
+        $selectedDriver->loadMissing(['user', 'vehicle']);
+        $expiresAt = now()->addSeconds(30);
+        $payload = $this->offerPayload($trip, $selectedDriver, $expiresAt);
+
+        DriverTripOffer::query()->create([
+            'trip_id' => $trip->id,
+            'driver_id' => $selectedDriver->id,
+            'status' => 'pending',
+            'expires_at' => $expiresAt,
+            'payload' => $payload,
+        ]);
+
+        $this->notifier->dispatch($trip, 'trip.offer.created', $payload, $selectedDriver);
 
         // Notify Driver
         $this->notificationService->sendToDriver($selectedDriver->id, [
@@ -166,5 +198,46 @@ class TripMatchingEngineV3
 
         // Dispatch timeout handler
         HandleDriverTimeoutV3::dispatch($trip, $selectedDriver->id)->delay(now()->addSeconds(30));
+    }
+
+    private function offerPayload(TripV3 $trip, Driver $driver, \DateTimeInterface $expiresAt): array
+    {
+        $passengerName = $trip->user?->name ?? 'Passenger';
+        $distance = $this->distanceKm(
+            (float) ($trip->pickup_lat ?? 0),
+            (float) ($trip->pickup_lng ?? 0),
+            (float) ($trip->dropoff_lat ?? 0),
+            (float) ($trip->dropoff_lng ?? 0),
+        );
+
+        return [
+            'trip_id' => $trip->id,
+            'driver_id' => $driver->id,
+            'passenger_name' => $passengerName,
+            'pickup_location' => $trip->pickup_location,
+            'dropoff_location' => $trip->dropoff_location,
+            'estimated_distance' => round($distance, 2),
+            'estimated_fare' => (float) ($trip->fare_estimate ?? max(1500, $distance * 900)),
+            'pickup_lat' => (float) $trip->pickup_lat,
+            'pickup_lng' => (float) $trip->pickup_lng,
+            'dropoff_lat' => (float) $trip->dropoff_lat,
+            'dropoff_lng' => (float) $trip->dropoff_lng,
+            'expires_at' => $expiresAt->format(DATE_ATOM),
+        ];
+    }
+
+    private function distanceKm(float $fromLat, float $fromLng, float $toLat, float $toLng): float
+    {
+        if ($fromLat === 0.0 && $fromLng === 0.0 || $toLat === 0.0 && $toLng === 0.0) {
+            return 0.0;
+        }
+
+        $earthRadiusKm = 6371;
+        $latDelta = deg2rad($toLat - $fromLat);
+        $lngDelta = deg2rad($toLng - $fromLng);
+        $a = sin($latDelta / 2) ** 2
+            + cos(deg2rad($fromLat)) * cos(deg2rad($toLat)) * sin($lngDelta / 2) ** 2;
+
+        return $earthRadiusKm * 2 * atan2(sqrt($a), sqrt(1 - $a));
     }
 }

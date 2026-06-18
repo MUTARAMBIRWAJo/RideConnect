@@ -14,8 +14,11 @@ class DriverLocationV3 extends Model
 
     protected $fillable = [
         'driver_id',
+        'trip_id',
         'lat',
         'lng',
+        'latitude',
+        'longitude',
         'heading',
         'speed',
         'is_online',
@@ -24,6 +27,8 @@ class DriverLocationV3 extends Model
     protected $casts = [
         'lat' => 'double',
         'lng' => 'double',
+        'latitude' => 'double',
+        'longitude' => 'double',
         'heading' => 'float',
         'speed' => 'float',
         'is_online' => 'boolean',

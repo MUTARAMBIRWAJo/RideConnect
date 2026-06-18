@@ -3,6 +3,7 @@
 namespace App\Jobs\V3;
 
 use App\Models\V3\TripV3;
+use App\Models\DriverTripOffer;
 use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Bus\Dispatchable;
@@ -32,7 +33,7 @@ class HandleDriverTimeoutV3 implements ShouldQueue
         }
 
         // Check if trip is still offered to this driver and they haven't responded
-        if ($freshTrip->status === 'DRIVER_OFFERED' && $freshTrip->matched_driver_id === $this->driverId) {
+        if ($freshTrip->status === 'MATCHING' && $freshTrip->matched_driver_id === $this->driverId && $freshTrip->driver_response_status === 'pending') {
             
             // Mark as rejected via timeout
             $ignored = $freshTrip->ignored_driver_ids ?? [];
@@ -42,9 +43,26 @@ class HandleDriverTimeoutV3 implements ShouldQueue
             
             $freshTrip->ignored_driver_ids = $ignored;
             $freshTrip->matched_driver_id = null;
-            $freshTrip->driver_response_status = 'rejected'; // timed out counts as rejected
-            // transition back to searching
-            app(\App\Services\V3\TripLifecycleEngineV3::class)->transition($freshTrip, 'SEARCHING');
+            $freshTrip->driver_response_status = 'timeout';
+            $freshTrip->save();
+
+            DriverTripOffer::query()
+                ->where('trip_id', $freshTrip->id)
+                ->where('driver_id', $this->driverId)
+                ->where('status', 'pending')
+                ->update([
+                    'status' => 'timeout',
+                    'responded_at' => now(),
+                    'response_reason' => 'Driver did not respond within 30 seconds.',
+                    'updated_at' => now(),
+                ]);
+
+            app(\App\Services\V3\TripLifecycleNotifierV3::class)->dispatch($freshTrip, 'trip.driver.rejected', [
+                'trip_id' => $freshTrip->id,
+                'driver_id' => $this->driverId,
+                'reason' => 'timeout',
+                'message' => 'Driver offer timed out. Finding another driver...',
+            ]);
             
             // Restart matching
             ProcessTripMatchingV3::dispatch($freshTrip);

@@ -3,6 +3,7 @@
 namespace Tests\Feature\V3;
 
 use App\Models\Driver;
+use App\Models\DriverTripOffer;
 use App\Models\User;
 use App\Models\V3\TripV3;
 use Illuminate\Foundation\Testing\RefreshDatabase;
@@ -30,10 +31,17 @@ class MatchingFlowTest extends TestCase
         $trip = TripV3::create([
             'user_id' => $user->id,
             'transport_type' => 'motor_vehicle',
-            'status' => 'DRIVER_OFFERED',
+            'status' => 'MATCHING',
             'matched_driver_id' => $driver->id,
             'driver_response_status' => 'pending',
             'match_attempt_count' => 1,
+        ]);
+        DriverTripOffer::create([
+            'trip_id' => $trip->id,
+            'driver_id' => $driver->id,
+            'status' => 'pending',
+            'expires_at' => now()->addSeconds(30),
+            'payload' => ['trip_id' => $trip->id],
         ]);
 
         $response = $this->actingAs($driverUser, 'sanctum')
@@ -43,7 +51,7 @@ class MatchingFlowTest extends TestCase
         
         $this->assertDatabaseHas('trips_v3', [
             'id' => $trip->id,
-            'status' => 'ASSIGNED',
+            'status' => 'DRIVER_ASSIGNED',
             'driver_id' => $driver->id,
             'driver_response_status' => 'accepted',
         ]);
@@ -58,10 +66,17 @@ class MatchingFlowTest extends TestCase
         $trip = TripV3::create([
             'user_id' => $user->id,
             'transport_type' => 'motor_vehicle',
-            'status' => 'DRIVER_OFFERED',
+            'status' => 'MATCHING',
             'matched_driver_id' => $driver->id,
             'driver_response_status' => 'pending',
             'match_attempt_count' => 1,
+        ]);
+        DriverTripOffer::create([
+            'trip_id' => $trip->id,
+            'driver_id' => $driver->id,
+            'status' => 'pending',
+            'expires_at' => now()->addSeconds(30),
+            'payload' => ['trip_id' => $trip->id],
         ]);
 
         $response = $this->actingAs($driverUser, 'sanctum')
@@ -71,7 +86,7 @@ class MatchingFlowTest extends TestCase
         
         $this->assertDatabaseHas('trips_v3', [
             'id' => $trip->id,
-            'status' => 'SEARCHING',
+            'status' => 'MATCHING',
             'matched_driver_id' => null,
             'driver_response_status' => 'rejected',
         ]);

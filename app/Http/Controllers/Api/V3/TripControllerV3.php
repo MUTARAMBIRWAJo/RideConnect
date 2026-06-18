@@ -123,9 +123,16 @@ class TripControllerV3 extends Controller
         
         $driverLocation = null;
         if ($trip->driver_id) {
-            $loc = \App\Models\V3\DriverLocationV3::where('driver_id', $trip->driver_id)->first();
+            $driverUserId = \App\Models\Driver::query()->where('id', $trip->driver_id)->value('user_id') ?: $trip->driver_id;
+            $loc = \App\Models\DriverLocation::where('driver_id', $driverUserId)->first();
             if ($loc) {
-                $driverLocation = ['lat' => $loc->lat, 'lng' => $loc->lng];
+                $driverLocation = [
+                    'lat' => (float) ($loc->lat ?? $loc->latitude),
+                    'lng' => (float) ($loc->lng ?? $loc->longitude),
+                    'heading' => $loc->heading ? (float) $loc->heading : null,
+                    'speed' => $loc->speed ? (float) $loc->speed : ((float) $loc->speed_kmh ?: null),
+                    'updated_at' => $loc->updated_at?->toIso8601String(),
+                ];
             }
         }
 
