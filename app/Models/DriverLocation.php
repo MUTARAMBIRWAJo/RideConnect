@@ -21,6 +21,7 @@ class DriverLocation extends Model
         'heading',
         'accuracy',
         'recorded_at',
+        'updated_at',
         'last_activity_at',
         'is_online',
     ];
