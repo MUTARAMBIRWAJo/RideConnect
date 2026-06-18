@@ -29,7 +29,15 @@ class NotificationServiceV3
 
         broadcast(new \App\Events\NewTripRequestEvent($driver->user_id, $payload));
 
-        Log::info("Laravel WebSocket Triggered for Driver [{$driverId}]", $payload);
+        $this->mobileNotificationService->sendToUserId(
+            $driver->user_id,
+            'trip_update',
+            $title,
+            $message,
+            $payload
+        );
+
+        Log::info("Laravel WebSocket & Mobile Push Triggered for Driver [{$driverId}]", $payload);
     }
 
     public function sendToPassenger(int $passengerId, array $payload): void
@@ -46,6 +54,14 @@ class NotificationServiceV3
         // Broadcast via Laravel Native WebSockets (Reverb)
         broadcast(new \App\Events\PassengerTripUpdateEvent($passengerId, $payload));
 
-        Log::info("Laravel WebSocket Triggered for Passenger [{$passengerId}]", $payload);
+        $this->mobileNotificationService->sendToUserId(
+            $passengerId,
+            'trip_update',
+            $title,
+            $message,
+            $payload
+        );
+
+        Log::info("Laravel WebSocket & Mobile Push Triggered for Passenger [{$passengerId}]", $payload);
     }
 }
