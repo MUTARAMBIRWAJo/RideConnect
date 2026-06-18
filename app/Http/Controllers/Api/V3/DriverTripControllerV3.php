@@ -41,6 +41,13 @@ class DriverTripControllerV3 extends Controller
                 'updated_at' => now(),
             ]);
 
+            app(\App\Services\V3\NotificationServiceV3::class)->sendToPassenger($trip->user_id, [
+                'type' => 'TRIP_ACCEPTED',
+                'trip_id' => $trip->id,
+                'driver_id' => $driverId,
+                'message' => 'Driver has accepted your trip request.',
+            ]);
+
             // Update active_trips_v3 status
             DB::table('active_trips_v3')
                 ->where('trip_id', $trip->id)
@@ -79,6 +86,12 @@ class DriverTripControllerV3 extends Controller
                 'payload' => json_encode(['driver_id' => $driverId]),
                 'created_at' => now(),
                 'updated_at' => now(),
+            ]);
+
+            app(\App\Services\V3\NotificationServiceV3::class)->sendToPassenger($trip->user_id, [
+                'type' => 'TRIP_REJECTED',
+                'trip_id' => $trip->id,
+                'message' => 'Driver rejected. Finding another driver...',
             ]);
 
             // Typically here you'd dispatch a job to rematch or call the matching engine immediately
