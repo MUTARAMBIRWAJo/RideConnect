@@ -59,23 +59,27 @@ class DriverTripControllerV3 extends Controller
 
         return DB::transaction(function () use ($id, $driver, $request) {
             $trip = TripV3::where('id', $id)->lockForUpdate()->firstOrFail();
-            $offer = $this->pendingOffer($trip, $driver);
 
-            if (! $offer || $trip->status !== 'MATCHING') {
+            if ((int)$trip->matched_driver_id !== (int)$driver->id || $trip->status !== 'MATCHING') {
                 return response()->json([
                     'success' => false,
                     'message' => 'Trip is no longer available or not assigned to you.',
                 ], 400);
             }
 
-            $offer->update([
-                'status' => 'accepted',
-                'responded_at' => now(),
-            ]);
+            DriverTripOffer::query()
+                ->where('trip_id', $trip->id)
+                ->where('driver_id', $driver->id)
+                ->where('status', 'pending')
+                ->update([
+                    'status' => 'accepted',
+                    'responded_at' => now(),
+                    'updated_at' => now()
+                ]);
 
             DriverTripOffer::query()
                 ->where('trip_id', $trip->id)
-                ->where('id', '!=', $offer->id)
+                ->where('driver_id', '!=', $driver->id)
                 ->where('status', 'pending')
                 ->update(['status' => 'superseded', 'updated_at' => now()]);
 
@@ -97,11 +101,17 @@ class DriverTripControllerV3 extends Controller
             $trip->loadMissing(['driver.user', 'driver.vehicle']);
 
             $payload = [
+                'type' => 'TRIP_ACCEPTED',
                 'trip_id' => $trip->id,
                 'driver' => $this->driverPayload($driver),
                 'vehicle' => $driver->vehicle ? $driver->vehicle->only(['id', 'make', 'model', 'year', 'color', 'vehicle_type', 'seats', 'license_plate']) : null,
+                'message' => 'Driver accepted your trip',
             ];
             $this->notifier->dispatch($trip, 'trip.driver.accepted', $payload, $driver);
+
+            // Notify passenger immediately
+            $notificationService = app(\App\Services\V3\NotificationServiceV3::class);
+            $notificationService->sendToPassenger($trip->user_id, $payload);
 
             return response()->json([
                 'success' => true,
@@ -116,20 +126,24 @@ class DriverTripControllerV3 extends Controller
 
         return DB::transaction(function () use ($id, $driver, $request) {
             $trip = TripV3::where('id', $id)->lockForUpdate()->firstOrFail();
-            $offer = $this->pendingOffer($trip, $driver);
 
-            if (! $offer || $trip->status !== 'MATCHING') {
+            if ((int)$trip->matched_driver_id !== (int)$driver->id || $trip->status !== 'MATCHING') {
                 return response()->json([
                     'success' => false,
                     'message' => 'Trip is no longer available or not assigned to you.',
                 ], 400);
             }
 
-            $offer->update([
-                'status' => 'rejected',
-                'responded_at' => now(),
-                'response_reason' => $request->input('reason'),
-            ]);
+            DriverTripOffer::query()
+                ->where('trip_id', $trip->id)
+                ->where('driver_id', $driver->id)
+                ->where('status', 'pending')
+                ->update([
+                    'status' => 'rejected',
+                    'responded_at' => now(),
+                    'response_reason' => $request->input('reason'),
+                    'updated_at' => now(),
+                ]);
 
             $ignored = $trip->ignored_driver_ids ?? [];
             if (! in_array($driver->id, $ignored, true)) {
@@ -142,14 +156,23 @@ class DriverTripControllerV3 extends Controller
             $trip->driver_response_status = 'rejected';
             $this->lifecycle->transition($trip, 'MATCHING');
 
-            $this->notifier->dispatch($trip, 'trip.driver.rejected', [
+            $payload = [
+                'type' => 'TRIP_REJECTED',
                 'trip_id' => $trip->id,
                 'driver_id' => $driver->id,
                 'reason' => $request->input('reason', 'rejected'),
-                'message' => 'Driver rejected. Finding another driver...',
-            ], $driver);
+                'message' => 'Driver unavailable, reassigning driver',
+            ];
 
-            ProcessTripMatchingV3::dispatch($trip);
+            $this->notifier->dispatch($trip, 'trip.driver.rejected', $payload, $driver);
+
+            // Notify passenger immediately
+            $notificationService = app(\App\Services\V3\NotificationServiceV3::class);
+            $notificationService->sendToPassenger($trip->user_id, $payload);
+
+            // Automatically reassign NEXT nearest driver from available pool
+            $matchingEngine = app(\App\Services\V3\TripMatchingEngineV3::class);
+            $matchingEngine->executeMatch($trip);
 
             return response()->json([
                 'success' => true,

@@ -53,7 +53,7 @@ class TripV3MatchingFallbackTest extends TestCase
         return $driver;
     }
 
-    public function test_v3_fallback_matching_assigns_online_driver_within_5km_after_40_seconds(): void
+    public function test_v3_deterministic_matching_assigns_nearest_online_driver_within_5km(): void
     {
         // 1. Create a passenger and an online motorcycle driver within 5km (e.g. 1km away)
         $passenger = User::factory()->create(['role' => 'PASSENGER', 'is_approved' => true]);
@@ -71,7 +71,7 @@ class TripV3MatchingFallbackTest extends TestCase
             'dropoff_location' => 'Kigali Convention Centre',
             'dropoff_lat' => -1.9536,
             'dropoff_lng' => 30.0928,
-            'matching_started_at' => now()->subSeconds(45), // Simulating that 45 seconds have passed
+            'matching_started_at' => now(),
             'status' => 'MATCHING',
         ]);
 
@@ -81,10 +81,9 @@ class TripV3MatchingFallbackTest extends TestCase
         $engine = app(TripMatchingEngineV3::class);
         $engine->executeMatch($trip);
 
-        // 4. Assert that the fallback driver has been matched successfully
+        // 4. Assert that the nearest driver has been matched successfully
         $trip->refresh();
         $this->assertEquals($driver->id, $trip->matched_driver_id);
-        $this->assertTrue((bool)$trip->fallback_match_used);
         $this->assertEquals('pending', $trip->driver_response_status);
 
         // 5. Assert that a DriverTripOffer was created for this driver
