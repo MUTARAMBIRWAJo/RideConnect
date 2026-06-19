@@ -12,8 +12,12 @@ return new class extends Migration
     public function up(): void
     {
         Schema::table('rides', function (Blueprint $table) {
-            $table->enum('transport_type', ['BUS', 'CAR', 'MOTORCYCLE'])->default('CAR')->after('id');
-            $table->enum('travel_mode', ['SCHEDULED', 'ON_DEMAND'])->default('ON_DEMAND')->after('transport_type');
+            if (!Schema::hasColumn('rides', 'transport_type')) {
+                $table->enum('transport_type', ['BUS', 'CAR', 'MOTORCYCLE'])->default('CAR')->after('id');
+            }
+            if (!Schema::hasColumn('rides', 'travel_mode')) {
+                $table->enum('travel_mode', ['SCHEDULED', 'ON_DEMAND'])->default('ON_DEMAND')->after('transport_type');
+            }
         });
     }
 

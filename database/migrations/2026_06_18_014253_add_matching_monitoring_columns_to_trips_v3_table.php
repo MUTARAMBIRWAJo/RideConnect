@@ -11,12 +11,27 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::table('trips_v3', function (Blueprint $table) {
-            $table->timestamp('matching_started_at')->nullable();
-            $table->timestamp('matching_timeout_at')->nullable();
-            $table->boolean('fallback_match_used')->default(false);
-            $table->timestamp('matched_at')->nullable();
-        });
+        $hasMatchingStarted = Schema::hasColumn('trips_v3', 'matching_started_at');
+        $hasMatchingTimeout = Schema::hasColumn('trips_v3', 'matching_timeout_at');
+        $hasFallbackMatch = Schema::hasColumn('trips_v3', 'fallback_match_used');
+        $hasMatched = Schema::hasColumn('trips_v3', 'matched_at');
+
+        if (!$hasMatchingStarted || !$hasMatchingTimeout || !$hasFallbackMatch || !$hasMatched) {
+            Schema::table('trips_v3', function (Blueprint $table) use ($hasMatchingStarted, $hasMatchingTimeout, $hasFallbackMatch, $hasMatched) {
+                if (!$hasMatchingStarted) {
+                    $table->timestamp('matching_started_at')->nullable();
+                }
+                if (!$hasMatchingTimeout) {
+                    $table->timestamp('matching_timeout_at')->nullable();
+                }
+                if (!$hasFallbackMatch) {
+                    $table->boolean('fallback_match_used')->default(false);
+                }
+                if (!$hasMatched) {
+                    $table->timestamp('matched_at')->nullable();
+                }
+            });
+        }
     }
 
     /**

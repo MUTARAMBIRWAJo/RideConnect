@@ -14,27 +14,35 @@ return new class extends Migration
             return;
         }
 
-        Schema::table('driver_locations', function (Blueprint $table): void {
-            if (! Schema::hasColumn('driver_locations', 'lat')) {
-                $table->decimal('lat', 10, 8)->nullable();
-            }
+        $hasLat = Schema::hasColumn('driver_locations', 'lat');
+        $hasLng = Schema::hasColumn('driver_locations', 'lng');
+        $hasTripId = Schema::hasColumn('driver_locations', 'trip_id');
+        $hasSpeed = Schema::hasColumn('driver_locations', 'speed');
+        $hasRecorded = Schema::hasColumn('driver_locations', 'recorded_at');
 
-            if (! Schema::hasColumn('driver_locations', 'lng')) {
-                $table->decimal('lng', 11, 8)->nullable();
-            }
+        if (!$hasLat || !$hasLng || !$hasTripId || !$hasSpeed || !$hasRecorded) {
+            Schema::table('driver_locations', function (Blueprint $table) use ($hasLat, $hasLng, $hasTripId, $hasSpeed, $hasRecorded): void {
+                if (!$hasLat) {
+                    $table->decimal('lat', 10, 8)->nullable();
+                }
 
-            if (! Schema::hasColumn('driver_locations', 'trip_id')) {
-                $table->unsignedBigInteger('trip_id')->nullable();
-            }
+                if (!$hasLng) {
+                    $table->decimal('lng', 11, 8)->nullable();
+                }
 
-            if (! Schema::hasColumn('driver_locations', 'speed')) {
-                $table->decimal('speed', 10, 2)->nullable();
-            }
+                if (!$hasTripId) {
+                    $table->unsignedBigInteger('trip_id')->nullable();
+                }
 
-            if (! Schema::hasColumn('driver_locations', 'recorded_at')) {
-                $table->timestamp('recorded_at')->nullable();
-            }
-        });
+                if (!$hasSpeed) {
+                    $table->decimal('speed', 10, 2)->nullable();
+                }
+
+                if (!$hasRecorded) {
+                    $table->timestamp('recorded_at')->nullable();
+                }
+            });
+        }
 
         if (Schema::hasColumn('driver_locations', 'latitude') && Schema::hasColumn('driver_locations', 'lat')) {
             DB::table('driver_locations')

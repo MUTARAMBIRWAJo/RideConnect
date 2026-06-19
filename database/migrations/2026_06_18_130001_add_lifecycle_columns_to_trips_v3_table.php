@@ -8,35 +8,49 @@ return new class extends Migration
 {
     public function up(): void
     {
-        Schema::table('trips_v3', function (Blueprint $table): void {
-            if (! Schema::hasColumn('trips_v3', 'trip_started_at')) {
-                $table->timestamp('trip_started_at')->nullable();
-            }
-            if (! Schema::hasColumn('trips_v3', 'trip_completed_at')) {
-                $table->timestamp('trip_completed_at')->nullable();
-            }
-            if (! Schema::hasColumn('trips_v3', 'payment_method')) {
-                $table->string('payment_method')->nullable();
-            }
-            if (! Schema::hasColumn('trips_v3', 'payment_reference')) {
-                $table->string('payment_reference')->nullable();
-            }
-            if (! Schema::hasColumn('trips_v3', 'amount_paid')) {
-                $table->decimal('amount_paid', 10, 2)->nullable();
-            }
-            if (! Schema::hasColumn('trips_v3', 'paid_at')) {
-                $table->timestamp('paid_at')->nullable();
-            }
-            if (! Schema::hasColumn('trips_v3', 'rating')) {
-                $table->unsignedTinyInteger('rating')->nullable();
-            }
-            if (! Schema::hasColumn('trips_v3', 'rating_comment')) {
-                $table->text('rating_comment')->nullable();
-            }
-            if (! Schema::hasColumn('trips_v3', 'rated_at')) {
-                $table->timestamp('rated_at')->nullable();
-            }
-        });
+        $hasStarted = Schema::hasColumn('trips_v3', 'trip_started_at');
+        $hasCompleted = Schema::hasColumn('trips_v3', 'trip_completed_at');
+        $hasMethod = Schema::hasColumn('trips_v3', 'payment_method');
+        $hasRef = Schema::hasColumn('trips_v3', 'payment_reference');
+        $hasAmount = Schema::hasColumn('trips_v3', 'amount_paid');
+        $hasPaidAt = Schema::hasColumn('trips_v3', 'paid_at');
+        $hasRating = Schema::hasColumn('trips_v3', 'rating');
+        $hasComment = Schema::hasColumn('trips_v3', 'rating_comment');
+        $hasRatedAt = Schema::hasColumn('trips_v3', 'rated_at');
+
+        if (!$hasStarted || !$hasCompleted || !$hasMethod || !$hasRef || !$hasAmount || !$hasPaidAt || !$hasRating || !$hasComment || !$hasRatedAt) {
+            Schema::table('trips_v3', function (Blueprint $table) use (
+                $hasStarted, $hasCompleted, $hasMethod, $hasRef, $hasAmount, $hasPaidAt, $hasRating, $hasComment, $hasRatedAt
+            ): void {
+                if (!$hasStarted) {
+                    $table->timestamp('trip_started_at')->nullable();
+                }
+                if (!$hasCompleted) {
+                    $table->timestamp('trip_completed_at')->nullable();
+                }
+                if (!$hasMethod) {
+                    $table->string('payment_method')->nullable();
+                }
+                if (!$hasRef) {
+                    $table->string('payment_reference')->nullable();
+                }
+                if (!$hasAmount) {
+                    $table->decimal('amount_paid', 10, 2)->nullable();
+                }
+                if (!$hasPaidAt) {
+                    $table->timestamp('paid_at')->nullable();
+                }
+                if (!$hasRating) {
+                    $table->unsignedTinyInteger('rating')->nullable();
+                }
+                if (!$hasComment) {
+                    $table->text('rating_comment')->nullable();
+                }
+                if (!$hasRatedAt) {
+                    $table->timestamp('rated_at')->nullable();
+                }
+            });
+        }
     }
 
     public function down(): void

@@ -13,22 +13,27 @@ return new class extends Migration
             return;
         }
 
-        Schema::table('driver_locations', function (Blueprint $table) {
-            // Add online status tracking
-            if (!Schema::hasColumn('driver_locations', 'is_online')) {
-                $table->boolean('is_online')->default(false);
-            }
+        $hasOnline = Schema::hasColumn('driver_locations', 'is_online');
+        $hasActivity = Schema::hasColumn('driver_locations', 'last_activity_at');
 
-            // Add last activity timestamp
-            if (!Schema::hasColumn('driver_locations', 'last_activity_at')) {
-                $table->timestamp('last_activity_at')->nullable();
-            }
+        if (!$hasOnline || !$hasActivity) {
+            Schema::table('driver_locations', function (Blueprint $table) use ($hasOnline, $hasActivity) {
+                // Add online status tracking
+                if (!$hasOnline) {
+                    $table->boolean('is_online')->default(false);
+                }
 
-            // Add indexes for performance
-            $table->index('is_online');
-            $table->index('last_activity_at');
-            $table->index(['is_online', 'last_activity_at']);
-        });
+                // Add last activity timestamp
+                if (!$hasActivity) {
+                    $table->timestamp('last_activity_at')->nullable();
+                }
+
+                // Add indexes for performance
+                $table->index('is_online');
+                $table->index('last_activity_at');
+                $table->index(['is_online', 'last_activity_at']);
+            });
+        }
         } catch (\Exception $e) {
             \Illuminate\Support\Facades\Log::warning('Migration 2026_06_13_120004_add_online_tracking_to_driver_locations.php skipped: ' . $e->getMessage());
         }

@@ -30,44 +30,66 @@ return new class extends Migration
         }
 
         // Task 4: matching metrics on motorcycle_trips.
-        if (Schema::hasTable('motorcycle_trips') && ! Schema::hasColumn('motorcycle_trips', 'matching_duration_seconds')) {
-            Schema::table('motorcycle_trips', function (Blueprint $table) {
-                $table->unsignedInteger('matching_duration_seconds')->nullable()->after('max_retries');
-                if (! Schema::hasColumn('motorcycle_trips', 'candidate_count')) {
-                    $table->unsignedInteger('candidate_count')->nullable()->after('matching_duration_seconds');
-                }
-                if (! Schema::hasColumn('motorcycle_trips', 'matched_via')) {
-                    $table->string('matched_via', 32)->nullable()->after('candidate_count');
-                }
-                if (! Schema::hasColumn('motorcycle_trips', 'matching_metadata')) {
-                    $table->json('matching_metadata')->nullable()->after('matched_via');
-                }
-            });
+        if (Schema::hasTable('motorcycle_trips')) {
+            $hasMatchingDuration = Schema::hasColumn('motorcycle_trips', 'matching_duration_seconds');
+            $hasCandidateCount = Schema::hasColumn('motorcycle_trips', 'candidate_count');
+            $hasMatchedVia = Schema::hasColumn('motorcycle_trips', 'matched_via');
+            $hasMatchingMetadata = Schema::hasColumn('motorcycle_trips', 'matching_metadata');
+
+            if (!$hasMatchingDuration || !$hasCandidateCount || !$hasMatchedVia || !$hasMatchingMetadata) {
+                Schema::table('motorcycle_trips', function (Blueprint $table) use ($hasMatchingDuration, $hasCandidateCount, $hasMatchedVia, $hasMatchingMetadata) {
+                    if (!$hasMatchingDuration) {
+                        $table->unsignedInteger('matching_duration_seconds')->nullable()->after('max_retries');
+                    }
+                    if (!$hasCandidateCount) {
+                        $table->unsignedInteger('candidate_count')->nullable()->after('matching_duration_seconds');
+                    }
+                    if (!$hasMatchedVia) {
+                        $table->string('matched_via', 32)->nullable()->after('candidate_count');
+                    }
+                    if (!$hasMatchingMetadata) {
+                        $table->json('matching_metadata')->nullable()->after('matched_via');
+                    }
+                });
+            }
         }
 
         // Task 7: public bus trip lifecycle status — add to trips table if not present.
-        if (Schema::hasTable('trips') && ! Schema::hasColumn('trips', 'passenger_waiting_at')) {
-            Schema::table('trips', function (Blueprint $table) {
-                if (! Schema::hasColumn('trips', 'driver_arrived_at')) {
-                    $table->timestamp('driver_arrived_at')->nullable()->after('accepted_at');
-                }
-                if (! Schema::hasColumn('trips', 'passenger_waiting_at')) {
-                    $table->timestamp('passenger_waiting_at')->nullable()->after('driver_arrived_at');
-                }
-                if (! Schema::hasColumn('trips', 'started_at')) {
-                    $table->timestamp('started_at')->nullable()->after('passenger_waiting_at');
-                }
-            });
+        if (Schema::hasTable('trips')) {
+            $hasDriverArrived = Schema::hasColumn('trips', 'driver_arrived_at');
+            $hasPassengerWaiting = Schema::hasColumn('trips', 'passenger_waiting_at');
+            $hasStarted = Schema::hasColumn('trips', 'started_at');
+
+            if (!$hasDriverArrived || !$hasPassengerWaiting || !$hasStarted) {
+                Schema::table('trips', function (Blueprint $table) use ($hasDriverArrived, $hasPassengerWaiting, $hasStarted) {
+                    if (!$hasDriverArrived) {
+                        $table->timestamp('driver_arrived_at')->nullable()->after('accepted_at');
+                    }
+                    if (!$hasPassengerWaiting) {
+                        $table->timestamp('passenger_waiting_at')->nullable()->after('driver_arrived_at');
+                    }
+                    if (!$hasStarted) {
+                        $table->timestamp('started_at')->nullable()->after('passenger_waiting_at');
+                    }
+                });
+            }
         }
 
         // Idempotency guard for parallel driver notifications (Task 2 + Task 8).
-        if (Schema::hasTable('trips') && ! Schema::hasColumn('trips', 'driver_notification_batch_id')) {
-            Schema::table('trips', function (Blueprint $table) {
-                $table->string('driver_notification_batch_id', 64)->nullable()->unique()->after('idempotency_key');
-                if (! Schema::hasColumn('trips', 'batch_dispatched_at')) {
-                    $table->timestamp('batch_dispatched_at')->nullable()->after('driver_notification_batch_id');
-                }
-            });
+        if (Schema::hasTable('trips')) {
+            $hasDriverNotificationBatchId = Schema::hasColumn('trips', 'driver_notification_batch_id');
+            $hasBatchDispatchedAt = Schema::hasColumn('trips', 'batch_dispatched_at');
+
+            if (!$hasDriverNotificationBatchId || !$hasBatchDispatchedAt) {
+                Schema::table('trips', function (Blueprint $table) use ($hasDriverNotificationBatchId, $hasBatchDispatchedAt) {
+                    if (!$hasDriverNotificationBatchId) {
+                        $table->string('driver_notification_batch_id', 64)->nullable()->unique()->after('idempotency_key');
+                    }
+                    if (!$hasBatchDispatchedAt) {
+                        $table->timestamp('batch_dispatched_at')->nullable()->after('driver_notification_batch_id');
+                    }
+                });
+            }
         }
     }
 
