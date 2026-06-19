@@ -102,7 +102,7 @@ return [
 
     'tflite' => [
         'endpoint' => env('TFLITE_ENDPOINT', 'http://localhost:8001'),
-        'timeout' => env('TFLITE_TIMEOUT', 15),
+        'timeout' => env('TFLITE_TIMEOUT', 1.5),
     ],
 
     'supabase' => [

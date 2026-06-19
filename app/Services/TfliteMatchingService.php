@@ -15,7 +15,7 @@ class TfliteMatchingService
     public function __construct()
     {
         $this->endpoint = rtrim((string) config('services.tflite.endpoint'), '/');
-        $this->timeoutSeconds = 5;
+        $this->timeoutSeconds = (float) config('services.tflite.timeout', 1.5);
     }
 
     public function warmUp(): void
