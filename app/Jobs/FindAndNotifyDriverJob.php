@@ -81,7 +81,7 @@ class FindAndNotifyDriverJob implements ShouldQueue
                 'score' => $topDriver['score'],
                 'score_breakdown' => $topDriver['score_breakdown'] ?? null,
                 'status' => 'pending',
-                'expires_at' => now()->addSeconds(30),
+                'expires_at' => now()->addMinutes(3),
             ]);
 
             TripStatusEvent::query()->create([
@@ -161,7 +161,7 @@ class FindAndNotifyDriverJob implements ShouldQueue
             'event_time' => now(),
         ]);
 
-        AttemptTimeoutJob::dispatch((int) $attempt->id)->delay(now()->addSeconds(30));
+        AttemptTimeoutJob::dispatch((int) $attempt->id)->delay(now()->addMinutes(3));
 
         $endMs = floor(microtime(true) * 1000);
         \Illuminate\Support\Facades\Log::info('MATCHING_DURATION_MS', ['trip_id' => $this->tripId, 'duration_ms' => $endMs - $startMs]);

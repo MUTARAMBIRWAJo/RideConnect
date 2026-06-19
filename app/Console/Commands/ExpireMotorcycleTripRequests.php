@@ -11,7 +11,7 @@ use Illuminate\Support\Facades\Log;
 
 class ExpireMotorcycleTripRequests extends Command
 {
-    protected $signature = 'motorcycle-trips:expire-pending {--seconds=30 : Acceptance window in seconds before auto-reassign}';
+    protected $signature = 'motorcycle-trips:expire-pending {--seconds=180 : Acceptance window in seconds before auto-reassign}';
     protected $description = 'Auto-reassign motorcycle trip requests that were not accepted in time';
 
     public function handle(
