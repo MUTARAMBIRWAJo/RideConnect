@@ -30,8 +30,8 @@ class ApiConfig {
 
   static String get updateDriverLocation => '$apiV2/driver/location';
 
-  static String get notifications => '$apiV2/notifications';
-  static String markNotificationRead(int id) => '$apiV2/notifications/$id/read';
+  static String get notifications => '$apiV1/notifications';
+  static String markNotificationRead(int id) => '$apiV1/notifications/$id/read';
 
   static const String supabaseUrl =
       'https://tpahuvmhlfluztuhznfj.supabase.co';
@@ -106,13 +106,13 @@ class ApiEndpoints {
 
   static const String availableDrivers = '${ApiConfig.mobileApiPath}/drivers/match';
   static String acceptTrip(int tripId) =>
-      '${ApiConfig.mobileApiPath}/drivers/trips/$tripId/accept';
+      '${ApiConfig.apiVersion}/driver/trips/$tripId/accept';
   static String rejectTrip(int tripId) =>
-      '${ApiConfig.mobileApiPath}/drivers/trips/$tripId/reject';
+      '${ApiConfig.apiVersion}/driver/trips/$tripId/reject';
   static String startTrip(int tripId) =>
-      '${ApiConfig.mobileApiPath}/drivers/trips/$tripId/start';
+      '${ApiConfig.apiVersion}/driver/trips/$tripId/start';
   static String completeTrip(int tripId) =>
-      '${ApiConfig.mobileApiPath}/drivers/trips/$tripId/complete';
+      '${ApiConfig.apiVersion}/driver/trips/$tripId/complete';
 
   static String matchingSession(String sessionId) =>
       '${ApiConfig.mobileApiPath}/trips/$sessionId/matching-session';
