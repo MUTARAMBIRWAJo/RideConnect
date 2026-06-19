@@ -339,8 +339,8 @@ Route::post('/matching/driver/{tripId}', [PassengerMatchingController::class, 'm
             
             // Trip request decision endpoints - standardized API design
             Route::get('/trip-requests/assigned', [PublicBusTripController::class, 'getAssigned']);
-            Route::post('/trip-requests/{id}/accept', [PublicBusTripController::class, 'accept'])->whereNumber('id');
-            Route::post('/trip-requests/{id}/reject', [PublicBusTripController::class, 'reject'])->whereNumber('id');
+            Route::post('/trip-requests/{id}/accept', [DriverPublicBusController::class, 'acceptTripRequest'])->whereNumber('id');
+            Route::post('/trip-requests/{id}/reject', [DriverPublicBusController::class, 'rejectTripRequest'])->whereNumber('id');
             
             Route::prefix('public-bus')->group(function () {
                 Route::post('/location', [DriverPublicBusController::class, 'location']);
