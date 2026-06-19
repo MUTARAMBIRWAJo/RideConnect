@@ -33,7 +33,7 @@ class DriverAvailabilityServiceV3
             ->where('drivers.last_seen_at', '>=', now()->subSeconds(30));
 
         if (!empty($ignoredDriverIds)) {
-            $query->whereNotIn('id', $ignoredDriverIds);
+            $query->whereNotIn('drivers.id', $ignoredDriverIds);
         }
 
         $query->join('vehicles', 'vehicles.driver_id', '=', 'drivers.id');
