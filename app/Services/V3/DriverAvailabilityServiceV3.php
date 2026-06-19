@@ -25,12 +25,12 @@ class DriverAvailabilityServiceV3
             ->select('drivers.*')
             ->selectRaw("{$haversine} AS distance", [$earthRadiusKm, $lat, $lng, $lat])
             ->whereRaw("{$haversine} <= ?", [$earthRadiusKm, $lat, $lng, $lat, $radiusKm])
-            ->where('status', 'approved')
-            ->where('is_active', true)
-            ->where('is_online', true)
-            ->whereIn('availability_status', ['online', 'available'])
-            ->whereNull('current_trip_id')
-            ->where('last_seen_at', '>=', now()->subSeconds(30));
+            ->where('drivers.status', 'approved')
+            ->where('drivers.is_active', true)
+            ->where('drivers.is_online', true)
+            ->whereIn('drivers.availability_status', ['online', 'available'])
+            ->whereNull('drivers.current_trip_id')
+            ->where('drivers.last_seen_at', '>=', now()->subSeconds(30));
 
         if (!empty($ignoredDriverIds)) {
             $query->whereNotIn('id', $ignoredDriverIds);

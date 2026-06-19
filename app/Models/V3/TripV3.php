@@ -49,6 +49,10 @@ class TripV3 extends Model
         'rating',
         'rating_comment',
         'rated_at',
+        'matching_started_at',
+        'matching_timeout_at',
+        'fallback_match_used',
+        'matched_at',
     ];
 
     protected $casts = [

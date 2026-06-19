@@ -96,4 +96,39 @@ class MatchingFlowTest extends TestCase
 
         Queue::assertPushed(\App\Jobs\V3\ProcessTripMatchingV3::class);
     }
+
+    public function test_fallback_matching_assigns_patrick_after_40_seconds(): void
+    {
+        $user = User::factory()->create();
+        $patrickUser = User::factory()->create(['email' => 'patrick.habimana@example.com']);
+        $patrickDriver = Driver::factory()->create([
+            'user_id' => $patrickUser->id,
+            'status' => 'approved',
+            'is_active' => true,
+            'is_online' => true,
+            'availability_status' => 'available',
+        ]);
+
+        // Create vehicle for Patrick
+        \App\Models\Vehicle::factory()->create([
+            'driver_id' => $patrickDriver->id,
+            'vehicle_type' => 'sedan',
+            'is_active' => true,
+        ]);
+
+        $trip = TripV3::create([
+            'user_id' => $user->id,
+            'transport_type' => 'private_car',
+            'status' => 'MATCHING',
+            'matching_started_at' => now()->subSeconds(45),
+            'match_attempt_count' => 1,
+        ]);
+
+        $engine = app(\App\Services\V3\TripMatchingEngineV3::class);
+        $engine->executeMatch($trip);
+
+        $trip->refresh();
+        $this->assertEquals($patrickDriver->id, $trip->matched_driver_id);
+        $this->assertTrue((bool) $trip->fallback_match_used);
+    }
 }
