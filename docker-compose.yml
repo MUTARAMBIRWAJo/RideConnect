@@ -68,7 +68,7 @@ services:
       DB_PORT: 5432
       DB_DATABASE: postgres
       DB_USERNAME: postgres.tpahuvmhlfluztuhznfj
-      DB_PASSWORD: rOnptMsAAnTbrpIY
+      DB_PASSWORD: k66JhsiIhCBkPcs3
       DB_SSLMODE: require
       REDIS_HOST: redis
       REDIS_PORT: 6379
@@ -103,7 +103,7 @@ services:
       DB_PORT: 5432
       DB_DATABASE: postgres
       DB_USERNAME: postgres.tpahuvmhlfluztuhznfj
-      DB_PASSWORD: rOnptMsAAnTbrpIY
+      DB_PASSWORD: k66JhsiIhCBkPcs3
       DB_SSLMODE: require
       REDIS_HOST: redis
       REDIS_PORT: 6379
@@ -133,7 +133,7 @@ services:
     environment:
       - PORT=8001
       - MODEL_PATH=/app/models/Matching_Modal_tflite_learn_1013157_3.tflite
-      - DATABASE_URL=postgresql+psycopg2://postgres.tpahuvmhlfluztuhznfj:rOnptMsAAnTbrpIY@aws-1-us-east-1.pooler.supabase.com:5432/postgres?sslmode=require
+      - DATABASE_URL=postgresql+psycopg2://postgres.tpahuvmhlfluztuhznfj:k66JhsiIhCBkPcs3@aws-1-us-east-1.pooler.supabase.com:5432/postgres?sslmode=require
     restart: unless-stopped
     healthcheck:
       test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:8001/health')"]
