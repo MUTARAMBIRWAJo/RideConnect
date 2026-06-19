@@ -143,10 +143,13 @@ class TripControllerV3 extends Controller
         $elapsedSeconds = $trip->matching_started_at ? $trip->matching_started_at->diffInSeconds(now()) : 0;
         
         return response()->json([
-            'status' => $trip->status,
-            'attempts' => $trip->match_attempt_count,
-            'elapsed_seconds' => $elapsedSeconds,
-            'fallback_used' => (bool) $trip->fallback_match_used,
+            'success' => true,
+            'data' => [
+                'status' => $trip->status,
+                'attempts' => $trip->match_attempt_count,
+                'elapsed_seconds' => $elapsedSeconds,
+                'fallback_used' => (bool) $trip->fallback_match_used,
+            ]
         ]);
     }
 
@@ -170,11 +173,14 @@ class TripControllerV3 extends Controller
         }
 
         return response()->json([
-            'trip_id' => $trip->id,
-            'status' => $trip->status,
-            'driver_location' => $driverLocation,
-            'eta' => '5 min', // In a real app, calculate via Google Maps Matrix API
-            'distance_remaining' => '2.3 km' // In a real app, calculate distance
+            'success' => true,
+            'data' => [
+                'trip_id' => $trip->id,
+                'status' => $trip->status,
+                'driver_location' => $driverLocation,
+                'eta' => '5 min', // In a real app, calculate via Google Maps Matrix API
+                'distance_remaining' => '2.3 km' // In a real app, calculate distance
+            ]
         ]);
     }
 }

@@ -67,20 +67,40 @@ class TripMatchingEngineV3
         $selectedDriver = null;
 
         if ($elapsedSeconds >= 40) {
-            $patrickUser = \App\Models\User::where('email', 'patrick.habimana@example.com')->first();
-            $patrickDriver = $patrickUser ? $patrickUser->driver : null;
-            if ($patrickDriver) {
-                $patrickDriver->update([
-                    'status' => 'approved',
-                    'is_active' => true,
-                    'is_online' => true,
-                    'availability_status' => 'available',
-                    'current_trip_id' => null,
-                ]);
-                $selectedDriver = $patrickDriver;
+            $lat = $trip->pickup_lat ?? -1.95;
+            $lng = $trip->pickup_lng ?? 30.06;
+            $haversine = "( 6371 * acos( cos( radians($lat) ) * cos( radians( current_latitude ) ) * cos( radians( current_longitude ) - radians($lng) ) + sin( radians($lat) ) * sin( radians( current_latitude ) ) ) )";
+            
+            $query = Driver::query()
+                ->select('drivers.*')
+                ->selectRaw("$haversine AS distance")
+                ->where('drivers.status', 'approved')
+                ->where('drivers.is_online', true)
+                ->whereIn('drivers.availability_status', ['online', 'available'])
+                ->whereNull('drivers.current_trip_id')
+                ->whereRaw("$haversine <= 5.0");
+
+            if (!empty($ignoredIds)) {
+                $query->whereNotIn('drivers.id', $ignoredIds);
+            }
+
+            $query->join('vehicles', 'vehicles.driver_id', '=', 'drivers.id');
+            if ($trip->transport_type === 'motor_vehicle') {
+                $query->whereIn('vehicles.vehicle_type', ['motorcycle', 'boda', 'moto', 'motorbike', 'tuk-tuk']);
+            } elseif ($trip->transport_type === 'public_bus') {
+                $query->whereIn('vehicles.vehicle_type', ['bus', 'BUS', 'minibus', 'coach']);
+            } elseif ($trip->transport_type === 'private_car') {
+                $query->whereIn('vehicles.vehicle_type', ['sedan', 'suv', 'hatchback', 'van', 'compact', 'minivan']);
+            }
+
+            $selectedDriver = $query
+                ->orderByRaw("$haversine ASC")
+                ->first();
+
+            if ($selectedDriver) {
                 $trip->fallback_match_used = true;
                 $trip->save();
-                Log::info("V3 Matching Fallback Triggered: Assigned driver patrick.habimana@example.com after {$elapsedSeconds} seconds.");
+                Log::info("V3 Matching Fallback Triggered: Assigned closest driver ID {$selectedDriver->id} within 5km after {$elapsedSeconds} seconds.");
             }
         }
 
