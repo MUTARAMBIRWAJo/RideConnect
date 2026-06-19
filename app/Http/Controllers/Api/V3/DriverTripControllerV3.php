@@ -482,4 +482,19 @@ class DriverTripControllerV3 extends Controller
 
         return 6371 * 2 * atan2(sqrt($a), sqrt(1 - $a));
     }
+
+    public function driverTrips(Request $request): JsonResponse
+    {
+        $driver = $this->driverFor($request);
+
+        $trips = TripV3::where('driver_id', $driver->id)
+            ->with('user')
+            ->latest()
+            ->get();
+
+        return response()->json([
+            'success' => true,
+            'data' => $trips,
+        ]);
+    }
 }

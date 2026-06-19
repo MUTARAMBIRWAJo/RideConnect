@@ -11,6 +11,7 @@ use App\Services\V3\TripLifecycleEngineV3;
 use App\Services\V3\TripMatchingEngineV3;
 use App\Services\V3\NotificationServiceV3;
 use Illuminate\Http\JsonResponse;
+use Illuminate\Http\Request;
 
 class TripControllerV3 extends Controller
 {
@@ -181,6 +182,19 @@ class TripControllerV3 extends Controller
                 'eta' => '5 min', // In a real app, calculate via Google Maps Matrix API
                 'distance_remaining' => '2.3 km' // In a real app, calculate distance
             ]
+        ]);
+    }
+
+    public function passengerTrips(Request $request): JsonResponse
+    {
+        $trips = TripV3::where('user_id', $request->user()->id)
+            ->with(['driver.user', 'driver.vehicle'])
+            ->latest()
+            ->get();
+
+        return response()->json([
+            'success' => true,
+            'data' => $trips,
         ]);
     }
 }

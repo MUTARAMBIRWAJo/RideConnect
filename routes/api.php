@@ -73,11 +73,13 @@ use Illuminate\Support\Facades\Route;
    API V3 (Trip System V3 - Isolated)
    =========================== */
 Route::prefix('v3')->middleware(['auth:sanctum'])->group(function () {
+    Route::get('/trips', [\App\Http\Controllers\Api\V3\TripControllerV3::class, 'passengerTrips']);
     Route::post('/trips/motor-vehicle/request', [\App\Http\Controllers\Api\V3\TripControllerV3::class, 'requestMotorVehicle']);
     Route::post('/trips/private-car/request', [\App\Http\Controllers\Api\V3\TripControllerV3::class, 'requestPrivateCar']);
     Route::post('/trips/public-bus/request', [\App\Http\Controllers\Api\V3\TripControllerV3::class, 'requestPublicBus']);
     
     // Driver Match Responses
+    Route::get('/driver/trips', [\App\Http\Controllers\Api\V3\DriverTripControllerV3::class, 'driverTrips']);
     Route::get('/driver/trips/incoming', [\App\Http\Controllers\Api\V3\DriverTripControllerV3::class, 'incoming']);
     Route::post('/trips/{id}/accept', [\App\Http\Controllers\Api\V3\DriverTripControllerV3::class, 'accept']);
     Route::post('/trips/{id}/reject', [\App\Http\Controllers\Api\V3\DriverTripControllerV3::class, 'reject']);
