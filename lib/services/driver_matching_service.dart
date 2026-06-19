@@ -30,16 +30,17 @@ class AvailableDriver {
   });
 
   factory AvailableDriver.fromJson(Map<String, dynamic> json) {
+    final vehicle = json['vehicle'] as Map<String, dynamic>?;
     return AvailableDriver(
-      id: json['id'] ?? 0,
-      name: json['name'] ?? 'Unknown Driver',
+      id: json['driver_id'] ?? json['id'] ?? 0,
+      name: json['driver_name'] ?? json['name'] ?? 'Unknown Driver',
       rating: (json['rating'] ?? 0.0).toDouble(),
-      vehicleType: json['vehicle_type'] ?? 'Unknown',
-      distance: (json['distance'] ?? 0.0).toDouble(),
-      eta: json['eta'] ?? 0,
-      vehicleNumber: json['vehicle_number'] ?? '',
-      vehicleColor: json['vehicle_color'],
-      licensePlate: json['license_plate'],
+      vehicleType: vehicle?['vehicle_type'] ?? json['vehicle_type'] ?? 'Unknown',
+      distance: (json['distance_km'] ?? json['distance'] ?? 0.0).toDouble(),
+      eta: json['estimated_arrival_minutes'] ?? json['eta'] ?? 0,
+      vehicleNumber: vehicle?['plate_number'] ?? json['vehicle_number'] ?? json['license_plate'] ?? '',
+      vehicleColor: vehicle?['color'] ?? json['vehicle_color'],
+      licensePlate: vehicle?['plate_number'] ?? json['license_plate'],
     );
   }
 
@@ -72,20 +73,36 @@ class DriverMatchingResponse {
   });
 
   factory DriverMatchingResponse.fromJson(Map<String, dynamic> json) {
-    final drivers = (json['data'] as List?)
-        ?.map((d) => AvailableDriver.fromJson(d as Map<String, dynamic>))
-        .toList() ?? [];
+    final dataObj = json['data'];
+    final List? rawDrivers = dataObj is Map<String, dynamic> 
+        ? (dataObj['drivers'] as List?) 
+        : (dataObj as List?);
+    
+    final drivers = rawDrivers
+            ?.map((d) => AvailableDriver.fromJson(d as Map<String, dynamic>))
+            .toList() ??
+        [];
+
+    final String? sessionId = dataObj is Map<String, dynamic>
+        ? dataObj['matching_session_id'] as String?
+        : json['matching_session_id'] as String?;
+
+    final String? expiryStr = dataObj is Map<String, dynamic>
+        ? dataObj['expires_at'] as String?
+        : json['expires_at'] as String?;
 
     return DriverMatchingResponse(
       drivers: drivers,
-      matchingSessionId: json['matching_session_id'] as String?,
+      matchingSessionId: sessionId,
       hasAvailableDrivers: drivers.isNotEmpty,
-      noDriversReason: drivers.isEmpty 
-          ? json['message'] ?? 'No drivers currently available in your area'
-          : null,
-      expiresAt: json['expires_at'] != null 
-          ? DateTime.tryParse(json['expires_at'])
-          : null,
+      noDriversReason:
+          drivers.isEmpty
+              ? json['message'] ?? 'No drivers currently available in your area'
+              : null,
+      expiresAt:
+          expiryStr != null
+              ? DateTime.tryParse(expiryStr)
+              : null,
     );
   }
 
@@ -95,7 +112,8 @@ class DriverMatchingResponse {
   /// Get appropriate message for empty response
   String getEmptyStateMessage() {
     if (isEmpty) {
-      return noDriversReason ?? 'No drivers available at the moment. Please try again later.';
+      return noDriversReason ??
+          'No drivers available at the moment. Please try again later.';
     }
     return '';
   }
@@ -116,16 +134,19 @@ class MatchingSessionResponse {
   });
 
   factory MatchingSessionResponse.fromJson(Map<String, dynamic> json) {
-    final drivers = (json['drivers'] as List?)
-        ?.map((d) => AvailableDriver.fromJson(d as Map<String, dynamic>))
-        .toList() ?? [];
+    final drivers =
+        (json['drivers'] as List?)
+            ?.map((d) => AvailableDriver.fromJson(d as Map<String, dynamic>))
+            .toList() ??
+        [];
 
     return MatchingSessionResponse(
       drivers: drivers,
       isActive: json['is_active'] ?? false,
-      expiresAt: json['expires_at'] != null 
-          ? DateTime.tryParse(json['expires_at'])
-          : null,
+      expiresAt:
+          json['expires_at'] != null
+              ? DateTime.tryParse(json['expires_at'])
+              : null,
     );
   }
 
@@ -143,17 +164,25 @@ class DriverMatchingService {
   Future<DriverMatchingResponse> getAvailableDrivers({
     required double latitude,
     required double longitude,
+    double? dropoffLatitude,
+    double? dropoffLongitude,
     String? transportType,
     int maxResults = 10,
   }) async {
     try {
+      final double dLat = dropoffLatitude ?? (latitude + 0.009);
+      final double dLng = dropoffLongitude ?? (longitude + 0.009);
+
       final response = await dio.get(
         ApiEndpoints.availableDrivers,
         queryParameters: {
-          'lat': latitude,
-          'lng': longitude,
-          if (transportType != null) 'transport_type': transportType,
-          'max_results': maxResults,
+          'pickup_lat': latitude,
+          'pickup_lng': longitude,
+          'dropoff_lat': dLat,
+          'dropoff_lng': dLng,
+          if (transportType != null)
+            'transport_type': _normalizeTransportType(transportType),
+          'limit': maxResults,
         },
         options: Options(
           validateStatus: (status) => status != null && status < 500,
@@ -207,15 +236,24 @@ class DriverMatchingService {
     }
 
     try {
+      final tripId = int.tryParse(sessionId) ?? 0;
       final response = await dio.get(
-        ApiEndpoints.matchingSession(sessionId),
+        '${ApiConfig.laravelBase}/api/v3/trips/$tripId/matching-status',
         options: Options(
           validateStatus: (status) => status != null && status < 500,
         ),
       );
 
       if (response.statusCode == 200) {
-        return MatchingSessionResponse.fromJson(response.data['data'] ?? response.data);
+        final data = response.data['data'] ?? response.data;
+        final String status = data['status'] ?? 'MATCHING';
+        final bool isActive = status == 'MATCHING' || status == 'searching';
+
+        return MatchingSessionResponse(
+          drivers: [],
+          isActive: isActive,
+          expiresAt: DateTime.now().add(Duration(seconds: 180 - (data['elapsed_seconds'] as int? ?? 0))),
+        );
       }
 
       if (response.statusCode == 404) {
@@ -232,6 +270,8 @@ class DriverMatchingService {
   Future<DriverMatchingResponse> getAvailableDriversWithRetry({
     required double latitude,
     required double longitude,
+    double? dropoffLatitude,
+    double? dropoffLongitude,
     String? transportType,
     int maxResults = 10,
     int maxAttempts = 3,
@@ -243,6 +283,8 @@ class DriverMatchingService {
         lastResponse = await getAvailableDrivers(
           latitude: latitude,
           longitude: longitude,
+          dropoffLatitude: dropoffLatitude,
+          dropoffLongitude: dropoffLongitude,
           transportType: transportType,
           maxResults: maxResults,
         );
@@ -309,4 +351,24 @@ class DriverMatchingService {
     
     return sorted.first;
   }
+}
+
+String _normalizeTransportType(String value) {
+  final lower = value.trim().toLowerCase();
+  if (lower == 'bus' || lower == 'public_bus' || lower == 'public bus') {
+    return 'public_bus';
+  }
+  if (lower == 'car' ||
+      lower == 'private' ||
+      lower == 'private_car' ||
+      lower == 'private car') {
+    return 'private_car';
+  }
+  if (lower == 'motorcycle' ||
+      lower == 'motor_vehicle' ||
+      lower == 'motor vehicle' ||
+      lower == 'moto') {
+    return 'motor_vehicle';
+  }
+  return value.trim();
 }

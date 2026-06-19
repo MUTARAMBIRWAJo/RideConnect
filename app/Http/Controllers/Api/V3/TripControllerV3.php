@@ -143,6 +143,23 @@ class TripControllerV3 extends Controller
         
         $elapsedSeconds = $trip->matching_started_at ? $trip->matching_started_at->diffInSeconds(now()) : 0;
         
+        $driver = null;
+        $driverId = $trip->matched_driver_id ?: $trip->driver_id;
+        if ($driverId) {
+            $d = \App\Models\Driver::with(['user', 'vehicle'])->find($driverId);
+            if ($d) {
+                $driver = [
+                    'id' => $d->id,
+                    'name' => $d->user?->name,
+                    'phone' => $d->user?->phone,
+                    'rating' => (float) ($d->rating ?? 0.0),
+                    'vehicle_type' => $d->vehicle?->vehicle_type ?? $d->license_plate,
+                    'plate_number' => $d->license_plate,
+                    'color' => $d->vehicle?->color,
+                ];
+            }
+        }
+
         return response()->json([
             'success' => true,
             'data' => [
@@ -150,6 +167,7 @@ class TripControllerV3 extends Controller
                 'attempts' => $trip->match_attempt_count,
                 'elapsed_seconds' => $elapsedSeconds,
                 'fallback_used' => (bool) $trip->fallback_match_used,
+                'driver' => $driver,
             ]
         ]);
     }
@@ -159,8 +177,24 @@ class TripControllerV3 extends Controller
         $trip = TripV3::findOrFail($id);
         
         $driverLocation = null;
-        if ($trip->driver_id) {
-            $driverUserId = \App\Models\Driver::query()->where('id', $trip->driver_id)->value('user_id') ?: $trip->driver_id;
+        $driver = null;
+        $driverId = $trip->driver_id ?: $trip->matched_driver_id;
+
+        if ($driverId) {
+            $d = \App\Models\Driver::with(['user', 'vehicle'])->find($driverId);
+            if ($d) {
+                $driver = [
+                    'id' => $d->id,
+                    'name' => $d->user?->name,
+                    'phone' => $d->user?->phone,
+                    'rating' => (float) ($d->rating ?? 0.0),
+                    'vehicle_type' => $d->vehicle?->vehicle_type,
+                    'plate_number' => $d->license_plate,
+                    'color' => $d->vehicle?->color,
+                ];
+            }
+
+            $driverUserId = $d?->user_id ?: $driverId;
             $loc = \App\Models\DriverLocation::where('driver_id', $driverUserId)->first();
             if ($loc) {
                 $driverLocation = [
@@ -179,6 +213,7 @@ class TripControllerV3 extends Controller
                 'trip_id' => $trip->id,
                 'status' => $trip->status,
                 'driver_location' => $driverLocation,
+                'driver' => $driver,
                 'eta' => '5 min', // In a real app, calculate via Google Maps Matrix API
                 'distance_remaining' => '2.3 km' // In a real app, calculate distance
             ]
@@ -195,6 +230,26 @@ class TripControllerV3 extends Controller
         return response()->json([
             'success' => true,
             'data' => $trips,
+        ]);
+    }
+
+    public function matchTrip(string $id): JsonResponse
+    {
+        $trip = TripV3::findOrFail($id);
+
+        if (! in_array($trip->status, ['created', 'searching', 'MATCHING', 'REQUESTED'], true)) {
+            return response()->json([
+                'success' => false,
+                'message' => "Trip is not in a matchable state. Current status: {$trip->status}",
+            ], 422);
+        }
+
+        $this->matchingEngine->startMatching($trip);
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Matching started/retried successfully.',
+            'data' => $trip->fresh(),
         ]);
     }
 }
