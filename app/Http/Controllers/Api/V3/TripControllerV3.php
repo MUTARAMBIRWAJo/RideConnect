@@ -168,37 +168,34 @@ class TripControllerV3 extends Controller
         path: '/v3/trips/{id}/select-driver',
         summary: 'Select driver & start matching',
         parameters: [
-            new OA\Parameter(name: 'id', in: 'path', required: true, schema: new OA\Schema(type: 'string'))
+            new OA\Parameter(name: 'id', in: 'path', required: true, description: 'Trip ID', schema: new OA\Schema(type: 'string'))
         ],
+        requestBody: new OA\RequestBody(
+            required: true,
+            content: new OA\MediaType(
+                mediaType: 'application/json',
+                schema: new OA\Schema(
+                    required: ['driver_id'],
+                    properties: [
+                        new OA\Property(property: 'driver_id', type: 'integer', description: 'ID of the selected driver')
+                    ]
+                )
+            )
+        ),
         responses: [
             new OA\Response(response: 200, description: 'Success')
         ]
     )]
     public function selectDriver(Request $request, string $id, NotificationServiceV3 $notificationService): JsonResponse
     {
+        $request->validate([
+            'driver_id' => 'required|integer|exists:drivers,id',
+        ]);
+
         $driverId = $request->input('driver_id');
         $tripId = $id;
 
-        if (!$driverId) {
-            // Fallback: check if the passenger has an active trip, and treat the URL parameter as the driver_id
-            $activeTrip = TripV3::where('user_id', $request->user()->id)
-                ->whereIn('status', ['created', 'searching', 'REQUESTED', 'MATCHING'])
-                ->latest()
-                ->first();
-
-            if ($activeTrip) {
-                $driverId = $id;
-                $trip = $activeTrip;
-            } else {
-                // Trigger standard validation if no active trip is found
-                $request->validate([
-                    'driver_id' => 'required|integer|exists:drivers,id',
-                ]);
-                return response()->json([], 422); // Unreachable, but satisfies static analysis
-            }
-        } else {
-            $trip = TripV3::findOrFail($tripId);
-        }
+        $trip = TripV3::findOrFail($tripId);
 
         // Validate the driver_id explicitly
         $validator = \Illuminate\Support\Facades\Validator::make(['driver_id' => $driverId], [
