@@ -37,13 +37,17 @@ class TripControllerV3 extends Controller
             ], 422);
         }
 
+        $trip->loadMissing('user');
+        $passengerName = $trip->user?->name ?? 'Passenger';
+
         $notificationService->sendToDriver($driverId, [
             'type' => 'NEW_TRIP_REQUEST',
             'trip_id' => $trip->id,
+            'passenger_name' => $passengerName,
             'pickup' => $trip->pickup_location,
             'dropoff' => $trip->dropoff_location,
             'fare' => $trip->fare_estimate ?? 4500,
-            'message' => 'New trip request available. Accept or reject.',
+            'message' => 'New trip request from ' . $passengerName . '. Accept or reject.',
         ]);
 
         return response()->json([
@@ -124,9 +128,29 @@ class TripControllerV3 extends Controller
 
         $this->matchingEngine->startMatching($trip);
 
+        $trip->loadMissing(['user', 'matchedDriver.user', 'matchedDriver.vehicle']);
+
         return response()->json([
             'success' => true,
-            'data' => $trip,
+            'data' => [
+                'trip' => $trip,
+                'passenger' => [
+                    'id' => $trip->user?->id,
+                    'name' => $trip->user?->name,
+                    'phone' => $trip->user?->phone,
+                ],
+                'driver' => $trip->matchedDriver ? [
+                    'id' => $trip->matchedDriver->id,
+                    'name' => $trip->matchedDriver->user?->name,
+                    'phone' => $trip->matchedDriver->user?->phone,
+                    'rating' => (float) $trip->matchedDriver->rating,
+                    'vehicle' => $trip->matchedDriver->vehicle ? [
+                        'vehicle_type' => $trip->matchedDriver->vehicle->vehicle_type,
+                        'plate_number' => $trip->matchedDriver->license_plate,
+                        'color' => $trip->matchedDriver->vehicle->color,
+                    ] : null,
+                ] : null,
+            ],
         ], 201);
     }
 

@@ -124,13 +124,17 @@ class TripMatchingEngineV3
         $this->notifier->dispatch($trip, 'trip.offer.created', $payload, $selectedDriver);
 
         // Notify Driver
+        $trip->loadMissing('user');
+        $passengerName = $trip->user?->name ?? 'Passenger';
+
         $this->notificationService->sendToDriver($selectedDriver->id, [
             'type' => 'NEW_TRIP_REQUEST',
             'trip_id' => $trip->id,
+            'passenger_name' => $passengerName,
             'pickup' => $trip->pickup_location,
             'dropoff' => $trip->dropoff_location,
             'fare' => $trip->fare_estimate ?? 4500,
-            'message' => 'New trip request available. Accept or reject.',
+            'message' => 'New trip request from ' . $passengerName . '. Accept or reject.',
         ]);
 
         // Dispatch timeout handler
