@@ -314,6 +314,7 @@ class TripControllerV3 extends Controller
             'success' => true,
             'data' => [
                 'status' => $trip->status,
+                'driver_response_status' => $trip->driver_response_status,
                 'attempts' => $trip->match_attempt_count,
                 'elapsed_seconds' => $elapsedSeconds,
                 'fallback_used' => (bool) $trip->fallback_match_used,

@@ -238,13 +238,24 @@ class DriverTripControllerV3 extends Controller
 
     public function complete(Request $request, string $id): JsonResponse
     {
-        $driver = $this->driverFor($request);
+        $user = $request->user();
 
-        return DB::transaction(function () use ($id, $driver) {
+        return DB::transaction(function () use ($id, $user, $request) {
             $trip = TripV3::where('id', $id)->lockForUpdate()->firstOrFail();
-            $this->assertDriverOwnsTrip($trip, $driver);
+            $isPassenger = (int) $trip->user_id === (int) $user->id;
+
+            $driver = null;
+            if ($isPassenger) {
+                $driver = $trip->driver ?: \App\Models\Driver::find($trip->matched_driver_id);
+            } else {
+                $driver = $this->driverFor($request);
+                $this->assertDriverOwnsTrip($trip, $driver);
+            }
 
             if ($trip->status !== 'IN_PROGRESS') {
+                if ($trip->status === 'COMPLETED' || $trip->status === 'PAID' || $trip->status === 'RATED') {
+                    return response()->json(['success' => true, 'data' => $trip->fresh()]);
+                }
                 return response()->json(['success' => false, 'message' => 'Trip is not in progress.'], 422);
             }
 
@@ -262,19 +273,24 @@ class DriverTripControllerV3 extends Controller
             ]);
             $this->lifecycle->transition($trip, 'COMPLETED');
 
-            $driver->update([
-                'availability_status' => 'available',
-                'is_available' => true,
-                'current_trip_id' => null,
-            ]);
+            if ($driver) {
+                $driver->update([
+                    'availability_status' => 'available',
+                    'is_available' => true,
+                    'current_trip_id' => null,
+                ]);
+            }
 
             $this->syncActiveTrip($trip);
-            $this->notifier->dispatch($trip, 'trip.completed', [
-                'trip_id' => $trip->id,
-                'distance_traveled_km' => round($distanceKm, 2),
-                'duration_minutes' => $durationMinutes,
-                'final_fare' => $finalFare,
-            ], $driver);
+            
+            if ($driver) {
+                $this->notifier->dispatch($trip, 'trip.completed', [
+                    'trip_id' => $trip->id,
+                    'distance_traveled_km' => round($distanceKm, 2),
+                    'duration_minutes' => $durationMinutes,
+                    'final_fare' => $finalFare,
+                ], $driver);
+            }
 
             return response()->json(['success' => true, 'data' => $trip->fresh()]);
         });
@@ -417,24 +433,38 @@ class DriverTripControllerV3 extends Controller
 
     private function driverTransition(Request $request, string $id, array $fromStatuses, string $toStatus, string $eventName, array $fills = []): JsonResponse
     {
-        $driver = $this->driverFor($request);
+        $user = $request->user();
 
-        return DB::transaction(function () use ($id, $driver, $fromStatuses, $toStatus, $eventName, $fills) {
+        return DB::transaction(function () use ($id, $user, $request, $fromStatuses, $toStatus, $eventName, $fills) {
             $trip = TripV3::where('id', $id)->lockForUpdate()->firstOrFail();
-            $this->assertDriverOwnsTrip($trip, $driver);
+            $isPassenger = (int) $trip->user_id === (int) $user->id;
+            
+            $driver = null;
+            if ($isPassenger) {
+                $driver = $trip->driver ?: \App\Models\Driver::find($trip->matched_driver_id);
+            } else {
+                $driver = $this->driverFor($request);
+                $this->assertDriverOwnsTrip($trip, $driver);
+            }
 
             if (! in_array($trip->status, $fromStatuses, true)) {
+                if ($trip->status === $toStatus) {
+                    return response()->json(['success' => true, 'data' => $trip->fresh()]);
+                }
                 return response()->json(['success' => false, 'message' => 'Trip cannot move to '.$toStatus.' from '.$trip->status.'.'], 422);
             }
 
             $trip->forceFill($fills);
             $this->lifecycle->transition($trip, $toStatus);
             $this->syncActiveTrip($trip);
-            $this->notifier->dispatch($trip, $eventName, [
-                'trip_id' => $trip->id,
-                'driver_id' => $driver->id,
-                'status' => $toStatus,
-            ], $driver);
+
+            if ($driver) {
+                $this->notifier->dispatch($trip, $eventName, [
+                    'trip_id' => $trip->id,
+                    'driver_id' => $driver->id,
+                    'status' => $toStatus,
+                ], $driver);
+            }
 
             return response()->json(['success' => true, 'data' => $trip->fresh()]);
         });
