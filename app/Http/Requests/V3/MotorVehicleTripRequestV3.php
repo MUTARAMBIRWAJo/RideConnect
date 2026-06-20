@@ -10,7 +10,6 @@ class MotorVehicleTripRequestV3 extends FormRequest
     {
         return true;
     }
-
     public function rules(): array
     {
         return [
@@ -22,6 +21,7 @@ class MotorVehicleTripRequestV3 extends FormRequest
             'dropoff_lng' => ['required', 'numeric', 'between:-180,180'],
             'ride_mode' => ['required', 'string', 'in:instant,scheduled,standard'],
             'payment_method' => ['required', 'string'],
+            'driver_id' => ['nullable', 'integer', 'exists:drivers,id'],
         ];
     }
 }

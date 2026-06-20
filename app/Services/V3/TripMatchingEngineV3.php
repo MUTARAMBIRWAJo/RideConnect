@@ -40,39 +40,52 @@ class TripMatchingEngineV3
 
     public function executeMatch(TripV3 $trip): void
     {
-        $ignoredIds = $trip->ignored_driver_ids ?? [];
-        $radiusKm = 5.0;
+        $selectedDriver = null;
 
-        // Stage 1: Deterministic Nearest Available Driver Search
-        $lat = $trip->pickup_lat ?? -1.95;
-        $lng = $trip->pickup_lng ?? 30.06;
-        $haversine = "( 6371 * acos( cos( radians($lat) ) * cos( radians( current_latitude ) ) * cos( radians( current_longitude ) - radians($lng) ) + sin( radians($lat) ) * sin( radians( current_latitude ) ) ) )";
-
-        $query = Driver::query()
-            ->select('drivers.*')
-            ->selectRaw("$haversine AS distance")
-            ->where('drivers.status', 'approved')
-            ->where('drivers.is_online', true)
-            ->whereIn('drivers.availability_status', ['online', 'available'])
-            ->whereNull('drivers.current_trip_id')
-            ->whereRaw("$haversine <= ?", [$radiusKm]);
-
-        if (!empty($ignoredIds)) {
-            $query->whereNotIn('drivers.id', $ignoredIds);
+        if ($trip->matched_driver_id) {
+            $selectedDriver = Driver::query()
+                ->where('id', $trip->matched_driver_id)
+                ->where('status', 'approved')
+                ->where('is_online', true)
+                ->whereIn('availability_status', ['online', 'available'])
+                ->first();
         }
 
-        $query->join('vehicles', 'vehicles.driver_id', '=', 'drivers.id');
-        if ($trip->transport_type === 'motor_vehicle') {
-            $query->whereIn('vehicles.vehicle_type', ['motorcycle', 'boda', 'moto', 'motorbike', 'tuk-tuk']);
-        } elseif ($trip->transport_type === 'public_bus') {
-            $query->whereIn('vehicles.vehicle_type', ['bus', 'BUS', 'minibus', 'coach']);
-        } elseif ($trip->transport_type === 'private_car') {
-            $query->whereIn('vehicles.vehicle_type', ['sedan', 'suv', 'hatchback', 'van', 'compact', 'minivan']);
-        }
+        if (!$selectedDriver) {
+            $ignoredIds = $trip->ignored_driver_ids ?? [];
+            $radiusKm = 5.0;
 
-        $selectedDriver = $query
-            ->orderByRaw("$haversine ASC")
-            ->first();
+            // Stage 1: Deterministic Nearest Available Driver Search
+            $lat = $trip->pickup_lat ?? -1.95;
+            $lng = $trip->pickup_lng ?? 30.06;
+            $haversine = "( 6371 * acos( cos( radians($lat) ) * cos( radians( current_latitude ) ) * cos( radians( current_longitude ) - radians($lng) ) + sin( radians($lat) ) * sin( radians( current_latitude ) ) ) )";
+
+            $query = Driver::query()
+                ->select('drivers.*')
+                ->selectRaw("$haversine AS distance")
+                ->where('drivers.status', 'approved')
+                ->where('drivers.is_online', true)
+                ->whereIn('drivers.availability_status', ['online', 'available'])
+                ->whereNull('drivers.current_trip_id')
+                ->whereRaw("$haversine <= ?", [$radiusKm]);
+
+            if (!empty($ignoredIds)) {
+                $query->whereNotIn('drivers.id', $ignoredIds);
+            }
+
+            $query->join('vehicles', 'vehicles.driver_id', '=', 'drivers.id');
+            if ($trip->transport_type === 'motor_vehicle') {
+                $query->whereIn('vehicles.vehicle_type', ['motorcycle', 'boda', 'moto', 'motorbike', 'tuk-tuk']);
+            } elseif ($trip->transport_type === 'public_bus') {
+                $query->whereIn('vehicles.vehicle_type', ['bus', 'BUS', 'minibus', 'coach']);
+            } elseif ($trip->transport_type === 'private_car') {
+                $query->whereIn('vehicles.vehicle_type', ['sedan', 'suv', 'hatchback', 'van', 'compact', 'minivan']);
+            }
+
+            $selectedDriver = $query
+                ->orderByRaw("$haversine ASC")
+                ->first();
+        }
 
         if (!$selectedDriver) {
             $trip->matching_timeout_at = now();

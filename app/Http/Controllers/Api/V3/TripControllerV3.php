@@ -58,15 +58,62 @@ class TripControllerV3 extends Controller
 
     public function requestMotorVehicle(MotorVehicleTripRequestV3 $request): JsonResponse
     {
+        $pickupLat = (float) $request->validated('pickup_lat');
+        $pickupLng = (float) $request->validated('pickup_lng');
+
+        if (!$request->filled('driver_id')) {
+            // Return top 3 nearest online motor vehicle drivers
+            $haversine = "( 6371 * acos( cos( radians($pickupLat) ) * cos( radians( current_latitude ) ) * cos( radians( current_longitude ) - radians($pickupLng) ) + sin( radians($pickupLat) ) * sin( radians( current_latitude ) ) ) )";
+
+            $drivers = \App\Models\Driver::query()
+                ->select('drivers.*')
+                ->selectRaw("$haversine AS distance_km")
+                ->join('vehicles', 'vehicles.driver_id', '=', 'drivers.id')
+                ->where('drivers.status', 'approved')
+                ->where('drivers.is_online', true)
+                ->whereIn('drivers.availability_status', ['online', 'available'])
+                ->whereNull('drivers.current_trip_id')
+                ->whereIn('vehicles.vehicle_type', ['motorcycle', 'boda', 'moto', 'motorbike', 'tuk-tuk'])
+                ->orderByRaw("$haversine ASC")
+                ->limit(3)
+                ->get();
+
+            return response()->json([
+                'success' => true,
+                'message' => 'Online matching drivers retrieved.',
+                'data' => [
+                    'drivers' => $drivers->map(fn ($d) => [
+                        'id' => $d->id,
+                        'name' => $d->user?->name,
+                        'phone' => $d->user?->phone,
+                        'rating' => (float) $d->rating,
+                        'distance_km' => round((float) $d->distance_km, 2),
+                        'estimated_arrival_minutes' => max(1, (int) ceil(($d->distance_km / 25) * 60)),
+                        'current_location' => [
+                            'latitude' => (float) $d->current_latitude,
+                            'longitude' => (float) $d->current_longitude,
+                        ],
+                        'vehicle' => $d->vehicle ? [
+                            'vehicle_type' => $d->vehicle->vehicle_type,
+                            'plate_number' => $d->license_plate,
+                            'color' => $d->vehicle->color,
+                        ] : null,
+                    ])
+                ]
+            ]);
+        }
+
+        // Create the trip V3 and assign the chosen driver
         $trip = new TripV3([
             'user_id' => $request->user()->id,
             'transport_type' => 'motor_vehicle',
             'pickup_location' => $request->validated('pickup_location'),
-            'pickup_lat' => $request->validated('pickup_lat'),
-            'pickup_lng' => $request->validated('pickup_lng'),
+            'pickup_lat' => $pickupLat,
+            'pickup_lng' => $pickupLng,
             'dropoff_location' => $request->validated('dropoff_location'),
-            'dropoff_lat' => $request->validated('dropoff_lat'),
-            'dropoff_lng' => $request->validated('dropoff_lng'),
+            'dropoff_lat' => (float) $request->validated('dropoff_lat'),
+            'dropoff_lng' => (float) $request->validated('dropoff_lng'),
+            'matched_driver_id' => $request->validated('driver_id'),
             'metadata' => [
                 'ride_mode' => $request->validated('ride_mode'),
                 'payment_method' => $request->validated('payment_method'),
