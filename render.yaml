@@ -2,7 +2,7 @@ services:
   - type: web
     name: rideconnect-api
     runtime: php
-    buildCommand: composer install --no-dev --optimize-autoloader --ignore-platform-req=ext-grpc && php artisan config:cache && php artisan route:cache
+    buildCommand: composer install --no-dev --optimize-autoloader --ignore-platform-req=ext-grpc && php artisan config:cache && php artisan route:cache && php artisan rideconnect:swagger
     # Run pending migrations, start a background queue worker (drains RetryTripMatchingJob
     # so trips advance past SEARCHING), then serve the API in the foreground.
     # NOTE: the worker shares the web instance. For higher volume, promote it to a dedicated

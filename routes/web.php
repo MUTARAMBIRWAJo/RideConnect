@@ -226,3 +226,17 @@ Route::middleware(['auth'])
         Route::get('/xlsx', [FinancialMatrixExportController::class, 'xlsx'])
             ->name('admin.exports.financial-matrix.xlsx');
     });
+
+// API Documentation UI (Scalar)
+Route::get('/docs', function () {
+    return view('swagger.reader');
+})->name('docs');
+
+// Serve the generated Swagger JSON
+Route::get('/docs/api-docs.json', function () {
+    $path = storage_path('api-docs/api-docs.json');
+    if (!file_exists($path)) {
+        abort(404, 'API Documentation JSON not found.');
+    }
+    return response()->file($path, ['Content-Type' => 'application/json']);
+})->name('docs.json');
