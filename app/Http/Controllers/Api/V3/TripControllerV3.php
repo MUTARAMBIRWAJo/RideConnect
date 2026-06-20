@@ -25,6 +25,16 @@ class TripControllerV3 extends Controller
         $this->matchingEngine = $matchingEngine;
     }
 
+    #[OA\Post(
+        path: '/v3/trips/{id}/notify-driver',
+        summary: 'Notify assigned driver',
+        parameters: [
+            new OA\Parameter(name: 'id', in: 'path', required: true, schema: new OA\Schema(type: 'string'))
+        ],
+        responses: [
+            new OA\Response(response: 200, description: 'Success')
+        ]
+    )]
     public function notifyDriver(string $id, NotificationServiceV3 $notificationService): JsonResponse
     {
         $trip = TripV3::findOrFail($id);
@@ -65,6 +75,13 @@ class TripControllerV3 extends Controller
         ]);
     }
 
+    #[OA\Post(
+        path: '/v3/trips/motor-vehicle/request',
+        summary: 'Request motor vehicle trip',
+        responses: [
+            new OA\Response(response: 201, description: 'Created')
+        ]
+    )]
     public function requestMotorVehicle(MotorVehicleTripRequestV3 $request): JsonResponse
     {
         $pickupLat = (float) $request->validated('pickup_lat');
@@ -146,6 +163,16 @@ class TripControllerV3 extends Controller
         ], 201);
     }
 
+    #[OA\Post(
+        path: '/v3/trips/{id}/select-driver',
+        summary: 'Select driver & start matching',
+        parameters: [
+            new OA\Parameter(name: 'id', in: 'path', required: true, schema: new OA\Schema(type: 'string'))
+        ],
+        responses: [
+            new OA\Response(response: 200, description: 'Success')
+        ]
+    )]
     public function selectDriver(Request $request, string $id, NotificationServiceV3 $notificationService): JsonResponse
     {
         $driverId = $request->input('driver_id');
@@ -242,6 +269,13 @@ class TripControllerV3 extends Controller
         ]);
     }
 
+    #[OA\Post(
+        path: '/v3/trips/private-car/request',
+        summary: 'Request private car trip',
+        responses: [
+            new OA\Response(response: 201, description: 'Created')
+        ]
+    )]
     public function requestPrivateCar(PrivateCarTripRequestV3 $request): JsonResponse
     {
         $trip = new TripV3([
@@ -269,6 +303,13 @@ class TripControllerV3 extends Controller
         ], 201);
     }
 
+    #[OA\Post(
+        path: '/v3/trips/public-bus/request',
+        summary: 'Request public bus trip',
+        responses: [
+            new OA\Response(response: 201, description: 'Created')
+        ]
+    )]
     public function requestPublicBus(PublicBusTripRequestV3 $request): JsonResponse
     {
         $trip = new TripV3([
@@ -296,6 +337,16 @@ class TripControllerV3 extends Controller
             'data' => $trip,
         ], 201);
     }
+    #[OA\Get(
+        path: '/v3/trips/{id}/matching-status',
+        summary: 'Get trip matching status',
+        parameters: [
+            new OA\Parameter(name: 'id', in: 'path', required: true, schema: new OA\Schema(type: 'string'))
+        ],
+        responses: [
+            new OA\Response(response: 200, description: 'Success')
+        ]
+    )]
     public function matchingStatus(string $id): JsonResponse
     {
         $trip = TripV3::findOrFail($id);
@@ -332,6 +383,16 @@ class TripControllerV3 extends Controller
         ]);
     }
 
+    #[OA\Get(
+        path: '/v3/trips/{id}/status',
+        summary: 'Get trip status details',
+        parameters: [
+            new OA\Parameter(name: 'id', in: 'path', required: true, schema: new OA\Schema(type: 'string'))
+        ],
+        responses: [
+            new OA\Response(response: 200, description: 'Success')
+        ]
+    )]
     public function status(string $id): JsonResponse
     {
         $trip = TripV3::findOrFail($id);
@@ -380,6 +441,13 @@ class TripControllerV3 extends Controller
         ]);
     }
 
+    #[OA\Get(
+        path: '/v3/trips',
+        summary: 'Get list of passenger trips',
+        responses: [
+            new OA\Response(response: 200, description: 'Success')
+        ]
+    )]
     public function passengerTrips(Request $request): JsonResponse
     {
         $trips = TripV3::where('user_id', $request->user()->id)
@@ -393,6 +461,16 @@ class TripControllerV3 extends Controller
         ]);
     }
 
+    #[OA\Post(
+        path: '/v3/trips/{id}/match',
+        summary: 'Initiate matching for trip',
+        parameters: [
+            new OA\Parameter(name: 'id', in: 'path', required: true, schema: new OA\Schema(type: 'string'))
+        ],
+        responses: [
+            new OA\Response(response: 200, description: 'Success')
+        ]
+    )]
     public function matchTrip(string $id): JsonResponse
     {
         $trip = TripV3::findOrFail($id);

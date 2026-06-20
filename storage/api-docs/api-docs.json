@@ -12,6 +12,356 @@
         }
     ],
     "paths": {
+        "/v3/driver/trips/incoming": {
+            "get": {
+                "summary": "Get incoming trip offer for driver",
+                "operationId": "69aacbe59e6f0a112452f1705201a225",
+                "responses": {
+                    "200": {
+                        "description": "Success"
+                    }
+                }
+            }
+        },
+        "/v3/trips/{id}/accept": {
+            "post": {
+                "summary": "Accept trip offer",
+                "operationId": "35063ed0cb9fe4b88b080f0fa216defd",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Success"
+                    }
+                }
+            }
+        },
+        "/v3/trips/{id}/reject": {
+            "post": {
+                "summary": "Reject trip offer",
+                "operationId": "72c683f1b332f98be6c9327d10094726",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Success"
+                    }
+                }
+            }
+        },
+        "/v3/trips/{id}/cancel": {
+            "post": {
+                "summary": "Cancel trip request",
+                "operationId": "a8e39449267c91d1352c90c7fb835ace",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Success"
+                    }
+                }
+            }
+        },
+        "/v3/trips/{id}/arrived": {
+            "post": {
+                "summary": "Driver arrived at pickup location",
+                "operationId": "196243e6e1d5dbb3771cbe7132cc8974",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Success"
+                    }
+                }
+            }
+        },
+        "/v3/trips/{id}/start": {
+            "post": {
+                "summary": "Start trip execution",
+                "operationId": "fb14c0c2c73bad216147690be1b813a1",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Success"
+                    }
+                }
+            }
+        },
+        "/v3/trips/{id}/complete": {
+            "post": {
+                "summary": "Complete trip and calculate final fare",
+                "operationId": "62354c09ad8f31b87b97e483bc0b4777",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Success"
+                    }
+                }
+            }
+        },
+        "/v3/trips/{id}/pay": {
+            "post": {
+                "summary": "Submit payment for trip",
+                "operationId": "f3db8bf7630f70d73b6291352d3f8b8e",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Success"
+                    }
+                }
+            }
+        },
+        "/v3/trips/{id}/rate": {
+            "post": {
+                "summary": "Submit rating for driver",
+                "operationId": "d782e729a6c06e8e9b86bc2cf8fa68f4",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Success"
+                    }
+                }
+            }
+        },
+        "/v3/driver/location": {
+            "post": {
+                "summary": "Update driver current location",
+                "operationId": "ec64c4c323f21cb81cef1fc1edb711f5",
+                "responses": {
+                    "200": {
+                        "description": "Success"
+                    }
+                }
+            }
+        },
+        "/v3/driver/trips": {
+            "get": {
+                "summary": "Get list of driver trips",
+                "operationId": "c8bb11dde14a57aa9a7a4895f6a14e53",
+                "responses": {
+                    "200": {
+                        "description": "Success"
+                    }
+                }
+            }
+        },
+        "/v3/trips/{id}/notify-driver": {
+            "post": {
+                "summary": "Notify assigned driver",
+                "operationId": "2e7778ff3b9b10fc544412bd58d00dd8",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Success"
+                    }
+                }
+            }
+        },
+        "/v3/trips/motor-vehicle/request": {
+            "post": {
+                "summary": "Request motor vehicle trip",
+                "operationId": "8d8c79dcee01163b13ff4bde5325dfc8",
+                "responses": {
+                    "201": {
+                        "description": "Created"
+                    }
+                }
+            }
+        },
+        "/v3/trips/{id}/select-driver": {
+            "post": {
+                "summary": "Select driver & start matching",
+                "operationId": "ad52d4a3ab34c918955aea0f9d7271fa",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Success"
+                    }
+                }
+            }
+        },
+        "/v3/trips/private-car/request": {
+            "post": {
+                "summary": "Request private car trip",
+                "operationId": "7dad0af182468142790d53d57138a8da",
+                "responses": {
+                    "201": {
+                        "description": "Created"
+                    }
+                }
+            }
+        },
+        "/v3/trips/public-bus/request": {
+            "post": {
+                "summary": "Request public bus trip",
+                "operationId": "b4af2798ad7ad88fa2a44d1397e6eb56",
+                "responses": {
+                    "201": {
+                        "description": "Created"
+                    }
+                }
+            }
+        },
+        "/v3/trips/{id}/matching-status": {
+            "get": {
+                "summary": "Get trip matching status",
+                "operationId": "5980f83bcf134ec369ab5130dad76069",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Success"
+                    }
+                }
+            }
+        },
+        "/v3/trips/{id}/status": {
+            "get": {
+                "summary": "Get trip status details",
+                "operationId": "3b73f40057c3f7e3e06dd6eb4e310204",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Success"
+                    }
+                }
+            }
+        },
+        "/v3/trips": {
+            "get": {
+                "summary": "Get list of passenger trips",
+                "operationId": "c7adfa34a7a4f710379110aa44f2c308",
+                "responses": {
+                    "200": {
+                        "description": "Success"
+                    }
+                }
+            }
+        },
+        "/v3/trips/{id}/match": {
+            "post": {
+                "summary": "Initiate matching for trip",
+                "operationId": "b7f5012f14cdc3ab1795108bdae50f9e",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Success"
+                    }
+                }
+            }
+        },
         "/v3/drivers/online": {
             "get": {
                 "summary": "Get online drivers list",

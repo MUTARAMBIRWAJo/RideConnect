@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Api\V3;
 
 use App\Http\Controllers\Controller;
+use OpenApi\Attributes as OA;
 use App\Jobs\V3\ProcessTripMatchingV3;
 use App\Models\Driver;
 use App\Models\V3\DriverLocationV3;
@@ -23,6 +24,13 @@ class DriverTripControllerV3 extends Controller
         private readonly TripLifecycleNotifierV3 $notifier,
     ) {}
 
+    #[OA\Get(
+        path: '/v3/driver/trips/incoming',
+        summary: 'Get incoming trip offer for driver',
+        responses: [
+            new OA\Response(response: 200, description: 'Success')
+        ]
+    )]
     public function incoming(Request $request): JsonResponse
     {
         $driver = $this->driverFor($request);
@@ -53,6 +61,16 @@ class DriverTripControllerV3 extends Controller
         ]);
     }
 
+    #[OA\Post(
+        path: '/v3/trips/{id}/accept',
+        summary: 'Accept trip offer',
+        parameters: [
+            new OA\Parameter(name: 'id', in: 'path', required: true, schema: new OA\Schema(type: 'string'))
+        ],
+        responses: [
+            new OA\Response(response: 200, description: 'Success')
+        ]
+    )]
     public function accept(Request $request, string $id): JsonResponse
     {
         $driver = $this->driverFor($request);
@@ -120,6 +138,16 @@ class DriverTripControllerV3 extends Controller
         });
     }
 
+    #[OA\Post(
+        path: '/v3/trips/{id}/reject',
+        summary: 'Reject trip offer',
+        parameters: [
+            new OA\Parameter(name: 'id', in: 'path', required: true, schema: new OA\Schema(type: 'string'))
+        ],
+        responses: [
+            new OA\Response(response: 200, description: 'Success')
+        ]
+    )]
     public function reject(Request $request, string $id): JsonResponse
     {
         $driver = $this->driverFor($request);
@@ -181,6 +209,16 @@ class DriverTripControllerV3 extends Controller
         });
     }
 
+    #[OA\Post(
+        path: '/v3/trips/{id}/cancel',
+        summary: 'Cancel trip request',
+        parameters: [
+            new OA\Parameter(name: 'id', in: 'path', required: true, schema: new OA\Schema(type: 'string'))
+        ],
+        responses: [
+            new OA\Response(response: 200, description: 'Success')
+        ]
+    )]
     public function cancel(Request $request, string $id): JsonResponse
     {
         $driver = $this->driverFor($request);
@@ -224,11 +262,31 @@ class DriverTripControllerV3 extends Controller
         });
     }
 
+    #[OA\Post(
+        path: '/v3/trips/{id}/arrived',
+        summary: 'Driver arrived at pickup location',
+        parameters: [
+            new OA\Parameter(name: 'id', in: 'path', required: true, schema: new OA\Schema(type: 'string'))
+        ],
+        responses: [
+            new OA\Response(response: 200, description: 'Success')
+        ]
+    )]
     public function arrived(Request $request, string $id): JsonResponse
     {
         return $this->driverTransition($request, $id, ['DRIVER_ASSIGNED'], 'DRIVER_ARRIVED', 'trip.driver.arrived');
     }
 
+    #[OA\Post(
+        path: '/v3/trips/{id}/start',
+        summary: 'Start trip execution',
+        parameters: [
+            new OA\Parameter(name: 'id', in: 'path', required: true, schema: new OA\Schema(type: 'string'))
+        ],
+        responses: [
+            new OA\Response(response: 200, description: 'Success')
+        ]
+    )]
     public function start(Request $request, string $id): JsonResponse
     {
         return $this->driverTransition($request, $id, ['DRIVER_ARRIVED'], 'IN_PROGRESS', 'trip.started', [
@@ -236,6 +294,16 @@ class DriverTripControllerV3 extends Controller
         ]);
     }
 
+    #[OA\Post(
+        path: '/v3/trips/{id}/complete',
+        summary: 'Complete trip and calculate final fare',
+        parameters: [
+            new OA\Parameter(name: 'id', in: 'path', required: true, schema: new OA\Schema(type: 'string'))
+        ],
+        responses: [
+            new OA\Response(response: 200, description: 'Success')
+        ]
+    )]
     public function complete(Request $request, string $id): JsonResponse
     {
         $user = $request->user();
@@ -296,6 +364,16 @@ class DriverTripControllerV3 extends Controller
         });
     }
 
+    #[OA\Post(
+        path: '/v3/trips/{id}/pay',
+        summary: 'Submit payment for trip',
+        parameters: [
+            new OA\Parameter(name: 'id', in: 'path', required: true, schema: new OA\Schema(type: 'string'))
+        ],
+        responses: [
+            new OA\Response(response: 200, description: 'Success')
+        ]
+    )]
     public function pay(Request $request, string $id): JsonResponse
     {
         $validated = $request->validate([
@@ -333,6 +411,16 @@ class DriverTripControllerV3 extends Controller
         });
     }
 
+    #[OA\Post(
+        path: '/v3/trips/{id}/rate',
+        summary: 'Submit rating for driver',
+        parameters: [
+            new OA\Parameter(name: 'id', in: 'path', required: true, schema: new OA\Schema(type: 'string'))
+        ],
+        responses: [
+            new OA\Response(response: 200, description: 'Success')
+        ]
+    )]
     public function rate(Request $request, string $id): JsonResponse
     {
         $validated = $request->validate([
@@ -377,6 +465,13 @@ class DriverTripControllerV3 extends Controller
         });
     }
 
+    #[OA\Post(
+        path: '/v3/driver/location',
+        summary: 'Update driver current location',
+        responses: [
+            new OA\Response(response: 200, description: 'Success')
+        ]
+    )]
     public function updateLocation(Request $request): JsonResponse
     {
         $driver = $this->driverFor($request);
@@ -524,6 +619,13 @@ class DriverTripControllerV3 extends Controller
         return 6371 * 2 * atan2(sqrt($a), sqrt(1 - $a));
     }
 
+    #[OA\Get(
+        path: '/v3/driver/trips',
+        summary: 'Get list of driver trips',
+        responses: [
+            new OA\Response(response: 200, description: 'Success')
+        ]
+    )]
     public function driverTrips(Request $request): JsonResponse
     {
         $driver = $this->driverFor($request);
