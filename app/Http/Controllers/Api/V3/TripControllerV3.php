@@ -252,4 +252,57 @@ class TripControllerV3 extends Controller
             'data' => $trip->fresh(),
         ]);
     }
+
+    public function onlineDrivers(Request $request): JsonResponse
+    {
+        $user = $request->user();
+
+        // Check if user is a passenger
+        if (method_exists($user, 'isPassenger') && !$user->isPassenger()) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Only passengers can access online drivers',
+            ], 403);
+        }
+
+        $query = \App\Models\Driver::query()
+            ->with(['user:id,name,phone,is_approved', 'vehicles'])
+            ->where('status', 'approved')
+            ->whereIn('availability_status', ['online', 'available'])
+            ->whereHas('user', fn ($q) => $q->where('is_approved', true));
+
+        // Optional transport type filtering for V3
+        if ($request->has('transport_type')) {
+            $transportType = $request->input('transport_type');
+            if (in_array($transportType, ['motor_vehicle', 'motorcycle', 'moto', 'motorbike'], true)) {
+                $query->whereHas('vehicles', fn($q) => $q->where('is_active', true)->whereIn('vehicle_type', ['motorcycle', 'boda', 'moto', 'motorbike', 'tuk-tuk']));
+            } elseif (in_array($transportType, ['private_car', 'car', 'private'], true)) {
+                $query->whereHas('vehicles', fn($q) => $q->where('is_active', true)->whereIn('vehicle_type', ['sedan', 'suv', 'hatchback', 'van', 'compact', 'minivan']));
+            }
+        }
+
+        $drivers = $query->orderByDesc('last_seen_at')
+            ->limit((int) $request->integer('limit', 100))
+            ->get();
+
+        return response()->json([
+            'success' => true,
+            'data' => $drivers->map(fn (\App\Models\Driver $driver) => [
+                'id' => $driver->id,
+                'name' => $driver->user?->name,
+                'phone' => $driver->user?->phone,
+                'rating' => (float) $driver->rating,
+                'total_rides' => (int) $driver->total_rides,
+                'availability_status' => $driver->availability_status,
+                'current_latitude' => $driver->current_latitude,
+                'current_longitude' => $driver->current_longitude,
+                'last_online_at' => ($driver->last_seen_at ?? $driver->last_online_at)?->toIso8601String(),
+                'vehicle' => $driver->vehicle ? [
+                    'vehicle_type' => $driver->vehicle->vehicle_type,
+                    'plate_number' => $driver->license_plate,
+                    'color' => $driver->vehicle->color,
+                ] : null,
+            ]),
+        ]);
+    }
 }
