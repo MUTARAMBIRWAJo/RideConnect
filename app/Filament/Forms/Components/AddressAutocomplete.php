@@ -14,7 +14,7 @@ class AddressAutocomplete extends Field
 
     protected string $lngField = 'pickup_lng';
 
-    protected string $label = 'Pickup Location';
+    protected \Illuminate\Contracts\Support\Htmlable|\Closure|string|null $label = 'Pickup Location';
 
     protected string $placeholder = 'Enter address...';
 

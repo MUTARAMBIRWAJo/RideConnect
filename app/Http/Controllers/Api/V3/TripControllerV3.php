@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Api\V3;
 
 use App\Http\Controllers\Controller;
+use OpenApi\Attributes as OA;
 use App\Http\Requests\V3\MotorVehicleTripRequestV3;
 use App\Http\Requests\V3\PrivateCarTripRequestV3;
 use App\Http\Requests\V3\PublicBusTripRequestV3;
@@ -412,6 +413,13 @@ class TripControllerV3 extends Controller
         ]);
     }
 
+    #[OA\Get(
+        path: '/v3/drivers/online',
+        summary: 'Get online drivers list',
+        responses: [
+            new OA\Response(response: 200, description: 'Success')
+        ]
+    )]
     public function onlineDrivers(Request $request): JsonResponse
     {
         $user = $request->user();

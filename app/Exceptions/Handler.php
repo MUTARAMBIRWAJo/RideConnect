@@ -35,7 +35,7 @@ class Handler extends ExceptionHandler
     /**
      * Render an exception into an HTTP response.
      */
-    public function render(Request $request, Throwable $exception)
+    public function render($request, Throwable $exception)
     {
         // Handle database exceptions for API requests
         if ($request->wantsJson()) {
