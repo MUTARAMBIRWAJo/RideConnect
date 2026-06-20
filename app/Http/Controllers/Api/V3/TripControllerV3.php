@@ -65,28 +65,38 @@ class TripControllerV3 extends Controller
         $pickupLat = (float) $request->validated('pickup_lat');
         $pickupLng = (float) $request->validated('pickup_lng');
 
-        // Create the trip V3
-        $trip = new TripV3([
-            'user_id' => $request->user()->id,
-            'transport_type' => 'motor_vehicle',
-            'pickup_location' => $request->validated('pickup_location'),
-            'pickup_lat' => $pickupLat,
-            'pickup_lng' => $pickupLng,
-            'dropoff_location' => $request->validated('dropoff_location'),
-            'dropoff_lat' => (float) $request->validated('dropoff_lat'),
-            'dropoff_lng' => (float) $request->validated('dropoff_lng'),
-            'metadata' => [
-                'ride_mode' => $request->validated('ride_mode'),
-                'payment_method' => $request->validated('payment_method'),
-                'requested_seats' => 1,
-            ],
-        ]);
-        $trip->save();
+        $tripId = $request->validated('trip_id');
+        if ($tripId) {
+            $trip = TripV3::findOrFail($tripId);
+            if ($trip->status === 'cancelled' || $trip->driver_response_status === 'rejected' || $trip->status === 'MATCHING') {
+                $trip->status = 'REQUESTED';
+                $trip->driver_response_status = 'pending';
+                $trip->save();
+            }
+        } else {
+            // Create the trip V3
+            $trip = new TripV3([
+                'user_id' => $request->user()->id,
+                'transport_type' => 'motor_vehicle',
+                'pickup_location' => $request->validated('pickup_location'),
+                'pickup_lat' => $pickupLat,
+                'pickup_lng' => $pickupLng,
+                'dropoff_location' => $request->validated('dropoff_location'),
+                'dropoff_lat' => (float) $request->validated('dropoff_lat'),
+                'dropoff_lng' => (float) $request->validated('dropoff_lng'),
+                'metadata' => [
+                    'ride_mode' => $request->validated('ride_mode'),
+                    'payment_method' => $request->validated('payment_method'),
+                    'requested_seats' => 1,
+                ],
+            ]);
+            $trip->save();
+        }
 
         // Calculate and query the top 3 nearest online motor vehicle drivers to this pickup location
         $haversine = "( 6371 * acos( cos( radians($pickupLat) ) * cos( radians( current_latitude ) ) * cos( radians( current_longitude ) - radians($pickupLng) ) + sin( radians($pickupLat) ) * sin( radians( current_latitude ) ) ) )";
 
-        $drivers = \App\Models\Driver::query()
+        $query = \App\Models\Driver::query()
             ->with(['user', 'vehicle'])
             ->select('drivers.*')
             ->selectRaw("$haversine AS distance_km")
@@ -95,8 +105,13 @@ class TripControllerV3 extends Controller
             ->where('drivers.is_online', true)
             ->whereIn('drivers.availability_status', ['online', 'available'])
             ->whereNull('drivers.current_trip_id')
-            ->whereIn('vehicles.vehicle_type', ['motorcycle', 'boda', 'moto', 'motorbike', 'tuk-tuk'])
-            ->orderByRaw("$haversine ASC")
+            ->whereIn('vehicles.vehicle_type', ['motorcycle', 'boda', 'moto', 'motorbike', 'tuk-tuk']);
+
+        if (!empty($trip->ignored_driver_ids)) {
+            $query->whereNotIn('drivers.id', $trip->ignored_driver_ids);
+        }
+
+        $drivers = $query->orderByRaw("$haversine ASC")
             ->limit(3)
             ->get();
 

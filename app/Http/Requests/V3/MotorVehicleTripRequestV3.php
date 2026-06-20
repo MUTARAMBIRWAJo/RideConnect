@@ -22,6 +22,7 @@ class MotorVehicleTripRequestV3 extends FormRequest
             'ride_mode' => ['required', 'string', 'in:instant,scheduled,standard'],
             'payment_method' => ['required', 'string'],
             'driver_id' => ['nullable', 'integer', 'exists:drivers,id'],
+            'trip_id' => ['nullable', 'integer', 'exists:trips_v3,id'],
         ];
     }
 }
