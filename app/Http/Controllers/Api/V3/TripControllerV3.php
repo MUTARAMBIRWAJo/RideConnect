@@ -128,11 +128,42 @@ class TripControllerV3 extends Controller
 
     public function selectDriver(Request $request, string $id): JsonResponse
     {
-        $validated = $request->validate([
+        $driverId = $request->input('driver_id');
+        $tripId = $id;
+
+        if (!$driverId) {
+            // Fallback: check if the passenger has an active trip, and treat the URL parameter as the driver_id
+            $activeTrip = TripV3::where('user_id', $request->user()->id)
+                ->whereIn('status', ['created', 'searching', 'REQUESTED', 'MATCHING'])
+                ->latest()
+                ->first();
+
+            if ($activeTrip) {
+                $driverId = $id;
+                $trip = $activeTrip;
+            } else {
+                // Trigger standard validation if no active trip is found
+                $request->validate([
+                    'driver_id' => 'required|integer|exists:drivers,id',
+                ]);
+                return response()->json([], 422); // Unreachable, but satisfies static analysis
+            }
+        } else {
+            $trip = TripV3::findOrFail($tripId);
+        }
+
+        // Validate the driver_id explicitly
+        $validator = \Illuminate\Support\Facades\Validator::make(['driver_id' => $driverId], [
             'driver_id' => 'required|integer|exists:drivers,id',
         ]);
 
-        $trip = TripV3::findOrFail($id);
+        if ($validator->fails()) {
+            return response()->json([
+                'success' => false,
+                'message' => 'The given data was invalid.',
+                'errors' => $validator->errors()
+            ], 422);
+        }
 
         if (!in_array($trip->status, ['created', 'searching', 'REQUESTED', 'MATCHING'], true)) {
             return response()->json([
@@ -141,7 +172,7 @@ class TripControllerV3 extends Controller
             ], 422);
         }
 
-        $trip->matched_driver_id = $validated['driver_id'];
+        $trip->matched_driver_id = $driverId;
         $trip->save();
 
         $this->matchingEngine->startMatching($trip);
