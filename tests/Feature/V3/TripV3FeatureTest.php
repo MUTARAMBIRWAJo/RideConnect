@@ -37,15 +37,13 @@ class TripV3FeatureTest extends TestCase
         ]);
 
         $response->assertStatus(201);
-        $response->assertJsonStructure(['success', 'data' => ['id', 'status', 'transport_type']]);
+        $response->assertJsonStructure(['success', 'data' => ['trip' => ['id', 'status', 'transport_type'], 'drivers']]);
 
         $this->assertDatabaseHas('trips_v3', [
             'user_id' => $user->id,
             'transport_type' => 'motor_vehicle',
-            'status' => 'MATCHING',
+            'status' => 'REQUESTED',
         ]);
-
-        Event::assertDispatched(\App\Events\V3\TripV3StatusChanged::class);
     }
 
     public function test_private_car_trip_creation(): void

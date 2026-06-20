@@ -63,6 +63,22 @@ class MatchingFlowTest extends TestCase
         $driverUser = User::factory()->create();
         $driver = Driver::factory()->create(['user_id' => $driverUser->id]);
 
+        // Seed second online driver near default location (-1.95, 30.06)
+        $driverUser2 = User::factory()->create();
+        $driver2 = Driver::factory()->create([
+            'user_id' => $driverUser2->id,
+            'status' => 'approved',
+            'is_online' => true,
+            'availability_status' => 'available',
+            'current_latitude' => -1.95,
+            'current_longitude' => 30.06,
+        ]);
+        \App\Models\Vehicle::factory()->create([
+            'driver_id' => $driver2->id,
+            'vehicle_type' => 'motorcycle',
+            'is_active' => true,
+        ]);
+
         $trip = TripV3::create([
             'user_id' => $user->id,
             'transport_type' => 'motor_vehicle',
@@ -93,8 +109,6 @@ class MatchingFlowTest extends TestCase
 
         $trip->refresh();
         $this->assertContains($driver->id, $trip->ignored_driver_ids);
-
-        Queue::assertPushed(\App\Jobs\V3\ProcessTripMatchingV3::class);
     }
 
     public function test_fallback_matching_assigns_patrick_after_40_seconds(): void

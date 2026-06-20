@@ -51,9 +51,14 @@ class TripMatchingEngineV3
                 ->first();
         }
 
+        $useFallback = false;
         if (!$selectedDriver) {
             $ignoredIds = $trip->ignored_driver_ids ?? [];
-            $radiusKm = 5.0;
+            
+            // Check if fallback matching should be used (elapsed time > 40 seconds)
+            $elapsedSeconds = $trip->matching_started_at ? $trip->matching_started_at->diffInSeconds(now()) : 0;
+            $useFallback = $elapsedSeconds > 40;
+            $radiusKm = $useFallback ? 50.0 : 5.0;
 
             // Stage 1: Deterministic Nearest Available Driver Search
             $lat = $trip->pickup_lat ?? -1.95;
@@ -66,8 +71,11 @@ class TripMatchingEngineV3
                 ->where('drivers.status', 'approved')
                 ->where('drivers.is_online', true)
                 ->whereIn('drivers.availability_status', ['online', 'available'])
-                ->whereNull('drivers.current_trip_id')
-                ->whereRaw("$haversine <= ?", [$radiusKm]);
+                ->whereNull('drivers.current_trip_id');
+
+            if (!$useFallback) {
+                $query->whereRaw("$haversine <= ?", [$radiusKm]);
+            }
 
             if (!empty($ignoredIds)) {
                 $query->whereNotIn('drivers.id', $ignoredIds);
@@ -103,6 +111,9 @@ class TripMatchingEngineV3
         $trip->driver_response_status = 'pending';
         $trip->match_attempt_count += 1;
         $trip->last_matched_at = now();
+        if ($useFallback) {
+            $trip->fallback_match_used = true;
+        }
         if ($trip->status !== 'MATCHING') {
             $this->lifecycle->transition($trip, 'MATCHING');
         } else {

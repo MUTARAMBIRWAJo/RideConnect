@@ -170,13 +170,13 @@ class DriverTripControllerV3 extends Controller
             $notificationService = app(\App\Services\V3\NotificationServiceV3::class);
             $notificationService->sendToPassenger($trip->user_id, $payload);
 
-            // Automatically reassign NEXT nearest driver from available pool
-            $matchingEngine = app(\App\Services\V3\TripMatchingEngineV3::class);
-            $matchingEngine->executeMatch($trip);
-
+            // Do not automatically reassign for V3 split flow - let the passenger decide (Request Again / Leave)
+            // $matchingEngine = app(\App\Services\V3\TripMatchingEngineV3::class);
+            // $matchingEngine->executeMatch($trip);
+ 
             return response()->json([
                 'success' => true,
-                'message' => 'Trip rejected successfully. Re-matching...',
+                'message' => 'Trip rejected by the driver.',
             ]);
         });
     }
