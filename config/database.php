@@ -16,8 +16,8 @@ return [
     |
     */
 
-    'default' => env('APP_ENV') === 'testing'
-        ? env('TEST_DB_CONNECTION', env('DB_CONNECTION', 'pgsql'))
+    'default' => (env('APP_ENV') === 'testing' || defined('PHPUNIT_COMPOSER_INSTALL') || isset($_SERVER['PHPUNIT_COMPOSER_INSTALL']))
+        ? 'sqlite'
         : env('DB_CONNECTION', 'pgsql'),
 
     /*
@@ -36,7 +36,9 @@ return [
         'sqlite' => [
             'driver' => 'sqlite',
             'url' => env('DB_URL'),
-            'database' => env('DB_DATABASE', database_path('database.sqlite')),
+            'database' => (env('APP_ENV') === 'testing' || defined('PHPUNIT_COMPOSER_INSTALL') || isset($_SERVER['PHPUNIT_COMPOSER_INSTALL']))
+                ? ':memory:'
+                : env('DB_DATABASE', database_path('database.sqlite')),
             'prefix' => '',
             'foreign_key_constraints' => env('DB_FOREIGN_KEYS', true),
             'busy_timeout' => null,
