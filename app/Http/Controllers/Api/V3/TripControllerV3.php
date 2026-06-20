@@ -126,7 +126,7 @@ class TripControllerV3 extends Controller
         ], 201);
     }
 
-    public function selectDriver(Request $request, string $id): JsonResponse
+    public function selectDriver(Request $request, string $id, NotificationServiceV3 $notificationService): JsonResponse
     {
         $driverId = $request->input('driver_id');
         $tripId = $id;
@@ -176,6 +176,20 @@ class TripControllerV3 extends Controller
         $trip->save();
 
         $this->matchingEngine->startMatching($trip);
+
+        // Notify the selected driver immediately!
+        $trip->loadMissing('user');
+        $passengerName = $trip->user?->name ?? 'Passenger';
+
+        $notificationService->sendToDriver($driverId, [
+            'type' => 'NEW_TRIP_REQUEST',
+            'trip_id' => $trip->id,
+            'passenger_name' => $passengerName,
+            'pickup' => $trip->pickup_location,
+            'dropoff' => $trip->dropoff_location,
+            'fare' => $trip->fare_estimate ?? 4500,
+            'message' => 'New trip request from ' . $passengerName . '. Accept or reject.',
+        ]);
 
         $trip->loadMissing(['user', 'matchedDriver.user', 'matchedDriver.vehicle']);
 
