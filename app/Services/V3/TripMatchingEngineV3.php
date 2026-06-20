@@ -135,6 +135,10 @@ class TripMatchingEngineV3
             'dropoff' => $trip->dropoff_location,
             'fare' => $trip->fare_estimate ?? 4500,
             'message' => 'New trip request from ' . $passengerName . '. Accept or reject.',
+            'actions' => [
+                'accept' => "/api/v3/trips/{$trip->id}/accept",
+                'reject' => "/api/v3/trips/{$trip->id}/reject",
+            ],
         ]);
 
         // Dispatch timeout handler

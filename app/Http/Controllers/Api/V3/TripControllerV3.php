@@ -48,6 +48,10 @@ class TripControllerV3 extends Controller
             'dropoff' => $trip->dropoff_location,
             'fare' => $trip->fare_estimate ?? 4500,
             'message' => 'New trip request from ' . $passengerName . '. Accept or reject.',
+            'actions' => [
+                'accept' => "/api/v3/trips/{$trip->id}/accept",
+                'reject' => "/api/v3/trips/{$trip->id}/reject",
+            ],
         ]);
 
         return response()->json([
@@ -204,6 +208,10 @@ class TripControllerV3 extends Controller
             'dropoff' => $trip->dropoff_location,
             'fare' => $trip->fare_estimate ?? 4500,
             'message' => 'New trip request from ' . $passengerName . '. Accept or reject.',
+            'actions' => [
+                'accept' => "/api/v3/trips/{$trip->id}/accept",
+                'reject' => "/api/v3/trips/{$trip->id}/reject",
+            ],
         ]);
 
         $trip->loadMissing(['user', 'matchedDriver.user', 'matchedDriver.vehicle']);
