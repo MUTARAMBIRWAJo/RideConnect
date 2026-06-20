@@ -97,6 +97,7 @@ Route::prefix('v3')->middleware(['auth:sanctum'])->group(function () {
     Route::post('/trips/{id}/notify-driver', [\App\Http\Controllers\Api\V3\TripControllerV3::class, 'notifyDriver']);
     Route::post('/trips/{id}/match', [\App\Http\Controllers\Api\V3\TripControllerV3::class, 'matchTrip']);
     Route::get('/drivers/online', [\App\Http\Controllers\Api\V3\TripControllerV3::class, 'onlineDrivers']);
+    Route::post('/trips/{id}/select-driver', [\App\Http\Controllers\Api\V3\TripControllerV3::class, 'selectDriver']);
 });
 
 /* ===========================
