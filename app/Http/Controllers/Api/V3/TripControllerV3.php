@@ -87,6 +87,7 @@ class TripControllerV3 extends Controller
         $haversine = "( 6371 * acos( cos( radians($pickupLat) ) * cos( radians( current_latitude ) ) * cos( radians( current_longitude ) - radians($pickupLng) ) + sin( radians($pickupLat) ) * sin( radians( current_latitude ) ) ) )";
 
         $drivers = \App\Models\Driver::query()
+            ->with(['user', 'vehicle'])
             ->select('drivers.*')
             ->selectRaw("$haversine AS distance_km")
             ->join('vehicles', 'vehicles.driver_id', '=', 'drivers.id')
