@@ -111,7 +111,7 @@ class MatchingFlowTest extends TestCase
         $this->assertContains($driver->id, $trip->ignored_driver_ids);
     }
 
-    public function test_fallback_matching_assigns_patrick_after_40_seconds(): void
+    public function test_fallback_matching_assigns_patrick_after_60_seconds(): void
     {
         $user = User::factory()->create();
         $patrickUser = User::factory()->create(['email' => 'patrick.habimana@example.com']);
@@ -134,7 +134,7 @@ class MatchingFlowTest extends TestCase
             'user_id' => $user->id,
             'transport_type' => 'private_car',
             'status' => 'MATCHING',
-            'matching_started_at' => now()->subSeconds(45),
+            'matching_started_at' => now()->subSeconds(65),
             'match_attempt_count' => 1,
         ]);
 

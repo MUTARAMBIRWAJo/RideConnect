@@ -5,7 +5,7 @@ namespace App\Http\Controllers\Api\V3;
 use App\Http\Controllers\Controller;
 use App\Jobs\V3\ProcessTripMatchingV3;
 use App\Models\Driver;
-use App\Models\DriverLocation;
+use App\Models\V3\DriverLocationV3;
 use App\Models\DriverTripOffer;
 use App\Models\V3\TripV3;
 use App\Services\V3\TripLifecycleEngineV3;
@@ -165,14 +165,14 @@ class DriverTripControllerV3 extends Controller
             ];
 
             $this->notifier->dispatch($trip, 'trip.driver.rejected', $payload, $driver);
+            $this->notifier->dispatch($trip, 'trip.matching.continues', $payload, $driver);
 
             // Notify passenger immediately
             $notificationService = app(\App\Services\V3\NotificationServiceV3::class);
             $notificationService->sendToPassenger($trip->user_id, $payload);
 
-            // Do not automatically reassign for V3 split flow - let the passenger decide (Request Again / Leave)
-            // $matchingEngine = app(\App\Services\V3\TripMatchingEngineV3::class);
-            // $matchingEngine->executeMatch($trip);
+            // Re-enable auto-reassign for V3 matching flow
+            ProcessTripMatchingV3::dispatch($trip);
  
             return response()->json([
                 'success' => true,
@@ -394,31 +394,19 @@ class DriverTripControllerV3 extends Controller
             ->whereIn('status', ['DRIVER_ASSIGNED', 'DRIVER_ARRIVED', 'IN_PROGRESS'])
             ->firstOrFail();
 
-        $driverLocationId = $driver->user_id ?: $driver->id;
-        $payload = ['driver_id' => $driverLocationId];
-        $optionalColumns = [
-            'latitude' => $validated['latitude'],
-            'longitude' => $validated['longitude'],
-            'lat' => $validated['latitude'],
-            'lng' => $validated['longitude'],
-            'heading' => $validated['heading'] ?? null,
-            'speed' => $validated['speed'] ?? null,
-            'speed_kmh' => $validated['speed'] ?? null,
-            'is_online' => true,
-            'recorded_at' => now(),
-            'last_activity_at' => now(),
-            'updated_at' => now(),
-        ];
-        foreach ($optionalColumns as $column => $value) {
-            if (Schema::hasColumn('driver_locations', $column)) {
-                $payload[$column] = $value;
-            }
-        }
-        if (Schema::hasColumn('driver_locations', 'trip_id') && is_numeric($trip->id)) {
-            $payload['trip_id'] = $trip->id;
-        }
-
-        $location = DriverLocation::query()->updateOrCreate(['driver_id' => $driverLocationId], $payload);
+        $location = DriverLocationV3::updateOrCreate(
+            ['driver_id' => $driver->id],
+            [
+                'trip_id' => $trip->id,
+                'lat' => $validated['latitude'],
+                'lng' => $validated['longitude'],
+                'latitude' => $validated['latitude'],
+                'longitude' => $validated['longitude'],
+                'heading' => $validated['heading'] ?? null,
+                'speed' => $validated['speed'] ?? null,
+                'is_online' => true,
+            ]
+        );
 
         $driver->update([
             'current_latitude' => $validated['latitude'],

@@ -57,6 +57,13 @@ class HandleDriverTimeoutV3 implements ShouldQueue
                     'updated_at' => now(),
                 ]);
 
+            $driver = \App\Models\Driver::find($this->driverId);
+            app(\App\Services\V3\TripLifecycleNotifierV3::class)->dispatch($freshTrip, 'trip.offer.expired', [
+                'trip_id' => $freshTrip->id,
+                'driver_id' => $this->driverId,
+                'message' => 'Driver offer timed out.',
+            ], $driver);
+
             app(\App\Services\V3\TripLifecycleNotifierV3::class)->dispatch($freshTrip, 'trip.driver.rejected', [
                 'trip_id' => $freshTrip->id,
                 'driver_id' => $this->driverId,

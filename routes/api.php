@@ -111,6 +111,17 @@ Route::prefix('webhooks')->group(function () {
 
 Route::get('/rides', [RideController::class, 'index']);
 Route::get('/system/firebase-health', [\App\Http\Controllers\SystemHealthController::class, 'firebaseHealth']);
+Route::get('/realtime-config', function () {
+    return response()->json([
+        'enabled' => (bool) config('realtime.enabled'),
+        'provider' => config('realtime.provider'),
+        'host' => config('realtime.host'),
+        'port' => (int) config('realtime.port'),
+        'scheme' => config('realtime.scheme'),
+        'ws_path' => config('realtime.ws_path'),
+        'key' => env('REVERB_APP_KEY'),
+    ]);
+});
 
 Route::middleware(['auth:sanctum'])->group(function () {
     Route::post('/driver/location', [DriverLocationController::class, 'update']);

@@ -8,7 +8,7 @@ services:
     # NOTE: the worker shares the web instance. For higher volume, promote it to a dedicated
     # Render `type: worker` service running the same `php artisan queue:work` command.
     preDeployCommand: php artisan db:migrate-seed-protect --use-marker --seed-marker=rideconnect-production
-    startCommand: (php artisan queue:work --tries=1 --sleep=3 --timeout=90 &) && php artisan serve --host=0.0.0.0 --port=$PORT
+    startCommand: (php artisan queue:work --tries=3 --sleep=3 --timeout=120 &) && php artisan serve --host=0.0.0.0 --port=$PORT
     envVars:
       - key: APP_ENV
         value: production

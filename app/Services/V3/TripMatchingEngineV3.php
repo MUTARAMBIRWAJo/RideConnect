@@ -40,6 +40,27 @@ class TripMatchingEngineV3
 
     public function executeMatch(TripV3 $trip): void
     {
+        if ($trip->match_attempt_count >= 5) {
+            $trip->matching_timeout_at = now();
+            $trip->save();
+            $this->lifecycle->cancel($trip, 'NO_DRIVER_AVAILABLE');
+            $this->notificationService->sendToPassenger($trip->user_id, [
+                'type' => 'TRIP_REJECTED',
+                'message' => 'No drivers available at the moment. Please try again.',
+            ]);
+            $this->notifier->dispatch($trip, 'trip.cancelled', [
+                'trip_id' => $trip->id,
+                'reason' => 'NO_DRIVER_AVAILABLE',
+                'message' => 'No drivers available at the moment.',
+            ]);
+            $this->notifier->dispatch($trip, 'trip.trip.cancelled', [
+                'trip_id' => $trip->id,
+                'reason' => 'NO_DRIVER_AVAILABLE',
+                'message' => 'No drivers available at the moment.',
+            ]);
+            return;
+        }
+
         $selectedDriver = null;
 
         if ($trip->matched_driver_id) {
@@ -55,9 +76,9 @@ class TripMatchingEngineV3
         if (!$selectedDriver) {
             $ignoredIds = $trip->ignored_driver_ids ?? [];
             
-            // Check if fallback matching should be used (elapsed time > 40 seconds)
+            // Check if fallback matching should be used (elapsed time > 60 seconds)
             $elapsedSeconds = $trip->matching_started_at ? $trip->matching_started_at->diffInSeconds(now()) : 0;
-            $useFallback = $elapsedSeconds > 40;
+            $useFallback = $elapsedSeconds > 60;
             $radiusKm = $useFallback ? 50.0 : 5.0;
 
             // Stage 1: Deterministic Nearest Available Driver Search
@@ -103,6 +124,16 @@ class TripMatchingEngineV3
                 'type' => 'TRIP_REJECTED',
                 'message' => 'No drivers available at the moment. Please try again.',
             ]);
+            $this->notifier->dispatch($trip, 'trip.cancelled', [
+                'trip_id' => $trip->id,
+                'reason' => 'NO_DRIVER_AVAILABLE',
+                'message' => 'No drivers available at the moment.',
+            ]);
+            $this->notifier->dispatch($trip, 'trip.trip.cancelled', [
+                'trip_id' => $trip->id,
+                'reason' => 'NO_DRIVER_AVAILABLE',
+                'message' => 'No drivers available at the moment.',
+            ]);
             return;
         }
 
@@ -121,7 +152,7 @@ class TripMatchingEngineV3
         }
 
         $selectedDriver->loadMissing(['user', 'vehicle']);
-        $expiresAt = now()->addMinutes(3);
+        $expiresAt = now()->addSeconds(30);
         $payload = $this->offerPayload($trip, $selectedDriver, $expiresAt);
 
         DriverTripOffer::query()->create([
@@ -153,7 +184,7 @@ class TripMatchingEngineV3
         ]);
 
         // Dispatch timeout handler
-        HandleDriverTimeoutV3::dispatch($trip, $selectedDriver->id)->delay(now()->addMinutes(3));
+        HandleDriverTimeoutV3::dispatch($trip, $selectedDriver->id)->delay(now()->addSeconds(30));
     }
 
     private function offerPayload(TripV3 $trip, Driver $driver, \DateTimeInterface $expiresAt): array
