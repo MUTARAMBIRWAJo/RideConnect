@@ -127,7 +127,8 @@ class TripControllerV3 extends Controller
             ->where('drivers.is_online', true)
             ->whereIn('drivers.availability_status', ['online', 'available'])
             ->whereNull('drivers.current_trip_id')
-            ->whereIn('vehicles.vehicle_type', ['motorcycle', 'boda', 'moto', 'motorbike', 'tuk-tuk']);
+            ->whereIn('vehicles.vehicle_type', ['sedan', 'suv', 'van', 'compact', 'hatchback', 'motorcycle', 'boda', 'moto'])
+            ->distinct();
 
         if (!empty($trip->ignored_driver_ids)) {
             $query->whereNotIn('drivers.id', $trip->ignored_driver_ids);
