@@ -65,6 +65,11 @@ class TripControllerV3 extends Controller
             ],
         ]);
 
+        if ($trip->status === 'DRIVER_SELECTED') {
+            $lifecycle = app(TripLifecycleEngineV3::class);
+            $lifecycle->transition($trip, 'NOTIFIED');
+        }
+
         return response()->json([
             'success' => true,
             'message' => 'Notification sent to assigned driver.',
@@ -216,10 +221,10 @@ class TripControllerV3 extends Controller
         $trip->matching_started_at = $trip->matching_started_at ?? now();
         $trip->save();
 
-        // Transition to MATCHING status via lifecycle engine
-        if ($trip->status !== 'MATCHING') {
+        // Transition to DRIVER_SELECTED status via lifecycle engine
+        if ($trip->status !== 'DRIVER_SELECTED') {
             $lifecycle = app(TripLifecycleEngineV3::class);
-            $lifecycle->transition($trip, 'MATCHING');
+            $lifecycle->transition($trip, 'DRIVER_SELECTED');
         }
 
         // Create a DriverTripOffer so the driver can accept/reject

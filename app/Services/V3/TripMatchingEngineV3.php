@@ -183,6 +183,8 @@ class TripMatchingEngineV3
             ],
         ]);
 
+        $this->lifecycle->transition($trip, 'NOTIFIED');
+
         // Dispatch timeout handler
         HandleDriverTimeoutV3::dispatch($trip, $selectedDriver->id)->delay(now()->addMinutes(5));
     }

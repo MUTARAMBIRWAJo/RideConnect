@@ -31,7 +31,7 @@ class MatchingFlowTest extends TestCase
         $trip = TripV3::create([
             'user_id' => $user->id,
             'transport_type' => 'motor_vehicle',
-            'status' => 'MATCHING',
+            'status' => 'NOTIFIED',
             'matched_driver_id' => $driver->id,
             'driver_response_status' => 'pending',
             'match_attempt_count' => 1,
@@ -82,7 +82,7 @@ class MatchingFlowTest extends TestCase
         $trip = TripV3::create([
             'user_id' => $user->id,
             'transport_type' => 'motor_vehicle',
-            'status' => 'MATCHING',
+            'status' => 'NOTIFIED',
             'matched_driver_id' => $driver->id,
             'driver_response_status' => 'pending',
             'match_attempt_count' => 1,

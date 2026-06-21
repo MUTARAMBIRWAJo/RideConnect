@@ -78,7 +78,7 @@ class DriverTripControllerV3 extends Controller
         return DB::transaction(function () use ($id, $driver, $request) {
             $trip = TripV3::where('id', $id)->lockForUpdate()->firstOrFail();
 
-            if ((int)$trip->matched_driver_id !== (int)$driver->id || $trip->status !== 'MATCHING') {
+            if ((int)$trip->matched_driver_id !== (int)$driver->id || $trip->status !== 'NOTIFIED') {
                 return response()->json([
                     'success' => false,
                     'message' => 'Trip is no longer available or not assigned to you.',
@@ -155,7 +155,7 @@ class DriverTripControllerV3 extends Controller
         return DB::transaction(function () use ($id, $driver, $request) {
             $trip = TripV3::where('id', $id)->lockForUpdate()->firstOrFail();
 
-            if ((int)$trip->matched_driver_id !== (int)$driver->id || $trip->status !== 'MATCHING') {
+            if ((int)$trip->matched_driver_id !== (int)$driver->id || $trip->status !== 'NOTIFIED') {
                 return response()->json([
                     'success' => false,
                     'message' => 'Trip is no longer available or not assigned to you.',

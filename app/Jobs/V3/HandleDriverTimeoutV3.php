@@ -33,7 +33,17 @@ class HandleDriverTimeoutV3 implements ShouldQueue
         }
 
         // Check if trip is still offered to this driver and they haven't responded
-        if ($freshTrip->status === 'MATCHING' && $freshTrip->matched_driver_id === $this->driverId && $freshTrip->driver_response_status === 'pending') {
+        if ($freshTrip->status === 'NOTIFIED' && $freshTrip->matched_driver_id === $this->driverId && $freshTrip->driver_response_status === 'pending') {
+            
+            $offer = DriverTripOffer::query()
+                ->where('trip_id', $freshTrip->id)
+                ->where('driver_id', $this->driverId)
+                ->where('status', 'pending')
+                ->first();
+
+            if ($offer && now()->lt($offer->expires_at)) {
+                return;
+            }
             
             // Mark as rejected via timeout
             $ignored = $freshTrip->ignored_driver_ids ?? [];

@@ -12,10 +12,10 @@ class TripLifecycleEngineV3
      * Allowed state transitions.
      */
     protected const TRANSITIONS = [
-        'REQUESTED' => ['MATCHING', 'CANCELLED'],
-        'PENDING_MATCH' => ['MATCHING', 'CANCELLED'],
-        'MATCHING' => ['MATCHING', 'DRIVER_FOUND', 'DRIVER_ASSIGNED', 'CANCELLED', 'FAILED'],
-        'DRIVER_FOUND' => ['MATCHING', 'DRIVER_ASSIGNED', 'CANCELLED'],
+        'REQUESTED' => ['DRIVER_SELECTED', 'MATCHING', 'CANCELLED'],
+        'DRIVER_SELECTED' => ['NOTIFIED', 'CANCELLED'],
+        'NOTIFIED' => ['DRIVER_ASSIGNED', 'CANCELLED', 'MATCHING'],
+        'MATCHING' => ['NOTIFIED', 'CANCELLED', 'FAILED'],
         'DRIVER_ASSIGNED' => ['DRIVER_ARRIVED', 'IN_PROGRESS', 'CANCELLED'],
         'DRIVER_ARRIVED' => ['IN_PROGRESS', 'CANCELLED'],
         'IN_PROGRESS' => ['COMPLETED', 'CANCELLED'],
