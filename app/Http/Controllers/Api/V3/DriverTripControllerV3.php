@@ -124,6 +124,7 @@ class DriverTripControllerV3 extends Controller
                 'driver' => $this->driverPayload($driver),
                 'vehicle' => $driver->vehicle ? $driver->vehicle->only(['id', 'make', 'model', 'year', 'color', 'vehicle_type', 'seats', 'license_plate']) : null,
                 'message' => 'Driver accepted your trip',
+                'tracking_url' => "/api/v3/trips/{$trip->id}/status",
             ];
             $this->notifier->dispatch($trip, 'trip.driver.accepted', $payload, $driver);
 

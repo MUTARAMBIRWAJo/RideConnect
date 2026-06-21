@@ -37,6 +37,16 @@ class NotificationServiceV3
 
     public function sendToPassenger(int $passengerId, array $payload): void
     {
+        // Save notification to the database
+        \App\Models\Notification::create([
+            'user_id' => $passengerId,
+            'type' => $payload['type'] ?? 'TRIP_UPDATE',
+            'title' => $payload['type'] === 'TRIP_ACCEPTED' ? 'Trip Accepted' : 'Trip Rejected',
+            'message' => $payload['message'] ?? 'Your trip request has been updated.',
+            'data' => $payload,
+            'is_read' => false,
+        ]);
+
         // Broadcast via Laravel Native WebSockets (Reverb)
         broadcast(new \App\Events\PassengerTripUpdateEvent($passengerId, $payload));
 
