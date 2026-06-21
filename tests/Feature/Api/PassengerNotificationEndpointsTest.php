@@ -677,4 +677,46 @@ class PassengerNotificationEndpointsTest extends TestCase
             'id' => $pending->id,
         ]);
     }
+
+    public function test_driver_can_read_and_read_all_v3_notifications(): void
+    {
+        $user = User::factory()->create();
+
+        // 1. Create a notification
+        $notification = Notification::create([
+            'user_id' => $user->id,
+            'type' => 'new_trip_request',
+            'title' => 'New Trip',
+            'message' => 'You have a new trip request',
+            'data' => ['trip_id' => 30],
+            'is_read' => false,
+        ]);
+
+        // 2. Mark one as read via driver endpoint
+        $this->actingAs($user, 'sanctum')
+            ->putJson("/api/v3/driver/notifications/{$notification->id}/read")
+            ->assertStatus(200)
+            ->assertJsonPath('success', true)
+            ->assertJsonPath('message', 'Notification marked as read');
+
+        $this->assertDatabaseHas('user_notifications', [
+            'id' => $notification->id,
+            'is_read' => true,
+        ]);
+
+        // 3. Reset to unread
+        $notification->update(['is_read' => false]);
+
+        // 4. Mark all as read via driver endpoint
+        $this->actingAs($user, 'sanctum')
+            ->putJson('/api/v3/driver/notifications/read-all')
+            ->assertStatus(200)
+            ->assertJsonPath('success', true)
+            ->assertJsonPath('message', 'All notifications marked as read');
+
+        $this->assertDatabaseHas('user_notifications', [
+            'id' => $notification->id,
+            'is_read' => true,
+        ]);
+    }
 }

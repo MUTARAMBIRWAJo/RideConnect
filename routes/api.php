@@ -104,8 +104,10 @@ Route::prefix('v3')->middleware(['auth:sanctum'])->group(function () {
     Route::get('/notifications/unread-count', [\App\Http\Controllers\Api\V3\DriverTripControllerV3::class, 'unreadCount']);
     Route::get('/notifications', [\App\Http\Controllers\Api\V3\DriverTripControllerV3::class, 'userNotifications']);
     Route::put('/notifications/read-all', [\App\Http\Controllers\Api\V3\DriverTripControllerV3::class, 'markAllAsRead']);
+    Route::put('/driver/notifications/read-all', [\App\Http\Controllers\Api\V3\DriverTripControllerV3::class, 'markAllAsRead']);
     Route::delete('/notifications/clear-actioned', [\App\Http\Controllers\Api\V3\DriverTripControllerV3::class, 'clearActioned']);
     Route::put('/notifications/{id}/read', [\App\Http\Controllers\Api\V3\DriverTripControllerV3::class, 'markNotificationAsRead'])->whereNumber('id');
+    Route::put('/driver/notifications/{id}/read', [\App\Http\Controllers\Api\V3\DriverTripControllerV3::class, 'markNotificationAsRead'])->whereNumber('id');
     Route::delete('/notifications/{id}', [\App\Http\Controllers\Api\V3\DriverTripControllerV3::class, 'deleteNotification'])->whereNumber('id');
 
     // Location Tracking
