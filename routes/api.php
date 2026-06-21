@@ -103,6 +103,7 @@ Route::prefix('v3')->middleware(['auth:sanctum'])->group(function () {
     Route::get('/driver/notifications', [\App\Http\Controllers\Api\V3\DriverTripControllerV3::class, 'notifications']);
     Route::get('/notifications', [\App\Http\Controllers\Api\V3\DriverTripControllerV3::class, 'userNotifications']);
     Route::put('/notifications/{id}/read', [\App\Http\Controllers\Api\V3\DriverTripControllerV3::class, 'markNotificationAsRead'])->whereNumber('id');
+    Route::delete('/notifications/{id}', [\App\Http\Controllers\Api\V3\DriverTripControllerV3::class, 'deleteNotification'])->whereNumber('id');
 
     // Location Tracking
     Route::post('/location/update', [\App\Http\Controllers\Api\V3\LocationTrackingControllerV3::class, 'updateLocation']);

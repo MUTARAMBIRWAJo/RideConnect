@@ -571,4 +571,50 @@ class PassengerNotificationEndpointsTest extends TestCase
             'is_read' => true,
         ]);
     }
+
+    public function test_user_can_delete_own_v3_notification_but_not_others(): void
+    {
+        $user1 = User::factory()->create();
+        $user2 = User::factory()->create();
+
+        $notification1 = Notification::create([
+            'user_id' => $user1->id,
+            'type' => 'TRIP_ACCEPTED',
+            'title' => 'Trip Accepted',
+            'message' => 'Your trip request has been accepted',
+            'data' => ['trip_id' => 10],
+            'is_read' => false,
+        ]);
+
+        $notification2 = Notification::create([
+            'user_id' => $user2->id,
+            'type' => 'TRIP_ACCEPTED',
+            'title' => 'Trip Accepted',
+            'message' => 'Your trip request has been accepted',
+            'data' => ['trip_id' => 11],
+            'is_read' => false,
+        ]);
+
+        // 1. User 1 cannot delete User 2's notification
+        $response = $this->actingAs($user1, 'sanctum')
+            ->deleteJson('/api/v3/notifications/' . $notification2->id);
+
+        $response->assertStatus(404); // returns 404 Not Found since it does firstOrFail with user scope checking
+
+        $this->assertDatabaseHas('user_notifications', [
+            'id' => $notification2->id,
+        ]);
+
+        // 2. User 1 can delete their own notification
+        $response2 = $this->actingAs($user1, 'sanctum')
+            ->deleteJson('/api/v3/notifications/' . $notification1->id);
+
+        $response2->assertStatus(200)
+            ->assertJsonPath('success', true)
+            ->assertJsonPath('message', 'Notification deleted successfully');
+
+        $this->assertDatabaseMissing('user_notifications', [
+            'id' => $notification1->id,
+        ]);
+    }
 }

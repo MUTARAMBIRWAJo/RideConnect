@@ -715,4 +715,28 @@ class DriverTripControllerV3 extends Controller
             'data' => $notification,
         ]);
     }
+
+    #[OA\Delete(
+        path: '/v3/notifications/{id}',
+        summary: 'Delete a notification for authenticated user',
+        responses: [
+            new OA\Response(response: 200, description: 'Success')
+        ]
+    )]
+    public function deleteNotification(Request $request, int $id): JsonResponse
+    {
+        $user = $request->user();
+
+        $notification = \App\Models\Notification::query()
+            ->where('id', $id)
+            ->where('user_id', $user->id)
+            ->firstOrFail();
+
+        $notification->delete();
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Notification deleted successfully',
+        ]);
+    }
 }
