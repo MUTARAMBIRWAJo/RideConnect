@@ -107,7 +107,7 @@ class DriverTripControllerV3 extends Controller
                 'driver_response_status' => 'accepted',
                 'matched_at' => now(),
             ]);
-            $this->lifecycle->transition($trip, 'DRIVER_ASSIGNED');
+            $this->lifecycle->transition($trip, 'ACCEPTED');
 
             $driver->update([
                 'availability_status' => 'busy',
@@ -183,7 +183,7 @@ class DriverTripControllerV3 extends Controller
             $trip->matched_driver_id = null;
             $trip->driver_id = null;
             $trip->driver_response_status = 'rejected';
-            $this->lifecycle->transition($trip, 'MATCHING');
+            $this->lifecycle->transition($trip, 'REJECTED');
 
             $payload = [
                 'type' => 'TRIP_REJECTED',
@@ -275,7 +275,7 @@ class DriverTripControllerV3 extends Controller
     )]
     public function arrived(Request $request, string $id): JsonResponse
     {
-        return $this->driverTransition($request, $id, ['DRIVER_ASSIGNED'], 'DRIVER_ARRIVED', 'trip.driver.arrived');
+        return $this->driverTransition($request, $id, ['ACCEPTED'], 'DRIVER_ARRIVED', 'trip.driver.arrived');
     }
 
     #[OA\Post(
@@ -487,7 +487,7 @@ class DriverTripControllerV3 extends Controller
         $trip = TripV3::query()
             ->where('id', $validated['trip_id'])
             ->where('driver_id', $driver->id)
-            ->whereIn('status', ['DRIVER_ASSIGNED', 'DRIVER_ARRIVED', 'IN_PROGRESS'])
+            ->whereIn('status', ['ACCEPTED', 'DRIVER_ARRIVED', 'IN_PROGRESS'])
             ->firstOrFail();
 
         $location = DriverLocationV3::updateOrCreate(

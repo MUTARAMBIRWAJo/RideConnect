@@ -51,7 +51,7 @@ class MatchingFlowTest extends TestCase
         
         $this->assertDatabaseHas('trips_v3', [
             'id' => $trip->id,
-            'status' => 'DRIVER_ASSIGNED',
+            'status' => 'ACCEPTED',
             'driver_id' => $driver->id,
             'driver_response_status' => 'accepted',
         ]);
@@ -121,7 +121,7 @@ class MatchingFlowTest extends TestCase
         
         $this->assertDatabaseHas('trips_v3', [
             'id' => $trip->id,
-            'status' => 'MATCHING',
+            'status' => 'REJECTED',
             'matched_driver_id' => null,
             'driver_response_status' => 'rejected',
         ]);
