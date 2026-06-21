@@ -496,4 +496,79 @@ class PassengerNotificationEndpointsTest extends TestCase
             'status' => 'acknowledged',
         ]);
     }
+
+    public function test_driver_can_retrieve_v3_notifications(): void
+    {
+        $driverUser1 = User::factory()->create([
+            'role' => UserRole::DRIVER->value,
+            'is_approved' => true,
+        ]);
+        $driver1 = Driver::create([
+            'user_id' => $driverUser1->id,
+            'license_number' => 'DL-PN-'.random_int(1000, 9999),
+            'license_plate' => 'RAA-'.random_int(100, 999).'-A',
+            'status' => 'approved',
+            'availability_status' => 'online',
+        ]);
+
+        $driverUser2 = User::factory()->create([
+            'role' => UserRole::DRIVER->value,
+            'is_approved' => true,
+        ]);
+        $driver2 = Driver::create([
+            'user_id' => $driverUser2->id,
+            'license_number' => 'DL-PN-'.random_int(1000, 9999),
+            'license_plate' => 'RAA-'.random_int(100, 999).'-B',
+            'status' => 'approved',
+            'availability_status' => 'online',
+        ]);
+
+        // Create notifications for driver 1
+        Notification::create([
+            'user_id' => $driverUser1->id,
+            'type' => 'NEW_TRIP_REQUEST',
+            'title' => 'Trip for Driver 1',
+            'message' => 'Driver 1 notification message',
+            'data' => ['trip_id' => 1],
+            'is_read' => false,
+        ]);
+
+        // Create notifications for driver 2
+        Notification::create([
+            'user_id' => $driverUser2->id,
+            'type' => 'NEW_TRIP_REQUEST',
+            'title' => 'Trip for Driver 2',
+            'message' => 'Driver 2 notification message',
+            'data' => ['trip_id' => 2],
+            'is_read' => false,
+        ]);
+
+        Sanctum::actingAs($driverUser1, ['*']);
+
+        // Check GET /v3/driver/notifications
+        $response = $this->getJson('/api/v3/driver/notifications');
+        $response->assertStatus(200)
+            ->assertJsonPath('success', true)
+            ->assertJsonCount(1, 'data')
+            ->assertJsonPath('data.0.title', 'Trip for Driver 1');
+
+        // Check GET /v3/notifications
+        $response2 = $this->getJson('/api/v3/notifications');
+        $response2->assertStatus(200)
+            ->assertJsonPath('success', true)
+            ->assertJsonCount(1, 'data')
+            ->assertJsonPath('data.0.title', 'Trip for Driver 1');
+
+        // Mark as read
+        $notificationId = $response->json('data.0.id');
+        $this->putJson('/api/v3/notifications/' . $notificationId . '/read')
+            ->assertStatus(200)
+            ->assertJsonPath('success', true)
+            ->assertJsonPath('data.is_read', true);
+
+        $this->assertDatabaseHas('user_notifications', [
+            'id' => $notificationId,
+            'is_read' => true,
+        ]);
+    }
 }

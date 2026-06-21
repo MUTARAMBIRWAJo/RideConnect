@@ -640,4 +640,78 @@ class DriverTripControllerV3 extends Controller
             'data' => $trips,
         ]);
     }
+
+    #[OA\Get(
+        path: '/v3/driver/notifications',
+        summary: 'Get notifications for authenticated driver',
+        responses: [
+            new OA\Response(response: 200, description: 'Success')
+        ]
+    )]
+    public function notifications(Request $request): JsonResponse
+    {
+        $driver = $this->driverFor($request);
+
+        $notifications = \App\Models\Notification::query()
+            ->where('user_id', $driver->user_id)
+            ->orderByDesc('created_at')
+            ->get();
+
+        return response()->json([
+            'success' => true,
+            'data' => $notifications,
+        ]);
+    }
+
+    #[OA\Get(
+        path: '/v3/notifications',
+        summary: 'Get notifications for authenticated user',
+        responses: [
+            new OA\Response(response: 200, description: 'Success')
+        ]
+    )]
+    public function userNotifications(Request $request): JsonResponse
+    {
+        $user = $request->user();
+
+        $notifications = \App\Models\Notification::query()
+            ->where('user_id', $user->id)
+            ->orderByDesc('created_at')
+            ->get();
+
+        return response()->json([
+            'success' => true,
+            'data' => $notifications,
+        ]);
+    }
+
+    #[OA\Put(
+        path: '/v3/notifications/{id}/read',
+        summary: 'Mark a notification as read',
+        responses: [
+            new OA\Response(response: 200, description: 'Success')
+        ]
+    )]
+    public function markNotificationAsRead(Request $request, int $id): JsonResponse
+    {
+        $user = $request->user();
+
+        $notification = \App\Models\Notification::query()
+            ->where('id', $id)
+            ->where('user_id', $user->id)
+            ->firstOrFail();
+
+        if (!$notification->is_read) {
+            $notification->update([
+                'is_read' => true,
+                'read_at' => now(),
+            ]);
+        }
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Notification marked as read',
+            'data' => $notification,
+        ]);
+    }
 }

@@ -20,6 +20,16 @@ class NotificationServiceV3
             return;
         }
 
+        // Save notification to the database
+        \App\Models\Notification::create([
+            'user_id' => $driver->user_id,
+            'type' => $payload['type'] ?? 'NEW_TRIP_REQUEST',
+            'title' => $payload['title'] ?? 'New Trip Request',
+            'message' => $payload['message'] ?? ($payload['message'] ?? 'New trip request. Accept or reject.'),
+            'data' => $payload,
+            'is_read' => false,
+        ]);
+
         broadcast(new \App\Events\NewTripRequestEvent($driver->user_id, $payload));
 
         Log::info("Laravel WebSocket Triggered for Driver [{$driverId}]", $payload);

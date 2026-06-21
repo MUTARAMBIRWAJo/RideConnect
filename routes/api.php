@@ -98,6 +98,11 @@ Route::prefix('v3')->middleware(['auth:sanctum'])->group(function () {
     Route::post('/trips/{id}/match', [\App\Http\Controllers\Api\V3\TripControllerV3::class, 'matchTrip']);
     Route::get('/drivers/online', [\App\Http\Controllers\Api\V3\TripControllerV3::class, 'onlineDrivers']);
     Route::post('/trips/{id}/select-driver', [\App\Http\Controllers\Api\V3\TripControllerV3::class, 'selectDriver']);
+
+    // Notifications
+    Route::get('/driver/notifications', [\App\Http\Controllers\Api\V3\DriverTripControllerV3::class, 'notifications']);
+    Route::get('/notifications', [\App\Http\Controllers\Api\V3\DriverTripControllerV3::class, 'userNotifications']);
+    Route::put('/notifications/{id}/read', [\App\Http\Controllers\Api\V3\DriverTripControllerV3::class, 'markNotificationAsRead'])->whereNumber('id');
 });
 
 /* ===========================
