@@ -152,7 +152,7 @@ class TripMatchingEngineV3
         }
 
         $selectedDriver->loadMissing(['user', 'vehicle']);
-        $expiresAt = now()->addSeconds(30);
+        $expiresAt = now()->addMinutes(5);
         $payload = $this->offerPayload($trip, $selectedDriver, $expiresAt);
 
         DriverTripOffer::query()->create([
@@ -184,7 +184,7 @@ class TripMatchingEngineV3
         ]);
 
         // Dispatch timeout handler
-        HandleDriverTimeoutV3::dispatch($trip, $selectedDriver->id)->delay(now()->addSeconds(30));
+        HandleDriverTimeoutV3::dispatch($trip, $selectedDriver->id)->delay(now()->addMinutes(5));
     }
 
     private function offerPayload(TripV3 $trip, Driver $driver, \DateTimeInterface $expiresAt): array
