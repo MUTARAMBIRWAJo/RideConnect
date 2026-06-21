@@ -197,19 +197,6 @@ class TripControllerV3 extends Controller
 
         $trip = TripV3::findOrFail($tripId);
 
-        // Validate the driver_id explicitly
-        $validator = \Illuminate\Support\Facades\Validator::make(['driver_id' => $driverId], [
-            'driver_id' => 'required|integer|exists:drivers,id',
-        ]);
-
-        if ($validator->fails()) {
-            return response()->json([
-                'success' => false,
-                'message' => 'The given data was invalid.',
-                'errors' => $validator->errors()
-            ], 422);
-        }
-
         if (!in_array($trip->status, ['created', 'searching', 'REQUESTED', 'MATCHING'], true)) {
             return response()->json([
                 'success' => false,
@@ -217,16 +204,50 @@ class TripControllerV3 extends Controller
             ], 422);
         }
 
+        // Assign the manually-selected driver directly — do NOT run the auto-matching engine,
+        // which would re-search for drivers and potentially cancel the trip.
+        $selectedDriver = \App\Models\Driver::with(['user', 'vehicle'])->findOrFail($driverId);
+
         $trip->matched_driver_id = $driverId;
         $trip->driver_id = $driverId;
+        $trip->driver_response_status = 'pending';
+        $trip->match_attempt_count = ($trip->match_attempt_count ?? 0) + 1;
+        $trip->last_matched_at = now();
+        $trip->matching_started_at = $trip->matching_started_at ?? now();
         $trip->save();
 
-        $this->matchingEngine->startMatching($trip);
+        // Transition to MATCHING status via lifecycle engine
+        if ($trip->status !== 'MATCHING') {
+            $lifecycle = app(TripLifecycleEngineV3::class);
+            $lifecycle->transition($trip, 'MATCHING');
+        }
 
-        // Notify the selected driver immediately!
+        // Create a DriverTripOffer so the driver can accept/reject
+        $expiresAt = now()->addMinutes(5);
         $trip->loadMissing('user');
         $passengerName = $trip->user?->name ?? 'Passenger';
 
+        \App\Models\DriverTripOffer::create([
+            'trip_id' => $trip->id,
+            'driver_id' => $selectedDriver->id,
+            'status' => 'pending',
+            'expires_at' => $expiresAt,
+            'payload' => [
+                'trip_id' => $trip->id,
+                'driver_id' => $selectedDriver->id,
+                'passenger_name' => $passengerName,
+                'pickup_location' => $trip->pickup_location,
+                'dropoff_location' => $trip->dropoff_location,
+                'pickup_lat' => (float) $trip->pickup_lat,
+                'pickup_lng' => (float) $trip->pickup_lng,
+                'dropoff_lat' => (float) $trip->dropoff_lat,
+                'dropoff_lng' => (float) $trip->dropoff_lng,
+                'estimated_fare' => (float) ($trip->fare_estimate ?? 4500),
+                'expires_at' => $expiresAt->format(DATE_ATOM),
+            ],
+        ]);
+
+        // Notify the selected driver immediately
         $notificationService->sendToDriver($driverId, [
             'type' => 'NEW_TRIP_REQUEST',
             'trip_id' => $trip->id,
@@ -241,7 +262,11 @@ class TripControllerV3 extends Controller
             ],
         ]);
 
-        $trip->loadMissing(['user', 'matchedDriver.user', 'matchedDriver.vehicle']);
+        // Dispatch timeout handler — if the driver doesn't respond in 5 minutes, reassign
+        \App\Jobs\V3\HandleDriverTimeoutV3::dispatch($trip, $selectedDriver->id)
+            ->delay($expiresAt);
+
+        $trip->loadMissing(['matchedDriver.user', 'matchedDriver.vehicle']);
 
         return response()->json([
             'success' => true,
