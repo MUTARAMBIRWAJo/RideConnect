@@ -157,6 +157,52 @@ class AuthController extends Controller
     {
         $user = $request->user();
         
+        // Store last active location to LocationHistory on logout
+        try {
+            $driver = \App\Models\Driver::where('user_id', $user->id)->first();
+            $role = $driver ? 'driver' : 'passenger';
+            $lat = null;
+            $lng = null;
+            $heading = null;
+            $speed = null;
+            $tripId = null;
+
+            if ($role === 'driver' && $driver) {
+                $loc = \App\Models\V3\DriverLocationV3::where('driver_id', $driver->id)->first();
+                if ($loc) {
+                    $lat = $loc->latitude;
+                    $lng = $loc->longitude;
+                    $heading = $loc->heading;
+                    $speed = $loc->speed;
+                    $tripId = $loc->trip_id;
+                }
+            } else {
+                $loc = \App\Models\PassengerLocation::where('user_id', $user->id)->first();
+                if ($loc) {
+                    $lat = $loc->latitude;
+                    $lng = $loc->longitude;
+                    $heading = $loc->heading;
+                    $speed = $loc->speed;
+                    $tripId = $loc->trip_id;
+                }
+            }
+
+            if ($lat !== null && $lng !== null) {
+                \App\Models\LocationHistory::create([
+                    'user_id' => $user->id,
+                    'role' => $role,
+                    'trip_id' => $tripId,
+                    'latitude' => $lat,
+                    'longitude' => $lng,
+                    'speed' => $speed,
+                    'heading' => $heading,
+                    'created_at' => now(),
+                ]);
+            }
+        } catch (\Throwable $e) {
+            \Illuminate\Support\Facades\Log::warning('Failed to record final location history on logout: ' . $e->getMessage());
+        }
+
         // Revoke the current token
         $user->currentAccessToken()->delete();
         

@@ -129,4 +129,80 @@ class LocationTrackingTest extends TestCase
             ->assertJsonPath('data.0.latitude', -1.9536)
             ->assertJsonPath('data.0.longitude', 30.0606);
     }
+
+    public function test_location_history_is_throttled_to_five_minutes(): void
+    {
+        $passengerUser = User::factory()->create(['role' => \App\Enums\UserRole::PASSENGER->value]);
+
+        // 1. Update location first time - should insert to history
+        $response1 = $this->actingAs($passengerUser, 'sanctum')
+            ->postJson('/api/v3/location/update', [
+                'latitude' => -1.9536,
+                'longitude' => 30.0606,
+            ]);
+        $response1->assertStatus(200);
+        $this->assertEquals(1, \App\Models\LocationHistory::where('user_id', $passengerUser->id)->count());
+
+        // 2. Update location second time immediately - should NOT insert to history
+        $response2 = $this->actingAs($passengerUser, 'sanctum')
+            ->postJson('/api/v3/location/update', [
+                'latitude' => -1.9540,
+                'longitude' => 30.0610,
+            ]);
+        $response2->assertStatus(200);
+        $this->assertEquals(1, \App\Models\LocationHistory::where('user_id', $passengerUser->id)->count());
+
+        // 3. Manually update the created_at of the first history record to be 6 minutes ago
+        $history = \App\Models\LocationHistory::where('user_id', $passengerUser->id)->first();
+        $history->update(['created_at' => now()->subMinutes(6)]);
+
+        // 4. Update location third time - should insert to history since 6 minutes has passed
+        $response3 = $this->actingAs($passengerUser, 'sanctum')
+            ->postJson('/api/v3/location/update', [
+                'latitude' => -1.9550,
+                'longitude' => 30.0620,
+            ]);
+        $response3->assertStatus(200);
+        $this->assertEquals(2, \App\Models\LocationHistory::where('user_id', $passengerUser->id)->count());
+    }
+
+    public function test_logout_saves_last_known_location_permanently(): void
+    {
+        $passengerUser = User::factory()->create([
+            'role' => \App\Enums\UserRole::PASSENGER->value,
+            'is_approved' => true,
+        ]);
+
+        $token = $passengerUser->createToken('TestDevice')->plainTextToken;
+
+        // Setup current location first
+        \App\Models\PassengerLocation::create([
+            'user_id' => $passengerUser->id,
+            'lat' => -1.9536,
+            'lng' => 30.0606,
+            'latitude' => -1.9536,
+            'longitude' => 30.0606,
+            'heading' => 180,
+            'speed' => 0.0,
+            'is_online' => true,
+            'recorded_at' => now(),
+        ]);
+
+        // Clean out history
+        \App\Models\LocationHistory::where('user_id', $passengerUser->id)->delete();
+
+        // Perform logout
+        $response = $this->withToken($token)
+            ->postJson('/api/v1/auth/logout');
+
+        $response->assertStatus(200);
+
+        // Verify history has a record with the correct coordinates
+        $this->assertDatabaseHas('location_histories', [
+            'user_id' => $passengerUser->id,
+            'role' => 'passenger',
+            'latitude' => -1.9536,
+            'longitude' => 30.0606,
+        ]);
+    }
 }

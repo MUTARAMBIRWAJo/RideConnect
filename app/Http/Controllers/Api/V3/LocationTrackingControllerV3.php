@@ -129,17 +129,23 @@ class LocationTrackingControllerV3 extends Controller
                 'is_online' => true,
             ]);
 
-            // 5. Append point to history log
-            LocationHistory::create([
-                'user_id' => $user->id,
-                'role' => $role,
-                'trip_id' => $tripId,
-                'latitude' => $lat,
-                'longitude' => $lng,
-                'speed' => $speed,
-                'heading' => $heading,
-                'created_at' => now(),
-            ]);
+            // 5. Append point to history log permanently only every 5 minutes
+            $lastHistory = LocationHistory::where('user_id', $user->id)
+                ->orderBy('created_at', 'desc')
+                ->first();
+
+            if (!$lastHistory || $lastHistory->created_at->lte(now()->subMinutes(5))) {
+                LocationHistory::create([
+                    'user_id' => $user->id,
+                    'role' => $role,
+                    'trip_id' => $tripId,
+                    'latitude' => $lat,
+                    'longitude' => $lng,
+                    'speed' => $speed,
+                    'heading' => $heading,
+                    'created_at' => now(),
+                ]);
+            }
         });
 
         return response()->json([

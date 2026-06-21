@@ -61,6 +61,11 @@ class FirebaseSyncService
                 return;
             }
 
+            if (!class_exists(\Kreait\Firebase\Factory::class)) {
+                Log::warning('[FirebaseSyncService] Kreait\\Firebase\\Factory class not found. Disabling sync.');
+                return;
+            }
+
             $factory = (new Factory)->withServiceAccount($credentialsPath);
 
             if ($databaseUrl) {
