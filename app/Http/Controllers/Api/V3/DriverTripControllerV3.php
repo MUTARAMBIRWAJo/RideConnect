@@ -378,7 +378,7 @@ class DriverTripControllerV3 extends Controller
     public function pay(Request $request, string $id): JsonResponse
     {
         $validated = $request->validate([
-            'payment_method' => 'required|string|in:cash,mobile_money,card,Cash,Mobile Money,Card',
+            'payment_method' => 'required|string|in:cash,mobile_money,card,Cash,Mobile Money,Card,mobile,MOBILE,CASH,CARD',
             'payment_reference' => 'nullable|string|max:120',
             'amount' => 'required|numeric|min:0',
         ]);
@@ -393,8 +393,13 @@ class DriverTripControllerV3 extends Controller
                 return response()->json(['success' => false, 'message' => 'Trip must be completed before payment.'], 422);
             }
 
+            $method = strtolower(str_replace(' ', '_', $validated['payment_method']));
+            if ($method === 'mobile') {
+                $method = 'mobile_money';
+            }
+
             $trip->forceFill([
-                'payment_method' => strtolower(str_replace(' ', '_', $validated['payment_method'])),
+                'payment_method' => $method,
                 'payment_reference' => $validated['payment_reference'] ?? 'cash-'.$trip->id,
                 'amount_paid' => $validated['amount'],
                 'paid_at' => now(),
