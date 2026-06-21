@@ -218,6 +218,7 @@ class TripControllerV3 extends Controller
         }
 
         $trip->matched_driver_id = $driverId;
+        $trip->driver_id = $driverId;
         $trip->save();
 
         $this->matchingEngine->startMatching($trip);
