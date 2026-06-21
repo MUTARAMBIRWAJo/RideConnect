@@ -651,10 +651,10 @@ class DriverTripControllerV3 extends Controller
     )]
     public function notifications(Request $request): JsonResponse
     {
-        $driver = $this->driverFor($request);
+        $user = $request->user();
 
         $notifications = \App\Models\Notification::query()
-            ->where('user_id', $driver->user_id)
+            ->where('user_id', $user->id)
             ->orderByDesc('created_at')
             ->get();
 
