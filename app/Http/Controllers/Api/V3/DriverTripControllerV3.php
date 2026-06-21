@@ -739,4 +739,153 @@ class DriverTripControllerV3 extends Controller
             'message' => 'Notification deleted successfully',
         ]);
     }
+
+    #[OA\Get(
+        path: '/v3/notifications/unread-count',
+        summary: 'Get count of unread notifications for authenticated user',
+        responses: [
+            new OA\Response(response: 200, description: 'Success')
+        ]
+    )]
+    public function unreadCount(Request $request): JsonResponse
+    {
+        $user = $request->user();
+
+        $count = \App\Models\Notification::query()
+            ->where('user_id', $user->id)
+            ->where('is_read', false)
+            ->count();
+
+        return response()->json([
+            'success' => true,
+            'data' => [
+                'unread_count' => $count,
+            ],
+        ]);
+    }
+
+    #[OA\Put(
+        path: '/v3/notifications/read-all',
+        summary: 'Mark all notifications as read for authenticated user',
+        responses: [
+            new OA\Response(response: 200, description: 'Success')
+        ]
+    )]
+    public function markAllAsRead(Request $request): JsonResponse
+    {
+        $user = $request->user();
+
+        \App\Models\Notification::query()
+            ->where('user_id', $user->id)
+            ->where('is_read', false)
+            ->update([
+                'is_read' => true,
+                'read_at' => now(),
+            ]);
+
+        return response()->json([
+            'success' => true,
+            'message' => 'All notifications marked as read',
+        ]);
+    }
+
+    #[OA\Delete(
+        path: '/v3/notifications/clear-actioned',
+        summary: 'Clear all actioned notifications for authenticated user',
+        responses: [
+            new OA\Response(response: 200, description: 'Success')
+        ]
+    )]
+    public function clearActioned(Request $request): JsonResponse
+    {
+        $user = $request->user();
+
+        $notifications = \App\Models\Notification::query()
+            ->where('user_id', $user->id)
+            ->get(['id', 'type', 'data']);
+
+        $actionedIds = $notifications
+            ->filter(fn (\App\Models\Notification $notification): bool => $this->isActionedNotification($notification))
+            ->pluck('id')
+            ->values();
+
+        $deletedCount = 0;
+        if ($actionedIds->isNotEmpty()) {
+            $deletedCount = \App\Models\Notification::query()
+                ->where('user_id', $user->id)
+                ->whereIn('id', $actionedIds->all())
+                ->delete();
+        }
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Actioned notifications cleared',
+            'data' => [
+                'deleted_count' => (int) $deletedCount,
+                'kept_count' => (int) max(0, $notifications->count() - $deletedCount),
+            ],
+        ]);
+    }
+
+    private function isActionedNotification(\App\Models\Notification $notification): bool
+    {
+        $type = strtolower((string) $notification->type);
+        $data = is_array($notification->data) ? $notification->data : [];
+        $status = strtolower((string) ($data['status'] ?? ''));
+
+        $pendingTypes = [
+            'ride_request_received',
+            'booking_request_received',
+            'new_trip_request',
+        ];
+
+        if (in_array($type, $pendingTypes, true)) {
+            return false;
+        }
+
+        $actionedKeywords = [
+            'accepted',
+            'rejected',
+            'cancelled',
+            'completed',
+            'confirmed',
+            'started',
+        ];
+
+        foreach ($actionedKeywords as $keyword) {
+            if (str_contains($type, $keyword)) {
+                return true;
+            }
+        }
+
+        $actionedStatuses = [
+            'accepted',
+            'rejected',
+            'cancelled',
+            'completed',
+            'confirmed',
+            'started',
+        ];
+
+        if ($status !== '' && in_array($status, $actionedStatuses, true)) {
+            return true;
+        }
+
+        $actionedDataKeys = [
+            'accepted_at',
+            'rejected_at',
+            'cancelled_at',
+            'completed_at',
+            'confirmed_at',
+            'started_at',
+        ];
+
+        foreach ($actionedDataKeys as $key) {
+            if (! empty($data[$key])) {
+                return true;
+            }
+        }
+
+        return false;
+    }
 }

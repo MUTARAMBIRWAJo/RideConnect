@@ -101,7 +101,10 @@ Route::prefix('v3')->middleware(['auth:sanctum'])->group(function () {
 
     // Notifications
     Route::get('/driver/notifications', [\App\Http\Controllers\Api\V3\DriverTripControllerV3::class, 'notifications']);
+    Route::get('/notifications/unread-count', [\App\Http\Controllers\Api\V3\DriverTripControllerV3::class, 'unreadCount']);
     Route::get('/notifications', [\App\Http\Controllers\Api\V3\DriverTripControllerV3::class, 'userNotifications']);
+    Route::put('/notifications/read-all', [\App\Http\Controllers\Api\V3\DriverTripControllerV3::class, 'markAllAsRead']);
+    Route::delete('/notifications/clear-actioned', [\App\Http\Controllers\Api\V3\DriverTripControllerV3::class, 'clearActioned']);
     Route::put('/notifications/{id}/read', [\App\Http\Controllers\Api\V3\DriverTripControllerV3::class, 'markNotificationAsRead'])->whereNumber('id');
     Route::delete('/notifications/{id}', [\App\Http\Controllers\Api\V3\DriverTripControllerV3::class, 'deleteNotification'])->whereNumber('id');
 

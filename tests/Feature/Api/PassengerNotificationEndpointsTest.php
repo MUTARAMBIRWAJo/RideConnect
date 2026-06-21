@@ -617,4 +617,64 @@ class PassengerNotificationEndpointsTest extends TestCase
             'id' => $notification1->id,
         ]);
     }
+
+    public function test_user_can_manage_unread_read_all_and_clear_actioned_v3_notifications(): void
+    {
+        $user = User::factory()->create();
+
+        // 1. Create a pending notification
+        $pending = Notification::create([
+            'user_id' => $user->id,
+            'type' => 'new_trip_request',
+            'title' => 'New Trip',
+            'message' => 'You have a new trip request',
+            'data' => ['trip_id' => 20],
+            'is_read' => false,
+        ]);
+
+        // 2. Create an actioned notification
+        $actioned = Notification::create([
+            'user_id' => $user->id,
+            'type' => 'TRIP_ACCEPTED',
+            'title' => 'Trip Accepted',
+            'message' => 'Driver accepted your trip',
+            'data' => ['trip_id' => 21],
+            'is_read' => false,
+        ]);
+
+        // Verify unread count is 2
+        $this->actingAs($user, 'sanctum')
+            ->getJson('/api/v3/notifications/unread-count')
+            ->assertStatus(200)
+            ->assertJsonPath('success', true)
+            ->assertJsonPath('data.unread_count', 2);
+
+        // Mark all as read
+        $this->actingAs($user, 'sanctum')
+            ->putJson('/api/v3/notifications/read-all')
+            ->assertStatus(200)
+            ->assertJsonPath('success', true);
+
+        // Verify unread count is 0
+        $this->actingAs($user, 'sanctum')
+            ->getJson('/api/v3/notifications/unread-count')
+            ->assertStatus(200)
+            ->assertJsonPath('data.unread_count', 0);
+
+        // Clear actioned
+        $this->actingAs($user, 'sanctum')
+            ->deleteJson('/api/v3/notifications/clear-actioned')
+            ->assertStatus(200)
+            ->assertJsonPath('success', true)
+            ->assertJsonPath('data.deleted_count', 1)
+            ->assertJsonPath('data.kept_count', 1);
+
+        $this->assertDatabaseMissing('user_notifications', [
+            'id' => $actioned->id,
+        ]);
+
+        $this->assertDatabaseHas('user_notifications', [
+            'id' => $pending->id,
+        ]);
+    }
 }
