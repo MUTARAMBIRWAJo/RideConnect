@@ -55,6 +55,25 @@ class MatchingFlowTest extends TestCase
             'driver_id' => $driver->id,
             'driver_response_status' => 'accepted',
         ]);
+
+        $this->assertDatabaseHas('user_notifications', [
+            'user_id' => $user->id,
+            'type' => 'TRIP_ACCEPTED',
+        ]);
+
+        $notification = \App\Models\Notification::where('user_id', $user->id)->where('type', 'TRIP_ACCEPTED')->first();
+        $this->assertNotNull($notification);
+        $this->assertEquals($trip->id, $notification->data['trip_id']);
+        $this->assertEquals("/api/v3/trips/{$trip->id}/status", $notification->data['tracking_url']);
+
+        // Verify the passenger can retrieve this notification via the v3 endpoint
+        $notificationsResponse = $this->actingAs($user, 'sanctum')
+            ->getJson('/api/v3/notifications');
+        $notificationsResponse->assertStatus(200)
+            ->assertJsonPath('success', true)
+            ->assertJsonPath('data.0.type', 'TRIP_ACCEPTED')
+            ->assertJsonPath('data.0.data.trip_id', $trip->id)
+            ->assertJsonPath('data.0.data.tracking_url', "/api/v3/trips/{$trip->id}/status");
     }
 
     public function test_driver_can_reject_offered_trip_and_trigger_retry(): void
@@ -109,6 +128,23 @@ class MatchingFlowTest extends TestCase
 
         $trip->refresh();
         $this->assertContains($driver->id, $trip->ignored_driver_ids);
+
+        $this->assertDatabaseHas('user_notifications', [
+            'user_id' => $user->id,
+            'type' => 'TRIP_REJECTED',
+        ]);
+
+        $notification = \App\Models\Notification::where('user_id', $user->id)->where('type', 'TRIP_REJECTED')->first();
+        $this->assertNotNull($notification);
+        $this->assertEquals($trip->id, $notification->data['trip_id']);
+
+        // Verify the passenger can retrieve this notification via the v3 endpoint
+        $notificationsResponse = $this->actingAs($user, 'sanctum')
+            ->getJson('/api/v3/notifications');
+        $notificationsResponse->assertStatus(200)
+            ->assertJsonPath('success', true)
+            ->assertJsonPath('data.0.type', 'TRIP_REJECTED')
+            ->assertJsonPath('data.0.data.trip_id', $trip->id);
     }
 
     public function test_fallback_matching_assigns_patrick_after_60_seconds(): void
