@@ -205,4 +205,63 @@ class LocationTrackingTest extends TestCase
             'longitude' => 30.0606,
         ]);
     }
+
+    public function test_driver_tracking_unified_payload(): void
+    {
+        $passengerUser = User::factory()->create(['role' => \App\Enums\UserRole::PASSENGER->value]);
+        $driverUser = User::factory()->create(['role' => \App\Enums\UserRole::DRIVER->value]);
+        $driver = Driver::factory()->create([
+            'user_id' => $driverUser->id,
+            'current_latitude' => 0.3456,
+            'current_longitude' => 32.5812,
+        ]);
+
+        $trip = \App\Models\V3\TripV3::create([
+            'user_id' => $passengerUser->id,
+            'driver_id' => $driver->id,
+            'transport_type' => 'private_car',
+            'status' => 'ACCEPTED',
+            'pickup_location' => 'Kampala Central',
+            'pickup_lat' => 0.3421,
+            'pickup_lng' => 32.5855,
+            'dropoff_location' => 'Makerere University',
+            'dropoff_lat' => 0.3551,
+            'dropoff_lng' => 32.5921,
+            'fare_estimate' => 5000,
+        ]);
+
+        // 1. Query tracking when driver location is in driver_locations_v3
+        \App\Models\V3\DriverLocationV3::create([
+            'driver_id' => $driver->id,
+            'latitude' => 0.3456,
+            'longitude' => 32.5812,
+            'lat' => 0.3456,
+            'lng' => 32.5812,
+            'heading' => 120.0,
+            'speed' => 15.0,
+            'is_online' => true,
+        ]);
+
+        $response = $this->actingAs($passengerUser, 'sanctum')
+            ->getJson("/api/v3/trips/{$trip->id}/tracking");
+
+        $response->assertStatus(200)
+            ->assertJsonPath('success', true)
+            ->assertJsonPath('data.trip_id', $trip->id)
+            ->assertJsonPath('data.status', 'driver_en_route')
+            ->assertJsonPath('data.driver.id', $driver->id)
+            ->assertJsonPath('data.driver_location.latitude', 0.3456)
+            ->assertJsonPath('data.driver_location.longitude', 32.5812)
+            ->assertJsonPath('data.pickup_location.name', 'Kampala Central')
+            ->assertJsonPath('data.dropoff_location.name', 'Makerere University');
+
+        // 2. Test status transition and distance remaining dropoff
+        $trip->update(['status' => 'IN_PROGRESS']);
+        
+        $response2 = $this->actingAs($passengerUser, 'sanctum')
+            ->getJson("/api/v3/trips/{$trip->id}/tracking");
+
+        $response2->assertStatus(200)
+            ->assertJsonPath('data.status', 'trip_started');
+    }
 }

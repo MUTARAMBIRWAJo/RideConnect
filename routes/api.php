@@ -94,6 +94,7 @@ Route::prefix('v3')->middleware(['auth:sanctum'])->group(function () {
     // Status polling for fallback
     Route::get('/trips/{id}/matching-status', [\App\Http\Controllers\Api\V3\TripControllerV3::class, 'matchingStatus']);
     Route::get('/trips/{id}/status', [\App\Http\Controllers\Api\V3\TripControllerV3::class, 'status']);
+    Route::get('/trips/{tripId}/tracking', [\App\Http\Controllers\Api\V3\TripControllerV3::class, 'getTracking']);
     Route::post('/trips/{id}/notify-driver', [\App\Http\Controllers\Api\V3\TripControllerV3::class, 'notifyDriver']);
     Route::post('/trips/{id}/match', [\App\Http\Controllers\Api\V3\TripControllerV3::class, 'matchTrip']);
     Route::get('/drivers/online', [\App\Http\Controllers\Api\V3\TripControllerV3::class, 'onlineDrivers']);
