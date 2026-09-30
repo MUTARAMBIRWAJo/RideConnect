@@ -25,11 +25,11 @@ services:
       DB_PORT: 5432
       DB_DATABASE: postgres
       DB_USERNAME: postgres.tpahuvmhlfluztuhznfj
-      DB_PASSWORD: k66JhsiIhCBkPcs3
+      DB_PASSWORD: ${DB_PASSWORD}
       DB_SSLMODE: require
       SUPABASE_URL: https://tpahuvmhlfluztuhznfj.supabase.co
-      SUPABASE_KEY: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InRwYWh1dm1obGZsdXp0dWh6bmZqIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjU5OTg1ODQsImV4cCI6MjA4MTU3NDU4NH0.iwwdBlMDl-X97_ozEEaEBah8vBQ5Em02f0praEr6m0U
-      SUPABASE_SERVICE_ROLE_KEY: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InRwYWh1dm1obGZsdXp0dWh6bmZqIiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc2NTk5ODU4NCwiZXhwIjoyMDgxNTc0NTg0fQ.DxszTVnPVdC1o9m8ew3WOEgY-POblWGgiNKS_cFLGwg
+      SUPABASE_KEY: ${SUPABASE_KEY}
+      SUPABASE_SERVICE_ROLE_KEY: ${SUPABASE_SERVICE_ROLE_KEY}
     networks:
       - rideconnect
 
